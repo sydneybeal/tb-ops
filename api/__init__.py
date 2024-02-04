@@ -12,4 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""REST API entrypoint code for TB Operations."""
+"""Travel Beyond data operations platform."""
+
+__version__ = "0.0.1"
+
+__all__ = ["__version__"]
