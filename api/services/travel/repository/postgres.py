@@ -169,7 +169,31 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new core destination record(s) to the repository."
         )
 
-    async def get_core_destination(
+    async def get_core_destination_by_name(self, name: str) -> CoreDestination:
+        """Returns the list of CoreDestination models in the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.core_destinations
+            WHERE UPPER(name) = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, name.upper())
+                if res:
+                    return CoreDestination(
+                        id=res["id"],
+                        name=res["name"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
+
+    async def get_core_destinations_by_name(
         self, names: Sequence[str]
     ) -> Sequence[CoreDestination]:
         """Returns the list of CoreDestination models in the repository by name."""
@@ -261,7 +285,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Deletes a sequence of Country models from the repository."""
         raise NotImplementedError
 
-    async def get_country(self, names: Sequence[str]) -> Sequence[Country]:
+    async def get_countries_by_name(self, names: Sequence[str]) -> Sequence[Country]:
         """Returns the list of Country models in the repository by name."""
         pool = await self._get_pool()
         upper_names = [name.upper() for name in names]
@@ -287,6 +311,31 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     )
                     for row in rows
                 ]
+
+    async def get_country_by_name(self, name: str) -> Country:
+        """Returns a single of Country models in the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.countries
+            WHERE UPPER(name) = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, name.upper())
+                if res:
+                    return Country(
+                        id=res["id"],
+                        name=res["name"],
+                        core_destination_id=res["core_destination_id"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     # Agency
     async def add_agency(self, agencies: Sequence[Agency]) -> None:

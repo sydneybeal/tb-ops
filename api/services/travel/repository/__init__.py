@@ -92,7 +92,14 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_core_destination(self, names: Sequence[str]) -> None:
+    async def get_core_destination_by_name(self, name: str) -> CoreDestination:
+        """Gets a single CoreDestination model based on names."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_core_destinations_by_name(
+        self, names: Sequence[str]
+    ) -> Sequence[CoreDestination]:
         """Gets a sequence of CoreDestination models based on names."""
         raise NotImplementedError
 
@@ -117,7 +124,12 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_country(self, names: Sequence[str]) -> None:
+    async def get_country_by_name(self, name: str) -> None:
+        """Gets a single Country model based on name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_countries_by_name(self, names: Sequence[str]) -> None:
         """Gets a sequence of Country models based on names."""
         raise NotImplementedError
 

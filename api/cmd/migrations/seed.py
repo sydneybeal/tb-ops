@@ -53,48 +53,41 @@ class SourceTableBuilder:
             row["id"] = uuid.uuid4()
             row["created_at"] = datetime.now()
             row["updated_at"] = datetime.now()
+            row["updated_by"] = "Initialization script"
 
             # Convert row dict to model instance
             record = CoreDestination(**row)
             records_to_add.append(record)
 
         await self._travel_service.add_core_destination(records_to_add)
-        print(f"Successfully added {len(records_to_add)} records to core_destinations.")
+        print(f"Successfully seeded {len(records_to_add)} CoreDestination records.")
 
     async def seed_countries(self):
         """Seeds countries into the DB with their appropriate core destination ID."""
         records_to_add = []
         for row in self.raw_data["countries"]:
-            core_destination_name = row["core_destination"].title()
             # Fetch the core_destination_id using the service layer
-            core_destinations = await self._travel_service.get_core_destination(
-                [core_destination_name]
+            core_destination = await self._travel_service.get_core_destination_by_name(
+                row["core_destination"]
             )
-            if core_destinations and len(core_destinations) == 1:
-                core_destination = core_destinations[
-                    0
-                ]  # Get the first (and only) element
+            if core_destination:
                 row["core_destination_id"] = core_destination.id
-                print(f"core_destination found {core_destination.name}")
                 del row["core_destination"]  # Remove the name key
-            elif len(core_destinations) > 1:
-                print(
-                    f"Multiple core destinations found for name {core_destination_name}."
-                )
             else:
-                print(f"Core destination {core_destination_name} not found.")
+                print(f"Core destination {row['core_destination']} not found.")
 
             # Add UUID and timestamps
             row["id"] = uuid.uuid4()
             row["created_at"] = datetime.now()
             row["updated_at"] = datetime.now()
+            row["updated_by"] = "Initialization script"
 
             # Convert row dict to model instance
             record = Country(**row)
             records_to_add.append(record)
 
         await self._travel_service.add_country(records_to_add)
-        print(f"Successfully added {len(records_to_add)} records to core_destinations.")
+        print(f"Successfully seeded {len(records_to_add)} new Country records.")
 
     async def seed_db(self):
         """Seeds the database table given a source name."""

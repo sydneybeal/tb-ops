@@ -37,29 +37,31 @@ class TravelService:
         """Adds country model to the repository."""
         # Only add countries that don't already exist
         to_be_added = [
-            model for model in models if not await self._repo.get_country(model.name)
+            model
+            for model in models
+            if not await self._repo.get_country_by_name(model.name)
         ]
         await self._repo.add_country(to_be_added)
 
-    async def get_country(self, names: Sequence[str]) -> Sequence[Country]:
-        """Gets a sequence of Country models by country name"""
-        await self._repo.get_country(names)
+    async def get_country_by_name(self, name: str) -> Sequence[Country]:
+        """Gets a sequence of Country models by country name."""
+        await self._repo.get_country_by_name(name)
+
+    async def get_countries_by_name(self, names: Sequence[str]) -> Sequence[Country]:
+        """Gets a sequence of Country models by country name."""
+        await self._repo.get_countries_by_name(names)
 
     async def add_core_destination(self, models: Sequence[CoreDestination]) -> None:
         """Adds core destination model to the repository."""
-        # Only get pipelines that don't already exist
-        # to_be_added = [model for model in models if not await self.get(model.id)]
-        # if len(to_be_added) == 0:
-        # Raise an AlreadyExists Error if all models in list exists
-        # print("Already exists")
-        # raise AlreadyExists(
-        #     f"All Pipeline models already exists in repository. {[model.id for model in models]}"
-        # )
+        # Only add countries that don't already exist
+        to_be_added = [
+            model
+            for model in models
+            if not await self._repo.get_core_destination_by_name(model.name)
+        ]
 
-        await self._repo.add_core_destination(models)
+        await self._repo.add_core_destination(to_be_added)
 
-    async def get_core_destination(
-        self, names: Sequence[str]
-    ) -> Sequence[CoreDestination]:
+    async def get_core_destination_by_name(self, name: str) -> CoreDestination:
         """Gets a sequence of CoreDestination models by core destination name"""
-        return await self._repo.get_core_destination(names)
+        return await self._repo.get_core_destination_by_name(name)
