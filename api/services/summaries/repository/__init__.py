@@ -1,0 +1,61 @@
+# Copyright 2024 SH
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Repositories for travel-related data."""
+import datetime
+import uuid
+from abc import ABC, abstractmethod
+from typing import Sequence
+from api.services.travel.models import (
+    AccommodationLog,
+    Property,
+)
+
+
+class SummaryRepository(ABC):
+    """Abstract repository for data summary models."""
+
+    # AccommodationLog
+    @abstractmethod
+    async def get_accommodation_log(
+        self,
+        primary_traveler: str,
+        property_id: str,
+        date_in: datetime.date,
+        date_out: datetime.date,
+    ) -> AccommodationLog:
+        """Gets a single AccommodationLog model in the repository by name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLog]:
+        """Gets all AccommodationLog models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
+
+    # Property
+    @abstractmethod
+    async def get_property(
+        self,
+        name: str,
+        portfolio_name: str,
+        country_id: uuid,
+        core_destination_id: uuid,
+    ) -> Property:
+        """Returns a single Property model in the repository by name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_properties(self) -> Sequence[Property]:
+        """Gets all Property models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
