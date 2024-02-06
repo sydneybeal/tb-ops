@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Postgres Repository for travel-related data."""
+import datetime
 import json
-from typing import Sequence
+import uuid
+from typing import Optional, Sequence
 from textwrap import dedent
 
 # from asyncpg.connection import inspect
@@ -46,20 +48,18 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 id,
                 property_id,
                 consultant_id,
-                portfolio,
                 primary_traveler,
                 num_pax,
                 date_in,
                 date_out,
                 booking_channel_id,
                 agency_id,
-                core_destination_id,
                 created_at,
                 updated_at,
                 updated_by
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
             );
             """
         )
@@ -73,14 +73,12 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         log.id,
                         log.property_id,
                         log.consultant_id,
-                        log.portfolio,
-                        log.primary_traveler,
+                        log.primary_traveler.strip(),
                         log.num_pax,
                         log.date_in,
                         log.date_out,
                         log.booking_channel_id,
                         log.agency_id,
-                        log.core_destination_id,
                         log.created_at,
                         log.updated_at,
                         log.updated_by,
@@ -89,6 +87,52 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 ]
                 await con.executemany(query, args)
         print(f"Successfully added {len(args)} new log(s) to the repository.")
+
+    async def get_accommodation_log(
+        self,
+        primary_traveler: str,
+        property_id: str,
+        date_in: datetime.date,
+        date_out: datetime.date,
+    ) -> AccommodationLog:
+        """Gets a single AccommodationLog model in the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.accommodation_logs
+            WHERE UPPER(primary_traveler) = $1
+            AND property_id = $2
+            AND date_in = $3
+            AND date_out = $4
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(
+                    query,
+                    primary_traveler.strip().upper(),
+                    property_id,
+                    date_in,
+                    date_out,
+                )
+                if res:
+                    return AccommodationLog(
+                        id=res["id"],
+                        property_id=res["property_id"],
+                        consultant_id=res["consultant_id"],
+                        primary_traveler=res["primary_traveler"],
+                        num_pax=res["num_pax"],
+                        date_in=res["date_in"],
+                        date_out=res["date_out"],
+                        booking_channel_id=res["booking_channel_id"],
+                        agency_id=res["agency_id"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     async def update_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]
@@ -105,7 +149,112 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     # Property
     async def add_property(self, properties: Sequence[Property]) -> None:
         """Adds a sequence of Property models to the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.properties (
+                id,
+                name,
+                portfolio,
+                representative,
+                country_id,
+                core_destination_id,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9
+            )
+            ON CONFLICT (name, portfolio, country_id, core_destination_id) DO NOTHING;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        prop.id,
+                        prop.name.strip(),
+                        prop.portfolio.strip(),
+                        prop.representative.strip(),
+                        prop.country_id,
+                        prop.core_destination_id,
+                        prop.created_at,
+                        prop.updated_at,
+                        prop.updated_by,
+                    )
+                    for prop in properties
+                ]
+                await con.executemany(query, args)
+        print(
+            f"Successfully added {len(args)} new Property record(s) to the repository."
+        )
+
+    async def get_property_by_name(
+        self,
+        name: str,
+        portfolio_name: str,
+        country_id: Optional[uuid.UUID],
+        core_destination_id: Optional[uuid.UUID],
+    ) -> Property:
+        """Returns a single Property model in the repository by name."""
+        # Check and convert only if country_id is a string and not empty
+        if isinstance(country_id, str) and country_id:
+            try:
+                country_id_uuid = uuid.UUID(country_id)
+            except ValueError:
+                # Handle the case where country_id is not a valid UUID string
+                country_id_uuid = None
+        else:
+            # No conversion needed if it's None or already a UUID object
+            country_id_uuid = country_id
+
+        # Repeat the similar check and conversion for core_destination_id
+        if isinstance(core_destination_id, str) and core_destination_id:
+            try:
+                core_destination_id_uuid = uuid.UUID(core_destination_id)
+            except ValueError:
+                core_destination_id_uuid = None
+        else:
+            core_destination_id_uuid = core_destination_id
+
+        # Pass the UUID conversions to the function
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.properties
+            WHERE UPPER(name) = $1
+            AND UPPER(portfolio) = $2
+            AND country_id IS NOT DISTINCT FROM $3
+            AND core_destination_id IS NOT DISTINCT FROM $4
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(
+                    query,
+                    name.strip().upper(),
+                    portfolio_name.strip().upper(),
+                    country_id_uuid,
+                    core_destination_id_uuid,
+                )
+                if res:
+                    return Property(
+                        id=res["id"],
+                        name=res["name"],
+                        portfolio=res["portfolio"],
+                        representative=res["representative"],
+                        country_id=res["country_id"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     async def update_property(self, properties: Sequence[Property]) -> None:
         """Updates a sequence of Property models in the repository."""
@@ -118,7 +267,74 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     # Consultant
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Adds a sequence of Consultant models to the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.consultants (
+                id,
+                first_name,
+                last_name,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6
+            )
+            ON CONFLICT (first_name, last_name) DO NOTHING;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        consultant.id,
+                        consultant.first_name.strip(),
+                        consultant.last_name.strip(),
+                        consultant.created_at,
+                        consultant.updated_at,
+                        consultant.updated_by,
+                    )
+                    for consultant in consultants
+                ]
+                await con.executemany(query, args)
+        print(
+            f"Successfully added {len(args)} new consultant record(s) to the repository."
+        )
+
+    async def get_consultant_by_name(
+        self, first_name: str, last_name: str
+    ) -> Consultant:
+        """Returns a single Consultant model in the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.consultants
+            WHERE UPPER(first_name) = $1
+            AND UPPER(last_name) = $2
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(
+                    query, first_name.strip().upper(), last_name.strip().upper()
+                )
+                if res:
+                    return Consultant(
+                        id=res["id"],
+                        first_name=res["first_name"],
+                        last_name=res["last_name"],
+                        is_active=res["is_active"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     async def update_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Updates a sequence of Consultant models in the repository."""
@@ -157,7 +373,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 args = [
                     (
                         core_destination.id,
-                        core_destination.name,
+                        core_destination.name.strip(),
                         core_destination.created_at,
                         core_destination.updated_at,
                         core_destination.updated_by,
@@ -170,7 +386,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         )
 
     async def get_core_destination_by_name(self, name: str) -> CoreDestination:
-        """Returns the list of CoreDestination models in the repository by name."""
+        """Returns a single CoreDestination model in the repository by name."""
         pool = await self._get_pool()
         query = dedent(
             """
@@ -183,7 +399,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
             async with con.transaction():
-                res = await con.fetchrow(query, name.upper())
+                res = await con.fetchrow(query, name.strip().upper())
                 if res:
                     return CoreDestination(
                         id=res["id"],
@@ -198,7 +414,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     ) -> Sequence[CoreDestination]:
         """Returns the list of CoreDestination models in the repository by name."""
         pool = await self._get_pool()
-        upper_names = [name.upper() for name in names]
+        upper_names = [name.strip().upper() for name in names]
         print(f"Querying for {upper_names}")
         query = dedent(
             """
@@ -264,7 +480,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 args = [
                     (
                         country.id,
-                        country.name,
+                        country.name.strip(),
                         country.core_destination_id,
                         country.created_at,
                         country.updated_at,
@@ -288,7 +504,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     async def get_countries_by_name(self, names: Sequence[str]) -> Sequence[Country]:
         """Returns the list of Country models in the repository by name."""
         pool = await self._get_pool()
-        upper_names = [name.upper() for name in names]
+        upper_names = [name.strip().upper() for name in names]
         query = dedent(
             """
             SELECT * FROM public.countries
@@ -313,7 +529,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 ]
 
     async def get_country_by_name(self, name: str) -> Country:
-        """Returns a single of Country models in the repository by name."""
+        """Returns a single Country model in the repository by name."""
         pool = await self._get_pool()
         query = dedent(
             """
@@ -321,12 +537,15 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             WHERE UPPER(name) = $1
             """
         )
+        # print(f"In postgres.py searching for country by name {name}")
         async with pool.acquire() as con:
             await con.set_type_codec(
                 "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
             async with con.transaction():
                 res = await con.fetchrow(query, name.upper())
+                # print("Response is:")
+                # print(res)
                 if res:
                     return Country(
                         id=res["id"],
@@ -340,7 +559,63 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     # Agency
     async def add_agency(self, agencies: Sequence[Agency]) -> None:
         """Adds a sequence of Agency models to the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.agencies (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (name) DO NOTHING;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        agency.id,
+                        agency.name.strip(),
+                        agency.created_at,
+                        agency.updated_at,
+                        agency.updated_by,
+                    )
+                    for agency in agencies
+                ]
+                await con.executemany(query, args)
+        print(f"Successfully added {len(args)} new agency record(s) to the repository.")
+
+    async def get_agency_by_name(self, name: str) -> Agency:
+        """Returns a single Agency model in the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.agencies
+            WHERE UPPER(name) = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, name.strip().upper())
+                if res:
+                    return Agency(
+                        id=res["id"],
+                        name=res["name"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     async def update_agency(self, agencies: Sequence[Agency]) -> None:
         """Updates a sequence of Agency models in the repository."""
@@ -355,7 +630,65 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         self, booking_channels: Sequence[BookingChannel]
     ) -> None:
         """Adds a sequence of BookingChannel models to the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.booking_channels (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (name) DO NOTHING;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        channel.id,
+                        channel.name.strip(),
+                        channel.created_at,
+                        channel.updated_at,
+                        channel.updated_by,
+                    )
+                    for channel in booking_channels
+                ]
+                await con.executemany(query, args)
+        print(
+            f"Successfully added {len(args)} new booking channel record(s) to the repository."
+        )
+
+    async def get_booking_channel_by_name(self, name: str) -> BookingChannel:
+        """Gets a single BookingChannel model from the repository by name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.booking_channels
+            WHERE UPPER(name) = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, name.strip().upper())
+                if res:
+                    return BookingChannel(
+                        id=res["id"],
+                        name=res["name"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
 
     async def update_booking_channel(
         self, booking_channels: Sequence[BookingChannel]

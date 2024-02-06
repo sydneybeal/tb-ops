@@ -27,7 +27,7 @@ class CoreDestination(BaseModel):
     name: str
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class Agency(BaseModel):
@@ -37,7 +37,7 @@ class Agency(BaseModel):
     name: str
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class BookingChannel(BaseModel):
@@ -47,7 +47,7 @@ class BookingChannel(BaseModel):
     name: str
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class Consultant(BaseModel):
@@ -59,7 +59,7 @@ class Consultant(BaseModel):
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class Country(BaseModel):
@@ -70,7 +70,7 @@ class Country(BaseModel):
     core_destination_id: UUID
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class Property(BaseModel):
@@ -80,11 +80,11 @@ class Property(BaseModel):
     name: str
     portfolio: str
     representative: str
-    core_destination_id: UUID
-    country_id: UUID
+    country_id: Optional[UUID] = None
+    core_destination_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
 
 class AccommodationLog(BaseModel):
@@ -93,18 +93,15 @@ class AccommodationLog(BaseModel):
     id: UUID
     property_id: UUID
     consultant_id: UUID
-    portfolio: str
     primary_traveler: str
     num_pax: int
     date_in: date
     date_out: date
     booking_channel_id: Optional[UUID] = None
     agency_id: Optional[UUID] = None
-    country: UUID
-    core_destination_id: UUID
     created_at: datetime
     updated_at: datetime
-    updated_by: Optional[str] = None
+    updated_by: str
 
     @computed_field  # type: ignore[misc]
     @property

@@ -12,7 +12,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- DROP TABLE public.core_destinations CASCADE;
 -- DROP TABLE public.countries CASCADE;
+-- DROP TABLE public.agencies CASCADE;
+-- DROP TABLE public.booking_channels CASCADE;
+-- DROP TABLE public.consultants CASCADE;
+-- DROP TABLE public.properties CASCADE;
+-- DROP TABLE public.accommodation_logs CASCADE;
 
 CREATE TABLE IF NOT EXISTS public.core_destinations (
     id UUID NOT NULL PRIMARY KEY,
@@ -58,9 +64,12 @@ CREATE TABLE IF NOT EXISTS public.consultants (
     updated_by VARCHAR(255) NULL
 );
 
+ALTER TABLE public.consultants
+ADD CONSTRAINT unique_full_name UNIQUE (first_name, last_name);
+
 CREATE TABLE IF NOT EXISTS public.properties (
     id UUID NOT NULL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
     portfolio VARCHAR(255),
     representative VARCHAR(255),
     core_destination_id UUID NOT NULL,
@@ -72,24 +81,27 @@ CREATE TABLE IF NOT EXISTS public.properties (
     FOREIGN KEY (country_id) REFERENCES public.countries(id)
 );
 
+ALTER TABLE public.properties
+ADD CONSTRAINT unique_property UNIQUE (name, portfolio, country_id, core_destination_id);
+
 CREATE TABLE IF NOT EXISTS public.accommodation_logs (
     id UUID NOT NULL PRIMARY KEY,
     property_id UUID NOT NULL,
     consultant_id UUID NOT NULL,
-    portfolio VARCHAR(255),
     primary_traveler VARCHAR(255) NOT NULL,
     num_pax INT NOT NULL,
     date_in DATE NOT NULL,
     date_out DATE NOT NULL,
     booking_channel_id UUID,
     agency_id UUID,
-    core_destination_id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255) NULL,
     FOREIGN KEY (property_id) REFERENCES public.properties(id),
     FOREIGN KEY (consultant_id) REFERENCES public.consultants(id),
     FOREIGN KEY (booking_channel_id) REFERENCES public.booking_channels(id),
-    FOREIGN KEY (agency_id) REFERENCES public.agencies(id),
-    FOREIGN KEY (core_destination_id) REFERENCES public.core_destinations(id)
+    FOREIGN KEY (agency_id) REFERENCES public.agencies(id)
 );
+
+ALTER TABLE public.accommodation_logs
+ADD CONSTRAINT unique_accommodation_log UNIQUE (primary_traveler, property_id, date_in, date_out);

@@ -13,6 +13,8 @@
 # limitations under the License.
 
 """Repositories for travel-related data."""
+import datetime
+import uuid
 from abc import ABC, abstractmethod
 from typing import Sequence, Callable
 from api.services.travel.models import (
@@ -38,6 +40,17 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_accommodation_log(
+        self,
+        primary_traveler: str,
+        property_id: str,
+        date_in: datetime.date,
+        date_out: datetime.date,
+    ) -> AccommodationLog:
+        """Gets a single AccommodationLog model in the repository by name."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]
     ) -> None:
@@ -58,6 +71,16 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_property_by_name(
+        self,
+        name: str,
+        portfolio_name: str,
+        country_id: uuid,
+        core_destination_id: uuid,
+    ) -> Property:
+        """Returns a single Property model in the repository by name."""
+
+    @abstractmethod
     async def update_property(self, properties: Sequence[Property]) -> None:
         """Updates a sequence of Property models in the repository."""
         raise NotImplementedError
@@ -71,6 +94,13 @@ class TravelRepository(ABC):
     @abstractmethod
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Adds a sequence of Consultant models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_consultant_by_name(
+        self, first_name: str, last_name: str
+    ) -> Consultant:
+        """Gets a single Consultant model based on name."""
         raise NotImplementedError
 
     @abstractmethod
@@ -150,6 +180,11 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_agency_by_name(self, name: str) -> Agency:
+        """Gets a single Agency model from the repository by name."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_agency(self, agencies: Sequence[Agency]) -> None:
         """Updates a sequence of Agency models in the repository."""
         raise NotImplementedError
@@ -165,6 +200,11 @@ class TravelRepository(ABC):
         self, booking_channels: Sequence[BookingChannel]
     ) -> None:
         """Adds a sequence of BookingChannel models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_booking_channel_by_name(self, name: str) -> BookingChannel:
+        """Gets a single BookingChannel model from the repository by name."""
         raise NotImplementedError
 
     @abstractmethod
