@@ -13,6 +13,7 @@ export const BedNightReports = () => {
         core_destination_name: [],
         country_name: [],
         consultant_name: [],
+        property_name: [],
         portfolio_name: [],
     });
     const [filters, setFilters] = useState({
@@ -21,6 +22,7 @@ export const BedNightReports = () => {
         core_destination_name: '',
         country_name: '',
         consultant_name: '',
+        property_name: '',
         portfolio_name: '',
     });
 
@@ -75,11 +77,13 @@ export const BedNightReports = () => {
         const countryOptions = [...new Set(accommodationLogData.map((item) => item.country_name))].sort();
         const consultantOptions = [...new Set(accommodationLogData.map((item) => item.consultant_display_name))].sort();
         const portfolioOptions = [...new Set(accommodationLogData.map((item) => item.property_portfolio))].sort();
+        const propertyOptions = [...new Set(accommodationLogData.map((item) => item.property_name))].sort();
         setFilterOptions({
             core_destination_name: coreDestOptions,
             country_name: countryOptions,
             consultant_name: consultantOptions,
             portfolio_name: portfolioOptions,
+            property_name: propertyOptions,
         });
     }, [accommodationLogData]);
 
@@ -112,19 +116,19 @@ export const BedNightReports = () => {
                                 </select>
                             </div>
                             <div className="col s3">
-                                <select value={filters.consultant_name} onChange={
-                                    (e) => setFilters({ ...filters, consultant_name: e.target.value })}>
-                                    <option value="">Consultant</option>
-                                    {filterOptions.consultant_name.map((option, index) => (
+                                <select value={filters.portfolio_name} onChange={
+                                    (e) => setFilters({ ...filters, portfolio_name: e.target.value })}>
+                                    <option value="">Portfolio</option>
+                                    {filterOptions.portfolio_name.map((option, index) => (
                                         <option key={index} value={option}>{option}</option>
                                     ))}
                                 </select>
                             </div>
                             <div className="col s3">
-                                <select value={filters.portfolio_name} onChange={
-                                    (e) => setFilters({ ...filters, portfolio_name: e.target.value })}>
-                                    <option value="">Portfolio</option>
-                                    {filterOptions.portfolio_name.map((option, index) => (
+                                <select value={filters.property_name} onChange={
+                                    (e) => setFilters({ ...filters, property_name: e.target.value })}>
+                                    <option value="">Property</option>
+                                    {filterOptions.property_name.map((option, index) => (
                                         <option key={index} value={option}>{option}</option>
                                     ))}
                                 </select>

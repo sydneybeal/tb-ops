@@ -195,7 +195,7 @@ export const Overview = () => {
                                                 key={idx}
                                                 onClick={() => changePage(idx)}
                                             >
-                                                <a className="teal-text text-lighten-4" href="#!">{idx + 1}</a>
+                                                <a className="teal-text text-lighten-2" href="#!">{idx + 1}</a>
                                             </li>
                                         ))}
                                         <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
@@ -262,7 +262,7 @@ export const Overview = () => {
                                             placeholder="Start Date"
                                         />
                                         <button
-                                            className="btn btn-small orange lighten-2"
+                                            className="btn btn-small deep-orange lighten-2"
                                             onClick={
                                                 (e) => setFilters({ ...filters, start_date: '' })}
                                         >x</button>
@@ -275,7 +275,7 @@ export const Overview = () => {
                                             placeholder="End Date"
                                         />
                                         <button
-                                            className="btn btn-small orange lighten-2"
+                                            className="btn btn-small deep-orange lighten-2"
                                             onClick={
                                                 (e) => setFilters({ ...filters, end_date: '' })}
                                         >x</button>
