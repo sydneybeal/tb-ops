@@ -176,3 +176,22 @@ table>thead>tr>th {
 table>tbody>tr>td {
   border-radius: 0px;
 }
+
+th {
+  white-space: nowrap;
+  min-width: 120px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.material-symbols-outlined {
+  font-size: 18px;
+  vertical-align: middle !important;
+}
+
+.material-symbols-rounded {
+  vertical-align: middle !important;
+  margin-bottom: 2px;
+}

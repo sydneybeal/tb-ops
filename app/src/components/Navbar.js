@@ -36,29 +36,29 @@ const Navbar = ({ title }) => {
                     </a>
                 </li>
                 <div className="container" style={{ width: '100%' }}>
-                    <li className="bold">
-                        <Link to={'/service_providers'}>
+                    <li>
+                        <Link to={'/service_providers'} className="text-bold">
                             Service Providers
                         </Link>
                     </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
-                    <li className="bold">
-                        <Link to={'#'}>
+                    <li>
+                        <Link to={'/'} className="text-bold">
                             Properties
                         </Link>
                     </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
-                    <li className="bold">
-                        <Link to={'#'}>
+                    <li>
+                        <Link to={'/'} className="text-bold">
                             Consultants
                         </Link>
                     </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
-                    <li className="bold">
-                        <Link to={'#'}>
+                    <li>
+                        <Link to={'/'} className="text-bold">
                             Trip Reports
                         </Link>
                     </li>

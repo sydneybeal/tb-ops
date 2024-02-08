@@ -6,7 +6,7 @@ const Landing = () => {
     return (
         <>
             <header>
-                <Navbar />
+                <Navbar title="Home" />
             </header>
             <main>
                 <div className="container" style={{ width: '100%' }}>
