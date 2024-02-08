@@ -44,6 +44,13 @@ const Navbar = ({ title }) => {
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
+                        <Link to={'/bed_night_reports'} className="text-bold">
+                            Bed Night Reports
+                        </Link>
+                    </li>
+                </div>
+                <div className="container" style={{ width: '100%' }}>
+                    <li>
                         <Link to={'/'} className="text-bold">
                             Properties
                         </Link>

@@ -20,7 +20,11 @@ from textwrap import dedent
 
 from api.adapters.repository import PostgresMixin
 from api.services.summaries.repository import SummaryRepository
-from api.services.summaries.models import AccommodationLogSummary, PropertySummary
+from api.services.summaries.models import (
+    AccommodationLogSummary,
+    BedNightReport,
+    PropertySummary,
+)
 from api.services.travel.models import (
     AccommodationLog,
     Property,
@@ -29,6 +33,60 @@ from api.services.travel.models import (
 
 class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
     """Implementation of the SummaryRepository ABC for Postgres."""
+
+    async def get_bed_night_report(self, input_args: dict) -> BedNightReport:
+        """Creates a BedNightReport model given the inputs and repo data."""
+        # Parse the input args to filter the query
+        print(input_args)
+        for k, v in input_args.items():
+            print(f"Key: {k}, Value: {v}")
+        # # Run some sort of query that gets aggregations and creates a bed night report
+        # pool = await self._get_pool()
+        # query = dedent(
+        #     """
+        #     SELECT
+        #         al.id,
+        #         al.primary_traveler,
+        #         cd.name AS core_destination_name,
+        #         c.name AS country_name,
+        #         al.date_in,
+        #         al.date_out,
+        #         al.num_pax,
+        #         p.name AS property_name,
+        #         p.portfolio AS property_portfolio,
+        #         p.representative AS property_representative,
+        #         bc.name AS booking_channel_name,
+        #         a.name AS agency_name,
+        #         al.consultant_id,
+        #         cons.first_name AS consultant_first_name,
+        #         cons.last_name AS consultant_last_name,
+        #         al.property_id,
+        #         al.booking_channel_id,
+        #         al.agency_id,
+        #         al.created_at,
+        #         al.updated_at,
+        #         al.updated_by
+        #     FROM public.accommodation_logs al
+        #     JOIN public.properties p ON al.property_id = p.id
+        #     JOIN public.consultants cons ON al.consultant_id = cons.id
+        #     LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
+        #     LEFT JOIN public.agencies a ON al.agency_id = a.id
+        #     LEFT JOIN public.countries c ON p.country_id = c.id
+        #     JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+        #     ORDER BY al.date_in desc
+        # """
+        # )
+        # async with pool.acquire() as con:
+        #     await con.set_type_codec(
+        #         "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+        #     )
+        #     async with con.transaction():
+        #         records = await con.fetch(
+        #             query
+        #         )  # Use fetch to retrieve all matching rows
+        #         report_data =  # do something to records to get counts
+        #         report = BedNightReport(**report_data)
+        #         return report
 
     # AccommodationLog
     async def get_accommodation_log(
@@ -89,6 +147,91 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 accommodation_log_summaries = [
                     AccommodationLogSummary(**record) for record in records
                 ]
+                return accommodation_log_summaries
+
+    async def get_accommodation_logs_by_filter(
+        self, filters: dict
+    ) -> Sequence[AccommodationLog]:
+        """Gets a set of AccommodationLogSummary models by filter."""
+        pool = await self._get_pool()
+        query_conditions = []
+        for key, value in filters.items():
+            if key == "start_date":
+                query_conditions.append(f"al.date_in >= '{value}'")
+            elif key == "end_date":
+                query_conditions.append(f"al.date_out <= '{value}'")
+            elif key == "country_name":
+                query_conditions.append(f"c.name = '{value}'")
+            elif key == "portfolio_name":
+                query_conditions.append(f"p.portfolio = '{value}'")
+            elif key == "property_name":
+                query_conditions.append(f"p.name = '{value}'")
+            elif key == "core_destination_name":
+                query_conditions.append(f"cd.name = '{value}'")
+            # Note: consultant_name will be handled below
+
+        condition_string = " AND ".join(query_conditions)
+        if condition_string:
+            condition_string = "WHERE " + condition_string
+        query = dedent(
+            f"""
+            SELECT
+                al.id,
+                al.primary_traveler,
+                cd.name AS core_destination_name,
+                c.name AS country_name,
+                al.date_in,
+                al.date_out,
+                al.num_pax,
+                p.name AS property_name,
+                p.portfolio AS property_portfolio,
+                p.representative AS property_representative,
+                bc.name AS booking_channel_name,
+                a.name AS agency_name,
+                al.consultant_id,
+                cons.first_name AS consultant_first_name,
+                cons.last_name AS consultant_last_name,
+                al.property_id,
+                al.booking_channel_id,
+                al.agency_id,
+                al.created_at,
+                al.updated_at,
+                al.updated_by
+            FROM public.accommodation_logs al
+            JOIN public.properties p ON al.property_id = p.id
+            JOIN public.consultants cons ON al.consultant_id = cons.id
+            LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
+            LEFT JOIN public.agencies a ON al.agency_id = a.id
+            LEFT JOIN public.countries c ON p.country_id = c.id
+            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            {condition_string}
+            ORDER BY al.date_in desc
+        """
+        )
+        print("condition_string:")
+        print(condition_string)
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                # Convert each record to AccommodationLogSummary before filtering
+                accommodation_log_summaries_temp = [
+                    AccommodationLogSummary(**record) for record in records
+                ]
+
+                if "consultant_name" in filters:
+                    consultant_filter = filters["consultant_name"]
+                    # Filter using the consultant_display_name property of AccommodationLogSummary
+                    accommodation_log_summaries = [
+                        log
+                        for log in accommodation_log_summaries_temp
+                        if log.consultant_display_name == consultant_filter
+                    ]
+                else:
+                    accommodation_log_summaries = accommodation_log_summaries_temp
+
                 return accommodation_log_summaries
 
     # Property

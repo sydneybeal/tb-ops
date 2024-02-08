@@ -14,7 +14,7 @@
 
 """Models for travel summaries."""
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List, Dict
 from uuid import UUID
 
 from pydantic import BaseModel, computed_field
@@ -71,3 +71,46 @@ class PropertySummary(BaseModel):
     created_at: datetime
     updated_at: datetime
     updated_by: str
+
+
+class ReportInput(BaseModel):
+    """Defines the input parameters for generating a Bed Night Report."""
+
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    country_name: Optional[str] = None
+    consultant_name: Optional[str] = None
+    portfolio_name: Optional[str] = None
+    property_name: Optional[str] = None
+    core_destination: Optional[str] = None
+
+
+class BreakdownItem(BaseModel):
+    """Represents a single item in a breakdown aggregation within the report."""
+
+    name: str
+    bed_nights: int
+    percentage: float
+
+
+class ReportAggregations(BaseModel):
+    """Contains aggregated data for the Bed Night Report, structured into various breakdowns."""
+
+    total_bed_nights: int
+    by_country: Optional[List[BreakdownItem]] = None
+    by_month: Optional[List[BreakdownItem]] = None
+    by_portfolio: Optional[List[BreakdownItem]] = None
+    by_property: Optional[List[BreakdownItem]] = None
+    by_consultant: Optional[List[BreakdownItem]] = None
+    by_core_destination: Optional[List[BreakdownItem]] = None
+    largest_booking: Optional[Dict[str, str | int]] = None
+    # More breakdowns can be added as needed without changing the overall structure.
+
+
+class BedNightReport(BaseModel):
+    """The top-level model representing a complete Bed Night Report,
+    including input parameters and calculated aggregations.
+    """
+
+    report_inputs: ReportInput
+    calculations: ReportAggregations

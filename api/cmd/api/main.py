@@ -13,10 +13,11 @@
 # limitations under the License.
 
 """REST API entrypoint code for TB Operations."""
-from fastapi import FastAPI
+from urllib import parse
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from api.services.summaries.models import AccommodationLogSummary
+from api.services.summaries.models import AccommodationLogSummary, BedNightReport
 from api.services.summaries.service import SummaryService
 
 
@@ -67,6 +68,22 @@ def make_app(summary_svc: SummaryService) -> FastAPI:
     ):
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_accommodation_logs()
+
+    @app.get(
+        "/v1/bed_night_report",
+        operation_id="get_bed_night_report",
+        response_model=BedNightReport,
+        tags=["bed_night_report"],
+    )
+    async def get_bed_night_report(
+        request: Request,
+    ) -> BedNightReport | JSONResponse:
+        """Get all AccommodationLog summaries."""
+        query_params = dict(request.query_params)
+        report_data = await summary_svc.get_bed_night_report(query_params)
+        if report_data is None:
+            raise HTTPException(status_code=404, detail="Report data not found")
+        return report_data
 
     return app
 

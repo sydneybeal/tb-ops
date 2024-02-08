@@ -19,11 +19,17 @@ export const Overview = () => {
         core_dest: [],
         country: [],
         consultant: [],
+        property: [],
+        start_date: '',
+        end_date: '',
     });
     const [filters, setFilters] = useState({
         core_dest: '',
         country: '',
         consultant: '',
+        property: '',
+        start_date: '',
+        end_date: '',
     });
 
     /**
@@ -52,6 +58,7 @@ export const Overview = () => {
             })
             .catch((err) => {
                 setError(true);
+                setLoaded(true);
                 console.error(err);
             });
     }, []);
@@ -69,16 +76,18 @@ export const Overview = () => {
     }, [filters, filterOptions]);
 
     useEffect(() => {
-        const coreDestOptions = [...new Set(filteredData.map((item) => item.core_destination_name))].sort();
-        const countryOptions = [...new Set(filteredData.map((item) => item.country_name))].sort();
-        const consultantOptions = [...new Set(filteredData.map((item) => item.consultant_display_name))].sort();
+        const coreDestOptions = [...new Set(apiData.map((item) => item.core_destination_name))].sort();
+        const countryOptions = [...new Set(apiData.map((item) => item.country_name))].sort();
+        const consultantOptions = [...new Set(apiData.map((item) => item.consultant_display_name))].sort();
+        const propertyOptions = [...new Set(apiData.map((item) => item.property_name))].sort();
 
         setFilterOptions({
             core_dest: coreDestOptions,
             country: countryOptions,
             consultant: consultantOptions,
+            property: propertyOptions,
         });
-    }, [filteredData,]);
+    }, [apiData,]);
 
     useEffect(() => {
         M.AutoInit();
@@ -97,6 +106,23 @@ export const Overview = () => {
 
         if (filters.consultant) {
             newFilteredData = newFilteredData.filter((item) => item.consultant_display_name === filters.consultant);
+        }
+
+        if (filters.property) {
+            newFilteredData = newFilteredData.filter((item) => item.property_name === filters.property);
+        }
+
+        // Filter by date range
+        if (filters.start_date || filters.end_date) {
+            const startDate = filters.start_date ? new Date(filters.start_date) : new Date('1900-01-01'); // A default early date if start_date is not set
+            const endDate = filters.end_date ? new Date(filters.end_date) : new Date('2100-12-31'); // A default late date if end_date is not set
+
+            newFilteredData = newFilteredData.filter((item) => {
+                const itemDateIn = new Date(item.date_in);
+                const itemDateOut = new Date(item.date_out);
+                // Adjust logic to handle cases where only one of the dates is provided
+                return (!filters.start_date || itemDateIn >= startDate) && (!filters.end_date || itemDateOut <= endDate);
+            });
         }
 
         setFilteredData(newFilteredData);
@@ -216,6 +242,47 @@ export const Overview = () => {
                                 </div>
                             </div>
                             <div className="row center">
+                                <div className="col s6">
+                                    <select value={filters.property} onChange={
+                                        (e) => setFilters({ ...filters, property: e.target.value })}>
+                                        <option value="">Property</option>
+                                        {filterOptions.property.map((option, index) => (
+                                            <option key={index} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="col s6">
+                                    <div className="date-selectors">
+                                        <input
+                                            type="date"
+                                            value={filters.start_date}
+                                            onChange={
+                                                (e) => setFilters({ ...filters, start_date: e.target.value })}
+                                            className="date-input"
+                                            placeholder="Start Date"
+                                        />
+                                        <button
+                                            className="btn btn-small orange lighten-2"
+                                            onClick={
+                                                (e) => setFilters({ ...filters, start_date: '' })}
+                                        >x</button>
+                                        <input
+                                            type="date"
+                                            value={filters.end_date}
+                                            onChange={
+                                                (e) => setFilters({ ...filters, end_date: e.target.value })}
+                                            className="date-input"
+                                            placeholder="End Date"
+                                        />
+                                        <button
+                                            className="btn btn-small orange lighten-2"
+                                            onClick={
+                                                (e) => setFilters({ ...filters, end_date: '' })}
+                                        >x</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="row center">
                                 <div>
                                     <button className="btn grey" onClick={() => setFilters(
                                         { core_dest: '', country: '', consultant: '' })}>
@@ -223,7 +290,7 @@ export const Overview = () => {
                                     </button>
                                 </div>
                             </div>
-                            <table>
+                            <table className="accommodation-logs-table">
                                 <thead>
                                     <tr>
                                         <th
@@ -344,7 +411,7 @@ export const Overview = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="100%" style={{ textAlign: 'center' }}>No results</td>
+                                            <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
                                         </tr>
                                     )}
                                 </tbody>

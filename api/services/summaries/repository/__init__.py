@@ -17,14 +17,21 @@ import datetime
 import uuid
 from abc import ABC, abstractmethod
 from typing import Sequence
-from api.services.travel.models import (
-    AccommodationLog,
-    Property,
+from api.services.summaries.models import (
+    AccommodationLogSummary,
+    BedNightReport,
+    PropertySummary,
 )
 
 
 class SummaryRepository(ABC):
     """Abstract repository for data summary models."""
+
+    # BedNightReport
+    @abstractmethod
+    async def get_bed_night_report(self, input_args: dict) -> BedNightReport:
+        """Creates a BedNightReport model given the inputs and repo data."""
+        raise NotImplementedError
 
     # AccommodationLog
     @abstractmethod
@@ -34,12 +41,12 @@ class SummaryRepository(ABC):
         property_id: str,
         date_in: datetime.date,
         date_out: datetime.date,
-    ) -> AccommodationLog:
+    ) -> AccommodationLogSummary:
         """Gets a single AccommodationLog model in the repository by name."""
         raise NotImplementedError
 
     @abstractmethod
-    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLog]:
+    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLogSummary]:
         """Gets all AccommodationLog models in the repository, joined with their foreign keys."""
         raise NotImplementedError
 
@@ -51,11 +58,11 @@ class SummaryRepository(ABC):
         portfolio_name: str,
         country_id: uuid,
         core_destination_id: uuid,
-    ) -> Property:
+    ) -> PropertySummary:
         """Returns a single Property model in the repository by name."""
         raise NotImplementedError
 
     @abstractmethod
-    async def get_all_properties(self) -> Sequence[Property]:
+    async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all Property models in the repository, joined with their foreign keys."""
         raise NotImplementedError

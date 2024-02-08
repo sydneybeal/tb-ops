@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import Landing from './pages/Landing';
-import Overview from './pages/AccommodationLogs/Overview';
+import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
+import BedNightReports from './pages/BedNights/BedNightReports';
 
 import 'materialize-css/dist/css/materialize.min.css';
 
@@ -16,7 +17,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/service_providers/',
-    element: <Overview />,
+    element: <AccommodationLogs />,
+  },
+  {
+    path: '/bed_night_reports/',
+    element: <BedNightReports />,
   },
 ]);
 
