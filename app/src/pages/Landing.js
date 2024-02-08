@@ -1,37 +1,18 @@
 import React, { useEffect, useState } from 'react';
-
+import Navbar from '../components/Navbar';
 
 const Landing = () => {
-    const [apiData, setApiData] = useState([]);
-    const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState(false);
-
-    useEffect(() => {
-        fetch(`${process.env.REACT_APP_API}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setApiData(data);
-                setLoaded(true);
-            })
-            .catch((err) => {
-                setError(true);
-                console.error(err);
-            });
-    }, []);
 
     return (
         <>
-            {error ? (
-                <p>Error loading data.</p>
-            ) : !loaded ? (
-                <p>Loading...</p>
-            ) : Object.keys(apiData).length === 0 ? (
-                <p>No results found.</p>
-            ) : (
-                Object.entries(apiData).map(([key, value]) => (
-                    <p key={key}>{`${key} ${value}`}</p>
-                ))
-            )}
+            <header>
+                <Navbar />
+            </header>
+            <main>
+                <div className="container" style={{ width: '100%' }}>
+                    Hello world
+                </div>
+            </main>
         </>
     );
 };

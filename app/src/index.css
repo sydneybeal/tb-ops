@@ -7,7 +7,172 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  font-family: 'Noto Sans', Arial, sans-serif !important;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+header,
+main,
+footer {
+  padding-left: 300px;
+}
+
+main {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.text-bold {
+  font-weight: 700 !important;
+}
+
+@media only screen and (max-width : 992px) {
+
+  header,
+  main,
+  footer {
+    padding-left: 0;
+  }
+}
+
+@media only screen and (min-width: 601px) {
+
+  nav,
+  nav .nav-wrapper i,
+  nav a.sidenav-trigger,
+  nav a.sidenav-trigger i {
+    height: 64px;
+    line-height: 64px;
+  }
+}
+
+nav.top-nav {
+  height: 80px;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+  background-color: transparent;
+}
+
+.nav-wrapper .row {
+  margin-bottom: 0px !important;
+}
+
+a.sidenav-trigger.top-nav {
+  position: absolute;
+  text-align: center;
+  height: 48px;
+  width: 48px;
+  top: 28px;
+  float: none;
+  margin-left: 1.5rem;
+  color: #f3989b;
+  font-size: 36px;
+  z-index: 2;
+}
+
+#front-page-logo {
+  display: inline-block;
+  height: 100%;
+  pointer-events: none;
+}
+
+#logo-container {
+  height: 57px;
+  margin-bottom: 32px;
+  height: 100%;
+}
+
+ul.sidenav.sidenav-fixed li.logo:hover,
+ul.sidenav.sidenav-fixed li.logo #logo-container:hover {
+  background-color: transparent;
+}
+
+ul.sidenav.sidenav-fixed li.logo {
+  text-align: center;
+  margin-top: 32px;
+  margin-bottom: 36px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  z-index: 0;
+}
+
+table td p {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+table td .chip {
+  margin-bottom: 5px;
+}
+
+table td {
+  padding: 10px;
+}
+
+table th {
+  padding: 10px;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background-color: #80cbc4;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #ddd;
+}
+
+table td {
+  vertical-align: top;
+}
+
+table td div {
+  vertical-align: top;
+}
+
+table>thead>tr>th:first-child {
+  border-top-left-radius: 10px;
+}
+
+table>thead>tr>th:last-child {
+  border-top-right-radius: 10px;
+}
+
+table>tbody>tr:last-child>td:first-child {
+  border-bottom-left-radius: 10px;
+}
+
+table>tbody>tr:last-child>td:last-child {
+  border-bottom-right-radius: 10px;
+}
+
+table>thead>tr>th {
+  border-radius: 0px;
+}
+
+table>tbody>tr>td {
+  border-radius: 0px;
 }

@@ -32,7 +32,6 @@ class AccommodationLogSummary(BaseModel):
     num_pax: int
     property_name: str
     property_portfolio: str
-    property_representative: str
     booking_channel_name: Optional[str] = None
     agency_name: Optional[str] = None
     consultant_id: UUID
@@ -54,7 +53,7 @@ class AccommodationLogSummary(BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
-    def consultant_name(self) -> str:
+    def consultant_display_name(self) -> str:
         """Number of bed nights occupied by this record."""
         return f"{self.consultant_last_name}/{self.consultant_first_name}"
 
@@ -67,7 +66,6 @@ class PropertySummary(BaseModel):
     core_destination_name: str
     country_name: Optional[str] = None
     portfolio_name: str
-    representative_name: str
     core_destination_id: UUID
     country_id: Optional[UUID] = None
     created_at: datetime

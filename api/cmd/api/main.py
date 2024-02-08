@@ -54,7 +54,7 @@ def make_app(summary_svc: SummaryService) -> FastAPI:
 
     @app.get("/")
     def root():
-        return {"Hello": "World"}
+        return {"Hello": "World", "Version": "feb7v1"}
 
     @app.get(
         "/v1/accommodation_logs",

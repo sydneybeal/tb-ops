@@ -61,11 +61,9 @@ CREATE TABLE IF NOT EXISTS public.consultants (
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by VARCHAR(255) NULL
+    updated_by VARCHAR(255) NULL,
+    UNIQUE (first_name, last_name)
 );
-
-ALTER TABLE public.consultants
-ADD CONSTRAINT unique_full_name UNIQUE (first_name, last_name);
 
 CREATE TABLE IF NOT EXISTS public.properties (
     id UUID NOT NULL PRIMARY KEY,
@@ -78,11 +76,9 @@ CREATE TABLE IF NOT EXISTS public.properties (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255) NULL,
     FOREIGN KEY (core_destination_id) REFERENCES public.core_destinations(id),
-    FOREIGN KEY (country_id) REFERENCES public.countries(id)
+    FOREIGN KEY (country_id) REFERENCES public.countries(id),
+    UNIQUE (name, portfolio, country_id, core_destination_id)
 );
-
-ALTER TABLE public.properties
-ADD CONSTRAINT unique_property UNIQUE (name, portfolio, country_id, core_destination_id);
 
 CREATE TABLE IF NOT EXISTS public.accommodation_logs (
     id UUID NOT NULL PRIMARY KEY,
@@ -100,8 +96,6 @@ CREATE TABLE IF NOT EXISTS public.accommodation_logs (
     FOREIGN KEY (property_id) REFERENCES public.properties(id),
     FOREIGN KEY (consultant_id) REFERENCES public.consultants(id),
     FOREIGN KEY (booking_channel_id) REFERENCES public.booking_channels(id),
-    FOREIGN KEY (agency_id) REFERENCES public.agencies(id)
+    FOREIGN KEY (agency_id) REFERENCES public.agencies(id),
+    UNIQUE (primary_traveler, property_id, date_in, date_out)
 );
-
-ALTER TABLE public.accommodation_logs
-ADD CONSTRAINT unique_accommodation_log UNIQUE (primary_traveler, property_id, date_in, date_out);

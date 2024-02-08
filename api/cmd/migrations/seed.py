@@ -380,7 +380,6 @@ class SourceTableBuilder:
         known_duplicates = {
             (
                 "Bell/Richard",
-                "86b2853c-7fc9-467c-a9a8-a1860774e49b",
                 "2024-08-28",
                 "2024-08-30",
             ),
@@ -391,7 +390,6 @@ class SourceTableBuilder:
             for record in orig_rows
             if (
                 record.primary_traveler,
-                str(record.property_id),
                 record.date_in.isoformat(),
                 record.date_out.isoformat(),
             )
@@ -401,18 +399,18 @@ class SourceTableBuilder:
 
     async def seed_db(self):
         """Seeds the database table given a source name."""
-        # step 1 seed the source tables that do not reference other tables
-        await self.seed_core_destinations()
-        await self.seed_agencies()
-        await self.seed_booking_channels()
-        await self.seed_consultants()
-        # step 2 seed countries table that reference a core destination ID using lookup
-        await self.seed_countries()
-        # step 3 seed properties that reference a country ID using lookup
-        await self.seed_properties()
-        # step 4 seed properties found during seed process that did not exist
-        await self.seed_override_properties()
-        # step 4 seed accommodation_logs that reference all of the above
+        # # step 1 seed the source tables that do not reference other tables
+        # await self.seed_core_destinations()
+        # await self.seed_agencies()
+        # await self.seed_booking_channels()
+        # await self.seed_consultants()
+        # # step 2 seed countries table that reference a core destination ID using lookup
+        # await self.seed_countries()
+        # # step 3 seed properties that reference a country ID using lookup
+        # await self.seed_properties()
+        # # step 4 seed properties found during seed process that did not exist
+        # await self.seed_override_properties()
+        # # step 4 seed accommodation_logs that reference all of the above
         await self.seed_accommodation_logs()
 
     def read_csv(self, file_name) -> list[dict]:
