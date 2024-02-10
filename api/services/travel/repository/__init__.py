@@ -90,6 +90,11 @@ class TravelRepository(ABC):
         """Deletes a sequence of Property models from the repository."""
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_all_consultants(self) -> Sequence[Consultant]:
+        """Gets all Consultant models."""
+        raise NotImplementedError
+
     # Consultant
     @abstractmethod
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:

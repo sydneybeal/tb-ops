@@ -23,6 +23,7 @@ from api.services.summaries.repository import SummaryRepository
 from api.services.summaries.models import (
     AccommodationLogSummary,
     BedNightReport,
+    CountrySummary,
     PropertySummary,
 )
 from api.services.travel.models import (
@@ -37,9 +38,9 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
     async def get_bed_night_report(self, input_args: dict) -> BedNightReport:
         """Creates a BedNightReport model given the inputs and repo data."""
         # Parse the input args to filter the query
-        print(input_args)
-        for k, v in input_args.items():
-            print(f"Key: {k}, Value: {v}")
+        # print(input_args)
+        # for k, v in input_args.items():
+        #     print(f"Key: {k}, Value: {v}")
         # # Run some sort of query that gets aggregations and creates a bed night report
         # pool = await self._get_pool()
         # query = dedent(
@@ -247,4 +248,55 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
 
     async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all Property models in the repository, joined with their foreign keys."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                p.id,
+                p.name,
+                cd.name as core_destination_name,
+                c.name as country_name,
+                p.portfolio as portfolio_name,
+                cd.id as core_destination_id,
+                c.id country_id,
+                p.created_at,
+                p.updated_at,
+                p.updated_by
+            FROM public.properties p
+            LEFT JOIN public.countries c ON p.country_id = c.id
+            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            ORDER BY p.name asc
+        """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(
+                    query
+                )  # Use fetch to retrieve all matching rows
+                property_summaries = [PropertySummary(**record) for record in records]
+                return property_summaries
+
+    async def get_all_countries(self) -> Sequence[CountrySummary]:
+        """Gets all Country models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                c.*,
+                cd.name as core_destination_name
+            FROM public.countries c
+            LEFT JOIN public.core_destinations cd
+            ON c.core_destination_id = cd.id
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                property_summaries = [CountrySummary(**record) for record in records]
+                return property_summaries

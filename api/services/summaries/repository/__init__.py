@@ -20,6 +20,7 @@ from typing import Sequence
 from api.services.summaries.models import (
     AccommodationLogSummary,
     BedNightReport,
+    CountrySummary,
     PropertySummary,
 )
 
@@ -65,4 +66,9 @@ class SummaryRepository(ABC):
     @abstractmethod
     async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all Property models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_countries(self) -> Sequence[CountrySummary]:
+        """Gets all Country models joined with their foreign keys."""
         raise NotImplementedError

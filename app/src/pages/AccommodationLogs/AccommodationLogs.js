@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
 import CircularPreloader from '../../components/CircularPreloader';
+import AddLogModal from './AddLogModal';
 import Navbar from '../../components/Navbar';
 import moment from 'moment';
 
@@ -14,6 +15,7 @@ export const Overview = () => {
     const itemsPerPage = 100;
     const [totalPages, setTotalPages] = useState(0);
     const [sortedData, setSortedData] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [sorting, setSorting] = useState({ field: 'date_in', ascending: false });
     const [filterOptions, setFilterOptions] = useState({
         core_dest: [],
@@ -168,6 +170,9 @@ export const Overview = () => {
 
     }, [filteredData, sorting, currentPage, itemsPerPage]);
 
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
     return (
         <>
             <header>
@@ -176,6 +181,14 @@ export const Overview = () => {
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
+                    <AddLogModal isOpen={isModalOpen} onClose={closeModal} />
+
+                    {/* <button className="btn" onClick={openModal}>New</button> */}
+                    <div className="row" style={{ textAlign: 'right' }}>
+                        <a className="btn-floating btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                            <i className="material-icons">add</i>
+                        </a>
+                    </div>
                     {loaded ? (
                         <>
                             <div className="row center">

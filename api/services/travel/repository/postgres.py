@@ -305,6 +305,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new consultant record(s) to the repository."
         )
 
+    async def get_all_consultants(self) -> Sequence[Consultant]:
+        """Gets all Consultant models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.consultants
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                property_summaries = [Consultant(**record) for record in records]
+                return property_summaries
+
     async def get_consultant_by_name(
         self, first_name: str, last_name: str
     ) -> Consultant:
@@ -326,15 +343,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     query, first_name.strip().upper(), last_name.strip().upper()
                 )
                 if res:
-                    return Consultant(
-                        id=res["id"],
-                        first_name=res["first_name"],
-                        last_name=res["last_name"],
-                        is_active=res["is_active"],
-                        created_at=res["created_at"],
-                        updated_at=res["updated_at"],
-                        updated_by=res["updated_by"],
-                    )
+                    return Consultant(**res)
 
     async def update_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Updates a sequence of Consultant models in the repository."""

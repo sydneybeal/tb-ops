@@ -17,11 +17,18 @@ from urllib import parse
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from api.services.summaries.models import AccommodationLogSummary, BedNightReport
+from api.services.summaries.models import (
+    AccommodationLogSummary,
+    CountrySummary,
+    PropertySummary,
+    BedNightReport,
+)
 from api.services.summaries.service import SummaryService
+from api.services.travel.models import Consultant
+from api.services.travel.service import TravelService
 
 
-def make_app(summary_svc: SummaryService) -> FastAPI:
+def make_app(travel_svc: TravelService, summary_svc: SummaryService) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
         title="tb_ops_api_layer",
@@ -70,6 +77,36 @@ def make_app(summary_svc: SummaryService) -> FastAPI:
         return await summary_svc.get_all_accommodation_logs()
 
     @app.get(
+        "/v1/properties",
+        operation_id="get_properties",
+        response_model=list[PropertySummary],
+        tags=["properties"],
+    )
+    async def get_all_properties() -> list[PropertySummary] | JSONResponse:
+        """Get all AccommodationLog summaries."""
+        return await summary_svc.get_all_properties()
+
+    @app.get(
+        "/v1/countries",
+        operation_id="get_countries",
+        response_model=list[CountrySummary],
+        tags=["countries"],
+    )
+    async def get_all_countries() -> list[CountrySummary] | JSONResponse:
+        """Get all Country models."""
+        return await summary_svc.get_all_countries()
+
+    @app.get(
+        "/v1/consultants",
+        operation_id="get_consultants",
+        response_model=list[Consultant],
+        tags=["consultants"],
+    )
+    async def get_all_consultants() -> list[Consultant] | JSONResponse:
+        """Get all Country models."""
+        return await travel_svc.get_all_consultants()
+
+    @app.get(
         "/v1/bed_night_report",
         operation_id="get_bed_night_report",
         response_model=BedNightReport,
@@ -91,8 +128,9 @@ def make_app(summary_svc: SummaryService) -> FastAPI:
 if __name__ == "__main__":
     import uvicorn
 
+    travel_svc = TravelService()
     summary_svc = SummaryService()
 
-    app = make_app(summary_svc)
+    app = make_app(travel_svc, summary_svc)
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

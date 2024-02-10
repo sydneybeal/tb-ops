@@ -61,6 +61,12 @@ class Consultant(BaseModel):
     updated_at: datetime
     updated_by: str
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def display_name(self) -> str:
+        """Number of bed nights occupied by this record."""
+        return f"{self.last_name}/{self.first_name}"
+
 
 class Country(BaseModel):
     """Record for a country."""

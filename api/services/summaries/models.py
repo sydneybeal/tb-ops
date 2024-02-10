@@ -73,6 +73,18 @@ class PropertySummary(BaseModel):
     updated_by: str
 
 
+class CountrySummary(BaseModel):
+    """Record for a country with its core destination name."""
+
+    id: UUID
+    name: str
+    core_destination_id: UUID
+    core_destination_name: str
+    created_at: datetime
+    updated_at: datetime
+    updated_by: str
+
+
 class ReportInput(BaseModel):
     """Defines the input parameters for generating a Bed Night Report."""
 

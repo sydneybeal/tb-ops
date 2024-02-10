@@ -99,6 +99,17 @@ ul.sidenav.sidenav-fixed li.logo {
   margin-bottom: 36px;
 }
 
+.modal.add-log-modal {
+  border-radius: 10px;
+}
+
+.modal.add-log-modal .modal-content {
+  border-radius: 10px;
+  /* Apply the border-radius here as well */
+  overflow-y: auto;
+  /* This will make sure the scrollbar appears inside the modal-content */
+}
+
 table.accommodation-logs-table {
   width: 100%;
   border-collapse: collapse;

@@ -19,6 +19,7 @@ from api.services.summaries.models import (
     AccommodationLogSummary,
     BedNightReport,
     BreakdownItem,
+    CountrySummary,
     PropertySummary,
     ReportAggregations,
     ReportInput,
@@ -126,3 +127,8 @@ class SummaryService:
     async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all PropertySummary models."""
         return await self._repo.get_all_properties()
+
+    # Country
+    async def get_all_countries(self) -> Sequence[CountrySummary]:
+        """Gets all CountrySummary models."""
+        return await self._repo.get_all_countries()

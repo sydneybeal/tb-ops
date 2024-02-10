@@ -102,7 +102,7 @@ class TravelService:
         country_id: Optional[str],
         core_destination_id: Optional[str],
     ) -> Property:
-        """Gets a single Property model by name, portfolio, and optional country or core_destination."""
+        """Gets a single Property model by name, portfolio, country, core_destination."""
         return await self._repo.get_property_by_name(
             name, portfolio_name, country_id, core_destination_id
         )
@@ -149,6 +149,10 @@ class TravelService:
             )
         ]
         await self._repo.add_consultant(to_be_added)
+
+    async def get_all_consultants(self) -> Sequence[Consultant]:
+        """Gets all Country models."""
+        return await self._repo.get_all_consultants()
 
     async def get_consultant_by_name(
         self, first_name: str, last_name: str
