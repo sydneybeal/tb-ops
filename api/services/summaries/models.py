@@ -26,7 +26,9 @@ class AccommodationLogSummary(BaseModel):
     id: UUID
     primary_traveler: str
     core_destination_name: str
+    core_destination_id: Optional[UUID] = None
     country_name: Optional[str] = None
+    country_id: Optional[UUID] = None
     date_in: date
     date_out: date
     num_pax: int

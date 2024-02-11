@@ -101,6 +101,7 @@ ul.sidenav.sidenav-fixed li.logo {
 
 .modal.add-log-modal {
   border-radius: 10px;
+  width: 70%;
 }
 
 .modal.add-log-modal .modal-content {
@@ -191,12 +192,15 @@ table.accommodation-logs-table>tbody>tr>td {
 .date-selectors {
   display: flex;
   gap: 20px;
-  /* Adjust the space between the elements */
+  /* Adjust or keep the gap as needed */
   align-items: center;
   margin: auto;
   margin-top: 10px;
   margin-bottom: 10px;
-  width: 30%;
+  width: 100%;
+  /* Adjusted to take the full width of its container */
+  justify-content: space-between;
+  /* This will space out the children elements */
 }
 
 .vertically-centered {
@@ -222,9 +226,26 @@ th {
   padding: 0 10px;
 }
 
+.new-existing-prop:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  /* Light background on hover */
+  cursor: pointer;
+  /* Change cursor to indicate clickability */
+  /* text-decoration: underline; */
+  /* Underline text to indicate it's clickable */
+}
+
+.card.new-property-card {
+  border-radius: 8px;
+  transition: box-shadow 0.25s;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+}
+
 .material-symbols-outlined {
   font-size: 18px;
   vertical-align: middle !important;
+  margin-bottom: 4px;
+  margin-right: 2px;
 }
 
 .material-symbols-rounded {

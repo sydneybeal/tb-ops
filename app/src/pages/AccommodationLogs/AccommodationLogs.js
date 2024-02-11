@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
+import Select from 'react-select';
 import CircularPreloader from '../../components/CircularPreloader';
 import AddLogModal from './AddLogModal';
 import Navbar from '../../components/Navbar';
@@ -78,10 +79,55 @@ export const Overview = () => {
     }, [filters, filterOptions]);
 
     useEffect(() => {
-        const coreDestOptions = [...new Set(apiData.map((item) => item.core_destination_name))].sort();
-        const countryOptions = [...new Set(apiData.map((item) => item.country_name))].sort();
-        const consultantOptions = [...new Set(apiData.map((item) => item.consultant_display_name))].sort();
-        const propertyOptions = [...new Set(apiData.map((item) => item.property_name))].sort();
+        // const coreDestOptions = [...new Set(apiData.map((item) => item.core_destination_name))].sort();
+        const coreDestMap = apiData.reduce((acc, item) => {
+            if (!acc[item.core_destination_id]) {
+                acc[item.core_destination_id] = {
+                    value: item.core_destination_id || '',
+                    label: item.core_destination_name || ''
+                };
+            }
+            return acc;
+        }, {});
+        // const countryOptions = [...new Set(apiData.map((item) => item.country_name))].sort();
+        const countryMap = apiData.reduce((acc, item) => {
+            // Define default values for null or undefined country_id and country_name
+            const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
+            const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
+
+            if (!acc[countryId]) {
+                acc[countryId] = {
+                    value: countryId,
+                    label: countryName
+                };
+            }
+            return acc;
+        }, {});
+        // const consultantOptions = [...new Set(apiData.map((item) => item.consultant_display_name))].sort();
+        const consultantMap = apiData.reduce((acc, item) => {
+            if (!acc[item.consultant_id]) {
+                acc[item.consultant_id] = {
+                    value: item.consultant_id || '',
+                    label: item.consultant_display_name || ''
+                };
+            }
+            return acc;
+        }, {});
+        const propertyMap = apiData.reduce((acc, item) => {
+            if (!acc[item.property_id]) {
+                acc[item.property_id] = {
+                    value: item.property_id || '',
+                    label: item.property_name || ''
+                };
+            }
+            return acc;
+        }, {});
+        const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
+        // console.log("Core dest options: " + Object.values(coreDestOptions));
+        const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
+        const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
+        const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
+
 
         setFilterOptions({
             core_dest: coreDestOptions,
@@ -103,7 +149,13 @@ export const Overview = () => {
         }
 
         if (filters.country) {
-            newFilteredData = newFilteredData.filter((item) => item.country_name === filters.country);
+            if (filters.country === 'No country') {
+                // Filter for records where country_name is null or undefined
+                newFilteredData = newFilteredData.filter(item => !item.country_name);
+            } else {
+                // Filter for records matching the selected country name
+                newFilteredData = newFilteredData.filter(item => item.country_name === filters.country);
+            }
         }
 
         if (filters.consultant) {
@@ -185,8 +237,11 @@ export const Overview = () => {
 
                     {/* <button className="btn" onClick={openModal}>New</button> */}
                     <div className="row" style={{ textAlign: 'right' }}>
-                        <a className="btn-floating btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
-                            <i className="material-icons">add</i>
+                        <a className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                            <span class="material-symbols-outlined">
+                                add
+                            </span>
+                            Add New
                         </a>
                     </div>
                     {loaded ? (
@@ -226,43 +281,83 @@ export const Overview = () => {
                             <div className="row center">
                                 <div>
                                     <div className="col s4">
-                                        <select value={filters.core_dest} onChange={
+                                        {/* <select value={filters.core_dest} onChange={
                                             (e) => setFilters({ ...filters, core_dest: e.target.value })}>
                                             <option value="">Core Destination</option>
                                             {filterOptions.core_dest.map((option, index) => (
                                                 <option key={index} value={option}>{option}</option>
                                             ))}
-                                        </select>
+                                        </select> */}
+                                        <Select
+                                            placeholder="Search by Core Destination"
+                                            value={filterOptions.core_dest.find(core_dest => core_dest.label === filters.core_dest) ? { value: filters.core_dest, label: filters.core_dest } : null}
+                                            onChange={(selectedOption) => setFilters({ ...filters, core_dest: selectedOption ? selectedOption.label : '' })}
+                                            options={filterOptions.core_dest}
+                                            isClearable
+                                        />
+                                        <span class="material-symbols-outlined">
+                                            explore
+                                        </span>
                                     </div>
                                     <div className="col s4">
-                                        <select value={filters.country} onChange={
+                                        {/* <select value={filters.country} onChange={
                                             (e) => setFilters({ ...filters, country: e.target.value })}>
                                             <option value="">Country</option>
                                             {filterOptions.country.map((option, index) => (
                                                 <option key={index} value={option}>{option}</option>
                                             ))}
-                                        </select>
+                                        </select> */}
+                                        <Select
+                                            placeholder="Search by Country"
+                                            value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
+                                            onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
+                                            options={filterOptions.country}
+                                            isClearable
+                                        />
+                                        <span class="material-symbols-outlined">
+                                            globe
+                                        </span>
                                     </div>
                                     <div className="col s4">
-                                        <select value={filters.consultant} onChange={
+                                        {/* <select value={filters.consultant} onChange={
                                             (e) => setFilters({ ...filters, consultant: e.target.value })}>
                                             <option value="">Consultant</option>
                                             {filterOptions.consultant.map((option, index) => (
                                                 <option key={index} value={option}>{option}</option>
                                             ))}
-                                        </select>
+                                        </select> */}
+                                        <Select
+                                            placeholder="Search by Consultant"
+                                            value={filterOptions.consultant.find(consultant => consultant.label === filters.consultant) ? { value: filters.consultant, label: filters.consultant } : null}
+                                            onChange={(selectedOption) => setFilters({ ...filters, consultant: selectedOption ? selectedOption.label : '' })}
+                                            options={filterOptions.consultant}
+                                            isClearable
+                                        />
+                                        <span class="material-symbols-outlined">
+                                            badge
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             <div className="row center">
                                 <div className="col s6">
-                                    <select value={filters.property} onChange={
+                                    {/* <select value={filters.property} onChange={
                                         (e) => setFilters({ ...filters, property: e.target.value })}>
                                         <option value="">Property</option>
                                         {filterOptions.property.map((option, index) => (
                                             <option key={index} value={option}>{option}</option>
                                         ))}
-                                    </select>
+                                    </select> */}
+                                    <Select
+                                        placeholder="Search by Property"
+                                        value={filterOptions.property.find(prop => prop.label === filters.property) ? { value: filters.property, label: filters.property } : null}
+                                        onChange={(selectedOption) => setFilters({ ...filters, property: selectedOption ? selectedOption.label : '' })}
+                                        options={filterOptions.property}
+                                        isClearable
+                                    />
+                                    <span class="material-symbols-outlined">
+                                        hotel
+                                    </span>
                                 </div>
                                 <div className="col s6">
                                     <div className="date-selectors">

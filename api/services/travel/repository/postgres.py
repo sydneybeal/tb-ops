@@ -319,8 +319,8 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 records = await con.fetch(query)
-                property_summaries = [Consultant(**record) for record in records]
-                return property_summaries
+                consultants = [Consultant(**record) for record in records]
+                return consultants
 
     async def get_consultant_by_name(
         self, first_name: str, last_name: str
@@ -626,6 +626,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_by=res["updated_by"],
                     )
 
+    async def get_all_agencies(self) -> Sequence[Agency]:
+        """Gets all Agency models from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.agencies
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                agencies = [Agency(**record) for record in records]
+                return agencies
+
     async def update_agency(self, agencies: Sequence[Agency]) -> None:
         """Updates a sequence of Agency models in the repository."""
         raise NotImplementedError
@@ -698,6 +715,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_at=res["updated_at"],
                         updated_by=res["updated_by"],
                     )
+
+    async def get_all_booking_channels(self) -> Sequence[BookingChannel]:
+        """Gets all BookingChannel models from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.booking_channels
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                agencies = [BookingChannel(**record) for record in records]
+                return agencies
 
     async def update_booking_channel(
         self, booking_channels: Sequence[BookingChannel]

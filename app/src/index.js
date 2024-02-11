@@ -13,7 +13,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Landing />,
+    element: <AccommodationLogs />,
   },
   {
     path: '/service_providers/',

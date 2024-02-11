@@ -118,6 +118,10 @@ class TravelService:
         ]
         await self._repo.add_agency(to_be_added)
 
+    async def get_all_agencies(self) -> Sequence[Agency]:
+        """Gets all Agency models."""
+        return await self._repo.get_all_agencies()
+
     async def get_agency_by_name(self, name: str) -> None:
         """Gets a single Agency model by name."""
         return await self._repo.get_agency_by_name(name)
@@ -132,6 +136,10 @@ class TravelService:
             if not await self._repo.get_booking_channel_by_name(model.name)
         ]
         await self._repo.add_booking_channel(to_be_added)
+
+    async def get_all_booking_channels(self) -> Sequence[BookingChannel]:
+        """Gets all BookingChannel models."""
+        return await self._repo.get_all_booking_channels()
 
     async def get_booking_channel_by_name(self, name: str) -> None:
         """Gets a single BookingChannel model by name."""
@@ -151,7 +159,7 @@ class TravelService:
         await self._repo.add_consultant(to_be_added)
 
     async def get_all_consultants(self) -> Sequence[Consultant]:
-        """Gets all Country models."""
+        """Gets all Consultant models."""
         return await self._repo.get_all_consultants()
 
     async def get_consultant_by_name(

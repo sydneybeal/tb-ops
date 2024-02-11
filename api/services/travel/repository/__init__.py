@@ -185,6 +185,11 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_all_agencies(self) -> Sequence[Agency]:
+        """Gets all Agency models from the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_agency_by_name(self, name: str) -> Agency:
         """Gets a single Agency model from the repository by name."""
         raise NotImplementedError
@@ -205,6 +210,11 @@ class TravelRepository(ABC):
         self, booking_channels: Sequence[BookingChannel]
     ) -> None:
         """Adds a sequence of BookingChannel models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_booking_channels(self) -> Sequence[BookingChannel]:
+        """Gets all BookingChannel models from the repository."""
         raise NotImplementedError
 
     @abstractmethod

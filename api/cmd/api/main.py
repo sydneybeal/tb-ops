@@ -24,7 +24,7 @@ from api.services.summaries.models import (
     BedNightReport,
 )
 from api.services.summaries.service import SummaryService
-from api.services.travel.models import Consultant
+from api.services.travel.models import Consultant, Agency, BookingChannel
 from api.services.travel.service import TravelService
 
 
@@ -105,6 +105,26 @@ def make_app(travel_svc: TravelService, summary_svc: SummaryService) -> FastAPI:
     async def get_all_consultants() -> list[Consultant] | JSONResponse:
         """Get all Country models."""
         return await travel_svc.get_all_consultants()
+
+    @app.get(
+        "/v1/booking_channels",
+        operation_id="get_booking_channels",
+        response_model=list[BookingChannel],
+        tags=["booking_channels"],
+    )
+    async def get_all_booking_channels() -> list[BookingChannel] | JSONResponse:
+        """Get all BookingChannel models."""
+        return await travel_svc.get_all_booking_channels()
+
+    @app.get(
+        "/v1/agencies",
+        operation_id="get_agencies",
+        response_model=list[Agency],
+        tags=["agencies"],
+    )
+    async def get_all_agencies() -> list[Agency] | JSONResponse:
+        """Get all Agency models."""
+        return await travel_svc.get_all_agencies()
 
     @app.get(
         "/v1/bed_night_report",
