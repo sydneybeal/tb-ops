@@ -19,7 +19,7 @@ const ReportDashboard = ({ reportData }) => {
 
     const sortedByMonth = calculations.by_month.sort((a, b) => {
         return a.name.localeCompare(b.name);
-    });
+    }, [reportData]);
 
     const colorPalette = [
         '#b2dfdb',

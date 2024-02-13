@@ -171,6 +171,10 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"p.name = '{value}'")
             elif key == "core_destination_name":
                 query_conditions.append(f"cd.name = '{value}'")
+            elif key == "agency":
+                query_conditions.append(f"a.name = '{value}'")
+            elif key == "booking_channel":
+                query_conditions.append(f"bc.name = '{value}'")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)

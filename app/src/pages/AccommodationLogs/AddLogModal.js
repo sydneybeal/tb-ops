@@ -6,12 +6,19 @@ import moment from 'moment';
 const AddLogModal = ({ isOpen, onClose }) => {
     const [accommodationLogs, setAccommodationLogs] = useState([{}]);
     const [primaryTraveler, setPrimaryTraveler] = useState('');
+    const [numPax, setNumPax] = useState(1);
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
     const [properties, setProperties] = useState([]);
     const [countries, setCountries] = useState([]);
     const [consultants, setConsultants] = useState([]);
     const [bookingChannels, setBookingChannels] = useState([]);
     const [agencies, setAgencies] = useState([]);
+    const [validationErrors, setValidationErrors] = useState({});
+    const [userNewPropertyInteractions, setUserNewPropertyInteractions] = useState({});
+    const [touched, setTouched] = useState({
+        primaryTraveler: false,
+    });
+
 
     useEffect(() => {
         const options = {
@@ -97,8 +104,49 @@ const AddLogModal = ({ isOpen, onClose }) => {
         setAccommodationLogs([...accommodationLogs, {}]);
     };
 
+    const validatePrimaryTraveler = (value) => {
+        if (!(value || '').trim()) {
+            return 'Missing primary traveler name';
+        }
+        // Regular expression to match "Last/First" format
+        const namePattern = /^[^/]+\/[^/]+$/;
+        if (!namePattern.test(value.trim())) {
+            return 'Please enter the name in "Last/First" format';
+        }
+
+        return '';
+    };
+
+    const validateConsultant = (value) => {
+        if (!(value || '').trim()) {
+            return 'Missing consultant';
+        }
+        return '';
+    };
+
+    const validateNumPax = (value) => {
+        const num = parseInt(value, 10);
+        if (num < 1) return 'Number of passengers must be greater than 0';
+        if (num > 50) return 'Number of passengers must be less than 50';
+        return '';
+    };
+
     const handleFormSubmit = (e) => {
         e.preventDefault();
+
+        // Validate form
+        if (!validateForm()) {
+            console.log('Validation failed');
+            M.toast({
+                html: 'Please check the form for errors.',
+                displayLength: 4000,
+                classes: 'red lighten-2',
+            });
+            // Prevent form submission if validation fails
+            return;
+        }
+        console.log('Validation passed, proceed with submission.');
+
         // Ensure each log includes the primary traveler's name and the selected consultant when submitting
         const logsToSubmit = accommodationLogs.map(log => ({
             ...log,
@@ -107,77 +155,306 @@ const AddLogModal = ({ isOpen, onClose }) => {
         }));
         // Submit logsToSubmit to your backend
         console.log(logsToSubmit);
+        M.toast({
+            html: 'Your entry was valid, but nothing will be saved to the database at this time.',
+            displayLength: 4000,
+            classes: 'green lighten-1',
+        });
         // Add submission logic here
         // Here, implement the logic to submit the form data
         // Convert accommodationLogs to the expected payload format
         // POST the payload to `${process.env.REACT_APP_API}/v1/accommodation_logs`
     };
 
-    // Function to handle changes to the consultant selection
-    const handleConsultantChange = selectedOption => {
+    const handlePrimaryTravelerChange = (e) => {
+        const value = e.target.value;
+        setPrimaryTraveler(value);
+
+        // Only validate in real-time if the field has been touched
+        if (touched.primaryTraveler) {
+            setValidationErrors(prevErrors => ({
+                ...prevErrors,
+                primaryTraveler: validatePrimaryTraveler(value),
+            }));
+        }
+    };
+
+    const handlePrimaryTravelerBlur = () => {
+        setTouched(prev => ({ ...prev, primaryTraveler: true }));
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            primaryTraveler: validatePrimaryTraveler(primaryTraveler),
+        }));
+    };
+
+    const handleConsultantChange = (selectedOption) => {
         setSelectedConsultantId(selectedOption ? selectedOption.value : '');
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            consultant: validateConsultant(selectedOption ? selectedOption.value : ''),
+        }));
+    };
+
+    const handleNumPaxChange = (newNumPax) => {
+        if (newNumPax === '') {
+            setNumPax(''); // Allow the field to be empty
+        } else {
+            const parsedNumPax = parseInt(newNumPax, 10);
+            if (!isNaN(parsedNumPax)) {
+                setNumPax(parsedNumPax);
+            }
+        }
+        const parsedNumPax = parseInt(newNumPax, 10);
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            numPax: validateNumPax(parsedNumPax),
+        }));
+
+        const updatedLogs = accommodationLogs.map((log) => {
+            if (log.date_in && log.date_out) {
+                return {
+                    ...log,
+                    bed_nights: calculateBedNights(log.date_in, log.date_out, parsedNumPax),
+                };
+            }
+            return log;
+        });
+
+        setAccommodationLogs(updatedLogs);
+    };
+
+    const calculateBedNights = (dateIn, dateOut, numPax) => {
+        const startDate = moment(dateIn);
+        const endDate = moment(dateOut);
+        const diffDays = endDate.diff(startDate, 'days');
+        return !isNaN(diffDays) && diffDays >= 0 ? diffDays * numPax : 0;
+    };
+
+    const validateLogEntry = (log) => {
+        let logError = {};
+
+        if (!log.date_in) logError.date_in = 'Missing check-in date';
+        if (!log.date_out) logError.date_out = 'Missing check-out date';
+        if (!log.property_id && !log.new_property_name) {
+            logError.property_selection = 'Missing property';
+        } else if (!log.property_id) {
+            if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';
+            if (!log.new_property_country_id) logError.new_property_country_id = 'Missing new property country';
+        }
+
+        return logError;
+    };
+
+    const validateDateIn = (dateIn) => {
+        if (!dateIn) return 'Missing check-in date';
+        return '';
+    };
+
+    const validateDateOut = (dateOut) => {
+        if (!dateOut) return 'Missing check-out date';
+        return '';
+    };
+
+    const validateDateRange = (dateIn, dateOut) => {
+        // Skip validation if either date is not set
+        if (!dateIn || !dateOut) {
+            return '';
+        }
+
+        // Convert string dates to moment objects
+        const checkInDate = moment(dateIn);
+        const checkOutDate = moment(dateOut);
+
+        // Check if check-in date is after check-out date
+        if (checkInDate.isAfter(checkOutDate)) {
+            return 'Check-in date must be before check-out date';
+        }
+
+        // Check if the stay is longer than 30 days
+        const duration = checkOutDate.diff(checkInDate, 'days');
+        if (duration > 30) {
+            return 'Stay cannot be longer than 30 days';
+        }
+        if (duration === 0) {
+            return 'Check-in and check-out dates cannot be the same';
+        }
+
+        // If both checks pass, return an empty string indicating no errors
+        return '';
+    };
+
+    const validateProperty = (log, index) => {
+        const errors = {};
+        const hasInteractedNewProperty = userNewPropertyInteractions[index];
+
+        // property_id is not set and it is not a new property
+        if (!log.property_id && !log.is_new_property) {
+            errors.property = 'Missing property';
+        }
+        // user is entering a new property and user has interacted
+        if (log.is_new_property && hasInteractedNewProperty) {
+            if (!log.new_property_name) errors.newPropertyName = "Missing new property name";
+            if (!log.new_property_country_id) errors.newPropertyCountry = "Missing new property country";
+        }
+
+        return errors;
+    };
+
+
+    const validateForm = () => {
+        let errors = {};
+
+        if (!(primaryTraveler || '').trim()) {
+            errors.primaryTraveler = 'Missing primary traveler';
+        }
+        if (!(selectedConsultantId || '').trim()) {
+            errors.consultant = 'Missing consultant';
+        }
+        if (parseInt(numPax, 10) < 1) {
+            errors.numPax = 'Number of passengers is less than 0';
+        }
+        if (parseInt(numPax, 10) > 50) {
+            errors.numPax = 'Number of passengers exceeds limit of 50';
+        }
+
+        let logErrors = accommodationLogs.map(log => validateLogEntry(log));
+
+        if (logErrors.some(error => Object.keys(error).length > 0)) {
+            errors.logs = logErrors;
+        }
+
+        setValidationErrors(errors);
+
+        // Determine if the form is valid based on the presence of errors
+        return Object.keys(errors).length === 0;
     };
 
     const handleLogChange = (index, field, value) => {
         const updatedLogs = [...accommodationLogs];
         if (!updatedLogs[index]) updatedLogs[index] = {};
         updatedLogs[index][field] = value;
-        const log = updatedLogs[index];
 
-        // Check if dates and num_pax are provided to calculate bed nights
-        // If a date is cleared, set bed nights to 0 explicitly
+        // Initialize logErrors from current validationErrors state or create a new array if undefined
+        const logErrors = validationErrors.logs ? [...validationErrors.logs] : [];
+
+        // Ensure there's an object to hold errors for the current log
+        if (!logErrors[index]) logErrors[index] = {};
+
+        // Check if dates are provided to calculate bed nights
         if (field === 'date_in' || field === 'date_out') {
-            // Clear bed nights if one of the dates is cleared
-            if (!log.date_in || !log.date_out) {
-                updatedLogs[index].bed_nights = 0;
+            const log = updatedLogs[index];
+            updatedLogs[index].bed_nights = calculateBedNights(log.date_in, log.date_out, numPax);
+            const dateRangeError = validateDateRange(log.date_in, log.date_out);
+            if (dateRangeError) {
+                logErrors[index].date_range = dateRangeError;
+            } else {
+                delete logErrors[index].date_range; // Remove the key if no error
             }
         }
 
-        if (log.date_in && log.date_out && log.num_pax) {
-            const startDate = moment(log.date_in);
-            const endDate = moment(log.date_out);
-            const numPax = parseInt(log.num_pax, 10) || 1;
-
-            const diffDays = endDate.diff(startDate, 'days');
-            const bedNights = !isNaN(diffDays) && diffDays >= 0 ? diffDays * numPax : 0; // Ensure diffDays is non-negative
-
-            updatedLogs[index].bed_nights = bedNights;
-        } else if (field === 'num_pax' && !log.date_in || !log.date_out) {
-            // If num_pax is updated but one of the dates is missing, ensure bed nights is recalculated or set to 0
-            updatedLogs[index].bed_nights = 0;
+        if (['new_property_name', 'new_property_country_id', 'new_property_portfolio_name'].includes(field)) {
+            setUserNewPropertyInteractions({
+                ...userNewPropertyInteractions,
+                [index]: true
+            });
         }
 
+        // Validate the changed field only
+        switch (field) {
+            case 'date_in':
+                const dateInError = validateDateIn(value);
+                if (dateInError) {
+                    logErrors[index].date_in = dateInError;
+                } else {
+                    delete logErrors[index].date_in; // Remove the key if no error
+                }
+                break;
+            case 'date_out':
+                const dateOutError = validateDateOut(value);
+                if (dateOutError) {
+                    logErrors[index].date_out = dateOutError;
+                } else {
+                    delete logErrors[index].date_out; // Remove the key if no error
+                }
+                break;
+            // Handle other fields similarly...
+        }
+
+        if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_portfolio_name', 'is_new_property'].includes(field)) {
+            const propertyErrors = validateProperty(updatedLogs[index], index);
+
+            // Clear previous property-related errors
+            Object.keys(logErrors[index]).forEach(errorKey => {
+                if (errorKey.startsWith('newProperty') || errorKey === 'property') {
+                    delete logErrors[index][errorKey];
+                }
+            });
+
+            // Apply new property-related errors
+            Object.assign(logErrors[index], propertyErrors);
+        }
+
+        // Update both the logs and validation errors state
         setAccommodationLogs(updatedLogs);
+        setValidationErrors(prevErrors => ({ ...prevErrors, logs: logErrors }));
     };
 
 
     const handleRemoveClick = (index) => {
+        // Remove the log entry at the specified index
         const updatedLogs = [...accommodationLogs];
         updatedLogs.splice(index, 1);
         setAccommodationLogs(updatedLogs);
+
+        // Remove any corresponding validation errors for the log entry
+        const updatedErrors = validationErrors.logs ? [...validationErrors.logs] : [];
+        updatedErrors.splice(index, 1);
+
+        // Update the validationErrors state with the updated errors array
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            logs: updatedErrors
+        }));
     };
+
 
 
     return (
         <div id="add-log-modal" className="modal add-log-modal">
             <div className="modal-content">
-                <h4>New Accommodation Log</h4>
+                <h4 className="grey-text text-darken-2">New Accommodation Log</h4>
                 <div style={{ textAlign: 'left', marginTop: '50px' }}>
-                    <form onSubmit={handleFormSubmit}>
+                    <form id="logForm" onSubmit={handleFormSubmit}>
                         {/* Trip Information Section */}
                         {/* <div className="teal-text text-lighten-3">Trip Details</div> */}
+                        {(validationErrors.primaryTraveler || validationErrors.consultant || validationErrors.numPax) && (
+                            <div className="row" style={{ marginBottom: '20px' }}>
+                                {validationErrors.primaryTraveler && (
+                                    <div className="chip red lighten-4 text-bold">{validationErrors.primaryTraveler}</div>
+                                )}
+                                {validationErrors.consultant && (
+                                    <div className="chip red lighten-4 text-bold">{validationErrors.consultant}</div>
+                                )}
+                                {validationErrors.numPax && (
+                                    <div className="chip red lighten-4 text-bold">{validationErrors.numPax}</div>
+                                )}
+                            </div>
+                        )}
                         <div className="row">
                             {/* Primary Traveler Name Field */}
-                            <div className="col s6">
+                            <div className="col s5">
                                 <input
                                     type="text"
+                                    id="primary_traveler"
                                     value={primaryTraveler}
-                                    onChange={(e) => setPrimaryTraveler(e.target.value)}
+                                    onChange={handlePrimaryTravelerChange}
+                                    onBlur={handlePrimaryTravelerBlur}
                                     placeholder="Name"
                                     style={{ marginRight: '10px', flexGrow: '1' }}
+                                    className={validationErrors.primaryTraveler ? 'invalid' : ''}
                                 />
                                 <label htmlFor="primary_traveler">
-                                    <span class="material-symbols-outlined">
+                                    <span className="material-symbols-outlined">
                                         hiking
                                     </span>
                                     Primary Traveler Name (Last/First)
@@ -186,19 +463,50 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 {/* <span className="helper-text" data-error="wrong" data-success="right">Enter the full name of the primary traveler</span> */}
                             </div>
 
+                            <div className="col s2" style={{ textAlign: 'center' }}>
+                                {/* Number of Pax Numeric Selection */}
+                                < input
+                                    type="number"
+                                    id="num_pax"
+                                    value={numPax}
+                                    onChange={(e) => handleNumPaxChange(e.target.value)}
+                                    placeholder="#"
+                                    style={{ marginBottom: '10px', textAlign: 'center' }}
+                                    className={validationErrors.numPax ? 'invalid' : ''}
+                                />
+                                <label htmlFor="num_pax">
+                                    <span className="material-symbols-outlined">
+                                        airplane_ticket
+                                    </span>
+                                    Pax
+                                </label>
+                            </div>
 
                             {/* Consultant Name Selection */}
-                            <div className="col s6">
+                            <div className="col s5">
                                 <Select
                                     placeholder="Select Consultant"
+                                    id="consultant_select"
                                     value={consultants.find(cons => cons.value === selectedConsultantId)}
                                     onChange={handleConsultantChange}
                                     options={consultants}
                                     isClearable
                                     style={{ flexGrow: '1' }}
+                                    classNamePrefix="select" // Use this for prefixing generated class names
+                                    className={validationErrors.consultant ? 'invalid-select' : ''} // This class is for the container
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: validationErrors.consultant ? 'red' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: validationErrors.consultant ? 'darkred' : provided['&:hover'].borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? (validationErrors.consultant ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                        })
+                                    }}
                                 />
-                                <label htmlFor="consultant_name">
-                                    <span class="material-symbols-outlined">
+                                <label htmlFor="consultant_select">
+                                    <span className="material-symbols-outlined">
                                         badge
                                     </span>
                                     Consultant Name
@@ -211,7 +519,6 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 <div className="row">
                                     <div className="col s11">
                                         <div className="chip teal accent-4 text-bold">{index + 1}</div>
-
                                         {log.bed_nights > 0 &&
                                             <div className="chip blue lighten-2">
                                                 <span className="text-bold">
@@ -231,7 +538,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 </span>
                                                 {log.portfolio_name || log.new_property_portfolio_name}
                                                 &nbsp;
-                                                <span class="material-symbols-outlined">
+                                                <span className="material-symbols-outlined">
                                                     store
                                                 </span>
                                             </div>
@@ -243,7 +550,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 </span>
                                                 {log.country_name || log.new_property_country_name}
                                                 &nbsp;
-                                                <span class="material-symbols-outlined">
+                                                <span className="material-symbols-outlined">
                                                     globe
                                                 </span>
                                             </div>
@@ -255,45 +562,13 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 </span>
                                                 {log.core_destination_name || log.new_property_core_destination_name}
                                                 &nbsp;
-                                                <span class="material-symbols-outlined">
+                                                <span className="material-symbols-outlined">
                                                     explore
                                                 </span>
                                             </div>
                                         }
-                                        {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
-                                            <div>
-                                                <em className="grey-text text-lighten-1">
-                                                    Please select an&nbsp;
-                                                    <a
-                                                        className="text-bold new-existing-prop teal-text text-lighten-2"
-                                                        onClick={() => {
-                                                            handleLogChange(index, 'is_new_property', false);
-                                                            handleLogChange(index, 'new_property_country_id', '');
-                                                            handleLogChange(index, 'new_property_core_destination_name', '');
-                                                            handleLogChange(index, 'new_property_name', '');
-                                                            handleLogChange(index, 'new_property_portfolio_name', '');
-                                                            handleLogChange(index, 'new_property_country_name', '');
-                                                        }}
-                                                    >
-                                                        <span class="material-symbols-outlined">
-                                                            manage_search
-                                                        </span>
-                                                        Existing Property
-                                                    </a>
-                                                    &nbsp;or&nbsp;
 
-                                                    <a
-                                                        className="text-bold new-existing-prop green-text text-lighten-2"
-                                                        onClick={() => handleLogChange(index, 'is_new_property', true)}>
-                                                        <span class="material-symbols-outlined">
-                                                            add_circle
-                                                        </span>
-                                                        New Property
-                                                    </a>
-                                                </em>
-                                            </div>
-                                        )
-                                        }
+
                                     </div>
                                     <div className="col s1" style={{ textAlign: 'right' }}>
                                         <a
@@ -303,21 +578,64 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         </a>
                                     </div>
                                 </div>
+                                {validationErrors.logs && validationErrors.logs[index] && Object.keys(validationErrors.logs[index]).length > 0 && (
+                                    <div className="row">
+                                        {Object.keys(validationErrors.logs[index]).map((errorKey) => (
+                                            <div key={errorKey} className="chip red lighten-4 text-bold">
+                                                {validationErrors.logs[index][errorKey]}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
-                                {/* Property Name Autocomplete */}
+                                {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
+                                    <div className="row">
+                                        <div>
+                                            <em className="grey-text text-lighten-1">
+                                                Please select an&nbsp;
+                                                <a
+                                                    className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                    onClick={() => {
+                                                        handleLogChange(index, 'is_new_property', false);
+                                                        handleLogChange(index, 'new_property_country_id', '');
+                                                        handleLogChange(index, 'new_property_core_destination_name', '');
+                                                        handleLogChange(index, 'new_property_name', '');
+                                                        handleLogChange(index, 'new_property_portfolio_name', '');
+                                                        handleLogChange(index, 'new_property_country_name', '');
+                                                    }}
+                                                >
+                                                    <span className="material-symbols-outlined">
+                                                        manage_search
+                                                    </span>
+                                                    Existing Property
+                                                </a>
+                                                &nbsp;or&nbsp;
+
+                                                <a
+                                                    className="text-bold new-existing-prop green-text text-lighten-2"
+                                                    onClick={() => handleLogChange(index, 'is_new_property', true)}>
+                                                    <span className="material-symbols-outlined">
+                                                        add_circle
+                                                    </span>
+                                                    New Property
+                                                </a>
+                                            </em>
+                                        </div>
+                                    </div>
+                                )
+                                }
+
+                                {/* Property Info */}
                                 <div className="row">
                                     {!log.is_new_property ? (
-                                        <div className="col s10">
+                                        <div className="col s12">
                                             <Select
                                                 placeholder="Search for a property"
+                                                id="property_select"
                                                 value={properties.find(prop => prop.value === log.property_id)}
                                                 onChange={(selectedOption) => {
-                                                    // Call handleLogChange for property_id
                                                     handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-                                                    // Call handleLogChange for property_name
                                                     handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
-                                                    // Call handleLogChange for portfolio_name
-                                                    console.log(selectedOption);
                                                     handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
                                                     handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
                                                     handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
@@ -325,15 +643,15 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 options={properties}
                                                 isClearable
                                             />
-                                            <label htmlFor="primary_traveler">
-                                                <span class="material-symbols-outlined">
+                                            <label htmlFor="property_select">
+                                                <span className="material-symbols-outlined">
                                                     hotel
                                                 </span>
                                                 Property Name
                                             </label>
                                         </div>
                                     ) : (
-                                        <div className="col s10">
+                                        <div className="col s12">
                                             <div className="card new-property-card cyan lighten-5">
                                                 <div className="card-content">
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -342,7 +660,6 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                         </em>
                                                         <a
                                                             className="text-bold new-existing-prop red-text text-lighten-3"
-                                                            // style={{ textAlign: 'right' }}
                                                             onClick={() => {
                                                                 handleLogChange(index, 'is_new_property', false);
                                                                 handleLogChange(index, 'new_property_country_id', '');
@@ -353,7 +670,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                             }}
                                                         >
                                                             Cancel
-                                                            <span class="material-symbols-outlined">
+                                                            <span className="material-symbols-outlined">
                                                                 close
                                                             </span>
                                                         </a>
@@ -362,13 +679,14 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                         <div className="col s6">
                                                             <input
                                                                 type="text"
+                                                                id="new_property_name"
                                                                 value={log.new_property_name || ''}
                                                                 onChange={(e) => handleLogChange(index, 'new_property_name', e.target.value)}
                                                                 placeholder="Property Name"
                                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                                             />
-                                                            <label htmlFor="primary_traveler">
-                                                                <span class="material-symbols-outlined">
+                                                            <label htmlFor="new_property_name">
+                                                                <span className="material-symbols-outlined">
                                                                     hotel
                                                                 </span>
                                                                 Property Name
@@ -377,13 +695,14 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                         <div className="col s6">
                                                             <input
                                                                 type="text"
+                                                                id="new_property_portfolio_name"
                                                                 value={log.new_property_portfolio_name || ''}
                                                                 onChange={(e) => handleLogChange(index, 'new_property_portfolio_name', e.target.value)}
                                                                 placeholder="Portfolio Name"
                                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                                             />
-                                                            <label htmlFor="primary_traveler">
-                                                                <span class="material-symbols-outlined">
+                                                            <label htmlFor="new_property_portfolio_name">
+                                                                <span className="material-symbols-outlined">
                                                                     store
                                                                 </span>
                                                                 Portfolio Name
@@ -396,20 +715,17 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                 placeholder="Select Country"
                                                                 value={countries.find(prop => prop.value === log.new_property_country_id)}
                                                                 onChange={(selectedOption) => {
-                                                                    // Call handleLogChange for property_id
                                                                     handleLogChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
-                                                                    // Call handleLogChange for property_name
                                                                     handleLogChange(index, 'new_property_core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
-                                                                    // Call handleLogChange for portfolio_name
-                                                                    console.log(selectedOption);
                                                                     handleLogChange(index, 'new_property_country_name', selectedOption ? selectedOption.label : '');
                                                                 }}
                                                                 options={countries}
                                                                 isClearable
                                                                 style={{ flexGrow: '1' }}
+                                                                id="new_country_select"
                                                             />
-                                                            <label htmlFor="consultant_name">
-                                                                <span class="material-symbols-outlined">
+                                                            <label htmlFor="new_country_select">
+                                                                <span className="material-symbols-outlined">
                                                                     globe
                                                                 </span>
                                                                 Country Name
@@ -423,7 +739,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                     </span>
                                                                     {log.new_property_core_destination_name}
                                                                     &nbsp;
-                                                                    <span class="material-symbols-outlined">
+                                                                    <span className="material-symbols-outlined">
                                                                         explore
                                                                     </span>
                                                                 </div>
@@ -435,49 +751,34 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         </div>
                                     )
                                     }
-                                    <div className="col s2" style={{ textAlign: 'center' }}>
-                                        {/* Number of Pax Numeric Selection */}
-                                        < input
-                                            type="number"
-                                            value={log.num_pax || ''}
-                                            onChange={(e) => handleLogChange(index, 'num_pax', parseInt(e.target.value))}
-                                            placeholder="#"
-                                            min="1"
-                                            style={{ marginBottom: '10px', textAlign: 'center' }}
-                                        />
-                                        <label htmlFor="primary_traveler">
-                                            <span class="material-symbols-outlined">
-                                                airplane_ticket
-                                            </span>
-                                            Pax
-                                        </label>
-                                    </div>
                                 </div>
 
                                 <div className="row">
-                                    {/* Primary Traveler Name Field */}
                                     <div className="col s6">
 
                                         {/* Date In Selector */}
                                         <input
                                             type="date"
+                                            id="date_in"
                                             value={log.date_in || ''} // Ensure this is a string in 'YYYY-MM-DD' format; use '' as fallback
                                             onChange={(e) => handleLogChange(index, 'date_in', e.target.value)} // Correctly extract value from event
                                             placeholder="Select date in"
                                             className="date-input"
                                         />
                                         <label htmlFor="date_in">
-                                            <span class="material-symbols-outlined">
+                                            <span className="material-symbols-outlined">
                                                 flight_land
                                             </span>
                                             Check-In Date
                                         </label>
                                         <button
-                                            className="btn btn-small grey lighten-1"
+                                            className="btn-floating btn-small grey lighten-1"
                                             onClick={() => handleLogChange(index, 'date_in', '')}
                                             style={{ marginLeft: '5px' }}
                                         >
-                                            Clear
+                                            <span className="material-symbols-outlined">
+                                                close
+                                            </span>
                                         </button>
                                     </div>
                                     <div className="col s6">
@@ -485,23 +786,26 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         {/* Date Out Selector */}
                                         <input
                                             type="date"
+                                            id="date_out"
                                             value={log.date_out || ''} // Ensure this is a string in 'YYYY-MM-DD' format; use '' as fallback
                                             onChange={(e) => handleLogChange(index, 'date_out', e.target.value)} // Correctly extract value from event
                                             placeholder="Select date out"
                                             className="date-input"
                                         />
                                         <label htmlFor="date_out">
-                                            <span class="material-symbols-outlined">
+                                            <span className="material-symbols-outlined">
                                                 flight_takeoff
                                             </span>
                                             Check-Out Date
                                         </label>
                                         <button
-                                            className="btn btn-small grey lighten-1"
+                                            className="btn-floating btn-small grey lighten-1"
                                             onClick={() => handleLogChange(index, 'date_out', '')}
                                             style={{ marginLeft: '5px' }}
                                         >
-                                            Clear
+                                            <span className="material-symbols-outlined">
+                                                close
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
@@ -519,7 +823,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                             handleLogChange(index, 'new_agency_name', '');
                                                         }}
                                                     >
-                                                        <span class="material-symbols-outlined">
+                                                        <span className="material-symbols-outlined">
                                                             manage_search
                                                         </span>
                                                         Existing Agency
@@ -529,7 +833,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                     <a
                                                         className="text-bold new-existing-prop green-text text-lighten-2"
                                                         onClick={() => handleLogChange(index, 'is_new_agency', true)}>
-                                                        <span class="material-symbols-outlined">
+                                                        <span className="material-symbols-outlined">
                                                             add_circle
                                                         </span>
                                                         New Agency
@@ -553,14 +857,15 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         ) : (
                                             <input
                                                 type="text"
+                                                id="new_agency_name"
                                                 value={log.new_agency_name || ''}
                                                 onChange={(e) => handleLogChange(index, 'new_agency_name', e.target.value)}
                                                 placeholder="Agency Name"
                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                             />
                                         )}
-                                        <label htmlFor="consultant_name">
-                                            <span class="material-symbols-outlined">
+                                        <label htmlFor="new_agency_name">
+                                            <span className="material-symbols-outlined">
                                                 contact_mail
                                             </span>
                                             Agency Name
@@ -578,7 +883,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                             handleLogChange(index, 'new_booking_channel_name', '');
                                                         }}
                                                     >
-                                                        <span class="material-symbols-outlined">
+                                                        <span className="material-symbols-outlined">
                                                             manage_search
                                                         </span>
                                                         Existing Channel
@@ -588,7 +893,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                     <a
                                                         className="text-bold new-existing-prop green-text text-lighten-2"
                                                         onClick={() => handleLogChange(index, 'is_new_booking_channel', true)}>
-                                                        <span class="material-symbols-outlined">
+                                                        <span className="material-symbols-outlined">
                                                             add_circle
                                                         </span>
                                                         New Channel
@@ -600,25 +905,26 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         {!log.is_new_booking_channel ? (
                                             <Select
                                                 placeholder="Search for a booking channel"
-                                                value={agencies.find(prop => prop.value === log.agency)}
+                                                value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
                                                 onChange={(selectedOption) => {
                                                     handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
                                                 }}
-                                                options={agencies}
+                                                options={bookingChannels}
                                                 isClearable
                                                 style={{ flexGrow: '1' }}
                                             />
                                         ) : (
                                             <input
                                                 type="text"
+                                                id="new_booking_channel_name"
                                                 value={log.new_booking_channel_name || ''}
                                                 onChange={(e) => handleLogChange(index, 'new_booking_channel_name', e.target.value)}
                                                 placeholder="Booking Channel Name"
                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                             />
                                         )}
-                                        <label htmlFor="consultant_name">
-                                            <span class="material-symbols-outlined">
+                                        <label htmlFor="new_booking_channel_name">
+                                            <span className="material-symbols-outlined">
                                                 alt_route
                                             </span>
                                             Booking Channel
@@ -672,7 +978,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     })()
                                 }
                                 &nbsp;
-                                <span class="material-symbols-outlined">
+                                <span className="material-symbols-outlined">
                                     flight_land
                                 </span>
                             </div>
@@ -688,7 +994,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     })()
                                 }
                                 &nbsp;
-                                <span class="material-symbols-outlined">
+                                <span className="material-symbols-outlined">
                                     flight_takeoff
                                 </span>
                             </div>
@@ -699,8 +1005,13 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     )}
             </div >
             <div className="modal-footer">
-                <a href="#!" className="modal-close waves-effect waves-green btn-flat" onClick={onClose}>Close</a>
-                <button type="submit" className="waves-effect waves-green btn-flat">Save</button>
+                <div>
+                    <a href="#!" className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                        Close
+                    </a>
+                    &nbsp;&nbsp;
+                    <button type="submit" form="logForm" className="btn waves-effect waves-light green">Save</button>
+                </div>
             </div>
         </div >
     );

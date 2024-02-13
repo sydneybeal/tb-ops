@@ -104,6 +104,11 @@ ul.sidenav.sidenav-fixed li.logo {
   width: 70%;
 }
 
+.material-tooltip.tooltip-light {
+  background-color: rgba(47, 79, 79, 0.8) !important;
+  border-radius: 4px !important;
+}
+
 .modal.add-log-modal .modal-content {
   border-radius: 10px;
   /* Apply the border-radius here as well */
@@ -115,6 +120,7 @@ table.accommodation-logs-table {
   width: 100%;
   border-collapse: collapse;
   z-index: 0;
+  table-layout: fixed;
 }
 
 table.accommodation-logs-table td p {

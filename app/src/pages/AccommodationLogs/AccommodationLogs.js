@@ -17,7 +17,7 @@ export const Overview = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [sortedData, setSortedData] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [sorting, setSorting] = useState({ field: 'date_in', ascending: false });
+    const [sorting, setSorting] = useState({ field: 'date_in', ascending: true });
     const [filterOptions, setFilterOptions] = useState({
         core_dest: [],
         country: [],
@@ -54,7 +54,6 @@ export const Overview = () => {
                 const numberOfPages = Math.ceil(data.length / itemsPerPage);
                 setApiData(data);
                 setTotalPages(numberOfPages);
-                console.log(numberOfPages);
                 setLoaded(true);
                 setCurrentPage(0);
                 setDisplayData(data.slice(0, itemsPerPage));
@@ -225,29 +224,74 @@ export const Overview = () => {
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
 
+    useEffect(() => {
+        // Initialize tooltips
+        const tooltipElems = document.querySelectorAll('.tooltipped');
+        M.Tooltip.init(tooltipElems, {
+            exitDelay: 100,
+            enterDelay: 100,
+            html: false,
+            margin: 0,
+            inDuration: 300,
+            outDuration: 250,
+            position: 'bottom',
+            transitionMovement: 10
+        });
+
+        setTimeout(() => {
+            document.querySelectorAll('.material-tooltip').forEach(tooltipElem => {
+                const relatedTrigger = tooltipElems[Array.from(document.querySelectorAll('.tooltipped')).findIndex(elem => elem.getAttribute('data-tooltip-id') === tooltipElem.getAttribute('id'))];
+                if (relatedTrigger) {
+                    const customClass = relatedTrigger.getAttribute('data-tooltip-class');
+                    if (customClass) {
+                        tooltipElem.classList.add(customClass);
+                    }
+                }
+            });
+        }, 10);
+
+        // Clean up function to destroy initialized tooltips to prevent memory leaks
+        return () => {
+            M.Tooltip.getInstance(tooltipElems)?.destroy();
+        };
+    }, [displayData]);
+
+    // useEffect(() => {
+    //     const elems = document.querySelectorAll('.tooltipped');
+    //     const instances = M.Tooltip.init(elems, {
+    //         exitDelay: 0,
+    //         enterDelay: 200,
+    //         // other options
+    //     });
+
+    //     // Adding custom class for background color
+    //     elems.forEach(elem => {
+    //         const instance = M.Tooltip.getInstance(elem);
+    //         if (instance && instance.tooltipEl) { // Ensure the tooltip element exists
+    //             instance.tooltipEl.classList.add('tooltip-light');
+    //         }
+    //     });
+
+    //     return () => {
+    //         instances.forEach(instance => instance.destroy());
+    //     };
+    // }, []);
+
     return (
         <>
             <header>
-                <Navbar title="Accommodation Logs" />
+                <Navbar title="Service Providers" />
             </header>
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
                     <AddLogModal isOpen={isModalOpen} onClose={closeModal} />
 
-                    {/* <button className="btn" onClick={openModal}>New</button> */}
-                    <div className="row" style={{ textAlign: 'right' }}>
-                        <a className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
-                            <span class="material-symbols-outlined">
-                                add
-                            </span>
-                            Add New
-                        </a>
-                    </div>
+
                     {loaded ? (
                         <>
                             <div className="row center">
-                                <div className="col s12">
+                                <div className="col s10">
                                     <ul className="pagination">
                                         <li className={currentPage === 0 ? 'disabled' : ''}>
                                             <a onClick={() => currentPage > 0 && changePage(currentPage - 1)} href="#!">
@@ -277,6 +321,17 @@ export const Overview = () => {
                                         </li>
                                     </ul>
                                 </div>
+                                <div className="col s2">
+                                    {/* <button className="btn" onClick={openModal}>New</button> */}
+                                    {/* <div className="row" style={{ textAlign: 'right' }}> */}
+                                    <a className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                                        <span className="material-symbols-outlined">
+                                            add
+                                        </span>
+                                        Add New
+                                    </a>
+                                    {/* </div> */}
+                                </div>
                             </div>
                             <div className="row center">
                                 <div>
@@ -295,7 +350,7 @@ export const Overview = () => {
                                             options={filterOptions.core_dest}
                                             isClearable
                                         />
-                                        <span class="material-symbols-outlined">
+                                        <span className="material-symbols-outlined">
                                             explore
                                         </span>
                                     </div>
@@ -314,7 +369,7 @@ export const Overview = () => {
                                             options={filterOptions.country}
                                             isClearable
                                         />
-                                        <span class="material-symbols-outlined">
+                                        <span className="material-symbols-outlined">
                                             globe
                                         </span>
                                     </div>
@@ -333,7 +388,7 @@ export const Overview = () => {
                                             options={filterOptions.consultant}
                                             isClearable
                                         />
-                                        <span class="material-symbols-outlined">
+                                        <span className="material-symbols-outlined">
                                             badge
                                         </span>
                                     </div>
@@ -355,7 +410,7 @@ export const Overview = () => {
                                         options={filterOptions.property}
                                         isClearable
                                     />
-                                    <span class="material-symbols-outlined">
+                                    <span className="material-symbols-outlined">
                                         hotel
                                     </span>
                                 </div>
@@ -406,9 +461,22 @@ export const Overview = () => {
                                                 applySorting('property_name')
                                             }
                                         >
-                                            Property
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* <span className="material-symbols-outlined">
+                                                hotel
+                                            </span> */}
+                                            {/* Property */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Property & Portfolio"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    hotel
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'property_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
@@ -416,49 +484,84 @@ export const Overview = () => {
                                                 applySorting('primary_traveler')
                                             }
                                         >
-                                            Traveler
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* Traveler */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Primary Traveler Name"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    person
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'primary_traveler' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
                                             onClick={() =>
                                                 applySorting('num_pax')
                                             }
+                                            style={{ width: '60px' }}
                                         >
-                                            Pax
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* Pax */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Number of Passengers"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    airline_seat_recline_extra
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'num_pax' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
                                             onClick={() =>
                                                 applySorting('date_in')
                                             }
+                                            style={{ width: '100px' }}
+                                            className="center"
+                                        // style={{ width: '200px' }}
                                         >
-                                            Date In
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
-                                            </span>
-                                        </th>
-                                        <th
-                                            onClick={() =>
-                                                applySorting('date_out')
-                                            }
-                                        >
-                                            Date Out
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Date Range"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    date_range
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'date_in' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
                                             onClick={() =>
                                                 applySorting('bed_nights')
                                             }
+                                            style={{ width: '60px' }}
+                                            className="center"
                                         >
-                                            Bed Nights
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Bed Nights"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    dark_mode
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'bed_nights' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
@@ -466,19 +569,80 @@ export const Overview = () => {
                                                 applySorting('consultant_display_name')
                                             }
                                         >
-                                            Consultant
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* Consultant */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Travel Beyond Consultant"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    badge
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'consultant_display_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('booking_channel_name')
+                                            }
+                                        >
+                                            {/* Booking Channel */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Booking Channel"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    alt_route
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'booking_channel_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('agency_name')
+                                            }
+                                        >
+                                            {/* Agency Name */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Agency"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    contact_mail
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'agency_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                         <th
                                             onClick={() =>
                                                 applySorting('country_name')
                                             }
+                                            className="center"
                                         >
-                                            Country
-                                            <span className="material-symbols-outlined">
-                                                swap_vert
+                                            {/* Country */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Country/Core Destination"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    explore
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
                                             </span>
                                         </th>
                                     </tr>
@@ -495,16 +659,38 @@ export const Overview = () => {
                                                         </div>
                                                     </td>
                                                     <td>{item.primary_traveler}</td>
-                                                    <td>{item.num_pax}</td>
-                                                    <td>{moment(item.date_in).format("MMM D, YYYY")}</td>
-                                                    <td>{moment(item.date_out).format("MMM D, YYYY")}</td>
-
-                                                    <td><span className="chip grey lighten-1">{item.bed_nights}</span></td>
+                                                    <td style={{ width: '60px' }}>{item.num_pax}</td>
+                                                    <td style={{ width: '100px' }}>
+                                                        <span className="chip blue-grey lighten-3 text-bold">
+                                                            {moment(item.date_in).format("M/D/YY")}
+                                                        </span>
+                                                        <span className="chip blue-grey lighten-3 text-bold">
+                                                            {moment(item.date_out).format("M/D/YY")}
+                                                        </span>
+                                                    </td>
+                                                    <td className="center" style={{ width: '60px' }}>
+                                                        {/* <span className="chip blue lighten-3"> */}
+                                                        {item.bed_nights}
+                                                        {/* </span> */}
+                                                    </td>
                                                     <td>
                                                         <div>
                                                             {item.consultant_display_name}
-
                                                         </div>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p>
+                                                            {item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
+                                                                ? item.booking_channel_name
+                                                                : <span className="chip">n/a</span>}
+                                                        </p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p>
+                                                            {item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
+                                                                ? item.agency_name
+                                                                : <span className="chip">n/a</span>}
+                                                        </p>
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
                                                         <p>{item.country_name}</p>
