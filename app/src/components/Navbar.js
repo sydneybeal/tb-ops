@@ -51,21 +51,21 @@ const Navbar = ({ title }) => {
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/'} className="text-bold">
+                        <Link to={'/properties'} className="text-bold">
                             Properties
                         </Link>
                     </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/'} className="text-bold">
+                        <Link to={'/consultants'} className="text-bold">
                             Consultants
                         </Link>
                     </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/'} className="text-bold">
+                        <Link to={'/trip_reports'} className="text-bold">
                             Trip Reports
                         </Link>
                     </li>

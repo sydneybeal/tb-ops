@@ -224,6 +224,10 @@ const AddLogModal = ({ isOpen, onClose }) => {
     };
 
     const calculateBedNights = (dateIn, dateOut, numPax) => {
+        // Skip calculation if either date is not set
+        if (!dateIn || !dateOut) {
+            return 0;
+        }
         const startDate = moment(dateIn);
         const endDate = moment(dateOut);
         const diffDays = endDate.diff(startDate, 'days');
@@ -772,6 +776,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                             Check-In Date
                                         </label>
                                         <button
+                                            type="button"
                                             className="btn-floating btn-small grey lighten-1"
                                             onClick={() => handleLogChange(index, 'date_in', '')}
                                             style={{ marginLeft: '5px' }}
@@ -799,6 +804,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                             Check-Out Date
                                         </label>
                                         <button
+                                            type="button"
                                             className="btn-floating btn-small grey lighten-1"
                                             onClick={() => handleLogChange(index, 'date_out', '')}
                                             style={{ marginLeft: '5px' }}
