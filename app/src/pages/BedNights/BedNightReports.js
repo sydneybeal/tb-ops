@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import Select from 'react-select';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
@@ -248,8 +250,47 @@ export const BedNightReports = () => {
                             />
                         </div>
                         <div className="col s6">
-                            <div className="date-selectors">
-                                <input
+                            <div className="row">
+                                <div className="col s6">
+                                    <div>
+                                        <ReactDatePicker
+                                            selected={filters.start_date ? new Date(filters.start_date) : null}
+                                            onChange={
+                                                (date) => setFilters({ ...filters, start_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                            isClearable
+                                            placeholderText="mm/dd/yyyy"
+                                            className="date-input"
+                                            dateFormat="MM/dd/yyyy" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                        />
+                                    </div>
+                                    <span style={{ fontSize: '0.8rem' }}>
+                                        <span className="material-symbols-outlined">
+                                            today
+                                        </span>
+                                        Start Date
+                                    </span>
+                                </div>
+                                <div className="col s6">
+                                    <div>
+                                        <ReactDatePicker
+                                            selected={filters.end_date ? new Date(filters.end_date) : null}
+                                            onChange={
+                                                (date) => setFilters({ ...filters, end_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                            isClearable
+                                            placeholderText="mm/dd/yyyy"
+                                            className="date-input"
+                                            dateFormat="MM/dd/yyyy" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                        />
+                                    </div>
+                                    <span style={{ fontSize: '0.8rem' }}>
+                                        <span className="material-symbols-outlined">
+                                            event
+                                        </span>
+                                        End Date
+                                    </span>
+                                </div>
+
+                                {/* <input
                                     type="date"
                                     value={filters.start_date}
                                     onChange={
@@ -274,7 +315,7 @@ export const BedNightReports = () => {
                                     className="btn btn-small deep-orange lighten-2"
                                     onClick={
                                         (e) => setFilters({ ...filters, end_date: '' })}
-                                >x</button>
+                                >x</button> */}
                             </div>
                         </div>
                     </div>
