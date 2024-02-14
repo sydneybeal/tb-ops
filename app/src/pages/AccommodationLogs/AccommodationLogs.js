@@ -11,7 +11,6 @@ export const Overview = () => {
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const [error, setError] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 100;
     const [totalPages, setTotalPages] = useState(0);
@@ -59,7 +58,6 @@ export const Overview = () => {
                 setDisplayData(data.slice(0, itemsPerPage));
             })
             .catch((err) => {
-                setError(true);
                 setLoaded(true);
                 console.error(err);
             });
@@ -256,26 +254,6 @@ export const Overview = () => {
         };
     }, [displayData]);
 
-    // useEffect(() => {
-    //     const elems = document.querySelectorAll('.tooltipped');
-    //     const instances = M.Tooltip.init(elems, {
-    //         exitDelay: 0,
-    //         enterDelay: 200,
-    //         // other options
-    //     });
-
-    //     // Adding custom class for background color
-    //     elems.forEach(elem => {
-    //         const instance = M.Tooltip.getInstance(elem);
-    //         if (instance && instance.tooltipEl) { // Ensure the tooltip element exists
-    //             instance.tooltipEl.classList.add('tooltip-light');
-    //         }
-    //     });
-
-    //     return () => {
-    //         instances.forEach(instance => instance.destroy());
-    //     };
-    // }, []);
 
     return (
         <>
@@ -324,7 +302,7 @@ export const Overview = () => {
                                 <div className="col s2">
                                     {/* <button className="btn" onClick={openModal}>New</button> */}
                                     {/* <div className="row" style={{ textAlign: 'right' }}> */}
-                                    <a className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                                    <a href="/#" className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
                                         </span>

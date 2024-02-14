@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import M from 'materialize-css';
 import { Link } from 'react-router-dom';
+import { useRole } from './RoleContext';
 
 const Navbar = ({ title }) => {
+    // State to keep track of the current role
+    const { role, setRole } = useRole();
+
     useEffect(() => {
         // Initialize Sidenav
         let elems = document.querySelectorAll('.sidenav');
         M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
+        let dropdowns = document.querySelectorAll('.dropdown-trigger');
+        M.Dropdown.init(dropdowns, {});
     }, []);
 
     return (
@@ -17,11 +23,18 @@ const Navbar = ({ title }) => {
                         <div className="col s12 m10 grey-text text-darken-3">
                             <h4 className="header">{title}</h4>
                         </div>
+                        <div className="col s12 m2">
+                            <button className='dropdown-trigger btn' href='#' data-target='role-dropdown'>Role: {role}</button>
+                            <ul id='role-dropdown' className='dropdown-content'>
+                                <li><a href="#!" onClick={() => setRole('admin')}>Admin</a></li>
+                                <li><a href="#!" onClick={() => setRole('user')}>User</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </nav>
             <div className="container">
-                <a href="#" data-target="slide-out" className="top-nav sidenav-trigger full hide-on-large-only">
+                <a href="/#" data-target="slide-out" className="top-nav sidenav-trigger full hide-on-large-only">
                     <i className="material-icons">menu</i>
                 </a>
             </div>
@@ -51,25 +64,44 @@ const Navbar = ({ title }) => {
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/properties'} className="text-bold">
-                            Properties
-                        </Link>
-                    </li>
-                </div>
-                <div className="container" style={{ width: '100%' }}>
-                    <li>
-                        <Link to={'/consultants'} className="text-bold">
-                            Consultants
-                        </Link>
-                    </li>
-                </div>
-                <div className="container" style={{ width: '100%' }}>
-                    <li>
                         <Link to={'/trip_reports'} className="text-bold">
                             Trip Reports
                         </Link>
                     </li>
                 </div>
+                {role === 'admin' && (
+                    <>
+                        <div className="container" style={{ width: '80%' }}>
+                            <li>
+                                <div className="chip small grey lighten-2">
+                                    ADMIN
+                                </div>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/properties'} className="text-bold">
+                                    Manage Properties
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/consultants'} className="text-bold">
+                                    Manage Consultants
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/agencies'} className="text-bold">
+                                    Manage Agencies
+                                </Link>
+                            </li>
+                        </div>
+                    </>
+                )}
+
             </ul>
         </>
     );

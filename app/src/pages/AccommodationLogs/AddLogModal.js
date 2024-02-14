@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
+import { useRole } from '../../components/RoleContext';
 import M from 'materialize-css';
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
 
 const AddLogModal = ({ isOpen, onClose }) => {
     const [accommodationLogs, setAccommodationLogs] = useState([{}]);
+    const { role } = useRole();
     const [primaryTraveler, setPrimaryTraveler] = useState('');
     const [numPax, setNumPax] = useState(1);
     const [selectedConsultantId, setSelectedConsultantId] = useState('');
+    const [selectedAgencyId, setSelectedAgencyId] = useState('');
+    const [isNewAgency, setIsNewAgency] = useState(false);
+    const [newAgencyName, setNewAgencyName] = useState('');
     const [properties, setProperties] = useState([]);
     const [countries, setCountries] = useState([]);
     const [consultants, setConsultants] = useState([]);
@@ -151,15 +158,26 @@ const AddLogModal = ({ isOpen, onClose }) => {
         const logsToSubmit = accommodationLogs.map(log => ({
             ...log,
             primary_traveler: primaryTraveler,
-            consultant_id: selectedConsultantId, // Apply the selected consultant's ID to each log
+            consultant_id: selectedConsultantId,
+            num_pax: numPax,
+            agency_id: selectedAgencyId || '',
+            new_agency_name: newAgencyName || '',
         }));
         // Submit logsToSubmit to your backend
         console.log(logsToSubmit);
-        M.toast({
-            html: 'Your entry was valid, but nothing will be saved to the database at this time.',
-            displayLength: 4000,
-            classes: 'green lighten-1',
-        });
+        if (role === 'admin') {
+            M.toast({
+                html: 'Your entry was valid, but nothing will be saved to the database at this time.',
+                displayLength: 4000,
+                classes: 'green lighten-1',
+            });
+        } else {
+            M.toast({
+                html: 'Your entry was valid, but only admins are able to save to the database at this time.',
+                displayLength: 4000,
+                classes: 'amber darken-1',
+            });
+        }
         // Add submission logic here
         // Here, implement the logic to submit the form data
         // Convert accommodationLogs to the expected payload format
@@ -177,6 +195,24 @@ const AddLogModal = ({ isOpen, onClose }) => {
                 primaryTraveler: validatePrimaryTraveler(value),
             }));
         }
+    };
+
+    const handleAgencyChange = (selectedOption) => {
+        setSelectedAgencyId(selectedOption ? selectedOption.value : '');
+        // setValidationErrors(prevErrors => ({
+        //     ...prevErrors,
+        //     consultant: validateConsultant(selectedOption ? selectedOption.value : ''),
+        // }));
+    };
+
+    const handleNewAgencyNameChange = (e) => {
+        const value = e.target.value;
+        setNewAgencyName(value);
+        console.log(newAgencyName);
+        // setValidationErrors(prevErrors => ({
+        //     ...prevErrors,
+        //     consultant: validateConsultant(selectedOption ? selectedOption.value : ''),
+        // }));
     };
 
     const handlePrimaryTravelerBlur = () => {
@@ -240,7 +276,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
         if (!log.date_in) logError.date_in = 'Missing check-in date';
         if (!log.date_out) logError.date_out = 'Missing check-out date';
         if (!log.property_id && !log.new_property_name) {
-            logError.property_selection = 'Missing property';
+            logError.property = 'Missing property';
         } else if (!log.property_id) {
             if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';
             if (!log.new_property_country_id) logError.new_property_country_id = 'Missing new property country';
@@ -287,6 +323,30 @@ const AddLogModal = ({ isOpen, onClose }) => {
         return '';
     };
 
+    const validateDateOverlaps = (logs) => {
+        // This function will store any date overlap errors
+        let overlapErrors = [];
+
+        // Iterate through each log and compare it against all other logs
+        for (let i = 0; i < logs.length; i++) {
+            for (let j = i + 1; j < logs.length; j++) {
+                // Convert string dates to moment objects for easy comparison
+                const logADateIn = moment(logs[i].date_in);
+                const logADateOut = moment(logs[i].date_out);
+                const logBDateIn = moment(logs[j].date_in);
+                const logBDateOut = moment(logs[j].date_out);
+
+                // Check for overlap
+                if (logADateIn.isBefore(logBDateOut) && logADateOut.isAfter(logBDateIn)) {
+                    // If there's an overlap, add an error message for these logs
+                    overlapErrors.push(`Overlapping dates between property ${i + 1} and property ${j + 1}`);
+                }
+            }
+        }
+
+        return overlapErrors;
+    };
+
     const validateProperty = (log, index) => {
         const errors = {};
         const hasInteractedNewProperty = userNewPropertyInteractions[index];
@@ -327,6 +387,12 @@ const AddLogModal = ({ isOpen, onClose }) => {
             errors.logs = logErrors;
         }
 
+        // Validate date overlaps
+        const dateOverlapErrors = validateDateOverlaps(accommodationLogs);
+        if (dateOverlapErrors.length > 0) {
+            errors.date_overlaps = dateOverlapErrors;
+        }
+
         setValidationErrors(errors);
 
         // Determine if the form is valid based on the presence of errors
@@ -334,6 +400,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
     };
 
     const handleLogChange = (index, field, value) => {
+        if (field === 'date_in' || field === 'date_out') {
+            value = value ? new Date(value).toISOString().substring(0, 10) : '';
+        }
         const updatedLogs = [...accommodationLogs];
         if (!updatedLogs[index]) updatedLogs[index] = {};
         updatedLogs[index][field] = value;
@@ -381,7 +450,8 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     delete logErrors[index].date_out; // Remove the key if no error
                 }
                 break;
-            // Handle other fields similarly...
+            default:
+                break;
         }
 
         if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_portfolio_name', 'is_new_property'].includes(field)) {
@@ -417,7 +487,8 @@ const AddLogModal = ({ isOpen, onClose }) => {
         // Update the validationErrors state with the updated errors array
         setValidationErrors(prevErrors => ({
             ...prevErrors,
-            logs: updatedErrors
+            logs: updatedErrors,
+            date_overlaps: [],
         }));
     };
 
@@ -426,7 +497,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
     return (
         <div id="add-log-modal" className="modal add-log-modal">
             <div className="modal-content">
-                <h4 className="grey-text text-darken-2">New Accommodation Log</h4>
+                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>New Service Provider Entry</h4>
                 <div style={{ textAlign: 'left', marginTop: '50px' }}>
                     <form id="logForm" onSubmit={handleFormSubmit}>
                         {/* Trip Information Section */}
@@ -444,9 +515,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 )}
                             </div>
                         )}
-                        <div className="row">
+                        <div className="row" style={{ marginBottom: '60px' }}>
                             {/* Primary Traveler Name Field */}
-                            <div className="col s5">
+                            <div className="col s3">
                                 <input
                                     type="text"
                                     id="primary_traveler"
@@ -461,13 +532,13 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     <span className="material-symbols-outlined">
                                         hiking
                                     </span>
-                                    Primary Traveler Name (Last/First)
+                                    Primary Traveler (Last/First)
 
                                 </label>
                                 {/* <span className="helper-text" data-error="wrong" data-success="right">Enter the full name of the primary traveler</span> */}
                             </div>
 
-                            <div className="col s2" style={{ textAlign: 'center' }}>
+                            <div className="col s1" style={{ textAlign: 'center' }}>
                                 {/* Number of Pax Numeric Selection */}
                                 < input
                                     type="number"
@@ -486,8 +557,109 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 </label>
                             </div>
 
-                            {/* Consultant Name Selection */}
-                            <div className="col s5">
+                            <div className="col s4">
+
+                                {role === 'admin' ? (
+                                    <>
+                                        {!isNewAgency ? (
+                                            <Select
+                                                placeholder="Select agency"
+                                                id="agency_select"
+                                                value={agencies.find(agency => agency.value === selectedAgencyId)}
+                                                onChange={handleAgencyChange}
+                                                options={agencies}
+                                                isClearable
+                                                style={{ flexGrow: '1' }}
+                                                classNamePrefix="select"
+                                                className={validationErrors.agency ? 'invalid-select' : ''}
+                                                styles={{
+                                                    control: (provided, state) => ({
+                                                        ...provided,
+                                                        borderColor: validationErrors.agency ? 'red' : provided.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                    })
+                                                }}
+                                            />
+
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                id="new_agency_name"
+                                                value={newAgencyName}
+                                                onChange={handleNewAgencyNameChange}
+                                                placeholder="Agency Name"
+                                                style={{ marginRight: '10px', flexGrow: '1' }}
+                                            />
+                                        )}
+                                        <label htmlFor="new_agency_name">
+                                            <span className="material-symbols-outlined">
+                                                contact_mail
+                                            </span>
+                                            Agency Name
+                                        </label>
+                                        {(!selectedAgencyId && !newAgencyName) && (
+                                            <div>
+                                                <em className="grey-text text-lighten-1">
+                                                    <a
+                                                        className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                        href="/#"
+                                                        onClick={() => {
+                                                            setIsNewAgency(false);
+                                                        }}
+                                                    >
+                                                        <span className="material-symbols-outlined">
+                                                            manage_search
+                                                        </span>
+                                                        Existing Agency
+                                                    </a>
+                                                    &nbsp;or&nbsp;
+
+                                                    <a
+                                                        className="text-bold new-existing-prop green-text text-lighten-2"
+                                                        href="/#"
+                                                        onClick={() => setIsNewAgency(true)} >
+                                                        <span className="material-symbols-outlined">
+                                                            add_circle
+                                                        </span>
+                                                        New Agency
+                                                    </a>
+                                                </em>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <div>
+                                            <Select
+                                                placeholder="Select agency"
+                                                id="agency_select"
+                                                value={agencies.find(agency => agency.value === selectedAgencyId)}
+                                                onChange={handleAgencyChange}
+                                                options={agencies}
+                                                isClearable
+                                                style={{ flexGrow: '1' }}
+                                                classNamePrefix="select"
+                                                className={validationErrors.agency ? 'invalid-select' : ''}
+                                                styles={{
+                                                    control: (provided, state) => ({
+                                                        ...provided,
+                                                        borderColor: validationErrors.agency ? 'red' : provided.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                    })
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="col s4">
                                 <Select
                                     placeholder="Select Consultant"
                                     id="consultant_select"
@@ -518,8 +690,19 @@ const AddLogModal = ({ isOpen, onClose }) => {
                             </div>
                         </div>
 
+                        {validationErrors.date_overlaps && validationErrors.date_overlaps.length > 0 && (
+                            <div className="row">
+                                {validationErrors.date_overlaps.map((errorMessage, index) => (
+                                    <div key={index} className="chip red lighten-4 text-bold">
+                                        {errorMessage}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         {accommodationLogs.map((log, index) => (
-                            <div key={index} style={{ marginTop: '60px' }}>
+                            // <>
+                            <div key={index} style={{ marginBottom: '80px' }}>
                                 <div className="row">
                                     <div className="col s11">
                                         <div className="chip teal accent-4 text-bold">{index + 1}</div>
@@ -577,6 +760,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     <div className="col s1" style={{ textAlign: 'right' }}>
                                         <a
                                             className="btn-floating btn-small waves-effect waves-light red lighten-2"
+                                            href="/#"
                                             onClick={() => handleRemoveClick(index)}>
                                             <i className="material-icons">remove</i>
                                         </a>
@@ -592,78 +776,17 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     </div>
                                 )}
 
-                                {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
-                                    <div className="row">
-                                        <div>
-                                            <em className="grey-text text-lighten-1">
-                                                Please select an&nbsp;
-                                                <a
-                                                    className="text-bold new-existing-prop teal-text text-lighten-2"
-                                                    onClick={() => {
-                                                        handleLogChange(index, 'is_new_property', false);
-                                                        handleLogChange(index, 'new_property_country_id', '');
-                                                        handleLogChange(index, 'new_property_core_destination_name', '');
-                                                        handleLogChange(index, 'new_property_name', '');
-                                                        handleLogChange(index, 'new_property_portfolio_name', '');
-                                                        handleLogChange(index, 'new_property_country_name', '');
-                                                    }}
-                                                >
-                                                    <span className="material-symbols-outlined">
-                                                        manage_search
-                                                    </span>
-                                                    Existing Property
-                                                </a>
-                                                &nbsp;or&nbsp;
-
-                                                <a
-                                                    className="text-bold new-existing-prop green-text text-lighten-2"
-                                                    onClick={() => handleLogChange(index, 'is_new_property', true)}>
-                                                    <span className="material-symbols-outlined">
-                                                        add_circle
-                                                    </span>
-                                                    New Property
-                                                </a>
-                                            </em>
-                                        </div>
-                                    </div>
-                                )
-                                }
-
                                 {/* Property Info */}
-                                <div className="row">
-                                    {!log.is_new_property ? (
-                                        <div className="col s12">
-                                            <Select
-                                                placeholder="Search for a property"
-                                                id="property_select"
-                                                value={properties.find(prop => prop.value === log.property_id)}
-                                                onChange={(selectedOption) => {
-                                                    handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-                                                    handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
-                                                    handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
-                                                    handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
-                                                    handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
-                                                }}
-                                                options={properties}
-                                                isClearable
-                                            />
-                                            <label htmlFor="property_select">
-                                                <span className="material-symbols-outlined">
-                                                    hotel
-                                                </span>
-                                                Property Name
-                                            </label>
-                                        </div>
-                                    ) : (
-                                        <div className="col s12">
-                                            <div className="card new-property-card cyan lighten-5">
-                                                <div className="card-content">
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <em className="grey-text">
-                                                            Creating a new property...&nbsp;
-                                                        </em>
+                                {role === 'admin' ? (
+                                    <>
+                                        {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
+                                            <div className="row">
+                                                <div>
+                                                    <em className="grey-text text-lighten-1">
+                                                        Please select an&nbsp;
                                                         <a
-                                                            className="text-bold new-existing-prop red-text text-lighten-3"
+                                                            className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                            href="/#"
                                                             onClick={() => {
                                                                 handleLogChange(index, 'is_new_property', false);
                                                                 handleLogChange(index, 'new_property_country_id', '');
@@ -673,274 +796,310 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                 handleLogChange(index, 'new_property_country_name', '');
                                                             }}
                                                         >
-                                                            Cancel
                                                             <span className="material-symbols-outlined">
-                                                                close
+                                                                manage_search
                                                             </span>
+                                                            Existing Property
                                                         </a>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col s6">
-                                                            <input
-                                                                type="text"
-                                                                id="new_property_name"
-                                                                value={log.new_property_name || ''}
-                                                                onChange={(e) => handleLogChange(index, 'new_property_name', e.target.value)}
-                                                                placeholder="Property Name"
-                                                                style={{ marginRight: '10px', flexGrow: '1' }}
-                                                            />
-                                                            <label htmlFor="new_property_name">
-                                                                <span className="material-symbols-outlined">
-                                                                    hotel
-                                                                </span>
-                                                                Property Name
-                                                            </label>
-                                                        </div>
-                                                        <div className="col s6">
-                                                            <input
-                                                                type="text"
-                                                                id="new_property_portfolio_name"
-                                                                value={log.new_property_portfolio_name || ''}
-                                                                onChange={(e) => handleLogChange(index, 'new_property_portfolio_name', e.target.value)}
-                                                                placeholder="Portfolio Name"
-                                                                style={{ marginRight: '10px', flexGrow: '1' }}
-                                                            />
-                                                            <label htmlFor="new_property_portfolio_name">
-                                                                <span className="material-symbols-outlined">
-                                                                    store
-                                                                </span>
-                                                                Portfolio Name
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col s6">
-                                                            <Select
-                                                                placeholder="Select Country"
-                                                                value={countries.find(prop => prop.value === log.new_property_country_id)}
-                                                                onChange={(selectedOption) => {
-                                                                    handleLogChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
-                                                                    handleLogChange(index, 'new_property_core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
-                                                                    handleLogChange(index, 'new_property_country_name', selectedOption ? selectedOption.label : '');
-                                                                }}
-                                                                options={countries}
-                                                                isClearable
-                                                                style={{ flexGrow: '1' }}
-                                                                id="new_country_select"
-                                                            />
-                                                            <label htmlFor="new_country_select">
-                                                                <span className="material-symbols-outlined">
-                                                                    globe
-                                                                </span>
-                                                                Country Name
-                                                            </label>
-                                                        </div>
-                                                        <div className="col s6">
-                                                            {log.new_property_core_destination_name &&
-                                                                <div className="chip">
-                                                                    <span className="text-bold">
-                                                                        Core Destination:&nbsp;
-                                                                    </span>
-                                                                    {log.new_property_core_destination_name}
-                                                                    &nbsp;
+                                                        &nbsp;or&nbsp;
+
+                                                        <a
+                                                            className="text-bold new-existing-prop green-text text-lighten-2"
+                                                            href="/#"
+                                                            onClick={() => handleLogChange(index, 'is_new_property', true)}>
+                                                            <span className="material-symbols-outlined">
+                                                                add_circle
+                                                            </span>
+                                                            New Property
+                                                        </a>
+                                                    </em>
+                                                </div>
+                                            </div>
+                                        )
+                                        }
+
+
+
+                                        <div className="row">
+                                            {!log.is_new_property ? (
+                                                <div className="col s12">
+                                                    <Select
+                                                        placeholder="Search for a property"
+                                                        id="property_select"
+                                                        value={properties.find(prop => prop.value === log.property_id)}
+                                                        onChange={(selectedOption) => {
+                                                            handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
+                                                            handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
+                                                            handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
+                                                            handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
+                                                            handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+                                                        }}
+                                                        options={properties}
+                                                        isClearable
+                                                    />
+                                                    <label htmlFor="property_select">
+                                                        <span className="material-symbols-outlined">
+                                                            hotel
+                                                        </span>
+                                                        Property Name
+                                                    </label>
+                                                </div>
+                                            ) : (
+                                                <div className="col s12">
+                                                    <div className="card new-property-card cyan lighten-5">
+                                                        <div className="card-content">
+                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                <em className="grey-text">
+                                                                    Creating a new property...&nbsp;
+                                                                </em>
+                                                                <a
+                                                                    className="text-bold new-existing-prop red-text text-lighten-3"
+                                                                    href="/#"
+                                                                    onClick={() => {
+                                                                        handleLogChange(index, 'is_new_property', false);
+                                                                        handleLogChange(index, 'new_property_country_id', '');
+                                                                        handleLogChange(index, 'new_property_core_destination_name', '');
+                                                                        handleLogChange(index, 'new_property_name', '');
+                                                                        handleLogChange(index, 'new_property_portfolio_name', '');
+                                                                        handleLogChange(index, 'new_property_country_name', '');
+                                                                    }}
+                                                                >
+                                                                    Cancel
                                                                     <span className="material-symbols-outlined">
-                                                                        explore
+                                                                        close
                                                                     </span>
+                                                                </a>
+                                                            </div>
+                                                            <div className="row">
+                                                                <div className="col s6">
+                                                                    <input
+                                                                        type="text"
+                                                                        id="new_property_name"
+                                                                        value={log.new_property_name || ''}
+                                                                        onChange={(e) => handleLogChange(index, 'new_property_name', e.target.value)}
+                                                                        placeholder="Property Name"
+                                                                        style={{ marginRight: '10px', flexGrow: '1' }}
+                                                                    />
+                                                                    <label htmlFor="new_property_name">
+                                                                        <span className="material-symbols-outlined">
+                                                                            hotel
+                                                                        </span>
+                                                                        Property Name
+                                                                    </label>
                                                                 </div>
-                                                            }
+                                                                <div className="col s6">
+                                                                    <input
+                                                                        type="text"
+                                                                        id="new_property_portfolio_name"
+                                                                        value={log.new_property_portfolio_name || ''}
+                                                                        onChange={(e) => handleLogChange(index, 'new_property_portfolio_name', e.target.value)}
+                                                                        placeholder="Portfolio Name"
+                                                                        style={{ marginRight: '10px', flexGrow: '1' }}
+                                                                    />
+                                                                    <label htmlFor="new_property_portfolio_name">
+                                                                        <span className="material-symbols-outlined">
+                                                                            store
+                                                                        </span>
+                                                                        Portfolio Name
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            <div className="row">
+                                                                <div className="col s6">
+                                                                    <Select
+                                                                        placeholder="Select Country"
+                                                                        value={countries.find(prop => prop.value === log.new_property_country_id)}
+                                                                        onChange={(selectedOption) => {
+                                                                            handleLogChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
+                                                                            handleLogChange(index, 'new_property_core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+                                                                            handleLogChange(index, 'new_property_country_name', selectedOption ? selectedOption.label : '');
+                                                                        }}
+                                                                        options={countries}
+                                                                        isClearable
+                                                                        style={{ flexGrow: '1' }}
+                                                                        id="new_country_select"
+                                                                    />
+                                                                    <label htmlFor="new_country_select">
+                                                                        <span className="material-symbols-outlined">
+                                                                            globe
+                                                                        </span>
+                                                                        Country Name
+                                                                    </label>
+                                                                </div>
+                                                                <div className="col s6">
+                                                                    {log.new_property_core_destination_name &&
+                                                                        <div className="chip">
+                                                                            <span className="text-bold">
+                                                                                Core Destination:&nbsp;
+                                                                            </span>
+                                                                            {log.new_property_core_destination_name}
+                                                                            &nbsp;
+                                                                            <span className="material-symbols-outlined">
+                                                                                explore
+                                                                            </span>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )
+                                            }
                                         </div>
-                                    )
-                                    }
-                                </div>
+                                    </>
+                                ) : (
+                                    <div className="col s12">
+                                        <Select
+                                            placeholder="Search for a property"
+                                            id="property_select"
+                                            value={properties.find(prop => prop.value === log.property_id)}
+                                            onChange={(selectedOption) => {
+                                                handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
+                                                handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
+                                                handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
+                                                handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
+                                                handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+                                            }}
+                                            options={properties}
+                                            isClearable
+                                        />
+                                        <label htmlFor="property_select">
+                                            <span className="material-symbols-outlined">
+                                                hotel
+                                            </span>
+                                            Property Name
+                                        </label>
+                                    </div>
+                                )}
+
 
                                 <div className="row">
-                                    <div className="col s6">
+                                    <div className="col s3">
 
                                         {/* Date In Selector */}
-                                        <input
-                                            type="date"
-                                            id="date_in"
-                                            value={log.date_in || ''} // Ensure this is a string in 'YYYY-MM-DD' format; use '' as fallback
-                                            onChange={(e) => handleLogChange(index, 'date_in', e.target.value)} // Correctly extract value from event
-                                            placeholder="Select date in"
-                                            className="date-input"
-                                        />
+                                        <div>
+                                            <ReactDatePicker
+                                                selected={log.date_in ? new Date(log.date_in) : null}
+                                                onChange={(date) => handleLogChange(index, 'date_in', date ? date.toISOString().substring(0, 10) : '')}
+                                                isClearable
+                                                placeholderText="Select date in"
+                                                className="date-input"
+                                                dateFormat="yyyy-MM-dd" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                            />
+                                        </div>
                                         <label htmlFor="date_in">
                                             <span className="material-symbols-outlined">
                                                 flight_land
                                             </span>
                                             Check-In Date
                                         </label>
-                                        <button
-                                            type="button"
-                                            className="btn-floating btn-small grey lighten-1"
-                                            onClick={() => handleLogChange(index, 'date_in', '')}
-                                            style={{ marginLeft: '5px' }}
-                                        >
-                                            <span className="material-symbols-outlined">
-                                                close
-                                            </span>
-                                        </button>
                                     </div>
-                                    <div className="col s6">
+                                    <div className="col s3">
 
                                         {/* Date Out Selector */}
-                                        <input
-                                            type="date"
-                                            id="date_out"
-                                            value={log.date_out || ''} // Ensure this is a string in 'YYYY-MM-DD' format; use '' as fallback
-                                            onChange={(e) => handleLogChange(index, 'date_out', e.target.value)} // Correctly extract value from event
-                                            placeholder="Select date out"
-                                            className="date-input"
-                                        />
+                                        <div>
+                                            <div>
+                                                <ReactDatePicker
+                                                    selected={log.date_out ? new Date(log.date_out) : null}
+                                                    onChange={(date) => handleLogChange(index, 'date_out', date ? date.toISOString().substring(0, 10) : '')}
+                                                    isClearable
+                                                    placeholderText="Select date out"
+                                                    className="date-input"
+                                                    dateFormat="yyyy-MM-dd" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                                />
+                                            </div>
+                                        </div>
                                         <label htmlFor="date_out">
                                             <span className="material-symbols-outlined">
                                                 flight_takeoff
                                             </span>
                                             Check-Out Date
                                         </label>
-                                        <button
-                                            type="button"
-                                            className="btn-floating btn-small grey lighten-1"
-                                            onClick={() => handleLogChange(index, 'date_out', '')}
-                                            style={{ marginLeft: '5px' }}
-                                        >
-                                            <span className="material-symbols-outlined">
-                                                close
-                                            </span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="row">
-                                    <div className="col s6">
-                                        {(!log.agency_id && !(log.new_agency_name)) && (
-                                            <div>
-                                                <em className="grey-text text-lighten-1">
-                                                    Select an&nbsp;
-                                                    <a
-                                                        className="text-bold new-existing-prop teal-text text-lighten-2"
-                                                        onClick={() => {
-                                                            handleLogChange(index, 'is_new_agency', false);
-                                                            handleLogChange(index, 'new_agency_name', '');
-                                                        }}
-                                                    >
-                                                        <span className="material-symbols-outlined">
-                                                            manage_search
-                                                        </span>
-                                                        Existing Agency
-                                                    </a>
-                                                    &nbsp;or&nbsp;
-
-                                                    <a
-                                                        className="text-bold new-existing-prop green-text text-lighten-2"
-                                                        onClick={() => handleLogChange(index, 'is_new_agency', true)}>
-                                                        <span className="material-symbols-outlined">
-                                                            add_circle
-                                                        </span>
-                                                        New Agency
-                                                    </a>
-                                                </em>
-                                            </div>
-                                        )
-                                        }
-                                        {!log.is_new_agency ? (
-                                            <Select
-                                                placeholder="Search for an agency"
-                                                value={agencies.find(prop => prop.value === log.new_property_country_id)}
-                                                onChange={(selectedOption) => {
-                                                    handleLogChange(index, 'agency_id', selectedOption ? selectedOption.value : '');
-                                                }}
-                                                options={agencies}
-                                                isClearable
-                                                style={{ flexGrow: '1' }}
-                                            />
-
-                                        ) : (
-                                            <input
-                                                type="text"
-                                                id="new_agency_name"
-                                                value={log.new_agency_name || ''}
-                                                onChange={(e) => handleLogChange(index, 'new_agency_name', e.target.value)}
-                                                placeholder="Agency Name"
-                                                style={{ marginRight: '10px', flexGrow: '1' }}
-                                            />
-                                        )}
-                                        <label htmlFor="new_agency_name">
-                                            <span className="material-symbols-outlined">
-                                                contact_mail
-                                            </span>
-                                            Agency Name
-                                        </label>
                                     </div>
                                     <div className="col s6">
-                                        {(!log.booking_channel_id && !(log.new_booking_channel_name)) && (
-                                            <div>
-                                                <em className="grey-text text-lighten-1">
-                                                    Select an&nbsp;
-                                                    <a
-                                                        className="text-bold new-existing-prop teal-text text-lighten-2"
-                                                        onClick={() => {
-                                                            handleLogChange(index, 'is_new_booking_channel', false);
-                                                            handleLogChange(index, 'new_booking_channel_name', '');
+                                        {role === 'admin' ? (
+                                            <>
+                                                {!log.is_new_booking_channel ? (
+                                                    <Select
+                                                        placeholder="Search for a booking channel"
+                                                        value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
+                                                        onChange={(selectedOption) => {
+                                                            handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
                                                         }}
-                                                    >
-                                                        <span className="material-symbols-outlined">
-                                                            manage_search
-                                                        </span>
-                                                        Existing Channel
-                                                    </a>
-                                                    &nbsp;or&nbsp;
+                                                        options={bookingChannels}
+                                                        isClearable
+                                                        style={{ flexGrow: '1' }}
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        id="new_booking_channel_name"
+                                                        value={log.new_booking_channel_name || ''}
+                                                        onChange={(e) => handleLogChange(index, 'new_booking_channel_name', e.target.value)}
+                                                        placeholder="Booking Channel Name"
+                                                        style={{ marginRight: '10px', flexGrow: '1' }}
+                                                    />
+                                                )}
+                                                <label htmlFor="new_booking_channel_name">
+                                                    <span className="material-symbols-outlined">
+                                                        alt_route
+                                                    </span>
+                                                    Booking Channel
+                                                </label>
+                                                {(!log.booking_channel_id && !(log.new_booking_channel_name)) && (
+                                                    <div>
+                                                        <em className="grey-text text-lighten-1">
+                                                            Select an&nbsp;
+                                                            <a
+                                                                className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                                href="/#"
+                                                                onClick={() => {
+                                                                    handleLogChange(index, 'is_new_booking_channel', false);
+                                                                    handleLogChange(index, 'new_booking_channel_name', '');
+                                                                }}
+                                                            >
+                                                                <span className="material-symbols-outlined">
+                                                                    manage_search
+                                                                </span>
+                                                                Existing Channel
+                                                            </a>
+                                                            &nbsp;or&nbsp;
 
-                                                    <a
-                                                        className="text-bold new-existing-prop green-text text-lighten-2"
-                                                        onClick={() => handleLogChange(index, 'is_new_booking_channel', true)}>
-                                                        <span className="material-symbols-outlined">
-                                                            add_circle
-                                                        </span>
-                                                        New Channel
-                                                    </a>
-                                                </em>
-                                            </div>
-                                        )
-                                        }
-                                        {!log.is_new_booking_channel ? (
-                                            <Select
-                                                placeholder="Search for a booking channel"
-                                                value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
-                                                onChange={(selectedOption) => {
-                                                    handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
-                                                }}
-                                                options={bookingChannels}
-                                                isClearable
-                                                style={{ flexGrow: '1' }}
-                                            />
+                                                            <a
+                                                                className="text-bold new-existing-prop green-text text-lighten-2"
+                                                                href="/#"
+                                                                onClick={() => handleLogChange(index, 'is_new_booking_channel', true)}>
+                                                                <span className="material-symbols-outlined">
+                                                                    add_circle
+                                                                </span>
+                                                                New Channel
+                                                            </a>
+                                                        </em>
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                id="new_booking_channel_name"
-                                                value={log.new_booking_channel_name || ''}
-                                                onChange={(e) => handleLogChange(index, 'new_booking_channel_name', e.target.value)}
-                                                placeholder="Booking Channel Name"
-                                                style={{ marginRight: '10px', flexGrow: '1' }}
-                                            />
+                                            <div>
+                                                <Select
+                                                    placeholder="Select booking channel"
+                                                    value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
+                                                    onChange={(selectedOption) => {
+                                                        handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
+                                                    }}
+                                                    options={bookingChannels}
+                                                    isClearable
+                                                    style={{ flexGrow: '1' }}
+                                                />
+                                            </div>
                                         )}
-                                        <label htmlFor="new_booking_channel_name">
-                                            <span className="material-symbols-outlined">
-                                                alt_route
-                                            </span>
-                                            Booking Channel
-                                        </label>
                                     </div>
-
                                 </div>
-
-
                             </div>
+                            //{/* <div style={{ textAlign: 'center' }}>
+                            //<hr style={{ width: '10%', borderColor: '#000', borderWidth: '1px', margin: '20px auto' }} />
+                            //</div> */}
+                            // </>
                         ))}
                         <button type="button" className="btn" onClick={addLogEntry}>Add More</button>
                     </form>
@@ -949,7 +1108,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     accommodationLogs.length >= 1 &&
                     accommodationLogs.some(log => log.bed_nights && log.property_name) && (
                         <div className="summary-row" style={{ textAlign: 'left', marginTop: '40px' }}>
-                            <h5>Totals</h5>
+                            <h5>Summary</h5>
                             <div className="chip blue lighten-4">
                                 <span className="text-bold">
                                     Bed Nights:&nbsp;
@@ -1004,13 +1163,23 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                     flight_takeoff
                                 </span>
                             </div>
-                            <div><span className="text-bold">Properties: </span>{
-                                accommodationLogs.map((log, index) => log.property_name || 'Unnamed Property').join(', ')
-                            }</div>
+                            <div>
+                                <span className="text-bold">Properties: </span>
+                                {
+                                    accommodationLogs
+                                        .filter(log => log.property_name) // Filter out logs without a property name
+                                        .map((log, index, filteredLogs) =>
+                                            // Check if it's the last property to decide whether to add a comma
+                                            `${log.property_name}${index < filteredLogs.length - 1 ? ', ' : ''}`
+                                        )
+                                        .join('') // Join the resulting strings without any additional separator
+                                }
+                            </div>
                         </div>
-                    )}
+                    )
+                }
             </div >
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ marginBottom: '20px' }}>
                 <div>
                     <a href="#!" className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                         Close

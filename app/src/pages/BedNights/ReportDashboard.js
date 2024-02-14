@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import M from 'materialize-css';
+import moment from 'moment';
 
 const ReportDashboard = ({ reportData }) => {
     // States for toggling visibility of charts
@@ -16,10 +17,6 @@ const ReportDashboard = ({ reportData }) => {
 
     const { report_inputs, calculations } = reportData;
     const formatValue = (value) => value || "ALL";
-
-    const sortedByMonth = calculations.by_month.sort((a, b) => {
-        return a.name.localeCompare(b.name);
-    }, [reportData]);
 
     const colorPalette = [
         '#b2dfdb',
@@ -83,10 +80,40 @@ const ReportDashboard = ({ reportData }) => {
         }]
     };
 
+
+    // Function to fill in missing months with 0s
+    const fillMissingMonths = (byMonthData) => {
+        if (!byMonthData || byMonthData.length === 0) return [];
+
+        // Sort by month to ensure correct order
+        const sortedByMonth = byMonthData.sort((a, b) => a.name.localeCompare(b.name));
+
+        const start = moment(sortedByMonth[0].name, "YYYY-MM");
+        const end = moment(sortedByMonth[sortedByMonth.length - 1].name, "YYYY-MM");
+        const filledMonths = [];
+
+        while (start <= end) {
+            const monthStr = start.format("YYYY-MM");
+            const existingMonth = sortedByMonth.find(m => m.name === monthStr);
+
+            filledMonths.push({
+                name: start.format("MMM YY"), // Format for display
+                bed_nights: existingMonth ? existingMonth.bed_nights : 0
+            });
+
+            start.add(1, 'month');
+        }
+
+        return filledMonths;
+    };
+
+    // Use the function to prepare data for the "Bed Nights by Month" chart
+    const filledByMonth = fillMissingMonths(calculations.by_month);
+
     // Bed Nights by Month Chart Data
     const barSeries = [{
         name: "Bed Nights",
-        data: sortedByMonth.map(item => item.bed_nights)
+        data: filledByMonth.map(item => item.bed_nights)
     }];
 
     const barOptions = {
@@ -110,7 +137,7 @@ const ReportDashboard = ({ reportData }) => {
             }
         },
         xaxis: {
-            categories: sortedByMonth.map(item => item.name),
+            categories: filledByMonth.map(item => item.name),
         }
     };
 

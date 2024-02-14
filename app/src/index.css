@@ -102,11 +102,18 @@ ul.sidenav.sidenav-fixed li.logo {
 .modal.add-log-modal {
   border-radius: 10px;
   width: 70%;
+  min-height: 80%;
 }
 
 .material-tooltip.tooltip-light {
   background-color: rgba(47, 79, 79, 0.8) !important;
   border-radius: 4px !important;
+}
+
+.react-datepicker__close-icon::after {
+  background-color: #ef9a9a !important; /* Change to your desired color */
+  color: white; /* Adjust text/icon color as needed */
+  /* You might need additional styles here depending on what you're trying to achieve */
 }
 
 .modal.add-log-modal .modal-content {
