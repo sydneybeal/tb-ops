@@ -260,7 +260,7 @@ export const BedNightReports = () => {
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
-                                            dateFormat="MM/dd/yyyy" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                            dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }}>
@@ -279,7 +279,7 @@ export const BedNightReports = () => {
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
-                                            dateFormat="MM/dd/yyyy" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                            dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }}>

@@ -985,7 +985,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 isClearable
                                                 placeholderText="Select date in"
                                                 className="date-input"
-                                                dateFormat="yyyy-MM-dd" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                                dateFormat="MM/dd/yyyy"
                                             />
                                         </div>
                                         <label htmlFor="date_in">
@@ -1006,7 +1006,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                     isClearable
                                                     placeholderText="Select date out"
                                                     className="date-input"
-                                                    dateFormat="yyyy-MM-dd" // Ensures the date is displayed in 'YYYY-MM-DD' format
+                                                    dateFormat="MM/dd/yyyy"
                                                 />
                                             </div>
                                         </div>

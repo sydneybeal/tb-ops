@@ -6,6 +6,9 @@ import { RoleProvider } from './components/RoleContext';
 import Landing from './pages/Landing';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import BedNightReports from './pages/BedNights/BedNightReports';
+import Agencies from './pages/Agencies/Agencies';
+import Consultants from './pages/Consultants/Consultants';
+import Properties from './pages/Properties/Properties';
 
 import 'materialize-css/dist/css/materialize.min.css';
 
@@ -26,15 +29,15 @@ const router = createBrowserRouter([
   },
   {
     path: '/properties/',
-    element: <Landing />,
+    element: <Properties />,
   },
   {
     path: '/consultants/',
-    element: <Landing />,
+    element: <Consultants />,
   },
   {
     path: '/agencies/',
-    element: <Landing />,
+    element: <Agencies />,
   },
   {
     path: '/trip_reports/',
