@@ -9,6 +9,8 @@ import BedNightReports from './pages/BedNights/BedNightReports';
 import Agencies from './pages/Agencies/Agencies';
 import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
+import TripReports from './pages/TripReports/TripReports';
+
 
 import 'materialize-css/dist/css/materialize.min.css';
 
@@ -41,7 +43,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/trip_reports/',
-    element: <Landing />,
+    element: <TripReports />,
   },
 ]);
 

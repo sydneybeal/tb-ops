@@ -3,6 +3,7 @@ import M from 'materialize-css/dist/js/materialize';
 import Select from 'react-select';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useRole } from '../../components/RoleContext';
 import CircularPreloader from '../../components/CircularPreloader';
 import AddLogModal from './AddLogModal';
 import Navbar from '../../components/Navbar';
@@ -10,6 +11,7 @@ import moment from 'moment';
 
 export const Overview = () => {
     const [apiData, setApiData] = useState([]);
+    const { userName } = useRole();
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [loaded, setLoaded] = useState(false);
@@ -221,7 +223,17 @@ export const Overview = () => {
 
     }, [filteredData, sorting, currentPage, itemsPerPage]);
 
-    const openModal = () => setIsModalOpen(true);
+    const openModal = () => {
+        if (!userName) {
+            M.toast({
+                html: 'Please enter your name above before adding logs.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        }
+        setIsModalOpen(true);
+    };
     const closeModal = () => setIsModalOpen(false);
 
     useEffect(() => {

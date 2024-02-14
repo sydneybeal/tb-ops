@@ -16,7 +16,7 @@ export const Agencies = () => {
     return (
         <>
             <header>
-                <Navbar title="Service Providers" />
+                <Navbar title="Agency Management" />
             </header>
 
             <main className="grey lighten-5">

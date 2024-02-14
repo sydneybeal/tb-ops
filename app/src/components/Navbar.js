@@ -6,6 +6,7 @@ import { useRole } from './RoleContext';
 const Navbar = ({ title }) => {
     // State to keep track of the current role
     const { role, setRole } = useRole();
+    const { userName, setUserName } = useRole();
 
     useEffect(() => {
         // Initialize Sidenav
@@ -20,8 +21,23 @@ const Navbar = ({ title }) => {
             <nav className="top-nav">
                 <div className="nav-wrapper">
                     <div className="row">
-                        <div className="col s12 m10 grey-text text-darken-3">
+                        <div className="col s12 m7 grey-text text-darken-3">
                             <h4 className="header">{title}</h4>
+                        </div>
+                        <div className="col s12 m3">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span className="material-symbols-outlined grey-text" style={{ fontSize: '2rem' }}>
+                                    account_circle
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your name"
+                                    onChange={(e) => setUserName(e.target.value)}
+                                    value={userName}
+                                    style={{ flexShrink: 1, marginTop: '10px', paddingLeft: '10px' }}
+                                    className="grey-text text-darken-2"
+                                />
+                            </div>
                         </div>
                         <div className="col s12 m2">
                             <button className='dropdown-trigger btn' href='#' data-target='role-dropdown'>Role: {role}</button>

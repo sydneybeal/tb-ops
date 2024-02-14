@@ -45,7 +45,7 @@ export const BedNightReports = () => {
 
         const queryString = getQueryString(filters);
         const apiUrl = `${process.env.REACT_APP_API}/v1/bed_night_report?${queryString}`;
-
+        setLoaded(false);
         fetch(apiUrl)
             .then((res) => res.json())
             .then((data) => {

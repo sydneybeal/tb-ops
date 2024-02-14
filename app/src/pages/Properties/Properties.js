@@ -9,14 +9,215 @@ import Navbar from '../../components/Navbar';
 import moment from 'moment';
 
 export const Properties = () => {
-    const [apiData, setApiData] = useState([]);
-    const [loaded, setLoaded] = useState(false);
     const { role } = useRole();
+    const [apiData, setApiData] = useState([]);
+    const { userName } = useRole();
+    const [displayData, setDisplayData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
+    const [loaded, setLoaded] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 100;
+    const [totalPages, setTotalPages] = useState(0);
+    const [sortedData, setSortedData] = useState([]);
+    const [sorting, setSorting] = useState({ field: 'name', ascending: true });
+    const [filterOptions, setFilterOptions] = useState({
+        core_dest: [],
+        country: [],
+        portfolio: [],
+    });
+    const [filters, setFilters] = useState({
+        core_dest: '',
+        country: '',
+        portfolio: '',
+    });
+
+    useEffect(() => {
+        M.AutoInit();
+        fetch(`${process.env.REACT_APP_API}/v1/properties`)
+            .then((res) => res.json())
+            .then((data) => {
+                const numberOfPages = Math.ceil(data.length / itemsPerPage);
+                setApiData(data);
+                setTotalPages(numberOfPages);
+                setLoaded(true);
+                setCurrentPage(0);
+                setDisplayData(data.slice(0, itemsPerPage));
+            })
+            .catch((err) => {
+                setLoaded(true);
+                console.error(err);
+            });
+    }, []);
+
+    /**
+  * Sets sorting criteria.
+  * @param {string} key - Field name to sort by.
+  * @param {boolean} ascending - Sort order: true (ascending), false (descending).
+  */
+    function applySorting(key) {
+        setSorting((prevSorting) => ({
+            field: key,
+            ascending: prevSorting.field === key ? !prevSorting.ascending : true,
+        }));
+    };
+
+    const changePage = (newPage) => {
+        const start = newPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(sortedData.slice(start, end));
+        setCurrentPage(newPage);
+    };
+
+    useEffect(() => {
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+    }, [filters, filterOptions]);
+
+    useEffect(() => {
+        const countryMap = apiData.reduce((acc, item) => {
+            const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
+            const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
+
+            if (!acc[countryId]) {
+                acc[countryId] = {
+                    value: countryId,
+                    label: countryName
+                };
+            }
+            return acc;
+        }, {});
+        const coreDestMap = apiData.reduce((acc, item) => {
+            if (!acc[item.core_destination_id]) {
+                acc[item.core_destination_id] = {
+                    value: item.core_destination_id || '',
+                    label: item.core_destination_name || ''
+                };
+            }
+            return acc;
+        }, {});
+        const portfolioMap = apiData.reduce((acc, item) => {
+            if (!acc[item.portfolio_name]) {
+                acc[item.portfolio_name] = {
+                    value: item.portfolio_name || '',
+                    label: item.portfolio_name || ''
+                };
+            }
+            return acc;
+        }, {});
+
+        // console.log("Core dest options: " + Object.values(coreDestOptions));
+        const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
+        const coreDestinationOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
+        const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
+
+
+        setFilterOptions({
+            country: countryOptions,
+            core_destination: coreDestinationOptions,
+            portfolio: portfolioOptions,
+        });
+    }, [apiData,]);
+
+    useEffect(() => {
+        let newFilteredData = apiData;
+
+        if (filters.country) {
+            if (filters.country === 'No country') {
+                // Filter for records where country_name is null or undefined
+                newFilteredData = newFilteredData.filter(item => !item.country_name);
+            } else {
+                // Filter for records matching the selected country name
+                newFilteredData = newFilteredData.filter(item => item.country_name === filters.country);
+            }
+        }
+
+        if (filters.core_destination) {
+            newFilteredData = newFilteredData.filter((item) => item.core_destination_name === filters.core_destination);
+        }
+
+        if (filters.portfolio) {
+            newFilteredData = newFilteredData.filter((item) => item.portfolio_name === filters.portfolio);
+        }
+
+        setFilteredData(newFilteredData);
+
+    }, [apiData, filters]);
+
+    useEffect(() => {
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(sortedData.slice(start, end));
+    }, [currentPage, sortedData, sorting]);
+
+    useEffect(() => {
+        // Perform sorting on filteredData
+        let sortedAndFilteredData = [...filteredData].sort((a, b) => {
+            let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
+            let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
+
+            // If both values are numbers, compare them as numbers.
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
+                return sorting.ascending ? aValue - bValue : bValue - aValue;
+            }
+
+            // If either value is not a number, convert both to strings and compare.
+            // This handles null, undefined, and other non-number types safely.
+            aValue = String(aValue);
+            bValue = String(bValue);
+            return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        });
+
+        setSortedData(sortedAndFilteredData); // Update sortedData with sorted and filtered results
+
+        const newTotalPages = Math.ceil(sortedAndFilteredData.length / itemsPerPage);
+        setTotalPages(newTotalPages);
+
+        // Pagination logic
+        if (currentPage >= newTotalPages) {
+            setCurrentPage(0);
+        }
+        const displayStartIndex = currentPage * itemsPerPage;
+        const displayEndIndex = displayStartIndex + itemsPerPage;
+        setDisplayData(sortedAndFilteredData.slice(displayStartIndex, displayEndIndex));
+
+    }, [filteredData, sorting, currentPage, itemsPerPage]);
+
+    useEffect(() => {
+        // Initialize tooltips
+        const tooltipElems = document.querySelectorAll('.tooltipped');
+        M.Tooltip.init(tooltipElems, {
+            exitDelay: 100,
+            enterDelay: 100,
+            html: false,
+            margin: 0,
+            inDuration: 300,
+            outDuration: 250,
+            position: 'bottom',
+            transitionMovement: 10
+        });
+
+        setTimeout(() => {
+            document.querySelectorAll('.material-tooltip').forEach(tooltipElem => {
+                const relatedTrigger = tooltipElems[Array.from(document.querySelectorAll('.tooltipped')).findIndex(elem => elem.getAttribute('data-tooltip-id') === tooltipElem.getAttribute('id'))];
+                if (relatedTrigger) {
+                    const customClass = relatedTrigger.getAttribute('data-tooltip-class');
+                    if (customClass) {
+                        tooltipElem.classList.add(customClass);
+                    }
+                }
+            });
+        }, 10);
+
+        // Clean up function to destroy initialized tooltips to prevent memory leaks
+        return () => {
+            M.Tooltip.getInstance(tooltipElems)?.destroy();
+        };
+    }, [displayData]);
 
     return (
         <>
             <header>
-                <Navbar title="Service Providers" />
+                <Navbar title="Property Management" />
             </header>
 
             <main className="grey lighten-5">
@@ -26,9 +227,214 @@ export const Properties = () => {
                             You do not have permission to view this page.
                         </div>
                     ) : (
-                        <div>
-                            Welcome to Properties!
-                        </div>
+                        <>
+                            {loaded ? (
+                                <>
+                                    <div className="row center">
+                                        <div className="col s10">
+                                            <ul className="pagination">
+                                                <li className={currentPage === 0 ? 'disabled' : ''}>
+                                                    <a onClick={() => currentPage > 0 && changePage(currentPage - 1)} href="#!">
+                                                        <i className="material-icons">chevron_left</i>
+                                                    </a>
+                                                </li>
+                                                {Array.from({ length: totalPages }, (_, idx) => (
+                                                    <li
+                                                        className={
+                                                            `waves-effect waves-light ${currentPage === idx ? 'active red lighten-2' : ''
+                                                            }`
+                                                        }
+                                                        key={idx}
+                                                        onClick={() => changePage(idx)}
+                                                    >
+                                                        <a className="teal-text text-lighten-2" href="#!">{idx + 1}</a>
+                                                    </li>
+                                                ))}
+                                                <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                                                    <a
+                                                        onClick={
+                                                            () => currentPage + 1 < totalPages && changePage(currentPage + 1)}
+                                                        href="#!"
+                                                    >
+                                                        <i className="material-icons">chevron_right</i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div className="col s2">
+                                            <button
+                                                href=""
+                                                className="btn-float btn-large waves-effect waves-light green lighten-2"
+                                                onClick={() => M.toast({ html: "Not available at this time" })}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    add
+                                                </span>
+                                                Add New
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="row center">
+                                        <div>
+                                            <div className="col s4">
+                                                <Select
+                                                    placeholder="Search by Country"
+                                                    value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.country}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined">
+                                                    globe
+                                                </span>
+                                            </div>
+                                            <div className="col s4">
+                                                <Select
+                                                    placeholder="Search by Core Destination"
+                                                    value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.core_destination}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined">
+                                                    explore
+                                                </span>
+                                            </div>
+                                            <div className="col s4">
+                                                <Select
+                                                    placeholder="Search by Portfolio"
+                                                    value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.portfolio}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined">
+                                                    store
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="row center">
+                                        <div>
+                                            <button className="btn grey" onClick={() => setFilters(
+                                                { core_destination: '', country: '', portfolio: '' })}>
+                                                Reset Filters
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <table className="accommodation-logs-table">
+                                        <thead>
+                                            <tr>
+                                                <th
+                                                    onClick={() =>
+                                                        applySorting('name')
+                                                    }
+                                                >
+                                                    {/* Property */}
+                                                    <span
+                                                        className={`tooltipped`}
+                                                        data-position="bottom"
+                                                        data-tooltip="Property"
+                                                        data-tooltip-class="tooltip-light"
+                                                    >
+                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                            hotel
+                                                        </span>
+                                                        <span className="material-symbols-outlined teal-text">
+                                                            {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th
+                                                    onClick={() =>
+                                                        applySorting('portfolio_name')
+                                                    }
+                                                >
+                                                    {/* Portfolio */}
+                                                    <span
+                                                        className={`tooltipped`}
+                                                        data-position="bottom"
+                                                        data-tooltip="Portfolio Name"
+                                                        data-tooltip-class="tooltip-light"
+                                                    >
+                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                            store
+                                                        </span>
+                                                        <span className="material-symbols-outlined teal-text">
+                                                            {sorting.field === 'portfolio_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th
+                                                    onClick={() =>
+                                                        applySorting('country_name')
+                                                    }
+                                                >
+                                                    {/* Country */}
+                                                    <span
+                                                        className={`tooltipped`}
+                                                        data-position="bottom"
+                                                        data-tooltip="Country Name"
+                                                        data-tooltip-class="tooltip-light"
+                                                    >
+                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                            globe
+                                                        </span>
+                                                        <span className="material-symbols-outlined teal-text">
+                                                            {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                                <th
+                                                    onClick={() =>
+                                                        applySorting('core_destination_name')
+                                                    }
+                                                >
+                                                    {/* Dates */}
+                                                    <span
+                                                        className={`tooltipped`}
+                                                        data-position="bottom"
+                                                        data-tooltip="Core Destination"
+                                                        data-tooltip-class="tooltip-light"
+                                                    >
+                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                            explore
+                                                        </span>
+                                                        <span className="material-symbols-outlined teal-text">
+                                                            {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                        </span>
+                                                    </span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Array.isArray(displayData) && displayData.length > 0 ? (
+                                                displayData.map((item, index) => (
+                                                    <React.Fragment key={item.id}>
+                                                        <tr>
+                                                            <td style={{ verticalAlign: 'top' }}>
+                                                                <p className="text-bold">{item.name}</p>
+                                                            </td>
+                                                            <td>{item.portfolio_name}</td>
+                                                            <td>{item.country_name}</td>
+                                                            <td>{item.core_destination_name}</td>
+                                                        </tr>
+                                                    </React.Fragment>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </>
+                            ) : (
+                                <div>
+                                    <CircularPreloader show={true} />
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </main>

@@ -8,7 +8,7 @@ import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
 import moment from 'moment';
 
-export const Consultants = () => {
+export const Properties = () => {
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
     const { role } = useRole();
@@ -16,24 +16,18 @@ export const Consultants = () => {
     return (
         <>
             <header>
-                <Navbar title="Consultant Management" />
+                <Navbar title="Trip Reports" />
             </header>
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
-                    {(role !== 'admin') ? (
-                        <div>
-                            You do not have permission to view this page.
-                        </div>
-                    ) : (
-                        <div>
-                            Welcome to Consultants!
-                        </div>
-                    )}
+                    <div>
+                        Welcome to Trip Reports!
+                    </div>
                 </div>
             </main>
         </>
     )
 }
 
-export default Consultants;
+export default Properties;

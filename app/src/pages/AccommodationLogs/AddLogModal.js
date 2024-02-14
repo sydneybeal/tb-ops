@@ -131,6 +131,13 @@ const AddLogModal = ({ isOpen, onClose }) => {
         return '';
     };
 
+    const validateAgency = (value) => {
+        if (!(value || '').trim()) {
+            return 'Missing agency';
+        }
+        return '';
+    };
+
     const validateNumPax = (value) => {
         const num = parseInt(value, 10);
         if (num < 1) return 'Number of passengers must be greater than 0';
@@ -158,9 +165,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
         const logsToSubmit = accommodationLogs.map(log => ({
             ...log,
             primary_traveler: primaryTraveler,
-            consultant_id: selectedConsultantId,
             num_pax: numPax,
             agency_id: selectedAgencyId || '',
+            consultant_id: selectedConsultantId,
             new_agency_name: newAgencyName || '',
         }));
         // Submit logsToSubmit to your backend
@@ -199,10 +206,10 @@ const AddLogModal = ({ isOpen, onClose }) => {
 
     const handleAgencyChange = (selectedOption) => {
         setSelectedAgencyId(selectedOption ? selectedOption.value : '');
-        // setValidationErrors(prevErrors => ({
-        //     ...prevErrors,
-        //     consultant: validateConsultant(selectedOption ? selectedOption.value : ''),
-        // }));
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            agency: validateAgency(selectedOption ? selectedOption.value : ''),
+        }));
     };
 
     const handleNewAgencyNameChange = (e) => {
@@ -281,6 +288,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
             if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';
             if (!log.new_property_country_id) logError.new_property_country_id = 'Missing new property country';
         }
+        if (!log.booking_channel) logError.booking_channel = 'Missing booking channel';
 
         return logError;
     };
@@ -292,6 +300,11 @@ const AddLogModal = ({ isOpen, onClose }) => {
 
     const validateDateOut = (dateOut) => {
         if (!dateOut) return 'Missing check-out date';
+        return '';
+    };
+
+    const validateBookingChannel = (bookingChannel) => {
+        if (!bookingChannel) return 'Missing booking channel';
         return '';
     };
 
@@ -374,6 +387,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
         if (!(selectedConsultantId || '').trim()) {
             errors.consultant = 'Missing consultant';
         }
+        if (!(selectedAgencyId || '').trim()) {
+            errors.agency = 'Missing agency';
+        }
         if (parseInt(numPax, 10) < 1) {
             errors.numPax = 'Number of passengers is less than 0';
         }
@@ -450,6 +466,14 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     delete logErrors[index].date_out; // Remove the key if no error
                 }
                 break;
+            case 'booking_channel_id':
+                const bookingChannelError = validateBookingChannel(value);
+                if (bookingChannelError) {
+                    logErrors[index].booking_channel = bookingChannelError;
+                } else {
+                    delete logErrors[index].booking_channel; // Remove the key if no error
+                }
+                break;
             default:
                 break;
         }
@@ -502,7 +526,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     <form id="logForm" onSubmit={handleFormSubmit}>
                         {/* Trip Information Section */}
                         {/* <div className="teal-text text-lighten-3">Trip Details</div> */}
-                        {(validationErrors.primaryTraveler || validationErrors.consultant || validationErrors.numPax) && (
+                        {(validationErrors.primaryTraveler || validationErrors.consultant || validationErrors.numPax || validationErrors.agency) && (
                             <div className="row" style={{ marginBottom: '20px' }}>
                                 {validationErrors.primaryTraveler && (
                                     <div className="chip red lighten-4 text-bold">{validationErrors.primaryTraveler}</div>
@@ -512,6 +536,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 )}
                                 {validationErrors.numPax && (
                                     <div className="chip red lighten-4 text-bold">{validationErrors.numPax}</div>
+                                )}
+                                {validationErrors.agency && (
+                                    <div className="chip red lighten-4 text-bold">{validationErrors.agency}</div>
                                 )}
                             </div>
                         )}
