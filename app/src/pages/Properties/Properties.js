@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
 import Select from 'react-select';
-import ReactDatePicker from 'react-datepicker';
 import { useRole } from '../../components/RoleContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
@@ -322,112 +321,134 @@ export const Properties = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <table className="accommodation-logs-table">
-                                        <thead>
-                                            <tr>
-                                                <th
-                                                    onClick={() =>
-                                                        applySorting('name')
-                                                    }
-                                                >
-                                                    {/* Property */}
-                                                    <span
-                                                        className={`tooltipped`}
-                                                        data-position="bottom"
-                                                        data-tooltip="Property"
-                                                        data-tooltip-class="tooltip-light"
-                                                    >
-                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
-                                                            hotel
-                                                        </span>
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </span>
-                                                </th>
-                                                <th
-                                                    onClick={() =>
-                                                        applySorting('portfolio_name')
-                                                    }
-                                                >
-                                                    {/* Portfolio */}
-                                                    <span
-                                                        className={`tooltipped`}
-                                                        data-position="bottom"
-                                                        data-tooltip="Portfolio Name"
-                                                        data-tooltip-class="tooltip-light"
-                                                    >
-                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
-                                                            store
-                                                        </span>
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'portfolio_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </span>
-                                                </th>
-                                                <th
-                                                    onClick={() =>
-                                                        applySorting('country_name')
-                                                    }
-                                                >
-                                                    {/* Country */}
-                                                    <span
-                                                        className={`tooltipped`}
-                                                        data-position="bottom"
-                                                        data-tooltip="Country Name"
-                                                        data-tooltip-class="tooltip-light"
-                                                    >
-                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
-                                                            globe
-                                                        </span>
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </span>
-                                                </th>
-                                                <th
-                                                    onClick={() =>
-                                                        applySorting('core_destination_name')
-                                                    }
-                                                >
-                                                    {/* Dates */}
-                                                    <span
-                                                        className={`tooltipped`}
-                                                        data-position="bottom"
-                                                        data-tooltip="Core Destination"
-                                                        data-tooltip-class="tooltip-light"
-                                                    >
-                                                        <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
-                                                            explore
-                                                        </span>
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {Array.isArray(displayData) && displayData.length > 0 ? (
-                                                displayData.map((item, index) => (
-                                                    <React.Fragment key={item.id}>
-                                                        <tr>
-                                                            <td style={{ verticalAlign: 'top' }}>
-                                                                <p className="text-bold">{item.name}</p>
-                                                            </td>
-                                                            <td>{item.portfolio_name}</td>
-                                                            <td>{item.country_name}</td>
-                                                            <td>{item.core_destination_name}</td>
-                                                        </tr>
-                                                    </React.Fragment>
-                                                ))
-                                            ) : (
+                                    <div className="container center">
+                                        <table className="accommodation-logs-table center">
+                                            <thead>
                                                 <tr>
-                                                    <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('name')
+                                                        }
+                                                    >
+                                                        {/* Property */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Property"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                                hotel
+                                                            </span>
+                                                            <span className="material-symbols-outlined teal-text">
+                                                                {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('portfolio_name')
+                                                        }
+                                                    >
+                                                        {/* Portfolio */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Portfolio Name"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                                store
+                                                            </span>
+                                                            <span className="material-symbols-outlined teal-text">
+                                                                {sorting.field === 'portfolio_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('country_name')
+                                                        }
+                                                    >
+                                                        {/* Country */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Country Name"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                                globe
+                                                            </span>
+                                                            <span className="material-symbols-outlined teal-text">
+                                                                {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('core_destination_name')
+                                                        }
+                                                    >
+                                                        {/* Dates */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Core Destination"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                                explore
+                                                            </span>
+                                                            <span className="material-symbols-outlined teal-text">
+                                                                {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th style={{ width: '90px' }} className="center">
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Edit"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                                edit
+                                                            </span>
+                                                        </span>
+                                                    </th>
                                                 </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {Array.isArray(displayData) && displayData.length > 0 ? (
+                                                    displayData.map((item, index) => (
+                                                        <React.Fragment key={item.id}>
+                                                            <tr>
+                                                                <td style={{ verticalAlign: 'top' }}>
+                                                                    <p className="text-bold">{item.name}</p>
+                                                                </td>
+                                                                <td>{item.portfolio_name}</td>
+                                                                <td>{item.country_name}</td>
+                                                                <td>{item.core_destination_name}</td>
+                                                                <td style={{ width: '90px' }}>
+                                                                    <button
+                                                                        className="btn waves-effect waves-light orange lighten-3"
+                                                                        onClick={() => M.toast({ html: "Not available at this time" })}
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        </React.Fragment>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </>
                             ) : (
                                 <div>

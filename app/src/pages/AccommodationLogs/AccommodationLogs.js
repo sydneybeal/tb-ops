@@ -226,7 +226,7 @@ export const Overview = () => {
     const openModal = () => {
         if (!userName) {
             M.toast({
-                html: 'Please enter your name above before adding logs.',
+                html: 'Please enter your name above before adding bed nights.',
                 displayLength: 2000,
                 classes: 'red lighten-2',
             });

@@ -179,7 +179,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         prop.id,
                         prop.name.strip(),
                         prop.portfolio.strip(),
-                        prop.representative.strip(),
+                        prop.representative.strip() if prop.representative else None,
                         prop.country_id,
                         prop.core_destination_id,
                         prop.created_at,
@@ -424,7 +424,6 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Returns the list of CoreDestination models in the repository by name."""
         pool = await self._get_pool()
         upper_names = [name.strip().upper() for name in names]
-        print(f"Querying for {upper_names}")
         query = dedent(
             """
             SELECT * FROM public.core_destinations
@@ -437,7 +436,6 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 rows = await con.fetch(query, upper_names)
-                # print(rows)
                 return [
                     CoreDestination(
                         id=row["id"],
@@ -546,15 +544,12 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             WHERE UPPER(name) = $1
             """
         )
-        # print(f"In postgres.py searching for country by name {name}")
         async with pool.acquire() as con:
             await con.set_type_codec(
                 "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
             async with con.transaction():
                 res = await con.fetchrow(query, name.upper())
-                # print("Response is:")
-                # print(res)
                 if res:
                     return Country(
                         id=res["id"],

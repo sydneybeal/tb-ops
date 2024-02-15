@@ -13,15 +13,18 @@
 # limitations under the License.
 
 """Services for interacting with travel entries."""
+import datetime
 from typing import Optional, Sequence
+from uuid import UUID
 from api.services.travel.models import (
-    CoreDestination,
-    Country,
-    Consultant,
-    Property,
     AccommodationLog,
     Agency,
     BookingChannel,
+    Consultant,
+    CoreDestination,
+    Country,
+    PatchAccommodationLogRequest,
+    Property,
 )
 from api.services.travel.repository.postgres import PostgresTravelRepository
 
@@ -46,6 +49,197 @@ class TravelService:
         ]
         await self._repo.add_accommodation_log(to_be_added)
 
+    async def get_accommodation_log(
+        self,
+        primary_traveler: str,
+        property_id: str,
+        date_in: datetime.date,
+        date_out: datetime.date,
+    ) -> Optional[AccommodationLog]:
+        """Finds existing accommodation log."""
+        # Assuming log_request has all necessary fields to match an existing log
+        return await self._repo.get_accommodation_log(
+            primary_traveler,
+            property_id,
+            date_in,
+            date_out,
+        )
+
+    async def process_accommodation_log_requests(
+        self, log_requests: Sequence[PatchAccommodationLogRequest]
+    ) -> dict:
+        """Adds or edits accommodation log models in the repository."""
+        prepared_logs = [
+            await self.prepare_accommodation_log_data(log_request)
+            for log_request in log_requests
+        ]
+        valid_logs_to_add = [log for log in prepared_logs if log is not None]
+
+        # Check if there are any valid logs to add
+        if valid_logs_to_add:
+            added_logs_ids = await self.add_accommodation_log(valid_logs_to_add)
+            return {
+                "inserted_count": len(valid_logs_to_add),
+            }
+
+        return {"inserted_count": 0, "message": "No new logs were added."}
+
+    async def prepare_accommodation_log_data(
+        self, log_request: PatchAccommodationLogRequest
+    ) -> Optional[AccommodationLog]:
+        """Processes an accommodation log add or update request."""
+        # Resolve entity IDs
+        agency_id = await self.resolve_agency_id(log_request)
+        booking_channel_id = await self.resolve_booking_channel_id(log_request)
+        property_id = await self.resolve_property_id(log_request)
+
+        # # Check if this log exists and needs updating or if it's a new log
+        # futureTODO: change this to accommodation_log.id if it's from the "Edit" form
+        existing_log = await self.get_accommodation_log(
+            log_request.primary_traveler,
+            log_request.property_id,
+            log_request.date_in,
+            log_request.date_out,
+        )
+        if existing_log:
+            # # If existing, prepare the updated data (compare and decide what needs updating)
+            # updated_log_data = self.prepare_updated_log_data(log_request, existing_log)
+            # return updated_log_data  # Return the prepared data for update
+            print("Accommodation log already existed")
+        else:
+            # If new, prepare the new log data
+            new_log_data = self.prepare_new_log_data(
+                log_request, property_id, booking_channel_id, agency_id
+            )
+            return new_log_data  # Return the prepared data for insertion
+
+    def prepare_new_log_data(
+        self,
+        log_request: PatchAccommodationLogRequest,
+        property_id: UUID,
+        booking_channel_id: UUID,
+        agency_id: UUID,
+    ) -> AccommodationLog:
+        """Prepares a new AccommodationLog with the required fields."""
+        new_log = AccommodationLog(
+            property_id=property_id,
+            consultant_id=log_request.consultant_id,
+            primary_traveler=log_request.primary_traveler,
+            num_pax=log_request.num_pax,
+            date_in=log_request.date_in,
+            date_out=log_request.date_out,
+            booking_channel_id=booking_channel_id,
+            agency_id=agency_id,
+            updated_by=log_request.updated_by,
+        )
+        return new_log
+
+    async def resolve_agency_id(
+        self, log_request: PatchAccommodationLogRequest
+    ) -> UUID:
+        """Gets or creates an agency based on either agency ID or new agency name."""
+        if log_request.agency_id:
+            return log_request.agency_id
+        elif log_request.new_agency_name:
+            existing_agency = await self.get_agency_by_name(log_request.new_agency_name)
+            if existing_agency:
+                print("Passed a new agency name and found it in the database already.")
+                return existing_agency.id
+            else:
+                # Create a new Agency model instance
+                new_agency = Agency(
+                    name=log_request.new_agency_name, updated_by=log_request.updated_by
+                )
+                # Pass a list of Agency instances to add_agency
+                await self.add_agency([new_agency])
+                # Fetch the newly created or existing agency by name to get its ID
+                agency_created = await self.get_agency_by_name(
+                    log_request.new_agency_name
+                )
+                return agency_created.id
+        else:
+            return None
+
+    async def resolve_booking_channel_id(
+        self, log_request: PatchAccommodationLogRequest
+    ) -> UUID:
+        """Gets or creates a booking channel based on either ID or new booking channel name."""
+        if log_request.booking_channel_id:
+            return log_request.booking_channel_id
+        elif log_request.new_booking_channel_name:
+            existing_booking_channel = await self.get_booking_channel_by_name(
+                log_request.new_booking_channel_name
+            )
+            if existing_booking_channel:
+                print(
+                    "Passed a new booking channel name and found it in the database already."
+                )
+                return existing_booking_channel.id
+            else:
+                # Create a new BookingChannel model instance
+                new_booking_channel = BookingChannel(
+                    name=log_request.new_booking_channel_name,
+                    updated_by=log_request.updated_by,
+                )
+                # Pass a list of BooikingChannel instances to add_booking_channel
+                await self.add_booking_channel([new_booking_channel])
+                # Fetch the newly created or existing booking channel by name to get its ID
+                booking_channel_created = await self.get_booking_channel_by_name(
+                    log_request.new_booking_channel_name
+                )
+                return booking_channel_created.id
+        else:
+            return None
+
+    async def resolve_property_id(
+        self, log_request: PatchAccommodationLogRequest
+    ) -> UUID:
+        """Gets or creates an agency based on either agency ID or new agency name."""
+        if log_request.property_id:
+            return log_request.property_id
+        elif log_request.new_property_name:
+            existing_property = await self.get_property_by_name(
+                log_request.new_property_name,
+                log_request.new_property_portfolio_name,
+                log_request.new_property_country_id,
+                log_request.new_property_core_destination_id,
+            )
+            if existing_property:
+                print("Passed a new property and found it in the database already.")
+                return existing_property.id
+            else:
+                # Create a new Property model instance
+                new_property = Property(
+                    name=log_request.new_property_name,
+                    portfolio=log_request.new_property_portfolio_name,
+                    country_id=log_request.new_property_country_id,
+                    core_destination_id=log_request.new_property_core_destination_id,
+                    updated_by=log_request.updated_by,
+                )
+                # Pass a list of Property instances to add_property
+                await self.add_property([new_property])
+                # Fetch the newly created or existing property by name to get its ID
+                property_created = await self.get_property_by_name(
+                    log_request.new_property_name,
+                    log_request.new_property_portfolio_name,
+                    log_request.new_property_country_id,
+                    log_request.new_property_core_destination_id,
+                )
+                return property_created.id
+        else:
+            return None
+
+    # if we got a new_property_name, new_property_portfolio_name, new_property_country_id
+    #    then we need to create the new property
+    # if we got a new_agency_name
+    #    then we need to create the new agency
+    # if we got a new_booking_channel name
+    #    then we need to create the new bookingchannel
+    # using the IDs passed to the patch request or the new IDs generated above
+    #    we need to create the AccommodationLog object
+    # then we need to add it to accommodation_logs (add_accommodation_log function?)
+    # or possibly in the future edit the existing accommodation log with that ID
+
     # Country
     async def add_country(self, models: Sequence[Country]) -> None:
         """Adds country model to the repository."""
@@ -59,7 +253,6 @@ class TravelService:
 
     async def get_country_by_name(self, name: str) -> Country:
         """Gets a single Country model by name."""
-        # print(f"In service.py searching for country by name {name}")
         return await self._repo.get_country_by_name(name)
 
     async def get_countries_by_name(self, names: Sequence[str]) -> Sequence[Country]:

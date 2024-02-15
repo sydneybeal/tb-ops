@@ -175,6 +175,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"a.name = '{value}'")
             elif key == "booking_channel":
                 query_conditions.append(f"bc.name = '{value}'")
+            elif key == "updated_by":
+                query_conditions.append(f"al.updated_by = '{value}'")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)

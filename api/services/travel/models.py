@@ -15,50 +15,50 @@
 """Models for travel entries."""
 from datetime import datetime, date
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 class CoreDestination(BaseModel):
     """Record for a core destination."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     name: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class Agency(BaseModel):
     """Record for an external agency."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     name: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class BookingChannel(BaseModel):
     """Record for an external booking channel."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     name: str
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class Consultant(BaseModel):
     """Record for an internal consultant."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     first_name: str
     last_name: str
     is_active: bool = True
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
     @computed_field  # type: ignore[misc]
@@ -71,32 +71,32 @@ class Consultant(BaseModel):
 class Country(BaseModel):
     """Record for a country."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     name: str
     core_destination_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class Property(BaseModel):
     """Record for a property - hotel, lodge, ship, etc."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     name: str
     portfolio: str
-    representative: str
+    representative: Optional[str] = None
     country_id: Optional[UUID] = None
     core_destination_id: Optional[UUID] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class AccommodationLog(BaseModel):
     """Record for an accommodation."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     property_id: UUID
     consultant_id: UUID
     primary_traveler: str
@@ -105,8 +105,8 @@ class AccommodationLog(BaseModel):
     date_out: date
     booking_channel_id: Optional[UUID] = None
     agency_id: Optional[UUID] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
     @computed_field  # type: ignore[misc]
@@ -115,3 +115,43 @@ class AccommodationLog(BaseModel):
         """Number of bed nights occupied by this record."""
         duration = (self.date_out - self.date_in).days
         return duration * self.num_pax
+
+
+# class NewEntity(BaseModel):
+#     """Model containing the required fields to create a new entity by name."""
+
+#     name: str
+
+
+# class NewPropertyEntity(BaseModel):
+#     """Model containing the required fields to create a new property."""
+
+#     name: str
+#     portfolio: Optional[str] = None
+#     country_id: Optional[UUID] = None
+#     core_destination_id: Optional[UUID] = None
+
+
+class PatchAccommodationLogRequest(BaseModel):
+    """A request object model that contains IDs of its related entities,
+    or string data to create them."""
+
+    # either selected property or NewPropertyEntity for property
+    property_id: Optional[UUID] = None
+    new_property_name: Optional[str] = None
+    new_property_portfolio_name: Optional[str] = None
+    new_property_country_id: Optional[UUID] = None
+    new_property_core_destination_id: Optional[UUID] = None
+    # required entry data
+    consultant_id: UUID
+    primary_traveler: str
+    num_pax: int
+    date_in: date
+    date_out: date
+    # either selected agency or NewEntity model for booking channel
+    booking_channel_id: Optional[UUID] = None
+    new_booking_channel_name: Optional[str] = None
+    # either selected agency or NewEntity model for agency
+    agency_id: Optional[UUID] = None
+    new_agency_name: Optional[str] = None
+    updated_by: str

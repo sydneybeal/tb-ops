@@ -15,6 +15,7 @@
 """REST API entrypoint code for TB Operations."""
 from urllib import parse
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from api.services.summaries.models import (
@@ -24,7 +25,13 @@ from api.services.summaries.models import (
     BedNightReport,
 )
 from api.services.summaries.service import SummaryService
-from api.services.travel.models import Consultant, Agency, BookingChannel
+from api.services.travel.models import (
+    AccommodationLog,
+    BookingChannel,
+    Agency,
+    Consultant,
+    PatchAccommodationLogRequest,
+)
 from api.services.travel.service import TravelService
 
 
@@ -75,6 +82,21 @@ def make_app(travel_svc: TravelService, summary_svc: SummaryService) -> FastAPI:
     ):
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_accommodation_logs()
+
+    @app.patch(
+        "/v1/accommodation_logs",
+        operation_id="post_accommodation_logs",
+        tags=["accommodation_logs"],
+    )
+    async def post_accommodation_logs(
+        accommodation_log_requests: list[PatchAccommodationLogRequest],
+    ) -> JSONResponse:
+        # ) -> Response:
+        """Get all AccommodationLog summaries."""
+        results = await travel_svc.process_accommodation_log_requests(
+            accommodation_log_requests
+        )
+        return JSONResponse(content=results)
 
     @app.get(
         "/v1/properties",

@@ -8,11 +8,11 @@ import moment from 'moment';
 
 const AddLogModal = ({ isOpen, onClose }) => {
     const [accommodationLogs, setAccommodationLogs] = useState([{}]);
-    const { role } = useRole();
+    const { role, userName } = useRole();
     const [primaryTraveler, setPrimaryTraveler] = useState('');
     const [numPax, setNumPax] = useState(1);
-    const [selectedConsultantId, setSelectedConsultantId] = useState('');
-    const [selectedAgencyId, setSelectedAgencyId] = useState('');
+    const [selectedConsultantId, setSelectedConsultantId] = useState(null);
+    const [selectedAgencyId, setSelectedAgencyId] = useState(null);
     const [isNewAgency, setIsNewAgency] = useState(false);
     const [newAgencyName, setNewAgencyName] = useState('');
     const [properties, setProperties] = useState([]);
@@ -24,24 +24,42 @@ const AddLogModal = ({ isOpen, onClose }) => {
     const [userNewPropertyInteractions, setUserNewPropertyInteractions] = useState({});
     const [touched, setTouched] = useState({
         primaryTraveler: false,
+        agency: false
     });
+
+    useEffect(() => {
+        if (!isOpen) {
+            resetFormState(); // Reset form state when modal closes
+        }
+    }, [isOpen]);
 
 
     useEffect(() => {
         const options = {
             onCloseEnd: () => {
-                onClose();
+                onClose(); // This will be called when the modal closes
             },
         };
-        if (!isOpen) return;
-
-        var elems = document.querySelectorAll('.modal');
-        M.Modal.init(elems, options);
-
+        // if (!isOpen) return;
+        const modalElement = document.getElementById('add-log-modal');
+        const instance = M.Modal.init(modalElement, options);
         if (isOpen) {
-            let instance = M.Modal.getInstance(document.getElementById('add-log-modal'));
             instance.open();
+        } else {
+            // If you want to programmatically close the modal when `isOpen` is false
+            // Make sure the instance exists before calling close
+            if (instance) {
+                instance.close();
+            }
         }
+
+        // var elems = document.querySelectorAll('.modal');
+        // M.Modal.init(elems, options);
+
+        // if (isOpen) {
+        //     let instance = M.Modal.getInstance(document.getElementById('add-log-modal'));
+        //     instance.open();
+        // }
         // Fetch properties
         fetch(`${process.env.REACT_APP_API}/v1/properties`)
             .then((res) => res.json())
@@ -65,6 +83,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                     value: country.id,
                     label: country.name,
                     core_destination_name: country.core_destination_name,
+                    core_destination_id: country.core_destination_id
                 }));
                 setCountries(formattedCountries);
             })
@@ -111,6 +130,17 @@ const AddLogModal = ({ isOpen, onClose }) => {
         setAccommodationLogs([...accommodationLogs, {}]);
     };
 
+    const resetFormState = () => {
+        setAccommodationLogs([{}]);
+        setNumPax(1);
+        setPrimaryTraveler('');
+        setSelectedConsultantId(null);
+        setSelectedAgencyId(null);
+        setNewAgencyName('');
+        setValidationErrors({});
+        setTouched({});
+    };
+
     const validatePrimaryTraveler = (value) => {
         if (!(value || '').trim()) {
             return 'Missing primary traveler name';
@@ -131,12 +161,33 @@ const AddLogModal = ({ isOpen, onClose }) => {
         return '';
     };
 
-    const validateAgency = (value) => {
-        if (!(value || '').trim()) {
+    const validateAgency = () => {
+        if (!touched.agency) {
+            return '';
+        }
+        // If not a new agency, check if an existing agency is selected
+        if (!isNewAgency && !selectedAgencyId) {
             return 'Missing agency';
         }
+        // If a new agency, check if the new agency name is provided
+        if (isNewAgency && !newAgencyName.trim()) {
+            return 'Missing agency name';
+        }
+        // If everything is fine, return an empty string
         return '';
     };
+
+    const updateAgencyValidation = () => {
+        const agencyError = validateAgency();
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            agency: agencyError,
+        }));
+    };
+
+    useEffect(() => {
+        updateAgencyValidation();
+    }, [isNewAgency, newAgencyName, selectedAgencyId]);
 
     const validateNumPax = (value) => {
         const num = parseInt(value, 10);
@@ -150,7 +201,6 @@ const AddLogModal = ({ isOpen, onClose }) => {
 
         // Validate form
         if (!validateForm()) {
-            console.log('Validation failed');
             M.toast({
                 html: 'Please check the form for errors.',
                 displayLength: 4000,
@@ -159,36 +209,63 @@ const AddLogModal = ({ isOpen, onClose }) => {
             // Prevent form submission if validation fails
             return;
         }
-        console.log('Validation passed, proceed with submission.');
 
         // Ensure each log includes the primary traveler's name and the selected consultant when submitting
         const logsToSubmit = accommodationLogs.map(log => ({
             ...log,
             primary_traveler: primaryTraveler,
             num_pax: numPax,
-            agency_id: selectedAgencyId || '',
+            agency_id: selectedAgencyId || null,
             consultant_id: selectedConsultantId,
-            new_agency_name: newAgencyName || '',
+            new_agency_name: newAgencyName || null,
+            booking_channel_id: log.booking_channel_id ? (log.booking_channel_id !== '' ? log.booking_channel_id : null) : null,
+            updated_by: userName || ''
         }));
-        // Submit logsToSubmit to your backend
-        console.log(logsToSubmit);
-        if (role === 'admin') {
-            M.toast({
-                html: 'Your entry was valid, but nothing will be saved to the database at this time.',
-                displayLength: 4000,
-                classes: 'green lighten-1',
-            });
-        } else {
+        if (role !== 'admin') {
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
                 classes: 'amber darken-1',
             });
         }
-        // Add submission logic here
-        // Here, implement the logic to submit the form data
-        // Convert accommodationLogs to the expected payload format
-        // POST the payload to `${process.env.REACT_APP_API}/v1/accommodation_logs`
+        else {
+            fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(logsToSubmit, null, 2),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Handle success response
+                    let toastHtml = '';
+                    if (data.inserted_count > 0) {
+                        toastHtml = `Added ${data.inserted_count} log(s) to the database.`;
+                    } else {
+                        // Use the message from the response if no logs were added
+                        toastHtml = data.message;
+                    }
+                    M.toast({
+                        html: toastHtml,
+                        displayLength: 4000,
+                        classes: 'green darken-1',
+                    });
+                })
+                .finally(() => {
+                    resetFormState();
+                    onClose();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    // Handle errors here
+                    M.toast({
+                        html: 'Your entry was valid, but was unable to save to the database.',
+                        displayLength: 4000,
+                        classes: 'amber darken-1',
+                    });
+                });
+        }
     };
 
     const handlePrimaryTravelerChange = (e) => {
@@ -205,21 +282,16 @@ const AddLogModal = ({ isOpen, onClose }) => {
     };
 
     const handleAgencyChange = (selectedOption) => {
+        setTouched(prev => ({ ...prev, agency: true }));
         setSelectedAgencyId(selectedOption ? selectedOption.value : '');
-        setValidationErrors(prevErrors => ({
-            ...prevErrors,
-            agency: validateAgency(selectedOption ? selectedOption.value : ''),
-        }));
+        // Note: No need to set validation errors here as it's handled by useEffect
     };
 
     const handleNewAgencyNameChange = (e) => {
+        setTouched(prev => ({ ...prev, agency: true }));
         const value = e.target.value;
         setNewAgencyName(value);
-        console.log(newAgencyName);
-        // setValidationErrors(prevErrors => ({
-        //     ...prevErrors,
-        //     consultant: validateConsultant(selectedOption ? selectedOption.value : ''),
-        // }));
+        // Note: No need to log here; also, commented out code related to consultant validation is not relevant to this context
     };
 
     const handlePrimaryTravelerBlur = () => {
@@ -288,7 +360,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
             if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';
             if (!log.new_property_country_id) logError.new_property_country_id = 'Missing new property country';
         }
-        if (!log.booking_channel) logError.booking_channel = 'Missing booking channel';
+        if (!log.booking_channel_id && !log.new_booking_channel_name) {
+            logError.property = 'Missing booking channel';
+        }
 
         return logError;
     };
@@ -387,7 +461,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
         if (!(selectedConsultantId || '').trim()) {
             errors.consultant = 'Missing consultant';
         }
-        if (!(selectedAgencyId || '').trim()) {
+        if (!(selectedAgencyId || '').trim() && !newAgencyName) {
             errors.agency = 'Missing agency';
         }
         if (parseInt(numPax, 10) < 1) {
@@ -416,9 +490,6 @@ const AddLogModal = ({ isOpen, onClose }) => {
     };
 
     const handleLogChange = (index, field, value) => {
-        if (field === 'date_in' || field === 'date_out') {
-            value = value ? new Date(value).toISOString().substring(0, 10) : '';
-        }
         const updatedLogs = [...accommodationLogs];
         if (!updatedLogs[index]) updatedLogs[index] = {};
         updatedLogs[index][field] = value;
@@ -592,7 +663,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                             <Select
                                                 placeholder="Select agency"
                                                 id="agency_select"
-                                                value={agencies.find(agency => agency.value === selectedAgencyId)}
+                                                value={agencies.find(agency => agency.value === selectedAgencyId) || ''}
                                                 onChange={handleAgencyChange}
                                                 options={agencies}
                                                 isClearable
@@ -663,7 +734,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                             <Select
                                                 placeholder="Select agency"
                                                 id="agency_select"
-                                                value={agencies.find(agency => agency.value === selectedAgencyId)}
+                                                value={agencies.find(agency => agency.value === selectedAgencyId) || ''}
                                                 onChange={handleAgencyChange}
                                                 options={agencies}
                                                 isClearable
@@ -690,7 +761,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                 <Select
                                     placeholder="Select Consultant"
                                     id="consultant_select"
-                                    value={consultants.find(cons => cons.value === selectedConsultantId)}
+                                    value={consultants.find(cons => cons.value === selectedConsultantId) || ''}
                                     onChange={handleConsultantChange}
                                     options={consultants}
                                     isClearable
@@ -818,6 +889,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                 handleLogChange(index, 'is_new_property', false);
                                                                 handleLogChange(index, 'new_property_country_id', '');
                                                                 handleLogChange(index, 'new_property_core_destination_name', '');
+                                                                handleLogChange(index, 'new_property_core_destination_id', '');
                                                                 handleLogChange(index, 'new_property_name', '');
                                                                 handleLogChange(index, 'new_property_portfolio_name', '');
                                                                 handleLogChange(index, 'new_property_country_name', '');
@@ -853,7 +925,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                     <Select
                                                         placeholder="Search for a property"
                                                         id="property_select"
-                                                        value={properties.find(prop => prop.value === log.property_id)}
+                                                        value={properties.find(prop => prop.value === log.property_id) || ''}
                                                         onChange={(selectedOption) => {
                                                             handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
                                                             handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
@@ -886,6 +958,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                         handleLogChange(index, 'is_new_property', false);
                                                                         handleLogChange(index, 'new_property_country_id', '');
                                                                         handleLogChange(index, 'new_property_core_destination_name', '');
+                                                                        handleLogChange(index, 'new_property_core_destination_id', '');
                                                                         handleLogChange(index, 'new_property_name', '');
                                                                         handleLogChange(index, 'new_property_portfolio_name', '');
                                                                         handleLogChange(index, 'new_property_country_name', '');
@@ -935,10 +1008,11 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                                 <div className="col s6">
                                                                     <Select
                                                                         placeholder="Select Country"
-                                                                        value={countries.find(prop => prop.value === log.new_property_country_id)}
+                                                                        value={countries.find(prop => prop.value === log.new_property_country_id) || ''}
                                                                         onChange={(selectedOption) => {
                                                                             handleLogChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
                                                                             handleLogChange(index, 'new_property_core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+                                                                            handleLogChange(index, 'new_property_core_destination_id', selectedOption ? selectedOption.core_destination_id : '');
                                                                             handleLogChange(index, 'new_property_country_name', selectedOption ? selectedOption.label : '');
                                                                         }}
                                                                         options={countries}
@@ -980,7 +1054,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         <Select
                                             placeholder="Search for a property"
                                             id="property_select"
-                                            value={properties.find(prop => prop.value === log.property_id)}
+                                            value={properties.find(prop => prop.value === log.property_id) || ''}
                                             onChange={(selectedOption) => {
                                                 handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
                                                 handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
@@ -1007,8 +1081,10 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         {/* Date In Selector */}
                                         <div>
                                             <ReactDatePicker
-                                                selected={log.date_in ? new Date(log.date_in) : null}
-                                                onChange={(date) => handleLogChange(index, 'date_in', date ? date.toISOString().substring(0, 10) : '')}
+                                                selected={log.date_in ? moment(log.date_in).toDate() : null}
+                                                onChange={(date) => {
+                                                    handleLogChange(index, 'date_in', date ? moment(date).format('YYYY-MM-DD') : '');
+                                                }}
                                                 isClearable
                                                 placeholderText="Select date in"
                                                 className="date-input"
@@ -1028,8 +1104,8 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                         <div>
                                             <div>
                                                 <ReactDatePicker
-                                                    selected={log.date_out ? new Date(log.date_out) : null}
-                                                    onChange={(date) => handleLogChange(index, 'date_out', date ? date.toISOString().substring(0, 10) : '')}
+                                                    selected={log.date_out ? moment(log.date_out).toDate() : null}
+                                                    onChange={(date) => handleLogChange(index, 'date_out', date ? moment(date).format('YYYY-MM-DD') : '')}
                                                     isClearable
                                                     placeholderText="Select date out"
                                                     className="date-input"
@@ -1050,7 +1126,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                                 {!log.is_new_booking_channel ? (
                                                     <Select
                                                         placeholder="Search for a booking channel"
-                                                        value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
+                                                        value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
                                                         onChange={(selectedOption) => {
                                                             handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
                                                         }}
@@ -1110,7 +1186,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                                             <div>
                                                 <Select
                                                     placeholder="Select booking channel"
-                                                    value={bookingChannels.find(prop => prop.value === log.booking_channel_id)}
+                                                    value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
                                                     onChange={(selectedOption) => {
                                                         handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
                                                     }}
