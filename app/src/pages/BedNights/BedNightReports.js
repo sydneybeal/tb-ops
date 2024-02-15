@@ -80,107 +80,53 @@ export const BedNightReports = () => {
     }, [accommodationLogData]);
 
     useEffect(() => {
-        // const coreDestOptions = [...new Set(accommodationLogData.map((item) => item.core_destination_name))].sort();
-        // const countryOptions = [...new Set(accommodationLogData.map((item) => item.country_name))].sort();
-        // const consultantOptions = [...new Set(accommodationLogData.map((item) => item.consultant_display_name))].sort();
-        // const portfolioOptions = [...new Set(accommodationLogData.map((item) => item.property_portfolio))].sort();
-        // const propertyOptions = [...new Set(accommodationLogData.map((item) => item.property_name))].sort();
-        const portfolioMap = accommodationLogData.reduce((acc, item) => {
-            const portfolioName = item.property_portfolio || 'No portfolio';
-            if (!acc[portfolioName]) {
-                acc[portfolioName] = {
-                    value: portfolioName,
-                    label: portfolioName,
-                };
-            }
-            return acc;
-        }, {});
-        const agencyMap = accommodationLogData.reduce((acc, item) => {
-            const agencyName = item.agency_name || 'No agency';
-            if (!acc[agencyName]) {
-                acc[agencyName] = {
-                    value: agencyName,
-                    label: agencyName,
-                };
-            }
-            return acc;
-        }, {});
-        const bookingChannelMap = accommodationLogData.reduce((acc, item) => {
-            const bookingChannelName = item.booking_channel_name || 'No booking channel';
-            if (!acc[bookingChannelName]) {
-                acc[bookingChannelName] = {
-                    value: bookingChannelName,
-                    label: bookingChannelName,
-                };
-            }
-            return acc;
-        }, {});
-        const coreDestMap = accommodationLogData.reduce((acc, item) => {
-            if (!acc[item.core_destination_id]) {
-                acc[item.core_destination_id] = {
-                    value: item.core_destination_id || '',
-                    label: item.core_destination_name || ''
-                };
-            }
-            return acc;
-        }, {});
-        // const countryOptions = [...new Set(apiData.map((item) => item.country_name))].sort();
-        const countryMap = accommodationLogData.reduce((acc, item) => {
-            // Define default values for null or undefined country_id and country_name
-            const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
-            const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
+        // Initialize or dynamically update filter options based on `accommodationLogData` and current `filters`
+        const filteredData = accommodationLogData.filter(item => {
+            // Example filtering logic here; adjust according to your actual filters
+            return (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
+                && (!filters.country_name || item.country_name === filters.country_name)
+                && (!filters.property_name || item.property_name === filters.property_name)
+                && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
+                && (!filters.agency || item.agency_name === filters.agency)
+                && (!filters.booking_channel || item.booking_channel_name === filters.booking_channel);
+        });
 
-            if (!acc[countryId]) {
-                acc[countryId] = {
-                    value: countryId,
-                    label: countryName
-                };
-            }
-            return acc;
-        }, {});
-        // const consultantOptions = [...new Set(apiData.map((item) => item.consultant_display_name))].sort();
-        const consultantMap = accommodationLogData.reduce((acc, item) => {
-            if (!acc[item.consultant_id]) {
-                acc[item.consultant_id] = {
-                    value: item.consultant_id || '',
-                    label: item.consultant_display_name || ''
-                };
-            }
-            return acc;
-        }, {});
-        const propertyMap = accommodationLogData.reduce((acc, item) => {
-            if (!acc[item.property_id]) {
-                acc[item.property_id] = {
-                    value: item.property_id || '',
-                    label: item.property_name || ''
-                };
-            }
-            return acc;
-        }, {});
-        const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
-        const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
-        const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label)); const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
+        // Maps for creating filter options from filtered data
+        const coreDestMap = {}, countryMap = {}, consultantMap = {}, propertyMap = {}, portfolioMap = {}, agencyMap = {}, bookingChannelMap = {};
+
+        // Populate maps with options from filteredData
+        filteredData.forEach(item => {
+            coreDestMap[item.core_destination_id] = { value: item.core_destination_id || '', label: item.core_destination_name || 'No core destination' };
+            countryMap[item.country_id] = { value: item.country_id || 'no-country', label: item.country_name || 'No country' };
+            consultantMap[item.consultant_id] = { value: item.consultant_id || '', label: item.consultant_display_name || 'No consultant' };
+            propertyMap[item.property_id] = { value: item.property_id || '', label: item.property_name || 'No property' };
+            portfolioMap[item.property_portfolio] = { value: item.property_portfolio || 'No portfolio', label: item.property_portfolio || 'No portfolio' };
+            agencyMap[item.agency_name] = { value: item.agency_name || 'No agency', label: item.agency_name || 'No agency' };
+            bookingChannelMap[item.booking_channel_name] = { value: item.booking_channel_name || 'No booking channel', label: item.booking_channel_name || 'No booking channel' };
+        });
+
+        // Convert maps to arrays and sort for filter options
+        const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
         const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
+        const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
+        const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
+        const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
 
-
-        // setFilterOptions({
-        //     core_dest: coreDestOptions,
-        //     country: countryOptions,
-        //     consultant: consultantOptions,
-        //     property: propertyOptions,
-        // });
+        // Update filter options state
         setFilterOptions({
             core_destination_name: coreDestOptions,
             country_name: countryOptions,
             consultant_name: consultantOptions,
-            portfolio_name: portfolioOptions,
             property_name: propertyOptions,
+            portfolio_name: portfolioOptions,
             agency: agencyOptions,
             booking_channel: bookingChannelOptions,
         });
-    }, [accommodationLogData]);
+    }, [accommodationLogData, filters]); // Depends on both the dataset and current filter selections
+
+
 
     return (
         <>

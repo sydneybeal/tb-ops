@@ -182,6 +182,19 @@ export const Overview = () => {
 
         setFilteredData(newFilteredData);
 
+        // Update filter options based on newFilteredData
+        const coreDestOptions = [...new Set(newFilteredData.map(item => item.core_destination_name))].sort().map(name => ({ value: name, label: name }));
+        const countryOptions = [...new Set(newFilteredData.map(item => item.country_name))].sort().map(name => ({ value: name, label: name }));
+        const consultantOptions = [...new Set(newFilteredData.map(item => item.consultant_display_name))].sort().map(name => ({ value: name, label: name }));
+        const propertyOptions = [...new Set(newFilteredData.map(item => item.property_name))].sort().map(name => ({ value: name, label: name }));
+
+        setFilterOptions({
+            core_dest: coreDestOptions,
+            country: countryOptions,
+            consultant: consultantOptions,
+            property: propertyOptions,
+        });
+
     }, [apiData, filters]);
 
     useEffect(() => {
