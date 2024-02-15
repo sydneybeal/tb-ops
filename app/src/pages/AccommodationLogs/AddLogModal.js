@@ -52,6 +52,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                 instance.close();
             }
         }
+        if (!isOpen) return;
 
         // var elems = document.querySelectorAll('.modal');
         // M.Modal.init(elems, options);
