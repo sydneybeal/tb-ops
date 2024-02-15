@@ -110,6 +110,13 @@ ul.sidenav.sidenav-fixed li.logo {
   border-radius: 4px !important;
 }
 
+.material-tooltip.tooltip-updated-by {
+  background-color: rgba(47, 79, 79, 0.8) !important;
+  border-radius: 4px !important;
+  min-width: 200px;
+  max-width: 400px;
+}
+
 .react-datepicker__close-icon::after {
   background-color: #ef9a9a !important; /* Change to your desired color */
   color: white; /* Adjust text/icon color as needed */

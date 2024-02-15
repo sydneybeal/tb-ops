@@ -46,21 +46,12 @@ const AddLogModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             instance.open();
         } else {
-            // If you want to programmatically close the modal when `isOpen` is false
-            // Make sure the instance exists before calling close
             if (instance) {
                 instance.close();
             }
         }
         if (!isOpen) return;
 
-        // var elems = document.querySelectorAll('.modal');
-        // M.Modal.init(elems, options);
-
-        // if (isOpen) {
-        //     let instance = M.Modal.getInstance(document.getElementById('add-log-modal'));
-        //     instance.open();
-        // }
         // Fetch properties
         fetch(`${process.env.REACT_APP_API}/v1/properties`)
             .then((res) => res.json())

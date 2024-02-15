@@ -710,14 +710,26 @@ export const Overview = () => {
                                                         </p>
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
-                                                        <p>{item.country_name}</p>
-                                                        <span className="chip red lighten-3">{item.core_destination_name}</span>
-                                                        <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'right', marginTop: '8px' }}>
-                                                            {moment(item.updated_at).fromNow()}
-                                                        </div>
-                                                    </td>
 
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="left"
+                                                            data-tooltip={`Updated ${moment(item.updated_at).fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                            data-tooltip-class="tooltip-updated-by"
+                                                        >
+                                                            <p>{item.country_name}</p>
+                                                            <span className="chip red lighten-3">{item.core_destination_name}</span>
+                                                            <br />
+                                                            <em class="grey-text" style={{ fontSize: '0.75rem' }}>
+                                                                <span class="material-symbols-outlined grey-text">
+                                                                    update
+                                                                </span>
+                                                                {moment(item.updated_at).fromNow()}
+                                                            </em>
+                                                        </span>
+                                                    </td>
                                                 </tr>
+
                                             </React.Fragment>
                                         ))
                                     ) : (
