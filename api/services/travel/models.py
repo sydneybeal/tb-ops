@@ -136,6 +136,7 @@ class PatchAccommodationLogRequest(BaseModel):
     """A request object model that contains IDs of its related entities,
     or string data to create them."""
 
+    log_id: Optional[UUID] = None
     # either selected property or NewPropertyEntity for property
     property_id: Optional[UUID] = None
     new_property_name: Optional[str] = None

@@ -65,6 +65,14 @@ class TravelService:
             date_out,
         )
 
+    async def get_accommodation_log_by_id(
+        self,
+        log_id: UUID,
+    ) -> Optional[AccommodationLog]:
+        """Finds existing accommodation log by its ID."""
+        # Assuming log_request has all necessary fields to match an existing log
+        return await self._repo.get_accommodation_log_by_id(log_id)
+
     async def process_accommodation_log_requests(
         self, log_requests: Sequence[PatchAccommodationLogRequest]
     ) -> dict:
@@ -73,16 +81,25 @@ class TravelService:
             await self.prepare_accommodation_log_data(log_request)
             for log_request in log_requests
         ]
-        valid_logs_to_add = [log for log in prepared_logs if log is not None]
+        valid_logs_to_upsert = [log for log in prepared_logs if log is not None]
 
-        # Check if there are any valid logs to add
-        if valid_logs_to_add:
-            added_logs_ids = await self.add_accommodation_log(valid_logs_to_add)
-            return {
-                "inserted_count": len(valid_logs_to_add),
-            }
+        # Perform the upsert operation for valid logs
+        inserted_count = 0
+        updated_count = 0
+        if valid_logs_to_upsert:
+            results = await self._repo.upsert_accommodation_log(valid_logs_to_upsert)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
 
-        return {"inserted_count": 0, "message": "No new logs were added."}
+        return {
+            "inserted_count": 0,
+            "updated_count": 0,
+            "message": "No logs were processed.",
+        }
 
     async def prepare_accommodation_log_data(
         self, log_request: PatchAccommodationLogRequest
@@ -95,17 +112,21 @@ class TravelService:
 
         # # Check if this log exists and needs updating or if it's a new log
         # futureTODO: change this to accommodation_log.id if it's from the "Edit" form
-        existing_log = await self.get_accommodation_log(
-            log_request.primary_traveler,
-            log_request.property_id,
-            log_request.date_in,
-            log_request.date_out,
-        )
+        if log_request.log_id:
+            existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
+        else:
+            existing_log = await self.get_accommodation_log(
+                log_request.primary_traveler,
+                log_request.property_id,
+                log_request.date_in,
+                log_request.date_out,
+            )
         if existing_log:
-            # # If existing, prepare the updated data (compare and decide what needs updating)
-            # updated_log_data = self.prepare_updated_log_data(log_request, existing_log)
-            # return updated_log_data  # Return the prepared data for update
             print("Accommodation log already existed")
+            updated_log_data = self.prepare_updated_log_data(
+                log_request, existing_log, property_id, booking_channel_id, agency_id
+            )
+            return updated_log_data
         else:
             # If new, prepare the new log data
             new_log_data = self.prepare_new_log_data(
@@ -133,6 +154,32 @@ class TravelService:
             updated_by=log_request.updated_by,
         )
         return new_log
+
+    def prepare_updated_log_data(
+        self,
+        log_request: PatchAccommodationLogRequest,
+        existing_log: AccommodationLog,
+        property_id: UUID,
+        booking_channel_id: UUID,
+        agency_id: UUID,
+    ) -> AccommodationLog:
+        """Prepares an updated AccommodationLog with the updated fields."""
+        # Compare fields between log_request and existing_log
+        # Only include fields in the update that have changed
+        # This example assumes you will create a new AccommodationLog object with potentially updated values
+        updated_log = AccommodationLog(
+            id=existing_log.id,  # Keep the same ID
+            property_id=property_id,
+            consultant_id=log_request.consultant_id,
+            primary_traveler=log_request.primary_traveler,
+            num_pax=log_request.num_pax,
+            date_in=log_request.date_in,
+            date_out=log_request.date_out,
+            booking_channel_id=booking_channel_id,
+            agency_id=agency_id,
+            updated_by=log_request.updated_by,
+        )
+        return updated_log
 
     async def resolve_agency_id(
         self, log_request: PatchAccommodationLogRequest

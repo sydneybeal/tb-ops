@@ -14,7 +14,7 @@
 
 """Repositories for travel-related data."""
 import datetime
-import uuid
+from uuid import UUID
 from abc import ABC, abstractmethod
 from typing import Sequence, Callable
 from api.services.travel.models import (
@@ -40,6 +40,13 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def upsert_accommodation_log(
+        self, accommodation_logs: Sequence[AccommodationLog]
+    ) -> None:
+        """Upserts a sequence of AccommodationLog models into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_accommodation_log(
         self,
         primary_traveler: str,
@@ -48,6 +55,14 @@ class TravelRepository(ABC):
         date_out: datetime.date,
     ) -> AccommodationLog:
         """Gets a single AccommodationLog model in the repository by name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_accommodation_log_by_id(
+        self,
+        log_id: UUID,
+    ) -> AccommodationLog:
+        """Gets a single AccommodationLog model in the repository by ID."""
         raise NotImplementedError
 
     @abstractmethod
@@ -75,8 +90,8 @@ class TravelRepository(ABC):
         self,
         name: str,
         portfolio_name: str,
-        country_id: uuid,
-        core_destination_id: uuid,
+        country_id: UUID,
+        core_destination_id: UUID,
     ) -> Property:
         """Returns a single Property model in the repository by name."""
 

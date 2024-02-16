@@ -14,7 +14,7 @@
 """Postgres Repository for travel-related data."""
 import datetime
 import json
-import uuid
+from uuid import UUID
 from typing import Sequence
 from textwrap import dedent
 
@@ -248,8 +248,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
         self,
         name: str,
         portfolio_name: str,
-        country_id: uuid,
-        core_destination_id: uuid,
+        country_id: UUID,
+        core_destination_id: UUID,
     ) -> Property:
         """Returns a single Property model in the repository by name."""
         raise NotImplementedError

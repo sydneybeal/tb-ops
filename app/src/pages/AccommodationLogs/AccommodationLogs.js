@@ -11,6 +11,7 @@ import moment from 'moment';
 
 export const Overview = () => {
     const [apiData, setApiData] = useState([]);
+    const [refreshData, setRefreshData] = useState(false);
     const { userName } = useRole();
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
@@ -20,7 +21,9 @@ export const Overview = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [sortedData, setSortedData] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [sorting, setSorting] = useState({ field: 'date_in', ascending: true });
+    const [currentEditLog, setCurrentEditLog] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [sorting, setSorting] = useState({ field: 'updated_at', ascending: false });
     const [filterOptions, setFilterOptions] = useState({
         core_dest: [],
         country: [],
@@ -65,13 +68,28 @@ export const Overview = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, []);
+    }, [refreshData]);
 
     const changePage = (newPage) => {
         const start = newPage * itemsPerPage;
         const end = start + itemsPerPage;
         setDisplayData(sortedData.slice(start, end));
         setCurrentPage(newPage);
+    };
+
+    const openEditModal = (logData) => {
+        if (!userName) {
+            M.toast({
+                html: 'Please enter your name above before adding bed nights.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        } else {
+            setCurrentEditLog(logData); // Set the data for the log to be edited
+            setIsEditMode(true);       // Indicate that we're in edit mode
+            setIsModalOpen(true);      // Open the modal
+        }
     };
 
     useEffect(() => {
@@ -124,7 +142,6 @@ export const Overview = () => {
             return acc;
         }, {});
         const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
-        // console.log("Core dest options: " + Object.values(coreDestOptions));
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
         const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
@@ -247,7 +264,11 @@ export const Overview = () => {
         }
         setIsModalOpen(true);
     };
-    const closeModal = () => setIsModalOpen(false);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setCurrentEditLog(null);
+    };
 
     useEffect(() => {
         // Initialize tooltips
@@ -281,6 +302,10 @@ export const Overview = () => {
         };
     }, [displayData]);
 
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
 
     return (
         <>
@@ -290,7 +315,13 @@ export const Overview = () => {
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
-                    <AddLogModal isOpen={isModalOpen} onClose={closeModal} />
+                    <AddLogModal
+                        isOpen={isModalOpen}
+                        onClose={closeModal}
+                        onRefresh={triggerRefresh}
+                        editLogData={currentEditLog}
+                        isEditMode={isEditMode}
+                    />
 
 
                     {loaded ? (
@@ -662,6 +693,26 @@ export const Overview = () => {
                                                 </span>
                                             </span>
                                         </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('updated_at')
+                                            }
+                                            style={{ width: '120px', textAlign: 'right' }}
+                                        >
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Last updated"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span class="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                    update
+                                                </span>
+                                                <span className="material-symbols-outlined teal-text">
+                                                    {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -710,23 +761,36 @@ export const Overview = () => {
                                                         </p>
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
-
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="left"
-                                                            data-tooltip={`Updated ${moment(item.updated_at).fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                                            data-tooltip-class="tooltip-updated-by"
-                                                        >
-                                                            <p>{item.country_name}</p>
-                                                            <span className="chip red lighten-3">{item.core_destination_name}</span>
-                                                            <br />
-                                                            <em class="grey-text" style={{ fontSize: '0.75rem' }}>
-                                                                <span class="material-symbols-outlined grey-text">
-                                                                    update
-                                                                </span>
-                                                                {moment(item.updated_at).fromNow()}
-                                                            </em>
-                                                        </span>
+                                                        <p>{item.country_name}</p>
+                                                        <span className="chip red lighten-3">{item.core_destination_name}</span>
+                                                        <br />
+                                                    </td>
+                                                    <td>
+                                                        <td style={{ width: '120px', textAlign: 'right', padding: '0px' }}>
+                                                            <span
+                                                                className={`tooltipped`}
+                                                                data-position="left"
+                                                                data-tooltip={`Updated ${moment(item.updated_at).fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                data-tooltip-class="tooltip-updated-by"
+                                                            >
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light orange lighten-4"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    <span class="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit_note
+                                                                    </span>
+                                                                </button>
+                                                                <br />
+                                                                <br />
+                                                                <em class="grey-text" style={{ fontSize: '0.75rem' }}>
+                                                                    <span class="material-symbols-outlined grey-text">
+                                                                        update
+                                                                    </span>
+                                                                    {moment(item.updated_at).fromNow()}
+                                                                </em>
+                                                            </span>
+                                                        </td>
                                                     </td>
                                                 </tr>
 

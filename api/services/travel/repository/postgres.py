@@ -14,7 +14,8 @@
 """Postgres Repository for travel-related data."""
 import datetime
 import json
-import uuid
+from typing import Tuple
+from uuid import UUID
 from typing import Optional, Sequence
 from textwrap import dedent
 
@@ -88,6 +89,84 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 await con.executemany(query, args)
         print(f"Successfully added {len(args)} new log(s) to the repository.")
 
+    async def upsert_accommodation_log(
+        self, accommodation_logs: Sequence[AccommodationLog]
+    ) -> list[Tuple[UUID, bool]]:
+        """Upserts a sequence of AccommodationLog models into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+        INSERT INTO public.accommodation_logs (
+            id,
+            property_id,
+            consultant_id,
+            primary_traveler,
+            num_pax,
+            date_in,
+            date_out,
+            booking_channel_id,
+            agency_id,
+            created_at,
+            updated_at,
+            updated_by
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            property_id = EXCLUDED.property_id,
+            consultant_id = EXCLUDED.consultant_id,
+            primary_traveler = EXCLUDED.primary_traveler,
+            num_pax = EXCLUDED.num_pax,
+            date_in = EXCLUDED.date_in,
+            date_out = EXCLUDED.date_out,
+            booking_channel_id = EXCLUDED.booking_channel_id,
+            agency_id = EXCLUDED.agency_id,
+            updated_at = EXCLUDED.updated_at,
+            updated_by = EXCLUDED.updated_by
+        RETURNING id, (xmax = 0) AS was_inserted;
+    """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                for log in accommodation_logs:
+                    args = (
+                        log.id,
+                        log.property_id,
+                        log.consultant_id,
+                        log.primary_traveler.strip(),
+                        log.num_pax,
+                        log.date_in,
+                        log.date_out,
+                        log.booking_channel_id,
+                        log.agency_id,
+                        datetime.datetime.now(),  # Assuming you're setting created_at for new records elsewhere
+                        datetime.datetime.now(),  # Set updated_at to now
+                        log.updated_by,
+                    )
+                    row = await con.fetchrow(query, *args)
+                    if row:
+                        # Append log ID and whether it was an insert (True) or an update (False)
+                        results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new log(s).")
+        print(f"Updated {updated_count} existing log(s).")
+        return results
+
     async def get_accommodation_log(
         self,
         primary_traveler: str,
@@ -133,6 +212,27 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_at=res["updated_at"],
                         updated_by=res["updated_by"],
                     )
+
+    async def get_accommodation_log_by_id(
+        self,
+        log_id: UUID,
+    ) -> AccommodationLog:
+        """Gets a single AccommodationLog model in the repository by ID."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.accommodation_logs
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, log_id)
+                if res:
+                    return AccommodationLog(**res)
 
     async def update_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]
@@ -197,14 +297,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         self,
         name: str,
         portfolio_name: str,
-        country_id: Optional[uuid.UUID],
-        core_destination_id: Optional[uuid.UUID],
+        country_id: Optional[UUID],
+        core_destination_id: Optional[UUID],
     ) -> Property:
         """Returns a single Property model in the repository by name."""
         # Check and convert only if country_id is a string and not empty
         if isinstance(country_id, str) and country_id:
             try:
-                country_id_uuid = uuid.UUID(country_id)
+                country_id_uuid = UUID(country_id)
             except ValueError:
                 # Handle the case where country_id is not a valid UUID string
                 country_id_uuid = None
@@ -215,7 +315,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         # Repeat the similar check and conversion for core_destination_id
         if isinstance(core_destination_id, str) and core_destination_id:
             try:
-                core_destination_id_uuid = uuid.UUID(core_destination_id)
+                core_destination_id_uuid = UUID(core_destination_id)
             except ValueError:
                 core_destination_id_uuid = None
         else:

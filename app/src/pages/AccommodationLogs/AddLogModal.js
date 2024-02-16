@@ -6,7 +6,7 @@ import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import moment from 'moment';
 
-const AddLogModal = ({ isOpen, onClose }) => {
+const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMode = false }) => {
     const [accommodationLogs, setAccommodationLogs] = useState([{}]);
     const { role, userName } = useRole();
     const [primaryTraveler, setPrimaryTraveler] = useState('');
@@ -32,6 +32,18 @@ const AddLogModal = ({ isOpen, onClose }) => {
             resetFormState(); // Reset form state when modal closes
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            resetFormState(); // Reset form state when modal closes
+        } else if (isOpen && isEditMode && editLogData) {
+            setAccommodationLogs([editLogData]);
+            setPrimaryTraveler(editLogData.primary_traveler);
+            setNumPax(editLogData.num_pax);
+            setSelectedAgencyId(editLogData.agency_id);
+            setSelectedConsultantId(editLogData.consultant_id);
+        }
+    }, [isOpen, isEditMode, editLogData]);
 
 
     useEffect(() => {
@@ -205,6 +217,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
         // Ensure each log includes the primary traveler's name and the selected consultant when submitting
         const logsToSubmit = accommodationLogs.map(log => ({
             ...log,
+            log_id: log.id || null,
             primary_traveler: primaryTraveler,
             num_pax: numPax,
             agency_id: selectedAgencyId || null,
@@ -231,12 +244,17 @@ const AddLogModal = ({ isOpen, onClose }) => {
                 .then(response => response.json())
                 .then(data => {
                     // Handle success response
+                    const insertedCount = data?.inserted_count ?? 0;
+                    const updatedCount = data?.updated_count ?? 0;
+                    const message = data?.message ?? "No logs were processed.";
                     let toastHtml = '';
-                    if (data.inserted_count > 0) {
-                        toastHtml = `Added ${data.inserted_count} log(s) to the database.`;
+                    if (insertedCount > 0) {
+                        toastHtml = `Added ${insertedCount} log(s) to the database.`;
+                    } if (updatedCount > 0) {
+                        toastHtml = `Modified ${updatedCount} log(s) in the database.`;
                     } else {
                         // Use the message from the response if no logs were added
-                        toastHtml = data.message;
+                        toastHtml = message;
                     }
                     M.toast({
                         html: toastHtml,
@@ -246,6 +264,7 @@ const AddLogModal = ({ isOpen, onClose }) => {
                 })
                 .finally(() => {
                     resetFormState();
+                    onRefresh();
                     onClose();
                 })
                 .catch((error) => {
@@ -257,7 +276,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
                         classes: 'amber darken-1',
                     });
                 });
+            // }
         }
+
     };
 
     const handlePrimaryTravelerChange = (e) => {
@@ -584,7 +605,9 @@ const AddLogModal = ({ isOpen, onClose }) => {
     return (
         <div id="add-log-modal" className="modal add-log-modal">
             <div className="modal-content">
-                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>New Service Provider Entry</h4>
+                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
+                    {!isEditMode ? 'New' : 'Editing'} Service Provider Entry
+                </h4>
                 <div style={{ textAlign: 'left', marginTop: '50px' }}>
                     <form id="logForm" onSubmit={handleFormSubmit}>
                         {/* Trip Information Section */}
@@ -792,10 +815,12 @@ const AddLogModal = ({ isOpen, onClose }) => {
 
                         {accommodationLogs.map((log, index) => (
                             // <>
-                            <div key={index} style={{ marginBottom: '80px' }}>
+                            <div key={index} style={{ marginBottom: '20px' }}>
                                 <div className="row">
                                     <div className="col s11">
-                                        <div className="chip teal accent-4 text-bold">{index + 1}</div>
+                                        {!isEditMode &&
+                                            <div className="chip teal accent-4 text-bold">{index + 1}</div>
+                                        }
                                         {log.bed_nights > 0 &&
                                             <div className="chip blue lighten-2">
                                                 <span className="text-bold">
@@ -847,13 +872,16 @@ const AddLogModal = ({ isOpen, onClose }) => {
 
 
                                     </div>
+
                                     <div className="col s1" style={{ textAlign: 'right' }}>
-                                        <a
-                                            className="btn-floating btn-small waves-effect waves-light red lighten-2"
-                                            href="/#"
-                                            onClick={() => handleRemoveClick(index)}>
-                                            <i className="material-icons">remove</i>
-                                        </a>
+                                        {!isEditMode &&
+                                            <a
+                                                className="btn-floating btn-small waves-effect waves-light red lighten-2"
+                                                href="/#"
+                                                onClick={() => handleRemoveClick(index)}>
+                                                <i className="material-icons">remove</i>
+                                            </a>
+                                        }
                                     </div>
                                 </div>
                                 {validationErrors.logs && validationErrors.logs[index] && Object.keys(validationErrors.logs[index]).length > 0 && (
@@ -1196,10 +1224,13 @@ const AddLogModal = ({ isOpen, onClose }) => {
                             //</div> */}
                             // </>
                         ))}
-                        <button type="button" className="btn" onClick={addLogEntry}>Add More</button>
+                        {!isEditMode &&
+                            <button type="button" className="btn" onClick={addLogEntry}>Add More</button>
+                        }
                     </form>
                 </div>
                 {
+                    !isEditMode &&
                     accommodationLogs.length >= 1 &&
                     accommodationLogs.some(log => log.bed_nights && log.property_name) && (
                         <div className="summary-row" style={{ textAlign: 'left', marginTop: '40px' }}>
