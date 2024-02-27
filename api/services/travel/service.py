@@ -65,6 +65,10 @@ class TravelService:
             date_out,
         )
 
+    async def delete_accommodation_log(self, log_id: UUID):
+        """Deletes an AccommodationLog."""
+        return await self._repo.delete_accommodation_log(log_id)
+
     async def get_accommodation_log_by_id(
         self,
         log_id: UUID,

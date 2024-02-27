@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
-import { useRole } from '../../components/RoleContext';
+import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -8,7 +8,7 @@ import moment from 'moment';
 
 const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMode = false }) => {
     const [accommodationLogs, setAccommodationLogs] = useState([{}]);
-    const { role, userName } = useRole();
+    const { userDetails } = useAuth();
     const [primaryTraveler, setPrimaryTraveler] = useState('');
     const [numPax, setNumPax] = useState(1);
     const [selectedConsultantId, setSelectedConsultantId] = useState(null);
@@ -65,12 +65,18 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         if (!isOpen) return;
 
         // Fetch properties
-        fetch(`${process.env.REACT_APP_API}/v1/properties`)
+        fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const formattedProperties = data.map((property) => ({
                     value: property.id,
-                    label: property.name,
+                    // TODO: try to put the country in a chip
+                    label: `${property.name} (${property.country_name || property.core_destination_name})`,
+                    name: property.name,
                     portfolio: property.portfolio_name,
                     country_name: property.country_name,
                     core_destination_name: property.core_destination_name
@@ -80,7 +86,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             .catch((err) => console.error(err));
 
         // Fetch countries
-        fetch(`${process.env.REACT_APP_API}/v1/countries`)
+        fetch(`${process.env.REACT_APP_API}/v1/countries`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const formattedCountries = data.map((country) => ({
@@ -94,7 +104,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             .catch((err) => console.error(err));
 
         // Fetch consultants
-        fetch(`${process.env.REACT_APP_API}/v1/consultants`)
+        fetch(`${process.env.REACT_APP_API}/v1/consultants`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const formattedConsultants = data.map((consultant) => ({
@@ -106,7 +120,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             .catch((err) => console.error(err));
 
         // Fetch countries
-        fetch(`${process.env.REACT_APP_API}/v1/booking_channels`)
+        fetch(`${process.env.REACT_APP_API}/v1/booking_channels`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const formattedBookingChannels = data.map((booking_channel) => ({
@@ -118,7 +136,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             .catch((err) => console.error(err));
 
         // Fetch countries
-        fetch(`${process.env.REACT_APP_API}/v1/agencies`)
+        fetch(`${process.env.REACT_APP_API}/v1/agencies`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const formattedAgencies = data.map((agency) => ({
@@ -143,6 +165,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         setNewAgencyName('');
         setValidationErrors({});
         setTouched({});
+        setIsNewAgency(false);
     };
 
     const validatePrimaryTraveler = (value) => {
@@ -224,9 +247,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             consultant_id: selectedConsultantId,
             new_agency_name: newAgencyName || null,
             booking_channel_id: log.booking_channel_id ? (log.booking_channel_id !== '' ? log.booking_channel_id : null) : null,
-            updated_by: userName || ''
+            updated_by: userDetails.email || ''
         }));
-        if (role !== 'admin') {
+        console.log(logsToSubmit);
+        if (userDetails.role !== 'admin') {
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
@@ -238,6 +262,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userDetails.token}`,
                 },
                 body: JSON.stringify(logsToSubmit, null, 2),
             })
@@ -246,12 +271,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     // Handle success response
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
-                    const message = data?.message ?? "No logs were processed.";
+                    const message = data?.message ?? "No records were added.";
                     let toastHtml = '';
                     if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} log(s) to the database.`;
+                        toastHtml = `Added ${insertedCount} record(s).`;
                     } if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} log(s) in the database.`;
+                        toastHtml = `Modified ${updatedCount} record(s).`;
                     } else {
                         // Use the message from the response if no logs were added
                         toastHtml = message;
@@ -280,6 +305,53 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         }
 
     };
+
+    const handleDelete = () => {
+        if (userDetails.role !== 'admin') {
+            M.toast({
+                html: 'Only admins are able to delete from the database at this time.',
+                displayLength: 4000,
+                classes: 'amber darken-1',
+            });
+        }
+        else {
+            const confirmDelete = window.confirm("Are you sure you want to delete this entry?");
+            if (confirmDelete) {
+                const entryId = accommodationLogs.length > 0 ? accommodationLogs[0].id : null;
+                if (!entryId) {
+                    M.toast({ html: 'Error: No entry ID found', classes: 'red lighten-2' });
+                    return;
+                }
+                // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
+                fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs/${entryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userDetails.token}`,
+                    },
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('API error');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Handle success - show success message and possibly update the UI
+                        M.toast({ html: 'Entry successfully deleted', classes: 'green' });
+                        resetFormState();
+                        onRefresh();
+                        onClose();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        // Handle error - show error message
+                        M.toast({ html: 'Error deleting entry', classes: 'red' });
+                    });
+            }
+        }
+    };
+
 
     const handlePrimaryTravelerChange = (e) => {
         const value = e.target.value;
@@ -604,10 +676,21 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
     return (
         <div id="add-log-modal" className="modal add-log-modal">
-            <div className="modal-content">
+            <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
-                    {!isEditMode ? 'New' : 'Editing'} Service Provider Entry
+                    {!isEditMode ? 'New' : 'Editing'} Service Provider Entry&nbsp;&nbsp;
+                    {isEditMode &&
+                        <button
+                            className="btn waves-effect waves-light red lighten-3"
+                            onClick={handleDelete}
+                        >
+                            <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                delete_forever
+                            </span>
+                        </button>
+                    }
                 </h4>
+
                 <div style={{ textAlign: 'left', marginTop: '50px' }}>
                     <form id="logForm" onSubmit={handleFormSubmit}>
                         {/* Trip Information Section */}
@@ -672,7 +755,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
                             <div className="col s4">
 
-                                {role === 'admin' ? (
+                                {userDetails.role === 'admin' ? (
                                     <>
                                         {!isNewAgency ? (
                                             <Select
@@ -895,7 +978,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 )}
 
                                 {/* Property Info */}
-                                {role === 'admin' ? (
+                                {userDetails.role === 'admin' ? (
                                     <>
                                         {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
                                             <div className="row">
@@ -1077,7 +1160,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             value={properties.find(prop => prop.value === log.property_id) || ''}
                                             onChange={(selectedOption) => {
                                                 handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-                                                handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
+                                                handleLogChange(index, 'property_name', selectedOption ? selectedOption.name : '');
                                                 handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
                                                 handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
                                                 handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
@@ -1141,7 +1224,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         </label>
                                     </div>
                                     <div className="col s6">
-                                        {role === 'admin' ? (
+                                        {userDetails.role === 'admin' ? (
                                             <>
                                                 {!log.is_new_booking_channel ? (
                                                     <Select
@@ -1305,7 +1388,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     )
                 }
             </div >
-            <div className="modal-footer" style={{ marginBottom: '20px' }}>
+            <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
                 <div>
                     <a href="#!" className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                         Close

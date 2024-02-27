@@ -106,11 +106,10 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             date_out,
             booking_channel_id,
             agency_id,
-            created_at,
             updated_at,
             updated_by
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
         )
         ON CONFLICT (id) DO UPDATE SET
             property_id = EXCLUDED.property_id,
@@ -143,7 +142,6 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         log.date_out,
                         log.booking_channel_id,
                         log.agency_id,
-                        datetime.datetime.now(),  # Assuming you're setting created_at for new records elsewhere
                         datetime.datetime.now(),  # Set updated_at to now
                         log.updated_by,
                     )
@@ -166,6 +164,30 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         print(f"Inserted {inserted_count} new log(s).")
         print(f"Updated {updated_count} existing log(s).")
         return results
+
+    async def delete_accommodation_log(self, log_id: UUID) -> bool:
+        """Deletes an AccommodationLog model from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.accommodation_logs
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, log_id)
+                # `execute` returns a string like 'DELETE 1' if a row was deleted successfully
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(f"No log found with ID: {log_id}, nothing was deleted.")
+                    return False
+                print(f"Successfully deleted log with ID: {log_id}.")
+                return True
 
     async def get_accommodation_log(
         self,
@@ -238,12 +260,6 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         self, accommodation_logs: Sequence[AccommodationLog]
     ) -> None:
         """Updates a sequence of AccommodationLog models in the repository."""
-        raise NotImplementedError
-
-    async def delete_accommodation_log(
-        self, accommodation_logs: Sequence[AccommodationLog]
-    ) -> None:
-        """Deletes a sequence of AccommodationLog models from the repository."""
         raise NotImplementedError
 
     # Property

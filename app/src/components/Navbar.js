@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import M from 'materialize-css';
+import { useAuth } from './AuthContext';
 import { Link } from 'react-router-dom';
-import { useRole } from './RoleContext';
 
 const Navbar = ({ title }) => {
-    // State to keep track of the current role
-    const { role, setRole } = useRole();
-    const { userName, setUserName } = useRole();
+    const { userDetails, logout } = useAuth();
 
     useEffect(() => {
         // Initialize Sidenav
@@ -20,32 +18,42 @@ const Navbar = ({ title }) => {
         <>
             <nav className="top-nav">
                 <div className="nav-wrapper">
-                    <div className="row">
-                        <div className="col s12 m7 grey-text text-darken-3">
+                    <div className="row" style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', justifyContent: 'space-between' }}>
+                        <div className="col s12 m6 grey-text text-darken-3">
                             <h4 className="header">{title}</h4>
                         </div>
-                        <div className="col s12 m3">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span className="material-symbols-outlined grey-text" style={{ fontSize: '2rem' }}>
-                                    account_circle
-                                </span>
-                                <input
-                                    type="text"
-                                    placeholder="Enter your name"
-                                    onChange={(e) => setUserName(e.target.value)}
-                                    value={userName}
-                                    style={{ flexShrink: 1, marginTop: '10px', paddingLeft: '10px' }}
-                                    className="grey-text text-darken-2"
-                                />
-                            </div>
-                        </div>
-                        <div className="col s12 m2">
-                            <button className='dropdown-trigger btn' href='#' data-target='role-dropdown'>Role: {role}</button>
-                            <ul id='role-dropdown' className='dropdown-content'>
-                                <li><a href="#!" onClick={() => setRole('admin')}>Admin</a></li>
-                                <li><a href="#!" onClick={() => setRole('user')}>User</a></li>
-                            </ul>
-                        </div>
+                        {userDetails &&
+                            <>
+                                <div className="col s12 m6" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                                    >
+                                        <span className="material-symbols-outlined grey-text" style={{ fontSize: '2rem' }}>
+                                            account_circle
+                                        </span>
+                                        <span className="grey-text text-darken-2">
+                                            Welcome, <span className="text-bold">{userDetails.email.split('@')[0]}</span>
+                                        </span>
+
+                                        {userDetails.role === 'admin' &&
+                                            <span className="chip green lighten-4 dark-grey-text text-darken-5 text-bold" style={{ margin: '0px' }}>
+                                                {userDetails.role.toUpperCase()}
+                                            </span>
+                                        }
+
+                                        <button
+                                            className='btn btn-floating red lighten-2'
+                                            onClick={logout}
+                                            style={{ margin: '0px' }}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                logout
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        }
                     </div>
                 </div>
             </nav>
@@ -85,7 +93,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                {role === 'admin' && (
+                {userDetails?.role === 'admin' && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
                             <li>
@@ -112,6 +120,13 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/agencies'} className="text-bold">
                                     Manage Agencies
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/booking_channels'} className="text-bold">
+                                    Manage Booking Channels
                                 </Link>
                             </li>
                         </div>

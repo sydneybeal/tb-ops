@@ -5,16 +5,16 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
 
-export const Consultants = () => {
+export const BookingChannels = () => {
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
     const { userDetails } = useAuth();
     const [displayData, setDisplayData] = useState([]);
-    const [sorting, setSorting] = useState({ field: 'is_active', ascending: true });
+    const [sorting, setSorting] = useState({ field: 'name', ascending: true });
 
     useEffect(() => {
         M.AutoInit();
-        fetch(`${process.env.REACT_APP_API}/v1/consultants`, {
+        fetch(`${process.env.REACT_APP_API}/v1/booking_channels`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
             }
@@ -66,7 +66,7 @@ export const Consultants = () => {
     return (
         <>
             <header>
-                <Navbar title="Consultant Management" />
+                <Navbar title="Booking Channel Management" />
             </header>
 
             <main className="grey lighten-5">
@@ -99,32 +99,12 @@ export const Consultants = () => {
                                                 <tr>
                                                     <th
                                                         onClick={() =>
-                                                            applySorting('first_name')
+                                                            applySorting('name')
                                                         }
                                                     >
-                                                        Last Name
+                                                        Name
                                                         <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('last_name')
-                                                        }
-                                                    >
-                                                        First Name
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('is_active')
-                                                        }
-                                                    >
-                                                        Active?
-                                                        <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'is_active' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
                                                     <th style={{ width: '90px' }} className="center">
@@ -147,16 +127,7 @@ export const Consultants = () => {
                                                         <React.Fragment key={item.id}>
                                                             <tr>
                                                                 <td style={{ verticalAlign: 'top' }}>
-                                                                    <p>{item.last_name}</p>
-                                                                </td>
-                                                                <td style={{ verticalAlign: 'top' }}>
-                                                                    <p className="text-bold">{item.first_name}</p>
-                                                                </td>
-                                                                <td>{item.is_active ? (
-                                                                    <span className="chip green lighten-3">YES</span>
-                                                                ) : (
-                                                                    <span className="chip grey lighten-3">NO</span>
-                                                                )}
+                                                                    <p className="text-bold">{item.name}</p>
                                                                 </td>
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
@@ -191,4 +162,4 @@ export const Consultants = () => {
     )
 }
 
-export default Consultants;
+export default BookingChannels;

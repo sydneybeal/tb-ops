@@ -2,11 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import { RoleProvider } from './components/RoleContext';
-import Landing from './pages/Landing';
+// import { RoleProvider } from './components/RoleContext';
+import { AuthProvider } from './components/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import Agencies from './pages/Agencies/Agencies';
+import BookingChannels from './pages/BookingChannels/BookingChannels';
 import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
 import TripReports from './pages/TripReports/TripReports';
@@ -19,31 +21,67 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <AccommodationLogs />,
+    element: (
+      <ProtectedRoute>
+        <AccommodationLogs />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/service_providers/',
-    element: <AccommodationLogs />,
+    element: (
+      <ProtectedRoute>
+        <AccommodationLogs />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/bed_night_reports/',
-    element: <BedNightReports />,
+    element: (
+      <ProtectedRoute>
+        <BedNightReports />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/properties/',
-    element: <Properties />,
+    element: (
+      <ProtectedRoute>
+        <Properties />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/consultants/',
-    element: <Consultants />,
+    element: (
+      <ProtectedRoute>
+        <Consultants />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/agencies/',
-    element: <Agencies />,
+    element: (
+      <ProtectedRoute>
+        <Agencies />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/booking_channels/',
+    element: (
+      <ProtectedRoute>
+        <BookingChannels />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/trip_reports/',
-    element: <TripReports />,
+    element: (
+      <ProtectedRoute>
+        <TripReports />
+      </ProtectedRoute>
+    ),
   },
 ]);
 
@@ -51,9 +89,9 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 // root.render(<RouterProvider router={router} />);
 // const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <RoleProvider>
+  <AuthProvider>
     <RouterProvider router={router} />
-  </RoleProvider>
+  </AuthProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

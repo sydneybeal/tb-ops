@@ -3,7 +3,7 @@ import M from 'materialize-css/dist/js/materialize';
 import Select from 'react-select';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useRole } from '../../components/RoleContext';
+import { useAuth } from '../../components/AuthContext';
 import CircularPreloader from '../../components/CircularPreloader';
 import AddLogModal from './AddLogModal';
 import Navbar from '../../components/Navbar';
@@ -12,9 +12,10 @@ import moment from 'moment';
 export const Overview = () => {
     const [apiData, setApiData] = useState([]);
     const [refreshData, setRefreshData] = useState(false);
-    const { userName } = useRole();
+    const { userDetails, logout } = useAuth();
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [loaded, setLoaded] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 100;
@@ -54,9 +55,27 @@ export const Overview = () => {
     };
 
     useEffect(() => {
-        fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`)
+        fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'red lighten-2',
+                    });
+                    logout();
+                    return;
+                }
+                if (!Array.isArray(data)) {
+                    console.error("Expected an array but got:", data);
+                    data = []; // Set data to an empty array if it's not an array
+                }
                 const numberOfPages = Math.ceil(data.length / itemsPerPage);
                 setApiData(data);
                 setTotalPages(numberOfPages);
@@ -78,9 +97,9 @@ export const Overview = () => {
     };
 
     const openEditModal = (logData) => {
-        if (!userName) {
+        if (!userDetails.email) {
             M.toast({
-                html: 'Please enter your name above before adding bed nights.',
+                html: 'Please log in before adding bed nights.',
                 displayLength: 2000,
                 classes: 'red lighten-2',
             });
@@ -162,6 +181,18 @@ export const Overview = () => {
     useEffect(() => {
         let newFilteredData = apiData;
 
+        if (searchQuery) {
+            newFilteredData = newFilteredData.filter((item) =>
+                (item.primary_traveler ? item.primary_traveler.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.property_name ? item.property_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.consultant_display_name ? item.consultant_display_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.agency_name ? item.agency_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.booking_channel_name ? item.booking_channel_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.country_name ? item.country_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.core_destination_name ? item.core_destination_name.toLowerCase() : '').includes(searchQuery.toLowerCase()),
+            );
+        }
+
         if (filters.core_dest) {
             newFilteredData = newFilteredData.filter((item) => item.core_destination_name === filters.core_dest);
         }
@@ -212,7 +243,7 @@ export const Overview = () => {
             property: propertyOptions,
         });
 
-    }, [apiData, filters]);
+    }, [apiData, filters, searchQuery]);
 
     useEffect(() => {
         const start = currentPage * itemsPerPage;
@@ -254,7 +285,7 @@ export const Overview = () => {
     }, [filteredData, sorting, currentPage, itemsPerPage]);
 
     const openModal = () => {
-        if (!userName) {
+        if (!userDetails.email) {
             M.toast({
                 html: 'Please enter your name above before adding bed nights.',
                 displayLength: 2000,
@@ -326,6 +357,7 @@ export const Overview = () => {
 
                     {loaded ? (
                         <>
+
                             <div className="row center">
                                 <div className="col s10">
                                     <ul className="pagination">
@@ -372,13 +404,6 @@ export const Overview = () => {
                             <div className="row center">
                                 <div>
                                     <div className="col s4">
-                                        {/* <select value={filters.core_dest} onChange={
-                                            (e) => setFilters({ ...filters, core_dest: e.target.value })}>
-                                            <option value="">Core Destination</option>
-                                            {filterOptions.core_dest.map((option, index) => (
-                                                <option key={index} value={option}>{option}</option>
-                                            ))}
-                                        </select> */}
                                         <Select
                                             placeholder="Search by Core Destination"
                                             value={filterOptions.core_dest.find(core_dest => core_dest.label === filters.core_dest) ? { value: filters.core_dest, label: filters.core_dest } : null}
@@ -391,13 +416,6 @@ export const Overview = () => {
                                         </span>
                                     </div>
                                     <div className="col s4">
-                                        {/* <select value={filters.country} onChange={
-                                            (e) => setFilters({ ...filters, country: e.target.value })}>
-                                            <option value="">Country</option>
-                                            {filterOptions.country.map((option, index) => (
-                                                <option key={index} value={option}>{option}</option>
-                                            ))}
-                                        </select> */}
                                         <Select
                                             placeholder="Search by Country"
                                             value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
@@ -410,13 +428,6 @@ export const Overview = () => {
                                         </span>
                                     </div>
                                     <div className="col s4">
-                                        {/* <select value={filters.consultant} onChange={
-                                            (e) => setFilters({ ...filters, consultant: e.target.value })}>
-                                            <option value="">Consultant</option>
-                                            {filterOptions.consultant.map((option, index) => (
-                                                <option key={index} value={option}>{option}</option>
-                                            ))}
-                                        </select> */}
                                         <Select
                                             placeholder="Search by Consultant"
                                             value={filterOptions.consultant.find(consultant => consultant.label === filters.consultant) ? { value: filters.consultant, label: filters.consultant } : null}
@@ -431,14 +442,8 @@ export const Overview = () => {
                                 </div>
                             </div>
                             <div className="row center">
-                                <div className="col s6">
-                                    {/* <select value={filters.property} onChange={
-                                        (e) => setFilters({ ...filters, property: e.target.value })}>
-                                        <option value="">Property</option>
-                                        {filterOptions.property.map((option, index) => (
-                                            <option key={index} value={option}>{option}</option>
-                                        ))}
-                                    </select> */}
+
+                                <div className="col s4">
                                     <Select
                                         placeholder="Search by Property"
                                         value={filterOptions.property.find(prop => prop.label === filters.property) ? { value: filters.property, label: filters.property } : null}
@@ -450,14 +455,28 @@ export const Overview = () => {
                                         hotel
                                     </span>
                                 </div>
-                                <div className="col s6">
+                                <div className="col s3">
+
+                                    <input
+                                        type="text"
+                                        placeholder="Search by text..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input" // Apply any styling as needed
+                                    />
+                                    <span className="material-symbols-outlined">
+                                        search
+                                    </span>
+                                </div>
+                                <div className="col s5">
                                     <div className="row">
                                         <div className="col s6">
                                             <div>
                                                 <ReactDatePicker
-                                                    selected={filters.start_date ? new Date(filters.start_date) : null}
-                                                    onChange={
-                                                        (date) => setFilters({ ...filters, start_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                                    selected={filters.start_date ? moment(filters.start_date).toDate() : null}
+                                                    onChange={(date) =>
+                                                        setFilters({ ...filters, start_date: date ? moment(date).format('YYYY-MM-DD') : '' })
+                                                    }
                                                     isClearable
                                                     placeholderText="mm/dd/yyyy"
                                                     className="date-input"
@@ -474,9 +493,10 @@ export const Overview = () => {
                                         <div className="col s6">
                                             <div>
                                                 <ReactDatePicker
-                                                    selected={filters.end_date ? new Date(filters.end_date) : null}
-                                                    onChange={
-                                                        (date) => setFilters({ ...filters, end_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                                    selected={filters.end_date ? moment(filters.end_date).toDate() : null}
+                                                    onChange={(date) =>
+                                                        setFilters({ ...filters, end_date: date ? moment(date).format('YYYY-MM-DD') : '' })
+                                                    }
                                                     isClearable
                                                     placeholderText="mm/dd/yyyy"
                                                     className="date-input"
@@ -495,8 +515,12 @@ export const Overview = () => {
                             </div>
                             <div className="row center">
                                 <div>
-                                    <button className="btn grey" onClick={() => setFilters(
-                                        { core_dest: '', country: '', consultant: '' })}>
+                                    <button className="btn grey" onClick={() => {
+                                        setFilters(
+                                            { core_dest: '', country: '', consultant: '' }
+                                        );
+                                        setSearchQuery('');
+                                    }}>
                                         Reset Filters
                                     </button>
                                 </div>
@@ -508,6 +532,7 @@ export const Overview = () => {
                                             onClick={() =>
                                                 applySorting('property_name')
                                             }
+                                            style={{ width: '140px' }}
                                         >
                                             {/* <span className="material-symbols-outlined">
                                                 hotel
@@ -705,7 +730,7 @@ export const Overview = () => {
                                                 data-tooltip="Last updated"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span class="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     update
                                                 </span>
                                                 <span className="material-symbols-outlined teal-text">
@@ -720,7 +745,7 @@ export const Overview = () => {
                                         displayData.map((item, index) => (
                                             <React.Fragment key={item.id}>
                                                 <tr>
-                                                    <td style={{ verticalAlign: 'top' }}>
+                                                    <td style={{ verticalAlign: 'top', width: '140px' }}>
                                                         <p className="text-bold">{item.property_name}</p>
                                                         <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'left', marginTop: '8px' }}>
                                                             {item.property_portfolio}
@@ -762,11 +787,19 @@ export const Overview = () => {
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
                                                         <p>{item.country_name}</p>
-                                                        <span className="chip red lighten-3">{item.core_destination_name}</span>
+                                                        <span className="chip blue lighten-4 text-bold" style={{
+                                                            padding: '0px 6px',
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            minWidth: '60px',
+                                                        }}>
+                                                            {item.core_destination_name}
+                                                        </span>
                                                         <br />
                                                     </td>
                                                     <td>
-                                                        <td style={{ width: '120px', textAlign: 'right', padding: '0px' }}>
+                                                        <div style={{ width: '100px', textAlign: 'right', padding: '0px' }}>
                                                             <span
                                                                 className={`tooltipped`}
                                                                 data-position="left"
@@ -777,20 +810,20 @@ export const Overview = () => {
                                                                     className="btn-floating btn-small waves-effect waves-light orange lighten-4"
                                                                     onClick={() => openEditModal(item)}
                                                                 >
-                                                                    <span class="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                    <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
                                                                         edit_note
                                                                     </span>
                                                                 </button>
                                                                 <br />
                                                                 <br />
-                                                                <em class="grey-text" style={{ fontSize: '0.75rem' }}>
-                                                                    <span class="material-symbols-outlined grey-text">
+                                                                <em className="grey-text" style={{ fontSize: '0.75rem' }}>
+                                                                    <span className="material-symbols-outlined grey-text">
                                                                         update
                                                                     </span>
                                                                     {moment(item.updated_at).fromNow()}
                                                                 </em>
                                                             </span>
-                                                        </td>
+                                                        </div>
                                                     </td>
                                                 </tr>
 
@@ -798,7 +831,7 @@ export const Overview = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                            <td colSpan="10" style={{ textAlign: 'center' }}>No results.</td>
                                         </tr>
                                     )}
                                 </tbody>

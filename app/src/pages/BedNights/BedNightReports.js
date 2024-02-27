@@ -4,13 +4,15 @@ import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import Select from 'react-select';
 import CircularPreloader from '../../components/CircularPreloader';
+import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
 import ReportDashboard from './ReportDashboard';
-// import moment from 'moment';
+import moment from 'moment';
 
 export const BedNightReports = () => {
     const [reportData, setReportData] = useState([]);
     const [accommodationLogData, setAccommodationLogData] = useState([]);
+    const { userDetails } = useAuth();
     const [loaded, setLoaded] = useState(false);
     const [filterOptions, setFilterOptions] = useState({
         core_destination_name: [],
@@ -46,12 +48,19 @@ export const BedNightReports = () => {
         const queryString = getQueryString(filters);
         const apiUrl = `${process.env.REACT_APP_API}/v1/bed_night_report?${queryString}`;
         setLoaded(false);
-        fetch(apiUrl)
+        fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 setReportData(data);
-                console.log(data);
-                fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`)
+                fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
+                    headers: {
+                        'Authorization': `Bearer ${userDetails.token}`
+                    }
+                })
                     .then((res) => res.json())
                     .then((data) => {
                         setAccommodationLogData(data);
@@ -200,9 +209,10 @@ export const BedNightReports = () => {
                                 <div className="col s6">
                                     <div>
                                         <ReactDatePicker
-                                            selected={filters.start_date ? new Date(filters.start_date) : null}
-                                            onChange={
-                                                (date) => setFilters({ ...filters, start_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                            selected={filters.start_date ? moment(filters.start_date).toDate() : null}
+                                            onChange={(date) =>
+                                                setFilters({ ...filters, start_date: date ? moment(date).format('YYYY-MM-DD') : '' })
+                                            }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
@@ -219,9 +229,10 @@ export const BedNightReports = () => {
                                 <div className="col s6">
                                     <div>
                                         <ReactDatePicker
-                                            selected={filters.end_date ? new Date(filters.end_date) : null}
-                                            onChange={
-                                                (date) => setFilters({ ...filters, end_date: date ? date.toISOString().substring(0, 10) : '' })}
+                                            selected={filters.end_date ? moment(filters.end_date).toDate() : null}
+                                            onChange={(date) =>
+                                                setFilters({ ...filters, end_date: date ? moment(date).format('YYYY-MM-DD') : '' })
+                                            }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"

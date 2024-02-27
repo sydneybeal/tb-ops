@@ -47,6 +47,11 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def delete_accommodation_log(self, log_id: UUID) -> bool:
+        """Deletes an AccommodationLog model from the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_accommodation_log(
         self,
         primary_traveler: str,
@@ -70,13 +75,6 @@ class TravelRepository(ABC):
         self, accommodation_logs: Sequence[AccommodationLog]
     ) -> None:
         """Updates a sequence of AccommodationLog models in the repository."""
-        raise NotImplementedError
-
-    @abstractmethod
-    async def delete_accommodation_log(
-        self, accommodation_logs: Sequence[AccommodationLog]
-    ) -> None:
-        """Deletes a sequence of AccommodationLog models from the repository."""
         raise NotImplementedError
 
     # Property

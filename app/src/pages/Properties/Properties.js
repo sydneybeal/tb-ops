@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
 import Select from 'react-select';
-import { useRole } from '../../components/RoleContext';
+import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
-import moment from 'moment';
 
 export const Properties = () => {
-    const { role } = useRole();
+    const { userDetails } = useAuth();
     const [apiData, setApiData] = useState([]);
-    const { userName } = useRole();
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [loaded, setLoaded] = useState(false);
@@ -32,7 +30,11 @@ export const Properties = () => {
 
     useEffect(() => {
         M.AutoInit();
-        fetch(`${process.env.REACT_APP_API}/v1/properties`)
+        fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
             .then((res) => res.json())
             .then((data) => {
                 const numberOfPages = Math.ceil(data.length / itemsPerPage);
@@ -104,7 +106,6 @@ export const Properties = () => {
             return acc;
         }, {});
 
-        // console.log("Core dest options: " + Object.values(coreDestOptions));
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const coreDestinationOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
         const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
@@ -221,7 +222,7 @@ export const Properties = () => {
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
-                    {(role !== 'admin') ? (
+                    {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
                         </div>

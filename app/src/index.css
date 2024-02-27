@@ -105,6 +105,12 @@ ul.sidenav.sidenav-fixed li.logo {
   min-height: 80%;
 }
 
+.modal {
+  border-radius: 10px;
+  width: 70%;
+  min-height: 80%;
+}
+
 .material-tooltip.tooltip-light {
   background-color: rgba(47, 79, 79, 0.8) !important;
   border-radius: 4px !important;
@@ -136,6 +142,10 @@ table.accommodation-logs-table {
   z-index: 0;
   table-layout: fixed;
 }
+
+/* .accommodation-logs-table th, .accommodation-logs-table td {
+  width: 120px;
+} */
 
 table.accommodation-logs-table td p {
   margin-block-start: 0;
