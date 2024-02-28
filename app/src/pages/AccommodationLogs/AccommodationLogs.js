@@ -176,7 +176,7 @@ export const Overview = () => {
 
     useEffect(() => {
         M.AutoInit();
-    }, [displayData]);
+    }, []);
 
     useEffect(() => {
         let newFilteredData = apiData;
@@ -392,12 +392,12 @@ export const Overview = () => {
                                 <div className="col s2">
                                     {/* <button className="btn" onClick={openModal}>New</button> */}
                                     {/* <div className="row" style={{ textAlign: 'right' }}> */}
-                                    <a href="/#" className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                                    <button className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
                                         </span>
                                         Add New
-                                    </a>
+                                    </button>
                                     {/* </div> */}
                                 </div>
                             </div>

@@ -105,11 +105,23 @@ ul.sidenav.sidenav-fixed li.logo {
   min-height: 80%;
 }
 
-.modal {
+
+.modal.add-edit-modal {
+  border-radius: 10px;
+  width: 50%;
+  min-height: 60%;
+}
+
+.modal.add-edit-modal .modal-content {
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+/* .modal {
   border-radius: 10px;
   width: 70%;
   min-height: 80%;
-}
+} */
 
 .material-tooltip.tooltip-light {
   background-color: rgba(47, 79, 79, 0.8) !important;
@@ -146,6 +158,14 @@ table.accommodation-logs-table {
 /* .accommodation-logs-table th, .accommodation-logs-table td {
   width: 120px;
 } */
+
+.pagination li button {
+  color: #444;
+  display: inline-block;
+  font-size: 1.1rem;
+  padding: 0 10px;
+  line-height: 30px;
+}
 
 table.accommodation-logs-table td p {
   margin-block-start: 0;

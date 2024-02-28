@@ -5,16 +5,22 @@ import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
+import AddEditPropertyModal from './AddEditModal';
 
 export const Properties = () => {
     const { userDetails } = useAuth();
     const [apiData, setApiData] = useState([]);
+    const [refreshData, setRefreshData] = useState(false);
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [loaded, setLoaded] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 100;
     const [totalPages, setTotalPages] = useState(0);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentEditProperty, setCurrentEditProperty] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
     const [sortedData, setSortedData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'name', ascending: true });
     const [filterOptions, setFilterOptions] = useState({
@@ -48,7 +54,11 @@ export const Properties = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, []);
+    }, [userDetails.token, refreshData]);
+
+    useEffect(() => {
+        M.AutoInit();
+    }, [displayData]);
 
     /**
   * Sets sorting criteria.
@@ -121,6 +131,15 @@ export const Properties = () => {
     useEffect(() => {
         let newFilteredData = apiData;
 
+        if (searchQuery) {
+            newFilteredData = newFilteredData.filter((item) =>
+                (item.name ? item.name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.portfolio_name ? item.portfolio_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.country_name ? item.country_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
+                (item.core_destination_name ? item.core_destination_name.toLowerCase() : '').includes(searchQuery.toLowerCase()),
+            );
+        }
+
         if (filters.country) {
             if (filters.country === 'No country') {
                 // Filter for records where country_name is null or undefined
@@ -141,7 +160,7 @@ export const Properties = () => {
 
         setFilteredData(newFilteredData);
 
-    }, [apiData, filters]);
+    }, [apiData, filters, searchQuery]);
 
     useEffect(() => {
         const start = currentPage * itemsPerPage;
@@ -182,6 +201,19 @@ export const Properties = () => {
 
     }, [filteredData, sorting, currentPage, itemsPerPage]);
 
+    const openModal = () => {
+        console.log("opening modal");
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please enter your name above before adding bed nights.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        }
+        setIsModalOpen(true);
+    };
+
     useEffect(() => {
         // Initialize tooltips
         const tooltipElems = document.querySelectorAll('.tooltipped');
@@ -214,6 +246,16 @@ export const Properties = () => {
         };
     }, [displayData]);
 
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setCurrentEditProperty(null);
+    };
+
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
     return (
         <>
             <header>
@@ -228,15 +270,25 @@ export const Properties = () => {
                         </div>
                     ) : (
                         <>
+                            <AddEditPropertyModal
+                                isOpen={isModalOpen}
+                                onClose={closeModal}
+                                onRefresh={triggerRefresh}
+                                editPropertyData={currentEditProperty}
+                                isEditMode={isEditMode}
+                            />
                             {loaded ? (
                                 <>
                                     <div className="row center">
                                         <div className="col s10">
                                             <ul className="pagination">
                                                 <li className={currentPage === 0 ? 'disabled' : ''}>
-                                                    <a onClick={() => currentPage > 0 && changePage(currentPage - 1)} href="#!">
+                                                    <button
+                                                        onClick={() => currentPage > 0 && changePage(currentPage - 1)}
+                                                        className="btn-flat"
+                                                        style={{ padding: '0px' }}>
                                                         <i className="material-icons">chevron_left</i>
-                                                    </a>
+                                                    </button>
                                                 </li>
                                                 {Array.from({ length: totalPages }, (_, idx) => (
                                                     <li
@@ -247,7 +299,12 @@ export const Properties = () => {
                                                         key={idx}
                                                         onClick={() => changePage(idx)}
                                                     >
-                                                        <a className="teal-text text-lighten-2" href="#!">{idx + 1}</a>
+                                                        <button
+                                                            className="btn-flat teal-text text-lighten-2"
+                                                            style={{ padding: '0px 12px' }}
+                                                        >
+                                                            {idx + 1}
+                                                        </button>
                                                     </li>
                                                 ))}
                                                 <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
@@ -265,7 +322,7 @@ export const Properties = () => {
                                             <button
                                                 href=""
                                                 className="btn-float btn-large waves-effect waves-light green lighten-2"
-                                                onClick={() => M.toast({ html: "Not available at this time" })}
+                                                onClick={openModal}
                                             >
                                                 <span className="material-symbols-outlined">
                                                     add
@@ -276,7 +333,7 @@ export const Properties = () => {
                                     </div>
                                     <div className="row center">
                                         <div>
-                                            <div className="col s4">
+                                            <div className="col s12 m4">
                                                 <Select
                                                     placeholder="Search by Country"
                                                     value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
@@ -288,7 +345,7 @@ export const Properties = () => {
                                                     globe
                                                 </span>
                                             </div>
-                                            <div className="col s4">
+                                            <div className="col s12 m4">
                                                 <Select
                                                     placeholder="Search by Core Destination"
                                                     value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
@@ -300,7 +357,7 @@ export const Properties = () => {
                                                     explore
                                                 </span>
                                             </div>
-                                            <div className="col s4">
+                                            <div className="col s12 m4">
                                                 <Select
                                                     placeholder="Search by Portfolio"
                                                     value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
@@ -312,6 +369,20 @@ export const Properties = () => {
                                                     store
                                                 </span>
                                             </div>
+                                        </div>
+                                    </div>
+                                    <div className="row center">
+                                        <div className="col s12 m6 offset-m3">
+                                            <input
+                                                type="text"
+                                                placeholder="Search by text..."
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="search-input" // Apply any styling as needed
+                                            />
+                                            <span className="material-symbols-outlined">
+                                                search
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="row center">

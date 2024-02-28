@@ -150,7 +150,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 setAgencies(formattedAgencies);
             })
             .catch((err) => console.error(err));
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, userDetails.token]);
 
     const addLogEntry = () => {
         setAccommodationLogs([...accommodationLogs, {}]);
@@ -266,7 +266,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 },
                 body: JSON.stringify(logsToSubmit, null, 2),
             })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        // If the response is not ok, throw an error with the status
+                        throw new Error('Network response was not ok: ' + response.statusText);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     // Handle success response
                     const insertedCount = data?.inserted_count ?? 0;
@@ -296,7 +302,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     console.error('Error:', error);
                     // Handle errors here
                     M.toast({
-                        html: 'Your entry was valid, but was unable to save to the database.',
+                        html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
                         classes: 'amber darken-1',
                     });
