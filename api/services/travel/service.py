@@ -25,6 +25,7 @@ from api.services.travel.models import (
     Country,
     PatchAccommodationLogRequest,
     Property,
+    PatchPropertyRequest,
 )
 from api.services.travel.repository.postgres import PostgresTravelRepository
 
@@ -115,7 +116,6 @@ class TravelService:
         property_id = await self.resolve_property_id(log_request)
 
         # # Check if this log exists and needs updating or if it's a new log
-        # futureTODO: change this to accommodation_log.id if it's from the "Edit" form
         if log_request.log_id:
             existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
         else:
@@ -131,12 +131,11 @@ class TravelService:
                 log_request, existing_log, property_id, booking_channel_id, agency_id
             )
             return updated_log_data
-        else:
-            # If new, prepare the new log data
-            new_log_data = self.prepare_new_log_data(
-                log_request, property_id, booking_channel_id, agency_id
-            )
-            return new_log_data  # Return the prepared data for insertion
+        # If new, prepare the new log data
+        new_log_data = self.prepare_new_log_data(
+            log_request, property_id, booking_channel_id, agency_id
+        )
+        return new_log_data  # Return the prepared data for insertion
 
     def prepare_new_log_data(
         self,
@@ -245,51 +244,37 @@ class TravelService:
     async def resolve_property_id(
         self, log_request: PatchAccommodationLogRequest
     ) -> UUID:
-        """Gets or creates an agency based on either agency ID or new agency name."""
+        """Gets or creates a property based on either property ID or new property name."""
         if log_request.property_id:
             return log_request.property_id
-        elif log_request.new_property_name:
-            existing_property = await self.get_property_by_name(
+        existing_property = await self.get_property_by_name(
+            log_request.new_property_name,
+            log_request.new_property_portfolio_name,
+            log_request.new_property_country_id,
+            log_request.new_property_core_destination_id,
+        )
+        if existing_property:
+            print("Passed a new property and found it in the database already.")
+            return existing_property.id
+        else:
+            # Create a new Property model instance
+            new_property = Property(
+                name=log_request.new_property_name,
+                portfolio=log_request.new_property_portfolio_name,
+                country_id=log_request.new_property_country_id,
+                core_destination_id=log_request.new_property_core_destination_id,
+                updated_by=log_request.updated_by,
+            )
+            # Pass a list of Property instances to add_property
+            await self.add_property([new_property])
+            # Fetch the newly created or existing property by name to get its ID
+            property_created = await self.get_property_by_name(
                 log_request.new_property_name,
                 log_request.new_property_portfolio_name,
                 log_request.new_property_country_id,
                 log_request.new_property_core_destination_id,
             )
-            if existing_property:
-                print("Passed a new property and found it in the database already.")
-                return existing_property.id
-            else:
-                # Create a new Property model instance
-                new_property = Property(
-                    name=log_request.new_property_name,
-                    portfolio=log_request.new_property_portfolio_name,
-                    country_id=log_request.new_property_country_id,
-                    core_destination_id=log_request.new_property_core_destination_id,
-                    updated_by=log_request.updated_by,
-                )
-                # Pass a list of Property instances to add_property
-                await self.add_property([new_property])
-                # Fetch the newly created or existing property by name to get its ID
-                property_created = await self.get_property_by_name(
-                    log_request.new_property_name,
-                    log_request.new_property_portfolio_name,
-                    log_request.new_property_country_id,
-                    log_request.new_property_core_destination_id,
-                )
-                return property_created.id
-        else:
-            return None
-
-    # if we got a new_property_name, new_property_portfolio_name, new_property_country_id
-    #    then we need to create the new property
-    # if we got a new_agency_name
-    #    then we need to create the new agency
-    # if we got a new_booking_channel name
-    #    then we need to create the new bookingchannel
-    # using the IDs passed to the patch request or the new IDs generated above
-    #    we need to create the AccommodationLog object
-    # then we need to add it to accommodation_logs (add_accommodation_log function?)
-    # or possibly in the future edit the existing accommodation log with that ID
+            return property_created.id
 
     # Country
     async def add_country(self, models: Sequence[Country]) -> None:
@@ -301,6 +286,10 @@ class TravelService:
             if not await self._repo.get_country_by_name(model.name)
         ]
         await self._repo.add_country(to_be_added)
+
+    async def get_country_by_id(self, country_id: UUID) -> Country:
+        """Gets a single Country model by name."""
+        return await self._repo.get_country_by_id(country_id)
 
     async def get_country_by_name(self, name: str) -> Country:
         """Gets a single Country model by name."""
@@ -339,6 +328,73 @@ class TravelService:
         ]
         await self._repo.add_property(to_be_added)
 
+    async def process_property_request(
+        self, property_request: PatchPropertyRequest
+    ) -> dict:
+        """Adds or edits accommodation log models in the repository."""
+        prepared_property = await self.prepare_property_data(property_request)
+
+        # Perform the upsert operation for valid logs
+        if prepared_property:
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_property(prepared_property)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        return {
+            "inserted_count": 0,
+            "updated_count": 0,
+            "message": "No logs were processed.",
+        }
+
+    async def prepare_property_data(
+        self, property_request: PatchPropertyRequest
+    ) -> Property:
+        """Resolves and prepares a property patch for insertion."""
+        # Get the core_destination_id that matches the country_id
+        core_destination = await self._repo.get_country_by_id(
+            property_request.country_id
+        )
+        core_destination_id = core_destination.core_destination_id
+        if core_destination_id is None:
+            raise ValueError("Invalid country_id")
+
+        # # Check if this log exists and needs updating or if it's a new log
+        if property_request.property_id:
+            existing_property = await self.get_property_by_id(
+                property_request.property_id
+            )
+        else:
+            existing_property = await self.get_property_by_name(
+                property_request.name,
+                property_request.portfolio,
+                property_request.country_id,
+                core_destination_id,
+            )
+        if existing_property:
+            print("Property already existed")
+            return Property(
+                id=existing_property.id,  # Keep the same ID
+                name=property_request.name,
+                portfolio=property_request.portfolio,
+                country_id=property_request.country_id,
+                core_destination_id=core_destination_id,
+                updated_by=property_request.updated_by,
+            )
+        # If new, prepare the new log data
+        return Property(
+            name=property_request.name,
+            portfolio=property_request.portfolio,
+            country_id=property_request.country_id,
+            core_destination_id=core_destination_id,
+            updated_by=property_request.updated_by,
+        )
+
     async def get_property_by_name(
         self,
         name: str,
@@ -350,6 +406,14 @@ class TravelService:
         return await self._repo.get_property_by_name(
             name, portfolio_name, country_id, core_destination_id
         )
+
+    async def get_property_by_id(self, property_id: UUID) -> Property:
+        """Gets a single Property model by id."""
+        return await self._repo.get_property_by_id(property_id)
+
+    async def delete_property(self, property_id: UUID):
+        """Deletes a Property."""
+        return await self._repo.delete_property(property_id)
 
     # Agency
     async def add_agency(self, models: Sequence[Agency]) -> None:

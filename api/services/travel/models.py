@@ -156,3 +156,13 @@ class PatchAccommodationLogRequest(BaseModel):
     agency_id: Optional[UUID] = None
     new_agency_name: Optional[str] = None
     updated_by: str
+
+
+class PatchPropertyRequest(BaseModel):
+    """A request object model that contains information for a new Property."""
+
+    property_id: Optional[UUID] = None
+    name: str
+    portfolio: str
+    country_id: UUID
+    updated_by: str

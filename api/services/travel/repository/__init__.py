@@ -94,12 +94,19 @@ class TravelRepository(ABC):
         """Returns a single Property model in the repository by name."""
 
     @abstractmethod
+    async def get_property_by_id(
+        self,
+        property_id: UUID,
+    ) -> Property:
+        """Returns a single Property model in the repository by id."""
+
+    @abstractmethod
     async def update_property(self, properties: Sequence[Property]) -> None:
         """Updates a sequence of Property models in the repository."""
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_property(self, properties: Sequence[Property]) -> None:
+    async def delete_property(self, property_id: UUID) -> None:
         """Deletes a sequence of Property models from the repository."""
         raise NotImplementedError
 
@@ -169,6 +176,11 @@ class TravelRepository(ABC):
     @abstractmethod
     async def add_country(self, countries: Sequence[Country]) -> None:
         """Adds a sequence of Country models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_country_by_id(self, country_id: UUID) -> None:
+        """Gets a single Country model based on ID."""
         raise NotImplementedError
 
     @abstractmethod

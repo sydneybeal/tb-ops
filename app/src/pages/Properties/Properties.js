@@ -79,6 +79,21 @@ export const Properties = () => {
         setCurrentPage(newPage);
     };
 
+    const openEditModal = (property) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before adding bed nights.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        } else {
+            setCurrentEditProperty(property); // Set the data for the log to be edited
+            setIsEditMode(true);       // Indicate that we're in edit mode
+            setIsModalOpen(true);      // Open the modal
+        }
+    };
+
     useEffect(() => {
         var elems = document.querySelectorAll('select');
         M.FormSelect.init(elems);
@@ -202,7 +217,6 @@ export const Properties = () => {
     }, [filteredData, sorting, currentPage, itemsPerPage]);
 
     const openModal = () => {
-        console.log("opening modal");
         if (!userDetails.email) {
             M.toast({
                 html: 'Please enter your name above before adding bed nights.',
@@ -387,14 +401,16 @@ export const Properties = () => {
                                     </div>
                                     <div className="row center">
                                         <div>
-                                            <button className="btn grey" onClick={() => setFilters(
-                                                { core_destination: '', country: '', portfolio: '' })}>
+                                            <button className="btn grey" onClick={() => {
+                                                setFilters({ core_destination: '', country: '', portfolio: '' });
+                                                setSearchQuery('');
+                                            }}>
                                                 Reset Filters
                                             </button>
                                         </div>
                                     </div>
                                     <div className="container center">
-                                        <table className="accommodation-logs-table center">
+                                        <table className="accommodation-logs-table">
                                             <thead>
                                                 <tr>
                                                     <th
@@ -505,7 +521,7 @@ export const Properties = () => {
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
                                                                         className="btn waves-effect waves-light orange lighten-3"
-                                                                        onClick={() => M.toast({ html: "Not available at this time" })}
+                                                                        onClick={() => openEditModal(item)}
                                                                     >
                                                                         Edit
                                                                     </button>
@@ -515,7 +531,7 @@ export const Properties = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="5" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

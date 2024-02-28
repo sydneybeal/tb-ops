@@ -309,6 +309,76 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new Property record(s) to the repository."
         )
 
+    async def upsert_property(self, property_data: Property) -> list[Tuple[UUID, bool]]:
+        """Upserts a sequence of Property models into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+        INSERT INTO public.properties (
+            id,
+            name,
+            portfolio,
+            representative,
+            country_id,
+            core_destination_id,
+            created_at,
+            updated_at,
+            updated_by
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            portfolio = EXCLUDED.portfolio,
+            representative = EXCLUDED.representative,
+            country_id = EXCLUDED.country_id,
+            core_destination_id = EXCLUDED.core_destination_id,
+            updated_at = EXCLUDED.updated_at,
+            updated_by = EXCLUDED.updated_by
+        RETURNING id, (xmax = 0) AS was_inserted;
+    """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    property_data.id,
+                    property_data.name.strip(),
+                    property_data.portfolio.strip(),
+                    (
+                        property_data.representative.strip()
+                        if property_data.representative
+                        else None
+                    ),
+                    property_data.country_id,
+                    property_data.core_destination_id,
+                    property_data.created_at,
+                    property_data.updated_at,
+                    property_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new log(s).")
+        print(f"Updated {updated_count} existing log(s).")
+        return results
+
     async def get_property_by_name(
         self,
         name: str,
@@ -361,24 +431,58 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     core_destination_id_uuid,
                 )
                 if res:
-                    return Property(
-                        id=res["id"],
-                        name=res["name"],
-                        portfolio=res["portfolio"],
-                        representative=res["representative"],
-                        country_id=res["country_id"],
-                        created_at=res["created_at"],
-                        updated_at=res["updated_at"],
-                        updated_by=res["updated_by"],
-                    )
+                    return Property(**res)
+
+    async def get_property_by_id(
+        self,
+        property_id: UUID,
+    ) -> Property:
+        """Returns a single Property model in the repository by id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.properties
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, property_id)
+                if res:
+                    return Property(**res)
 
     async def update_property(self, properties: Sequence[Property]) -> None:
         """Updates a sequence of Property models in the repository."""
         raise NotImplementedError
 
-    async def delete_property(self, properties: Sequence[Property]) -> None:
+    async def delete_property(self, property_id: UUID) -> None:
         """Deletes a sequence of Property models from the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.properties
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, property_id)
+                # `execute` returns a string like 'DELETE 1' if a row was deleted successfully
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No property found with ID: {property_id}, nothing was deleted."
+                    )
+                    return False
+                print(f"Successfully deleted log with ID: {property_id}.")
+                return True
 
     # Consultant
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:
@@ -675,6 +779,24 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_at=res["updated_at"],
                         updated_by=res["updated_by"],
                     )
+
+    async def get_country_by_id(self, country_id: UUID) -> None:
+        """Gets a single Country model based on ID."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.countries
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, country_id)
+                if res:
+                    return Country(**res)
 
     # Agency
     async def add_agency(self, agencies: Sequence[Agency]) -> None:

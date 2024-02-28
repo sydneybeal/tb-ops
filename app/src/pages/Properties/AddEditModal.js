@@ -8,6 +8,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = null, isEditMode = false }) => {
     const { userDetails } = useAuth();
+    const [propertyId, setPropertyId] = useState(null);
     const [propertyName, setPropertyName] = useState('');
     const [portfolioName, setPortfolioName] = useState('');
     const [selectedCountryId, setSelectedCountryId] = useState(null);
@@ -34,6 +35,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }
 
         const propertyToSubmit = {
+            property_id: propertyId || null,
             name: propertyName || null,
             portfolio: portfolioName,
             country_id: selectedCountryId,
@@ -165,7 +167,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             const confirmDelete = window.confirm("Are you sure you want to delete this property?");
             if (confirmDelete) {
                 // const entryId = property.id : null;
-                const propertyId = 'abc';
+                // const propertyId = 'abc';
                 if (!propertyId) {
                     M.toast({ html: 'Error: No property ID found', classes: 'red lighten-2' });
                     return;
@@ -200,10 +202,22 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }
     };
 
+    useEffect(() => {
+        if (!isOpen) {
+            resetFormState(); // Reset form state when modal closes
+        } else if (isOpen && isEditMode && editPropertyData) {
+            setPropertyId(editPropertyData.id);
+            setPropertyName(editPropertyData.name);
+            setPortfolioName(editPropertyData.portfolio_name);
+            setSelectedCountryId(editPropertyData.country_id);
+        }
+    }, [isOpen, isEditMode, editPropertyData]);
+
     const resetFormState = () => {
         setPropertyName('');
         setPortfolioName('');
         setSelectedCountryId(null);
+        setValidationErrors({});
     };
 
     const validatePropertyName = (value) => {
@@ -281,13 +295,13 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }
     };
 
-    // const handleSelectedCountryIdBlur = () => {
-    //     setTouched(prev => ({ ...prev, selectedCountryId: true }));
-    //     setValidationErrors(prevErrors => ({
-    //         ...prevErrors,
-    //         country: validateSelectedCountryId(selectedCountryId),
-    //     }));
-    // };
+    const handleSelectedCountryIdBlur = () => {
+        setTouched(prev => ({ ...prev, selectedCountryId: true }));
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            country: validateSelectedCountryId(selectedCountryId),
+        }));
+    };
 
     return (
         <div id="add-edit-modal" className="modal add-edit-modal">
@@ -334,7 +348,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                 />
                                 <label htmlFor="property_name">
                                     <span className="material-symbols-outlined">
-                                        hiking
+                                        hotel
                                     </span>
                                     Property Name
                                 </label>
@@ -352,7 +366,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                 />
                                 <label htmlFor="portfolio_name">
                                     <span className="material-symbols-outlined">
-                                        hiking
+                                        store
                                     </span>
                                     Portfolio Name
                                 </label>
@@ -363,6 +377,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                     id="country_select"
                                     value={countries.find(cons => cons.value === selectedCountryId) || ''}
                                     onChange={handleSelectedCountryIdChange}
+                                    onBlur={handleSelectedCountryIdBlur}
                                     options={countries}
                                     isClearable
                                     style={{ flexGrow: '1' }}
@@ -381,7 +396,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                 />
                                 <label htmlFor="country_select">
                                     <span className="material-symbols-outlined">
-                                        badge
+                                        globe
                                     </span>
                                     Country Name
                                 </label>

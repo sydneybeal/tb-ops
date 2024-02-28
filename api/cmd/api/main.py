@@ -39,6 +39,7 @@ from api.services.travel.models import (
     Agency,
     Consultant,
     PatchAccommodationLogRequest,
+    PatchPropertyRequest,
 )
 from api.services.travel.service import TravelService
 
@@ -102,7 +103,7 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "feb27v1"}
+        return {"Hello": "World", "Version": "feb28v1"}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
@@ -145,7 +146,7 @@ def make_app(
         accommodation_log_requests: list[PatchAccommodationLogRequest],
         current_user: User = Depends(get_current_user),
     ) -> JSONResponse:
-        """Get all AccommodationLog summaries."""
+        """Add or edit a sequence of AccommodationLogs."""
         results = await travel_svc.process_accommodation_log_requests(
             accommodation_log_requests
         )
@@ -179,6 +180,36 @@ def make_app(
     ) -> list[PropertySummary] | JSONResponse:
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_properties()
+
+    @app.patch(
+        "/v1/properties",
+        operation_id="post_properties",
+        tags=["properties"],
+    )
+    async def post_properties(
+        property_data: PatchPropertyRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        results = await travel_svc.process_property_request(property_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/properties/{property_id}",
+        operation_id="post_properties",
+        tags=["properties"],
+    )
+    async def delete_property(
+        property_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete a property by its ID."""
+        is_deleted = await travel_svc.delete_property(property_id)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Accommodation log not found")
+        return JSONResponse(
+            content={"message": "Accommodation log deleted successfully"},
+            status_code=200,
+        )
 
     @app.get(
         "/v1/countries",
