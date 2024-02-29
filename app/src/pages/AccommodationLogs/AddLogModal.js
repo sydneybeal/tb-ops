@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
@@ -188,7 +188,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         return '';
     };
 
-    const validateAgency = () => {
+    const validateAgency = useCallback(() => {
         if (!touched.agency) {
             return '';
         }
@@ -202,19 +202,19 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         }
         // If everything is fine, return an empty string
         return '';
-    };
+    }, [isNewAgency, newAgencyName, selectedAgencyId, touched.agency]);
 
-    const updateAgencyValidation = () => {
+    const updateAgencyValidation = useCallback(() => {
         const agencyError = validateAgency();
         setValidationErrors(prevErrors => ({
             ...prevErrors,
             agency: agencyError,
         }));
-    };
+    }, [validateAgency, setValidationErrors]);
 
     useEffect(() => {
         updateAgencyValidation();
-    }, [isNewAgency, newAgencyName, selectedAgencyId]);
+    }, [updateAgencyValidation, isNewAgency, newAgencyName, selectedAgencyId]);
 
     const validateNumPax = (value) => {
         const num = parseInt(value, 10);
@@ -766,7 +766,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         {!isNewAgency ? (
                                             <Select
                                                 placeholder="Select agency"
-                                                id="agency_select"
+                                                inputId="agency_select"
                                                 value={agencies.find(agency => agency.value === selectedAgencyId) || ''}
                                                 onChange={handleAgencyChange}
                                                 options={agencies}
@@ -789,14 +789,14 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         ) : (
                                             <input
                                                 type="text"
-                                                id="new_agency_name"
+                                                id="agency_select"
                                                 value={newAgencyName}
                                                 onChange={handleNewAgencyNameChange}
                                                 placeholder="Agency Name"
                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                             />
                                         )}
-                                        <label htmlFor="new_agency_name">
+                                        <label htmlFor="agency_select">
                                             <span className="material-symbols-outlined">
                                                 contact_mail
                                             </span>
@@ -837,7 +837,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         <div>
                                             <Select
                                                 placeholder="Select agency"
-                                                id="agency_select"
+                                                inputId="agency_select"
                                                 value={agencies.find(agency => agency.value === selectedAgencyId) || ''}
                                                 onChange={handleAgencyChange}
                                                 options={agencies}
@@ -864,7 +864,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                             <div className="col s4">
                                 <Select
                                     placeholder="Select Consultant"
-                                    id="consultant_select"
+                                    inputId="consultant_select"
                                     value={consultants.find(cons => cons.value === selectedConsultantId) || ''}
                                     onChange={handleConsultantChange}
                                     options={consultants}
@@ -1033,7 +1033,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 <div className="col s12">
                                                     <Select
                                                         placeholder="Search for a property"
-                                                        id="property_select"
+                                                        inputId="property_select"
                                                         value={properties.find(prop => prop.value === log.property_id) || ''}
                                                         onChange={(selectedOption) => {
                                                             handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
@@ -1162,7 +1162,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     <div className="col s12">
                                         <Select
                                             placeholder="Search for a property"
-                                            id="property_select"
+                                            inputId="property_select"
                                             value={properties.find(prop => prop.value === log.property_id) || ''}
                                             onChange={(selectedOption) => {
                                                 handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
@@ -1190,6 +1190,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         {/* Date In Selector */}
                                         <div>
                                             <ReactDatePicker
+                                                id="form-date-in"
                                                 selected={log.date_in ? moment(log.date_in).toDate() : null}
                                                 onChange={(date) => {
                                                     handleLogChange(index, 'date_in', date ? moment(date).format('YYYY-MM-DD') : '');
@@ -1200,7 +1201,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 dateFormat="MM/dd/yyyy"
                                             />
                                         </div>
-                                        <label htmlFor="date_in">
+                                        <label htmlFor="form-date-in">
                                             <span className="material-symbols-outlined">
                                                 flight_land
                                             </span>
@@ -1213,6 +1214,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         <div>
                                             <div>
                                                 <ReactDatePicker
+                                                    id="form-date-out"
                                                     selected={log.date_out ? moment(log.date_out).toDate() : null}
                                                     onChange={(date) => handleLogChange(index, 'date_out', date ? moment(date).format('YYYY-MM-DD') : '')}
                                                     isClearable
@@ -1222,7 +1224,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 />
                                             </div>
                                         </div>
-                                        <label htmlFor="date_out">
+                                        <label htmlFor="form-date-out">
                                             <span className="material-symbols-outlined">
                                                 flight_takeoff
                                             </span>
@@ -1234,6 +1236,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             <>
                                                 {!log.is_new_booking_channel ? (
                                                     <Select
+                                                        inputId="booking_channel_select"
                                                         placeholder="Search for a booking channel"
                                                         value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
                                                         onChange={(selectedOption) => {
@@ -1246,14 +1249,14 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 ) : (
                                                     <input
                                                         type="text"
-                                                        id="new_booking_channel_name"
+                                                        id="booking_channel_select"
                                                         value={log.new_booking_channel_name || ''}
                                                         onChange={(e) => handleLogChange(index, 'new_booking_channel_name', e.target.value)}
                                                         placeholder="Booking Channel Name"
                                                         style={{ marginRight: '10px', flexGrow: '1' }}
                                                     />
                                                 )}
-                                                <label htmlFor="new_booking_channel_name">
+                                                <label htmlFor="booking_channel_select">
                                                     <span className="material-symbols-outlined">
                                                         alt_route
                                                     </span>

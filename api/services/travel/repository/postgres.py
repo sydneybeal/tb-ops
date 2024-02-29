@@ -375,8 +375,8 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 updated_count += 1
 
         print(f"Processed {len(results)} upsert operation(s).")
-        print(f"Inserted {inserted_count} new log(s).")
-        print(f"Updated {updated_count} existing log(s).")
+        print(f"Inserted {inserted_count} new property(ies).")
+        print(f"Updated {updated_count} existing property(ies).")
         return results
 
     async def get_property_by_name(
@@ -569,9 +569,110 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Updates a sequence of Consultant models in the repository."""
         raise NotImplementedError
 
-    async def delete_consultant(self, consultants: Sequence[Consultant]) -> None:
+    async def upsert_consultant(
+        self, consultant_data: Consultant
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a consultant into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+        INSERT INTO public.consultants (
+            id,
+            first_name,
+            last_name,
+            is_active,
+            created_at,
+            updated_at,
+            updated_by
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            is_active = EXCLUDED.is_active,
+            updated_at = EXCLUDED.updated_at,
+            updated_by = EXCLUDED.updated_by
+        RETURNING id, (xmax = 0) AS was_inserted;
+    """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    consultant_data.id,
+                    consultant_data.first_name.strip(),
+                    consultant_data.last_name.strip(),
+                    consultant_data.is_active,
+                    consultant_data.created_at,
+                    consultant_data.updated_at,
+                    consultant_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new consultant(s).")
+        print(f"Updated {updated_count} existing consultant(s).")
+        return results
+
+    async def get_consultant_by_id(self, consultant_id: UUID) -> Consultant:
+        """Gets a single Consultant model based on id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.consultants
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, consultant_id)
+                if res:
+                    return Consultant(**res)
+
+    async def delete_consultant(self, consultant_id: UUID) -> None:
         """Deletes a sequence of Consultant models from the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.consultants
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, consultant_id)
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No consultant found with ID: {consultant_id}, nothing was deleted."
+                    )
+                    return False
+                print(f"Successfully deleted consultant with ID: {consultant_id}.")
+                return True
 
     # CoreDestination
     async def add_core_destination(

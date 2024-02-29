@@ -4,13 +4,18 @@ import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
+import AddEditConsultantModal from './AddEditModal';
 
 export const Consultants = () => {
+    const { userDetails } = useAuth();
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const { userDetails } = useAuth();
     const [displayData, setDisplayData] = useState([]);
-    const [sorting, setSorting] = useState({ field: 'is_active', ascending: true });
+    const [sorting, setSorting] = useState({ field: 'is_active', ascending: false });
+    const [refreshData, setRefreshData] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentEditConsultant, setCurrentEditConsultant] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
         M.AutoInit();
@@ -28,7 +33,7 @@ export const Consultants = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, []);
+    }, [userDetails.token, refreshData]);
 
     /**
   * Sets sorting criteria.
@@ -63,6 +68,43 @@ export const Consultants = () => {
 
     }, [sorting, apiData]);
 
+    const openEditModal = (consultant) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before adding bed nights.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        } else {
+            setCurrentEditConsultant(consultant);
+            setIsEditMode(true);
+            setIsModalOpen(true);
+        }
+    };
+
+    const openModal = () => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please enter your name above before adding bed nights.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setCurrentEditConsultant(null);
+    };
+
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
     return (
         <>
             <header>
@@ -77,6 +119,13 @@ export const Consultants = () => {
                         </div>
                     ) : (
                         <>
+                            <AddEditConsultantModal
+                                isOpen={isModalOpen}
+                                onClose={closeModal}
+                                onRefresh={triggerRefresh}
+                                editConsultantData={currentEditConsultant}
+                                isEditMode={isEditMode}
+                            />
                             {loaded ? (
                                 <>
                                     <div className="container center">
@@ -85,7 +134,7 @@ export const Consultants = () => {
                                                 <button
                                                     href=""
                                                     className="btn-float btn-large waves-effect waves-light green lighten-2"
-                                                    onClick={() => M.toast({ html: "Not available at this time" })}
+                                                    onClick={openModal}
                                                 >
                                                     <span className="material-symbols-outlined">
                                                         add
@@ -155,13 +204,13 @@ export const Consultants = () => {
                                                                 <td>{item.is_active ? (
                                                                     <span className="chip green lighten-3">YES</span>
                                                                 ) : (
-                                                                    <span className="chip grey lighten-3">NO</span>
+                                                                    <span className="chip grey lighten-2">NO</span>
                                                                 )}
                                                                 </td>
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
                                                                         className="btn waves-effect waves-light orange lighten-3"
-                                                                        onClick={() => M.toast({ html: "Not available at this time" })}
+                                                                        onClick={() => openEditModal(item)}
                                                                     >
                                                                         Edit
                                                                     </button>

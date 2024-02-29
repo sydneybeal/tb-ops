@@ -459,6 +459,7 @@ export const Overview = () => {
 
                                     <input
                                         type="text"
+                                        id="search-query"
                                         placeholder="Search by text..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -473,6 +474,7 @@ export const Overview = () => {
                                         <div className="col s6">
                                             <div>
                                                 <ReactDatePicker
+                                                    id="date-in"
                                                     selected={filters.start_date ? moment(filters.start_date).toDate() : null}
                                                     onChange={(date) =>
                                                         setFilters({ ...filters, start_date: date ? moment(date).format('YYYY-MM-DD') : '' })
@@ -493,6 +495,7 @@ export const Overview = () => {
                                         <div className="col s6">
                                             <div>
                                                 <ReactDatePicker
+                                                    id="date-out"
                                                     selected={filters.end_date ? moment(filters.end_date).toDate() : null}
                                                     onChange={(date) =>
                                                         setFilters({ ...filters, end_date: date ? moment(date).format('YYYY-MM-DD') : '' })

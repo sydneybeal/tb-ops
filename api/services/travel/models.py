@@ -166,3 +166,13 @@ class PatchPropertyRequest(BaseModel):
     portfolio: str
     country_id: UUID
     updated_by: str
+
+
+class PatchConsultantRequest(BaseModel):
+    """A request object model that contains information for a new Consultant."""
+
+    consultant_id: Optional[UUID] = None
+    first_name: str
+    last_name: str
+    is_active: bool
+    updated_by: str

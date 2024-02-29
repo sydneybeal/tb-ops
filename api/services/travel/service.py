@@ -21,6 +21,7 @@ from api.services.travel.models import (
     Agency,
     BookingChannel,
     Consultant,
+    PatchConsultantRequest,
     CoreDestination,
     Country,
     PatchAccommodationLogRequest,
@@ -349,7 +350,7 @@ class TravelService:
         return {
             "inserted_count": 0,
             "updated_count": 0,
-            "message": "No logs were processed.",
+            "message": "No properties were processed.",
         }
 
     async def prepare_property_data(
@@ -475,3 +476,66 @@ class TravelService:
     ) -> Consultant:
         """Gets a single Consultant model by name."""
         return await self._repo.get_consultant_by_name(first_name, last_name)
+
+    async def get_consultant_by_id(self, consultant_id: UUID) -> Consultant:
+        """Gets a single Consultant model by id."""
+        return await self._repo.get_consultant_by_id(consultant_id)
+
+    async def process_consultant_request(
+        self, consultant_request: PatchConsultantRequest
+    ) -> dict:
+        """Adds or edits consultant models in the repository."""
+        prepared_consultant = await self.prepare_consultant_data(consultant_request)
+
+        # Perform the upsert operation for valid logs
+        if prepared_consultant:
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_consultant(prepared_consultant)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        return {
+            "inserted_count": 0,
+            "updated_count": 0,
+            "message": "No consultants were processed.",
+        }
+
+    async def prepare_consultant_data(
+        self, consultant_request: PatchConsultantRequest
+    ) -> Property:
+        """Resolves and prepares a consultant patch for insertion."""
+        # # Check if this log exists and needs updating or if it's a new log
+        if consultant_request.consultant_id:
+            existing_consultant = await self.get_consultant_by_id(
+                consultant_request.consultant_id
+            )
+        else:
+            existing_consultant = await self.get_consultant_by_name(
+                consultant_request.first_name,
+                consultant_request.first_name,
+            )
+        if existing_consultant:
+            print("Consultant already existed")
+            return Consultant(
+                id=existing_consultant.id,  # Keep the same ID
+                first_name=consultant_request.first_name,
+                last_name=consultant_request.last_name,
+                is_active=consultant_request.is_active,
+                updated_by=consultant_request.updated_by,
+            )
+        # If new, prepare the new log data
+        return Consultant(
+            first_name=consultant_request.first_name,
+            last_name=consultant_request.last_name,
+            is_active=consultant_request.is_active,
+            updated_by=consultant_request.updated_by,
+        )
+
+    async def delete_consultant(self, consultant_id: UUID):
+        """Deletes a Consultant."""
+        return await self._repo.delete_consultant(consultant_id)

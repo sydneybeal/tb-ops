@@ -39,6 +39,7 @@ from api.services.travel.models import (
     Agency,
     Consultant,
     PatchAccommodationLogRequest,
+    PatchConsultantRequest,
     PatchPropertyRequest,
 )
 from api.services.travel.service import TravelService
@@ -196,7 +197,7 @@ def make_app(
 
     @app.delete(
         "/v1/properties/{property_id}",
-        operation_id="post_properties",
+        operation_id="delete_properties",
         tags=["properties"],
     )
     async def delete_property(
@@ -205,9 +206,9 @@ def make_app(
         """Delete a property by its ID."""
         is_deleted = await travel_svc.delete_property(property_id)
         if not is_deleted:
-            raise HTTPException(status_code=404, detail="Accommodation log not found")
+            raise HTTPException(status_code=404, detail="Property not found")
         return JSONResponse(
-            content={"message": "Accommodation log deleted successfully"},
+            content={"message": "Property deleted successfully"},
             status_code=200,
         )
 
@@ -234,6 +235,36 @@ def make_app(
     ) -> list[Consultant] | JSONResponse:
         """Get all Country models."""
         return await travel_svc.get_all_consultants()
+
+    @app.patch(
+        "/v1/consultants",
+        operation_id="post_consultants",
+        tags=["consultants"],
+    )
+    async def post_consultants(
+        consultant_data: PatchConsultantRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        results = await travel_svc.process_consultant_request(consultant_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/consultants/{consultant_id}",
+        operation_id="delete_consultant",
+        tags=["consultants"],
+    )
+    async def delete_consultant(
+        consultant_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete a consultant by its ID."""
+        is_deleted = await travel_svc.delete_consultant(consultant_id)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Consultant not found")
+        return JSONResponse(
+            content={"message": "Consultant deleted successfully"},
+            status_code=200,
+        )
 
     @app.get(
         "/v1/booking_channels",

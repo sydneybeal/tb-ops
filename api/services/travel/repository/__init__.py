@@ -16,7 +16,7 @@
 import datetime
 from uuid import UUID
 from abc import ABC, abstractmethod
-from typing import Sequence, Callable
+from typing import Sequence, Callable, Tuple
 from api.services.travel.models import (
     AccommodationLog,
     Property,
@@ -106,6 +106,11 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def upsert_property(self, property_data: Property) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a property into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_property(self, property_id: UUID) -> None:
         """Deletes a sequence of Property models from the repository."""
         raise NotImplementedError
@@ -129,13 +134,25 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_consultant_by_id(self, consultant_id: UUID) -> Consultant:
+        """Gets a single Consultant model based on id."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Updates a sequence of Consultant models in the repository."""
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_consultant(self, consultants: Sequence[Consultant]) -> None:
-        """Deletes a sequence of Consultant models from the repository."""
+    async def upsert_consultant(
+        self, consultant_data: Consultant
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a consultant into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_consultant(self, consultant_id: UUID) -> None:
+        """Deletes a Consultant model from the repository."""
         raise NotImplementedError
 
     # CoreDestination
