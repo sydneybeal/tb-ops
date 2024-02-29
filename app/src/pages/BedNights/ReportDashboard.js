@@ -11,7 +11,7 @@ const ReportDashboard = ({ reportData }) => {
         M.AutoInit();
     }, [reportData]);
 
-    if (!reportData) {
+    if (!reportData || Object.keys(reportData).length === 0) {
         return <div>Sorry, could not generate a report for that.</div>;
     }
 

@@ -14,17 +14,19 @@
 
 """Services for interacting with travel entries."""
 import datetime
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 from uuid import UUID
 from api.services.travel.models import (
     AccommodationLog,
+    PatchAccommodationLogRequest,
     Agency,
+    PatchAgencyRequest,
     BookingChannel,
+    PatchBookingChannelRequest,
     Consultant,
     PatchConsultantRequest,
     CoreDestination,
     Country,
-    PatchAccommodationLogRequest,
     Property,
     PatchPropertyRequest,
 )
@@ -333,13 +335,19 @@ class TravelService:
         self, property_request: PatchPropertyRequest
     ) -> dict:
         """Adds or edits accommodation log models in the repository."""
-        prepared_property = await self.prepare_property_data(property_request)
+        prepared_data_or_error = await self.prepare_property_data(property_request)
 
-        # Perform the upsert operation for valid logs
-        if prepared_property:
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a name conflict
+            return {"error": prepared_data_or_error["error"]}
+
+        if prepared_data_or_error:
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_property(prepared_property)
+            results = await self._repo.upsert_property(prepared_data_or_error)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
@@ -347,54 +355,69 @@ class TravelService:
                     updated_count += 1
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
-        return {
-            "inserted_count": 0,
-            "updated_count": 0,
-            "message": "No properties were processed.",
-        }
+        # If no data was prepared for insertion or update
+        return {"error": "No valid property data provided for processing."}
 
     async def prepare_property_data(
         self, property_request: PatchPropertyRequest
     ) -> Property:
         """Resolves and prepares a property patch for insertion."""
-        # Get the core_destination_id that matches the country_id
-        core_destination = await self._repo.get_country_by_id(
-            property_request.country_id
-        )
-        core_destination_id = core_destination.core_destination_id
+        # Check if this property exists and needs updating
+
+        country = await self._repo.get_country_by_id(property_request.country_id)
+        core_destination_id = country.core_destination_id
         if core_destination_id is None:
             raise ValueError("Invalid country_id")
 
-        # # Check if this log exists and needs updating or if it's a new log
+        existing_property_by_id = None
         if property_request.property_id:
-            existing_property = await self.get_property_by_id(
+            existing_property_by_id = await self.get_property_by_id(
                 property_request.property_id
             )
-        else:
-            existing_property = await self.get_property_by_name(
-                property_request.name,
-                property_request.portfolio,
-                property_request.country_id,
-                core_destination_id,
-            )
-        if existing_property:
-            print("Property already existed")
+
+        # Check for a name conflict with a different property
+        existing_property_by_name = await self.get_property_by_name(
+            property_request.name,
+            property_request.portfolio,
+            property_request.country_id,
+            core_destination_id,
+        )
+        if existing_property_by_name and (
+            not existing_property_by_id
+            or existing_property_by_id.id != existing_property_by_name.id
+        ):
+            # Found a name conflict with another property
+            return {
+                "error": f"Property '{property_request.name}' in {country.name} already exists."
+            }
+
+        if existing_property_by_id:
+            if (
+                existing_property_by_id.name == property_request.name
+                and existing_property_by_id.portfolio == property_request.portfolio
+                and existing_property_by_id.country_id == property_request.country_id
+                and existing_property_by_id.core_destination_id == core_destination_id
+            ):
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing property with possibly updated fields
             return Property(
-                id=existing_property.id,  # Keep the same ID
+                id=existing_property_by_id.id,  # Keep the same ID
                 name=property_request.name,
                 portfolio=property_request.portfolio,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
                 updated_by=property_request.updated_by,
             )
-        # If new, prepare the new log data
-        return Property(
-            name=property_request.name,
-            portfolio=property_request.portfolio,
-            country_id=property_request.country_id,
-            core_destination_id=core_destination_id,
-            updated_by=property_request.updated_by,
-        )
+        else:
+            # If new, prepare the new property data
+            return Property(
+                name=property_request.name,
+                portfolio=property_request.portfolio,
+                country_id=property_request.country_id,
+                core_destination_id=core_destination_id,
+                updated_by=property_request.updated_by,
+            )
 
     async def get_property_by_name(
         self,
@@ -431,9 +454,81 @@ class TravelService:
         """Gets all Agency models."""
         return await self._repo.get_all_agencies()
 
-    async def get_agency_by_name(self, name: str) -> None:
+    async def get_agency_by_name(self, name: str) -> Agency:
         """Gets a single Agency model by name."""
         return await self._repo.get_agency_by_name(name)
+
+    async def get_agency_by_id(self, agency_id: UUID) -> Agency:
+        """Gets a single Agency model by id."""
+        return await self._repo.get_agency_by_id(agency_id)
+
+    async def process_agency_request(self, agency_request: PatchAgencyRequest) -> dict:
+        """Adds or edits agency models in the repository."""
+        prepared_data_or_error = await self.prepare_agency_data(agency_request)
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a name conflict
+            return {"error": prepared_data_or_error["error"]}
+
+        if prepared_data_or_error:
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_agency(prepared_data_or_error)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid agency data provided for processing."}
+
+    async def prepare_agency_data(
+        self, agency_request: PatchAgencyRequest
+    ) -> Union[Agency, dict]:
+        """Resolves and prepares an agency patch for insertion or update."""
+        # Check if this agency exists and needs updating
+        existing_agency_by_id = None
+        if agency_request.agency_id:
+            existing_agency_by_id = await self.get_agency_by_id(
+                agency_request.agency_id
+            )
+
+        # Check for a name conflict with a different agency
+        existing_agency_by_name = await self.get_agency_by_name(agency_request.name)
+        if existing_agency_by_name and (
+            not existing_agency_by_id
+            or existing_agency_by_id.id != existing_agency_by_name.id
+        ):
+            # Found a name conflict with another agency
+            return {
+                "error": f"An agency with the name '{agency_request.name}' already exists."
+            }
+
+        if existing_agency_by_id:
+            if existing_agency_by_id.name == agency_request.name:
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing agency with possibly updated fields
+            return Agency(
+                id=existing_agency_by_id.id,  # Keep the same ID
+                name=agency_request.name,
+                updated_by=agency_request.updated_by,
+            )
+        else:
+            # If new, prepare the new agency data
+            return Agency(
+                name=agency_request.name,
+                updated_by=agency_request.updated_by,
+            )
+
+    async def delete_agency(self, agency_id: UUID):
+        """Deletes an Agency."""
+        return await self._repo.delete_agency(agency_id)
 
     # BookingChannel
     async def add_booking_channel(self, models: Sequence[BookingChannel]) -> None:
@@ -450,9 +545,89 @@ class TravelService:
         """Gets all BookingChannel models."""
         return await self._repo.get_all_booking_channels()
 
-    async def get_booking_channel_by_name(self, name: str) -> None:
+    async def get_booking_channel_by_name(self, name: str) -> BookingChannel:
         """Gets a single BookingChannel model by name."""
         return await self._repo.get_booking_channel_by_name(name)
+
+    async def get_booking_channel_by_id(
+        self, booking_channel_id: UUID
+    ) -> BookingChannel:
+        """Gets a single BookingChannel model by id."""
+        return await self._repo.get_booking_channel_by_id(booking_channel_id)
+
+    async def process_booking_channel_request(
+        self, booking_channel_request: PatchBookingChannelRequest
+    ) -> dict:
+        """Adds or edits booking channel models in the repository."""
+        prepared_data_or_error = await self.prepare_booking_channel_data(
+            booking_channel_request
+        )
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a name conflict
+            return {"error": prepared_data_or_error["error"]}
+
+        if prepared_data_or_error:
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_booking_channel(prepared_data_or_error)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid booking channel data provided for processing."}
+
+    async def prepare_booking_channel_data(
+        self, booking_channel_request: PatchBookingChannelRequest
+    ) -> Union[BookingChannel, dict]:
+        """Resolves and prepares a booking channel patch for insertion."""
+        # Check if this booking channel exists and needs updating
+        existing_booking_channel_by_id = None
+        if booking_channel_request.booking_channel_id:
+            existing_booking_channel_by_id = await self.get_booking_channel_by_id(
+                booking_channel_request.booking_channel_id
+            )
+
+        # Check for a name conflict with a different booking channel
+        existing_booking_channel_by_name = await self.get_booking_channel_by_name(
+            booking_channel_request.name
+        )
+        if existing_booking_channel_by_name and (
+            not existing_booking_channel_by_id
+            or existing_booking_channel_by_id.id != existing_booking_channel_by_name.id
+        ):
+            # Found a name conflict with another booking channel
+            return {
+                "error": f"A booking channel with the name '{booking_channel_request.name}' already exists."
+            }
+
+        if existing_booking_channel_by_id:
+            if existing_booking_channel_by_id.name == booking_channel_request.name:
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing booking channel with possibly updated fields
+            return BookingChannel(
+                id=existing_booking_channel_by_id.id,  # Keep the same ID
+                name=booking_channel_request.name,
+                updated_by=booking_channel_request.updated_by,
+            )
+        else:
+            # If new, prepare the new booking channel data
+            return BookingChannel(
+                name=booking_channel_request.name,
+                updated_by=booking_channel_request.updated_by,
+            )
+
+    async def delete_booking_channel(self, booking_channel_id: UUID):
+        """Deletes a BookingChannel."""
+        return await self._repo.delete_booking_channel(booking_channel_id)
 
     # Consultant
     async def add_consultant(self, models: Sequence[Consultant]) -> None:
@@ -485,13 +660,19 @@ class TravelService:
         self, consultant_request: PatchConsultantRequest
     ) -> dict:
         """Adds or edits consultant models in the repository."""
-        prepared_consultant = await self.prepare_consultant_data(consultant_request)
+        prepared_data_or_error = await self.prepare_consultant_data(consultant_request)
 
-        # Perform the upsert operation for valid logs
-        if prepared_consultant:
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a name conflict
+            return {"error": prepared_data_or_error["error"]}
+
+        if prepared_data_or_error:
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_consultant(prepared_consultant)
+            results = await self._repo.upsert_consultant(prepared_data_or_error)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
@@ -499,42 +680,58 @@ class TravelService:
                     updated_count += 1
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
-        return {
-            "inserted_count": 0,
-            "updated_count": 0,
-            "message": "No consultants were processed.",
-        }
+        # If no data was prepared for insertion or update
+        return {"error": "No valid consultant data provided for processing."}
 
     async def prepare_consultant_data(
         self, consultant_request: PatchConsultantRequest
-    ) -> Property:
+    ) -> Union[Consultant, dict]:
         """Resolves and prepares a consultant patch for insertion."""
-        # # Check if this log exists and needs updating or if it's a new log
+        # Check if this consultant exists and needs updating
+        existing_consultant_by_id = None
         if consultant_request.consultant_id:
-            existing_consultant = await self.get_consultant_by_id(
+            existing_consultant_by_id = await self.get_consultant_by_id(
                 consultant_request.consultant_id
             )
-        else:
-            existing_consultant = await self.get_consultant_by_name(
-                consultant_request.first_name,
-                consultant_request.first_name,
-            )
-        if existing_consultant:
-            print("Consultant already existed")
+
+        # Check for a name conflict with a different consultant
+        existing_consultant_by_name = await self.get_consultant_by_name(
+            consultant_request.first_name,
+            consultant_request.last_name,
+        )
+        if existing_consultant_by_name and (
+            not existing_consultant_by_id
+            or existing_consultant_by_id.id != existing_consultant_by_name.id
+        ):
+            # Found a name conflict with another consultant
+            return {
+                "error": f"A consultant with the name '{consultant_request.last_name}/{consultant_request.first_name}' already exists."
+            }
+
+        if existing_consultant_by_id:
+            if (
+                existing_consultant_by_id.first_name == consultant_request.first_name
+                and existing_consultant_by_id.last_name == consultant_request.last_name
+                and existing_consultant_by_id.is_active == consultant_request.is_active
+            ):
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing booking channel with possibly updated fields
             return Consultant(
-                id=existing_consultant.id,  # Keep the same ID
+                id=existing_consultant_by_id.id,  # Keep the same ID
                 first_name=consultant_request.first_name,
                 last_name=consultant_request.last_name,
                 is_active=consultant_request.is_active,
                 updated_by=consultant_request.updated_by,
             )
-        # If new, prepare the new log data
-        return Consultant(
-            first_name=consultant_request.first_name,
-            last_name=consultant_request.last_name,
-            is_active=consultant_request.is_active,
-            updated_by=consultant_request.updated_by,
-        )
+        else:
+            # If new, prepare the new booking channel data
+            return Consultant(
+                first_name=consultant_request.first_name,
+                last_name=consultant_request.last_name,
+                is_active=consultant_request.is_active,
+                updated_by=consultant_request.updated_by,
+            )
 
     async def delete_consultant(self, consultant_id: UUID):
         """Deletes a Consultant."""

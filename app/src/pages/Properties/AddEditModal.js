@@ -69,19 +69,25 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     // Handle success response
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
-                    const message = data?.message ?? "No properties were added.";
                     let toastHtml = '';
-                    if (insertedCount > 0) {
+                    let toastColor = 'green darken-1';
+
+                    // Check for error first
+                    if (data?.error) {
+                        toastHtml = data.error;
+                        toastColor = 'red lighten-2';
+                    } else if (insertedCount > 0) {
                         toastHtml = `Added ${insertedCount} property.`;
-                    } if (updatedCount > 0) {
+                    } else if (updatedCount > 0) {
                         toastHtml = `Modified ${updatedCount} property.`;
                     } else {
-                        toastHtml = message;
+                        toastHtml = data?.message ?? "No properties were added.";
+                        toastColor = 'red lighten-2';
                     }
                     M.toast({
                         html: toastHtml,
                         displayLength: 4000,
-                        classes: 'green darken-1',
+                        classes: toastColor,
                     });
                 })
                 .finally(() => {
@@ -407,9 +413,9 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
                 <div>
-                    <a href="#!" className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                    <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                         Close
-                    </a>
+                    </button>
                     &nbsp;&nbsp;
                     <button type="submit" form="propertyForm" className="btn waves-effect waves-light green">Save</button>
                 </div>

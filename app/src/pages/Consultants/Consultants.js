@@ -220,7 +220,7 @@ export const Consultants = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

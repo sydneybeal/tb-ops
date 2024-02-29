@@ -281,7 +281,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     let toastHtml = '';
                     if (insertedCount > 0) {
                         toastHtml = `Added ${insertedCount} record(s).`;
-                    } if (updatedCount > 0) {
+                    } else if (updatedCount > 0) {
                         toastHtml = `Modified ${updatedCount} record(s).`;
                     } else {
                         // Use the message from the response if no logs were added

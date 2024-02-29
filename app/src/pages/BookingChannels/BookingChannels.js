@@ -4,6 +4,7 @@ import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
+import AddEditBcModal from './AddEditModal';
 
 export const BookingChannels = () => {
     const [apiData, setApiData] = useState([]);
@@ -11,6 +12,10 @@ export const BookingChannels = () => {
     const { userDetails } = useAuth();
     const [displayData, setDisplayData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'name', ascending: true });
+    const [refreshData, setRefreshData] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentEditBc, setCurrentEditBc] = useState(null);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
         M.AutoInit();
@@ -28,7 +33,7 @@ export const BookingChannels = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, []);
+    }, [userDetails.token, refreshData]);
 
     /**
   * Sets sorting criteria.
@@ -63,6 +68,43 @@ export const BookingChannels = () => {
 
     }, [sorting, apiData]);
 
+    const openEditModal = (booking_channel) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before adding booking channels.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        } else {
+            setCurrentEditBc(booking_channel);
+            setIsEditMode(true);
+            setIsModalOpen(true);
+        }
+    };
+
+    const openModal = () => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please enter your name above before adding booking channels.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        }
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setIsEditMode(false);
+        setCurrentEditBc(null);
+    };
+
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
     return (
         <>
             <header>
@@ -79,13 +121,20 @@ export const BookingChannels = () => {
                         <>
                             {loaded ? (
                                 <>
+                                    <AddEditBcModal
+                                        isOpen={isModalOpen}
+                                        onClose={closeModal}
+                                        onRefresh={triggerRefresh}
+                                        editBcData={currentEditBc}
+                                        isEditMode={isEditMode}
+                                    />
                                     <div className="container center">
                                         <div className="row center">
                                             <div className="col s2 offset-s10">
                                                 <button
                                                     href=""
                                                     className="btn-float btn-large waves-effect waves-light green lighten-2"
-                                                    onClick={() => M.toast({ html: "Not available at this time" })}
+                                                    onClick={openModal}
                                                 >
                                                     <span className="material-symbols-outlined">
                                                         add
@@ -132,7 +181,7 @@ export const BookingChannels = () => {
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
                                                                         className="btn waves-effect waves-light orange lighten-3"
-                                                                        onClick={() => M.toast({ html: "Not available at this time" })}
+                                                                        onClick={() => openEditModal(item)}
                                                                     >
                                                                         Edit
                                                                     </button>
@@ -142,7 +191,7 @@ export const BookingChannels = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="100%" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="2" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

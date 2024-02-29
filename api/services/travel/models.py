@@ -176,3 +176,19 @@ class PatchConsultantRequest(BaseModel):
     last_name: str
     is_active: bool
     updated_by: str
+
+
+class PatchAgencyRequest(BaseModel):
+    """A request object model that contains information for a new Agency."""
+
+    agency_id: Optional[UUID] = None
+    name: str
+    updated_by: str
+
+
+class PatchBookingChannelRequest(BaseModel):
+    """A request object model that contains information for a new BookingChannel."""
+
+    booking_channel_id: Optional[UUID] = None
+    name: str
+    updated_by: str

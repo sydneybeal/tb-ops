@@ -87,7 +87,7 @@ export const Overview = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [refreshData]);
+    }, [refreshData, logout, userDetails.token]);
 
     const changePage = (newPage) => {
         const start = newPage * itemsPerPage;

@@ -10,9 +10,9 @@ import ReportDashboard from './ReportDashboard';
 import moment from 'moment';
 
 export const BedNightReports = () => {
-    const [reportData, setReportData] = useState([]);
+    const [reportData, setReportData] = useState({});
     const [accommodationLogData, setAccommodationLogData] = useState([]);
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
     const [filterOptions, setFilterOptions] = useState({
         core_destination_name: [],
@@ -55,6 +55,7 @@ export const BedNightReports = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                console.log(data);
                 setReportData(data);
                 fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
                     headers: {
@@ -63,6 +64,20 @@ export const BedNightReports = () => {
                 })
                     .then((res) => res.json())
                     .then((data) => {
+                        if (data.detail && data.detail === "Could not validate credentials") {
+                            // Session has expired or credentials are invalid
+                            M.toast({
+                                html: 'Your session has timed out, please log in again.',
+                                displayLength: 4000,
+                                classes: 'red lighten-2',
+                            });
+                            logout();
+                            return;
+                        }
+                        if (!Array.isArray(data)) {
+                            console.error("Expected an array but got:", data);
+                            data = []; // Set data to an empty array if it's not an array
+                        }
                         setAccommodationLogData(data);
                         setLoaded(true);
                     })
@@ -75,7 +90,7 @@ export const BedNightReports = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [filters]);
+    }, [filters, logout, userDetails.token]);
 
     useEffect(() => {
         M.AutoInit();

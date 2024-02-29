@@ -649,7 +649,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 if res:
                     return Consultant(**res)
 
-    async def delete_consultant(self, consultant_id: UUID) -> None:
+    async def delete_consultant(self, consultant_id: UUID) -> bool:
         """Deletes a sequence of Consultant models from the repository."""
         pool = await self._get_pool()
         query = dedent(
@@ -960,6 +960,24 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_by=res["updated_by"],
                     )
 
+    async def get_agency_by_id(self, agency_id: UUID) -> Agency:
+        """Gets a single Agency model based on id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.agencies
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, agency_id)
+                if res:
+                    return Agency(**res)
+
     async def get_all_agencies(self) -> Sequence[Agency]:
         """Gets all Agency models from the repository."""
         pool = await self._get_pool()
@@ -977,13 +995,86 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 agencies = [Agency(**record) for record in records]
                 return agencies
 
+    async def upsert_agency(self, agency_data: Agency) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts an agency into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.agencies (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            ) VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    agency_data.id,
+                    agency_data.name.strip(),
+                    agency_data.created_at,
+                    agency_data.updated_at,
+                    agency_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new agency(ies).")
+        print(f"Updated {updated_count} existing agency(ies).")
+        return results
+
     async def update_agency(self, agencies: Sequence[Agency]) -> None:
         """Updates a sequence of Agency models in the repository."""
         raise NotImplementedError
 
-    async def delete_agency(self, agencies: Sequence[Agency]) -> None:
-        """Deletes a sequence of Agency models from the repository."""
-        raise NotImplementedError
+    async def delete_agency(self, agency_id: UUID) -> bool:
+        """Deletes an Agency model from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.agencies
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, agency_id)
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(f"No agency found with ID: {agency_id}, nothing was deleted.")
+                    return False
+                print(f"Successfully deleted agency with ID: {agency_id}.")
+                return True
 
     # BookingChannel
     async def add_booking_channel(
@@ -1050,6 +1141,26 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_by=res["updated_by"],
                     )
 
+    async def get_booking_channel_by_id(
+        self, booking_channel_id: UUID
+    ) -> BookingChannel:
+        """Gets a single BookingChannel model based on id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.booking_channels
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, booking_channel_id)
+                if res:
+                    return BookingChannel(**res)
+
     async def get_all_booking_channels(self) -> Sequence[BookingChannel]:
         """Gets all BookingChannel models from the repository."""
         pool = await self._get_pool()
@@ -1067,14 +1178,91 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 agencies = [BookingChannel(**record) for record in records]
                 return agencies
 
+    async def upsert_booking_channel(
+        self, booking_channel_data: BookingChannel
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a booking channel into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.booking_channels (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            ) VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    booking_channel_data.id,
+                    booking_channel_data.name.strip(),
+                    booking_channel_data.created_at,
+                    booking_channel_data.updated_at,
+                    booking_channel_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new booking channel(s).")
+        print(f"Updated {updated_count} existing booking channel(s).")
+        return results
+
     async def update_booking_channel(
         self, booking_channels: Sequence[BookingChannel]
     ) -> None:
         """Updates a sequence of BookingChannel models in the repository."""
         raise NotImplementedError
 
-    async def delete_booking_channel(
-        self, booking_channels: Sequence[BookingChannel]
-    ) -> None:
+    async def delete_booking_channel(self, booking_channel_id: UUID) -> bool:
         """Deletes a sequence of BookingChannel models from the repository."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.booking_channels
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, booking_channel_id)
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No booking channel found with ID: {booking_channel_id}, nothing was deleted."
+                    )
+                    return False
+                print(
+                    f"Successfully deleted booking channel with ID: {booking_channel_id}."
+                )
+                return True

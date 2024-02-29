@@ -39,6 +39,8 @@ from api.services.travel.models import (
     Agency,
     Consultant,
     PatchAccommodationLogRequest,
+    PatchAgencyRequest,
+    PatchBookingChannelRequest,
     PatchConsultantRequest,
     PatchPropertyRequest,
 )
@@ -278,6 +280,36 @@ def make_app(
         """Get all BookingChannel models."""
         return await travel_svc.get_all_booking_channels()
 
+    @app.patch(
+        "/v1/booking_channels",
+        operation_id="post_booking_channels",
+        tags=["booking_channels"],
+    )
+    async def post_booking_channels(
+        booking_channel_data: PatchBookingChannelRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit an BookingChannel."""
+        results = await travel_svc.process_booking_channel_request(booking_channel_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/booking_channels/{booking_channel_id}",
+        operation_id="delete_booking_channel",
+        tags=["booking_channels"],
+    )
+    async def delete_booking_channel(
+        booking_channel_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete a booking channel by its ID."""
+        is_deleted = await travel_svc.delete_booking_channel(booking_channel_id)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Booking channel not found")
+        return JSONResponse(
+            content={"message": "Booking channel deleted successfully"},
+            status_code=200,
+        )
+
     @app.get(
         "/v1/agencies",
         operation_id="get_agencies",
@@ -289,6 +321,36 @@ def make_app(
     ) -> list[Agency] | JSONResponse:
         """Get all Agency models."""
         return await travel_svc.get_all_agencies()
+
+    @app.patch(
+        "/v1/agencies",
+        operation_id="post_agencies",
+        tags=["agencies"],
+    )
+    async def post_agencies(
+        agency_data: PatchAgencyRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit an Agency."""
+        results = await travel_svc.process_agency_request(agency_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/agencies/{agency_id}",
+        operation_id="delete_agency",
+        tags=["agencies"],
+    )
+    async def delete_agency(
+        agency_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete an agency by its ID."""
+        is_deleted = await travel_svc.delete_agency(agency_id)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Agency not found")
+        return JSONResponse(
+            content={"message": "Agency deleted successfully"},
+            status_code=200,
+        )
 
     @app.get(
         "/v1/bed_night_report",

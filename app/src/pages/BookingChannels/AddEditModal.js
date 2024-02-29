@@ -6,17 +6,13 @@ import M from 'materialize-css';
 import 'react-datepicker/dist/react-datepicker.css';
 // import moment from 'moment';
 
-const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData = null, isEditMode = false }) => {
+const AddEditBcModal = ({ isOpen, onClose, onRefresh, editBcData = null, isEditMode = false }) => {
     const { userDetails } = useAuth();
-    const [consultantId, setConsultantId] = useState(null);
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [isActive, setIsActive] = useState(true);
+    const [bookingChannelId, setBookingChannelId] = useState(null);
+    const [name, setName] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
     const [touched, setTouched] = useState({
-        firstName: false,
-        lastName: false,
-        isActive: false,
+        name: false,
     });
 
     const handleFormSubmit = (e) => {
@@ -33,13 +29,13 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             return;
         }
 
-        const consultantToSubmit = {
-            consultant_id: consultantId || null,
-            first_name: firstName || null,
-            last_name: lastName || null,
-            is_active: isActive,
+        const bcToSubmit = {
+            booking_channel_id: bookingChannelId || null,
+            name: name || null,
             updated_by: userDetails.email || ''
         };
+
+        console.log(bcToSubmit);
 
         if (userDetails.role !== 'admin') {
             M.toast({
@@ -49,13 +45,13 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             });
         }
         else {
-            fetch(`${process.env.REACT_APP_API}/v1/consultants`, {
+            fetch(`${process.env.REACT_APP_API}/v1/booking_channels`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userDetails.token}`,
                 },
-                body: JSON.stringify(consultantToSubmit, null, 2),
+                body: JSON.stringify(bcToSubmit, null, 2),
             })
                 .then(response => {
                     if (!response.ok) {
@@ -76,13 +72,15 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                         toastHtml = data.error;
                         toastColor = 'red lighten-2';
                     } else if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} consultant.`;
+                        toastHtml = `Added ${insertedCount} booking channel.`;
                     } else if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} consultant.`;
+                        toastHtml = `Modified ${updatedCount} booking channel.`;
                     } else {
-                        toastHtml = data?.message ?? "No consultants were added.";
+                        toastHtml = data?.message ?? "No booking channels were added.";
                         toastColor = 'red lighten-2';
                     }
+
+                    console.log(toastHtml);
                     M.toast({
                         html: toastHtml,
                         displayLength: 4000,
@@ -109,14 +107,8 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
     const validateForm = () => {
         let errors = {};
 
-        if (!(firstName || '').trim()) {
-            errors.firstName = 'Missing first name';
-        }
-        if (!(lastName || '').trim()) {
-            errors.lastName = 'Missing last name';
-        }
-        if (isActive === null) {
-            errors.isActive = 'Missing active status';
+        if (!(name || '').trim()) {
+            errors.name = 'Missing booking channel name';
         }
 
         setValidationErrors(errors);
@@ -153,14 +145,14 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             });
         }
         else {
-            const confirmDelete = window.confirm("Are you sure you want to delete this consultant?");
+            const confirmDelete = window.confirm("Are you sure you want to delete this booking channel?");
             if (confirmDelete) {
-                if (!consultantId) {
-                    M.toast({ html: 'Error: No consultant ID found', classes: 'red lighten-2' });
+                if (!bookingChannelId) {
+                    M.toast({ html: 'Error: No booking channel ID found', classes: 'red lighten-2' });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
-                fetch(`${process.env.REACT_APP_API}/v1/consultants/${consultantId}`, {
+                fetch(`${process.env.REACT_APP_API}/v1/booking_channels/${bookingChannelId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -175,7 +167,9 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     })
                     .then(data => {
                         // Handle success - show success message and possibly update the UI
-                        M.toast({ html: 'Consultant successfully deleted', classes: 'green' });
+                        M.toast({ html: 'Booking channel successfully deleted', classes: 'green' });
+                    })
+                    .finally(() => {
                         resetFormState();
                         onRefresh();
                         onClose();
@@ -183,7 +177,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     .catch(error => {
                         console.error('Error:', error);
                         // Handle error - show error message
-                        M.toast({ html: 'Error deleting consultant', classes: 'red' });
+                        M.toast({ html: 'Error deleting booking channel', classes: 'red' });
                     });
             }
         }
@@ -192,99 +186,49 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
     useEffect(() => {
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
-        } else if (isOpen && isEditMode && editConsultantData) {
-            setConsultantId(editConsultantData.id);
-            setFirstName(editConsultantData.first_name);
-            setLastName(editConsultantData.last_name);
-            setIsActive(editConsultantData.is_active);
+        } else if (isOpen && isEditMode && editBcData) {
+            setBookingChannelId(editBcData.id);
+            setName(editBcData.name);
         }
-    }, [isOpen, isEditMode, editConsultantData]);
+    }, [isOpen, isEditMode, editBcData]);
 
     const resetFormState = () => {
-        setFirstName('');
-        setLastName('');
-        setIsActive(true);
+        setName('');
         setValidationErrors({});
     };
 
-    const validateFirstName = (value) => {
+    const validateName = (value) => {
         if (!(value || '').trim()) {
-            return 'Missing first name';
+            return 'Missing booking channel name';
         }
         return '';
     };
 
-    const handleFirstNameChange = (e) => {
+    const handleNameChange = (e) => {
         const value = e.target.value;
-        setFirstName(value);
+        setName(value);
 
-        if (touched.firstName) {
+        if (touched.name) {
             setValidationErrors(prevErrors => ({
                 ...prevErrors,
-                name: validateFirstName(value),
+                name: validateName(value),
             }));
         }
     };
 
-    const handleFirstNameBlur = () => {
-        setTouched(prev => ({ ...prev, firstName: true }));
+    const handleNameBlur = () => {
+        setTouched(prev => ({ ...prev, name: true }));
         setValidationErrors(prevErrors => ({
             ...prevErrors,
-            firstName: validateFirstName(firstName),
+            name: validateName(name),
         }));
-    };
-
-    const validateLastName = (value) => {
-        if (!(value || '').trim()) {
-            return 'Missing last name';
-        }
-        return '';
-    };
-
-    const handleLastNameChange = (e) => {
-        const value = e.target.value;
-        setLastName(value);
-
-        if (touched.lastName) {
-            setValidationErrors(prevErrors => ({
-                ...prevErrors,
-                lastName: validateLastName(value),
-            }));
-        }
-    };
-
-    const handleLastNameBlur = () => {
-        setTouched(prev => ({ ...prev, lastName: true }));
-        setValidationErrors(prevErrors => ({
-            ...prevErrors,
-            lastName: validateFirstName(lastName),
-        }));
-    };
-
-    const validateIsActive = (value) => {
-        if (value === null) {
-            return 'Missing active status';
-        }
-        return '';
-    };
-
-    const handleIsActiveChange = (e) => {
-        const isChecked = e.target.checked;
-        setIsActive(isChecked);
-
-        if (touched.isActive !== undefined) {
-            setValidationErrors(prevErrors => ({
-                ...prevErrors,
-                isActive: validateIsActive(isChecked),
-            }));
-        }
     };
 
     return (
         <div id="add-edit-modal" className="modal add-edit-modal">
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
-                    {!isEditMode ? 'New' : 'Editing'} Consultant&nbsp;&nbsp;
+                    {!isEditMode ? 'New' : 'Editing'} Booking Channel&nbsp;&nbsp;
                     {isEditMode &&
                         <button
                             className="btn waves-effect waves-light red lighten-3"
@@ -299,68 +243,30 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                 <div className="container" style={{ width: '60%' }}>
                     <div style={{ textAlign: 'left', marginTop: '50px' }}>
                         <form id="consultantForm" onSubmit={handleFormSubmit}>
-                            {(validationErrors.firstName || validationErrors.lastName || validationErrors.isActive) && (
+                            {validationErrors.name && (
                                 <div className="row" style={{ marginBottom: '20px' }}>
-                                    {validationErrors.firstName && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.firstName}</div>
-                                    )}
-                                    {validationErrors.lastName && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.lastName}</div>
-                                    )}
-                                    {validationErrors.isActive && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.isActive}</div>
+                                    {validationErrors.name && (
+                                        <div className="chip red lighten-4 text-bold">{validationErrors.name}</div>
                                     )}
                                 </div>
                             )}
                             <div className="row" style={{ marginBottom: '20px' }}>
                                 <input
                                     type="text"
-                                    id="first_name"
-                                    value={firstName}
-                                    onChange={handleFirstNameChange}
-                                    onBlur={handleFirstNameBlur}
-                                    placeholder="First name"
+                                    id="booking_channel_name"
+                                    value={name}
+                                    onChange={handleNameChange}
+                                    onBlur={handleNameBlur}
+                                    placeholder="Booking channel name"
                                     style={{ marginRight: '10px', flexGrow: '1' }}
-                                    className={validationErrors.first_name ? 'invalid' : ''}
+                                    className={validationErrors.name ? 'invalid' : ''}
                                 />
-                                <label htmlFor="first_name">
+                                <label htmlFor="booking_channel_name">
                                     <span className="material-symbols-outlined">
-                                        badge
+                                        alt_route
                                     </span>
-                                    First Name
+                                    Booking Channel Name
                                 </label>
-                            </div>
-                            <div className="row" style={{ marginBottom: '20px' }}>
-                                <input
-                                    type="text"
-                                    id="last_name"
-                                    value={lastName}
-                                    onChange={handleLastNameChange}
-                                    onBlur={handleLastNameBlur}
-                                    placeholder="Last name"
-                                    style={{ marginRight: '10px', flexGrow: '1' }}
-                                    className={validationErrors.last_name ? 'invalid' : ''}
-                                />
-                                <label htmlFor="last_name">
-                                    <span className="material-symbols-outlined">
-                                        store
-                                    </span>
-                                    Last Name
-                                </label>
-                            </div>
-                            <div className="row" style={{ marginBottom: '20px' }}>
-                                <div className="switch">
-                                    <label>
-                                        Inactive
-                                        <input
-                                            type="checkbox"
-                                            checked={isActive}
-                                            onChange={handleIsActiveChange}
-                                        />
-                                        <span className="lever"></span>
-                                        Active
-                                    </label>
-                                </div>
                             </div>
                         </form>
                     </div>
@@ -379,4 +285,4 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
     )
 };
 
-export default AddEditConsultantModal;
+export default AddEditBcModal;

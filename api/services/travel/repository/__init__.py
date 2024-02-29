@@ -151,7 +151,7 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_consultant(self, consultant_id: UUID) -> None:
+    async def delete_consultant(self, consultant_id: UUID) -> bool:
         """Deletes a Consultant model from the repository."""
         raise NotImplementedError
 
@@ -237,12 +237,22 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_agency_by_id(self, agency_id: UUID) -> Agency:
+        """Gets a single Agency model based on id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def upsert_agency(self, agency_data: Agency) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts an agency into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_agency(self, agencies: Sequence[Agency]) -> None:
         """Updates a sequence of Agency models in the repository."""
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_agency(self, agencies: Sequence[Agency]) -> None:
+    async def delete_agency(self, agency_id: UUID) -> bool:
         """Deletes a sequence of Agency models from the repository."""
         raise NotImplementedError
 
@@ -265,6 +275,20 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_booking_channel_by_id(
+        self, booking_channel_id: UUID
+    ) -> BookingChannel:
+        """Gets a single BookingChannel model based on id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def upsert_booking_channel(
+        self, booking_channel_data: BookingChannel
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a booking channel into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_booking_channel(
         self, booking_channels: Sequence[BookingChannel]
     ) -> None:
@@ -272,8 +296,6 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_booking_channel(
-        self, booking_channels: Sequence[BookingChannel]
-    ) -> None:
+    async def delete_booking_channel(self, booking_channel_id: UUID) -> bool:
         """Deletes a sequence of BookingChannel models from the repository."""
         raise NotImplementedError
