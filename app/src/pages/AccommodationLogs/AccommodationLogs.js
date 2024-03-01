@@ -113,7 +113,10 @@ export const Overview = () => {
 
     useEffect(() => {
         var elems = document.querySelectorAll('select');
-        M.FormSelect.init(elems);
+        var instances = M.FormSelect.init(elems);
+        return () => {
+            instances.forEach(instance => instance.destroy());
+        };
     }, [filters, filterOptions]);
 
     useEffect(() => {

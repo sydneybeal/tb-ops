@@ -687,7 +687,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
 
     return (
-        <div id="add-log-modal" className="modal add-log-modal">
+        <div id="add-log-modal" className="modal add-log-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
                     {!isEditMode ? 'New' : 'Editing'} Service Provider Entry&nbsp;&nbsp;

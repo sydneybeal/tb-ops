@@ -280,7 +280,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
     };
 
     return (
-        <div id="add-edit-modal" className="modal add-edit-modal">
+        <div id="add-edit-modal" className="modal add-edit-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
                     {!isEditMode ? 'New' : 'Editing'} Consultant&nbsp;&nbsp;
