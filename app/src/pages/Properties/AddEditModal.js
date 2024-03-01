@@ -397,8 +397,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                                 borderColor: validationErrors.country ? 'darkred' : provided['&:hover'].borderColor,
                                             },
                                             boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
-                                        })
+                                        }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                 />
                                 <label htmlFor="country_select">
                                     <span className="material-symbols-outlined">

@@ -247,6 +247,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             consultant_id: selectedConsultantId,
             new_agency_name: newAgencyName || null,
             booking_channel_id: log.booking_channel_id ? (log.booking_channel_id !== '' ? log.booking_channel_id : null) : null,
+            // if property_id was selected, but then changed to new_property, set property_id as null instead of ''
+            property_id: log.new_property_name || log.new_property_portfolio_name || log.new_property_country_id || log.new_property_core_destination_id ? null : log.property_id,
+            new_property_name: log.new_property_name || null,
+            new_property_portfolio_name: log.new_property_portfolio_name || null,
+            new_property_country_id: log.new_property_country_id || null,
+            new_property_core_destination_id: log.new_property_core_destination_id || null,
             updated_by: userDetails.email || ''
         }));
         console.log(logsToSubmit);
@@ -782,8 +788,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                             borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
                                                         },
                                                         boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
-                                                    })
+                                                    }),
+                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                                 }}
+                                                menuPortalTarget={document.body}
                                             />
 
                                         ) : (
@@ -853,8 +861,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                             borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
                                                         },
                                                         boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
-                                                    })
+                                                    }),
+                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                                 }}
+                                                menuPortalTarget={document.body}
                                             />
                                         </div>
                                     </>
@@ -880,8 +890,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 borderColor: validationErrors.consultant ? 'darkred' : provided['&:hover'].borderColor,
                                             },
                                             boxShadow: state.isFocused ? (validationErrors.consultant ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
-                                        })
+                                        }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                 />
                                 <label htmlFor="consultant_select">
                                     <span className="material-symbols-outlined">
@@ -1043,6 +1055,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                             handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
                                                         }}
                                                         options={properties}
+                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        menuPortalTarget={document.body}
                                                         isClearable
                                                     />
                                                     <label htmlFor="property_select">
@@ -1128,6 +1142,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         isClearable
                                                                         style={{ flexGrow: '1' }}
                                                                         id="new_country_select"
+                                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                                        menuPortalTarget={document.body}
                                                                     />
                                                                     <label htmlFor="new_country_select">
                                                                         <span className="material-symbols-outlined">
@@ -1172,6 +1188,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
                                             }}
                                             options={properties}
+                                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            menuPortalTarget={document.body}
                                             isClearable
                                         />
                                         <label htmlFor="property_select">
@@ -1245,6 +1263,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         options={bookingChannels}
                                                         isClearable
                                                         style={{ flexGrow: '1' }}
+                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        menuPortalTarget={document.body}
                                                     />
                                                 ) : (
                                                     <input
@@ -1305,6 +1325,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     options={bookingChannels}
                                                     isClearable
                                                     style={{ flexGrow: '1' }}
+                                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                    menuPortalTarget={document.body}
                                                 />
                                             </div>
                                         )}

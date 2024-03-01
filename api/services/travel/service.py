@@ -14,8 +14,10 @@
 
 """Services for interacting with travel entries."""
 import datetime
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Union, Tuple, Dict
 from uuid import UUID
+from api.services.audit.service import AuditService
+from api.services.audit.models import AuditLog
 from api.services.travel.models import (
     AccommodationLog,
     PatchAccommodationLogRequest,
@@ -39,6 +41,7 @@ class TravelService:
     def __init__(self):
         """Initializes with a configured repository."""
         self._repo = PostgresTravelRepository()
+        self._audit_svc = AuditService()
 
     # AccommodationLog
     async def add_accommodation_log(self, models: Sequence[AccommodationLog]) -> None:
@@ -69,9 +72,19 @@ class TravelService:
             date_out,
         )
 
-    async def delete_accommodation_log(self, log_id: UUID):
+    async def delete_accommodation_log(self, log_id: UUID, user_email: str):
         """Deletes an AccommodationLog."""
-        return await self._repo.delete_accommodation_log(log_id)
+        deleted = await self._repo.delete_accommodation_log(log_id)
+        audit_log = AuditLog(
+            table_name="accommodation_logs",
+            record_id=log_id,
+            user_name=user_email,
+            before_value={"id": log_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
 
     async def get_accommodation_log_by_id(
         self,
@@ -85,11 +98,12 @@ class TravelService:
         self, log_requests: Sequence[PatchAccommodationLogRequest]
     ) -> dict:
         """Adds or edits accommodation log models in the repository."""
-        prepared_logs = [
+        prepared_data = [
             await self.prepare_accommodation_log_data(log_request)
             for log_request in log_requests
         ]
-        valid_logs_to_upsert = [log for log in prepared_logs if log is not None]
+        valid_data = [data for data in prepared_data if data is not None]
+        valid_logs_to_upsert, audit_logs = zip(*valid_data) if valid_data else ([], [])
 
         # Perform the upsert operation for valid logs
         inserted_count = 0
@@ -101,6 +115,11 @@ class TravelService:
                     inserted_count += 1
                 else:
                     updated_count += 1
+            await self.process_audit_logs(audit_logs)
+            # try:
+            #     await self.process_audit_logs(audit_logs)
+            # except:
+            #     print(f"Couldn't insert audit logs {audit_logs}")
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
         return {
@@ -109,9 +128,13 @@ class TravelService:
             "message": "No logs were processed.",
         }
 
+    async def process_audit_logs(self, audit_logs):
+        """Calls audit service to insert audit logs to the database."""
+        await self._audit_svc.add_audit_logs(audit_logs)
+
     async def prepare_accommodation_log_data(
         self, log_request: PatchAccommodationLogRequest
-    ) -> Optional[AccommodationLog]:
+    ) -> Tuple[Optional[AccommodationLog], AuditLog]:
         """Processes an accommodation log add or update request."""
         # Resolve entity IDs
         agency_id = await self.resolve_agency_id(log_request)
@@ -133,12 +156,28 @@ class TravelService:
             updated_log_data = self.prepare_updated_log_data(
                 log_request, existing_log, property_id, booking_channel_id, agency_id
             )
-            return updated_log_data
+            audit_log = AuditLog(
+                table_name="accommodation_logs",
+                record_id=existing_log.id,
+                user_name=log_request.updated_by,
+                before_value=existing_log.dict(),
+                after_value=updated_log_data.dict(),
+                action="update",
+            )
+            return updated_log_data, audit_log
         # If new, prepare the new log data
         new_log_data = self.prepare_new_log_data(
             log_request, property_id, booking_channel_id, agency_id
         )
-        return new_log_data  # Return the prepared data for insertion
+        audit_log = AuditLog(
+            table_name="accommodation_logs",
+            record_id=new_log_data.id,
+            user_name=log_request.updated_by,
+            before_value={},
+            after_value=new_log_data.dict(),
+            action="insert",
+        )
+        return new_log_data, audit_log  # Return the prepared data for insertion
 
     def prepare_new_log_data(
         self,
@@ -193,7 +232,7 @@ class TravelService:
         """Gets or creates an agency based on either agency ID or new agency name."""
         if log_request.agency_id:
             return log_request.agency_id
-        elif log_request.new_agency_name:
+        if log_request.new_agency_name:
             existing_agency = await self.get_agency_by_name(log_request.new_agency_name)
             if existing_agency:
                 print("Passed a new agency name and found it in the database already.")
@@ -205,6 +244,15 @@ class TravelService:
                 )
                 # Pass a list of Agency instances to add_agency
                 await self.add_agency([new_agency])
+                audit_log = AuditLog(
+                    table_name="agencies",
+                    record_id=new_agency.id,
+                    user_name=log_request.updated_by,
+                    before_value={},
+                    after_value=new_agency.dict(),
+                    action="insert",
+                )
+                await self.process_audit_logs(audit_log)
                 # Fetch the newly created or existing agency by name to get its ID
                 agency_created = await self.get_agency_by_name(
                     log_request.new_agency_name
@@ -236,6 +284,15 @@ class TravelService:
                 )
                 # Pass a list of BooikingChannel instances to add_booking_channel
                 await self.add_booking_channel([new_booking_channel])
+                audit_log = AuditLog(
+                    table_name="booking_channels",
+                    record_id=new_booking_channel.id,
+                    user_name=log_request.updated_by,
+                    before_value={},
+                    after_value=new_booking_channel.dict(),
+                    action="insert",
+                )
+                await self.process_audit_logs(audit_log)
                 # Fetch the newly created or existing booking channel by name to get its ID
                 booking_channel_created = await self.get_booking_channel_by_name(
                     log_request.new_booking_channel_name
@@ -270,6 +327,15 @@ class TravelService:
             )
             # Pass a list of Property instances to add_property
             await self.add_property([new_property])
+            audit_log = AuditLog(
+                table_name="properties",
+                record_id=new_property.id,
+                user_name=log_request.updated_by,
+                before_value={},
+                after_value=new_property.dict(),
+                action="insert",
+            )
+            await self.process_audit_logs(audit_log)
             # Fetch the newly created or existing property by name to get its ID
             property_created = await self.get_property_by_name(
                 log_request.new_property_name,
@@ -288,6 +354,19 @@ class TravelService:
             for model in models
             if not await self._repo.get_country_by_name(model.name)
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="countries",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
         await self._repo.add_country(to_be_added)
 
     async def get_country_by_id(self, country_id: UUID) -> Country:
@@ -311,6 +390,19 @@ class TravelService:
             for model in models
             if not await self._repo.get_core_destination_by_name(model.name)
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="core_destinations",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
 
         await self._repo.add_core_destination(to_be_added)
 
@@ -329,6 +421,19 @@ class TravelService:
                 model.name, model.portfolio, model.country_id, model.core_destination_id
             )
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="properties",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
         await self._repo.add_property(to_be_added)
 
     async def process_property_request(
@@ -341,18 +446,25 @@ class TravelService:
             isinstance(prepared_data_or_error, dict)
             and "error" in prepared_data_or_error
         ):
-            # Return the error message directly if there was a name conflict
+            # Return the error message directly if there was a conflict or issue
             return {"error": prepared_data_or_error["error"]}
 
-        if prepared_data_or_error:
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            property_data, audit_logs = prepared_data_or_error
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_property(prepared_data_or_error)
+            results = await self._repo.upsert_property(property_data)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
                 else:
                     updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
         # If no data was prepared for insertion or update
@@ -360,7 +472,7 @@ class TravelService:
 
     async def prepare_property_data(
         self, property_request: PatchPropertyRequest
-    ) -> Property:
+    ) -> Union[Dict[str, str], Tuple[Property, AuditLog]]:
         """Resolves and prepares a property patch for insertion."""
         # Check if this property exists and needs updating
 
@@ -401,7 +513,7 @@ class TravelService:
                 # No changes detected, return a message indicating so
                 return {"error": "No changes were detected."}
             # If updating, return the existing property with possibly updated fields
-            return Property(
+            updated_property = Property(
                 id=existing_property_by_id.id,  # Keep the same ID
                 name=property_request.name,
                 portfolio=property_request.portfolio,
@@ -409,15 +521,34 @@ class TravelService:
                 core_destination_id=core_destination_id,
                 updated_by=property_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="properties",
+                record_id=existing_property_by_id.id,
+                user_name=updated_property.updated_by,
+                before_value=existing_property_by_id.dict(),
+                after_value=updated_property.dict(),
+                action="update",
+            )
+            return updated_property, audit_log
         else:
             # If new, prepare the new property data
-            return Property(
+            new_property = Property(
                 name=property_request.name,
                 portfolio=property_request.portfolio,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
                 updated_by=property_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="properties",
+                record_id=new_property.id,
+                user_name=new_property.updated_by,
+                before_value={},
+                after_value=new_property.dict(),
+                action="insert",
+            )
+
+            return new_property, audit_log
 
     async def get_property_by_name(
         self,
@@ -435,9 +566,19 @@ class TravelService:
         """Gets a single Property model by id."""
         return await self._repo.get_property_by_id(property_id)
 
-    async def delete_property(self, property_id: UUID):
+    async def delete_property(self, property_id: UUID, user_email: str):
         """Deletes a Property."""
-        return await self._repo.delete_property(property_id)
+        deleted = await self._repo.delete_property(property_id)
+        audit_log = AuditLog(
+            table_name="properties",
+            record_id=property_id,
+            user_name=user_email,
+            before_value={"id": property_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
 
     # Agency
     async def add_agency(self, models: Sequence[Agency]) -> None:
@@ -448,6 +589,19 @@ class TravelService:
             for model in models
             if not await self._repo.get_agency_by_name(model.name)
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="agencies",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
         await self._repo.add_agency(to_be_added)
 
     async def get_all_agencies(self) -> Sequence[Agency]:
@@ -470,18 +624,25 @@ class TravelService:
             isinstance(prepared_data_or_error, dict)
             and "error" in prepared_data_or_error
         ):
-            # Return the error message directly if there was a name conflict
+            # Return the error message directly if there was a conflict or issue
             return {"error": prepared_data_or_error["error"]}
 
-        if prepared_data_or_error:
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            agency_data, audit_logs = prepared_data_or_error
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_agency(prepared_data_or_error)
+            results = await self._repo.upsert_agency(agency_data)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
                 else:
                     updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
         # If no data was prepared for insertion or update
@@ -489,7 +650,7 @@ class TravelService:
 
     async def prepare_agency_data(
         self, agency_request: PatchAgencyRequest
-    ) -> Union[Agency, dict]:
+    ) -> Union[Dict[str, str], Tuple[Agency, AuditLog]]:
         """Resolves and prepares an agency patch for insertion or update."""
         # Check if this agency exists and needs updating
         existing_agency_by_id = None
@@ -514,21 +675,49 @@ class TravelService:
                 # No changes detected, return a message indicating so
                 return {"error": "No changes were detected."}
             # If updating, return the existing agency with possibly updated fields
-            return Agency(
+            updated_agency = Agency(
                 id=existing_agency_by_id.id,  # Keep the same ID
                 name=agency_request.name,
                 updated_by=agency_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="agencies",
+                record_id=existing_agency_by_id.id,
+                user_name=updated_agency.updated_by,
+                before_value=existing_agency_by_id.dict(),
+                after_value=updated_agency.dict(),
+                action="update",
+            )
+            return updated_agency, audit_log
         else:
             # If new, prepare the new agency data
-            return Agency(
+            new_agency = Agency(
                 name=agency_request.name,
                 updated_by=agency_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="agencies",
+                record_id=new_agency.id,
+                user_name=new_agency.updated_by,
+                before_value={},
+                after_value=new_agency.dict(),
+                action="insert",
+            )
+            return new_agency, audit_log
 
-    async def delete_agency(self, agency_id: UUID):
+    async def delete_agency(self, agency_id: UUID, user_email: str):
         """Deletes an Agency."""
-        return await self._repo.delete_agency(agency_id)
+        deleted = await self._repo.delete_agency(agency_id)
+        audit_log = AuditLog(
+            table_name="agencies",
+            record_id=agency_id,
+            user_name=user_email,
+            before_value={"id": agency_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
 
     # BookingChannel
     async def add_booking_channel(self, models: Sequence[BookingChannel]) -> None:
@@ -539,6 +728,19 @@ class TravelService:
             for model in models
             if not await self._repo.get_booking_channel_by_name(model.name)
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="agencies",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
         await self._repo.add_booking_channel(to_be_added)
 
     async def get_all_booking_channels(self) -> Sequence[BookingChannel]:
@@ -567,18 +769,25 @@ class TravelService:
             isinstance(prepared_data_or_error, dict)
             and "error" in prepared_data_or_error
         ):
-            # Return the error message directly if there was a name conflict
+            # Return the error message directly if there was a conflict or issue
             return {"error": prepared_data_or_error["error"]}
 
-        if prepared_data_or_error:
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            booking_channel_data, audit_logs = prepared_data_or_error
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_booking_channel(prepared_data_or_error)
+            results = await self._repo.upsert_booking_channel(booking_channel_data)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
                 else:
                     updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
         # If no data was prepared for insertion or update
@@ -586,7 +795,7 @@ class TravelService:
 
     async def prepare_booking_channel_data(
         self, booking_channel_request: PatchBookingChannelRequest
-    ) -> Union[BookingChannel, dict]:
+    ) -> Union[Dict[str, str], Tuple[BookingChannel, AuditLog]]:
         """Resolves and prepares a booking channel patch for insertion."""
         # Check if this booking channel exists and needs updating
         existing_booking_channel_by_id = None
@@ -613,21 +822,49 @@ class TravelService:
                 # No changes detected, return a message indicating so
                 return {"error": "No changes were detected."}
             # If updating, return the existing booking channel with possibly updated fields
-            return BookingChannel(
+            updated_booking_channel = BookingChannel(
                 id=existing_booking_channel_by_id.id,  # Keep the same ID
                 name=booking_channel_request.name,
                 updated_by=booking_channel_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="booking_channels",
+                record_id=existing_booking_channel_by_id.id,
+                user_name=updated_booking_channel.updated_by,
+                before_value=existing_booking_channel_by_id.dict(),
+                after_value=updated_booking_channel.dict(),
+                action="update",
+            )
+            return updated_booking_channel, audit_log
         else:
             # If new, prepare the new booking channel data
-            return BookingChannel(
+            new_booking_channel = BookingChannel(
                 name=booking_channel_request.name,
                 updated_by=booking_channel_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="booking_channels",
+                record_id=new_booking_channel.id,
+                user_name=new_booking_channel.updated_by,
+                before_value={},
+                after_value=new_booking_channel.dict(),
+                action="insert",
+            )
+            return new_booking_channel, audit_log
 
-    async def delete_booking_channel(self, booking_channel_id: UUID):
+    async def delete_booking_channel(self, booking_channel_id: UUID, user_email: str):
         """Deletes a BookingChannel."""
-        return await self._repo.delete_booking_channel(booking_channel_id)
+        deleted = await self._repo.delete_booking_channel(booking_channel_id)
+        audit_log = AuditLog(
+            table_name="booking_channels",
+            record_id=booking_channel_id,
+            user_name=user_email,
+            before_value={"id": booking_channel_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
 
     # Consultant
     async def add_consultant(self, models: Sequence[Consultant]) -> None:
@@ -640,6 +877,19 @@ class TravelService:
                 model.first_name, model.last_name
             )
         ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="consultants",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
         await self._repo.add_consultant(to_be_added)
 
     async def get_all_consultants(self) -> Sequence[Consultant]:
@@ -666,18 +916,25 @@ class TravelService:
             isinstance(prepared_data_or_error, dict)
             and "error" in prepared_data_or_error
         ):
-            # Return the error message directly if there was a name conflict
+            # Return the error message directly if there was a conflict or issue
             return {"error": prepared_data_or_error["error"]}
 
-        if prepared_data_or_error:
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            consultant_data, audit_logs = prepared_data_or_error
             inserted_count = 0
             updated_count = 0
-            results = await self._repo.upsert_consultant(prepared_data_or_error)
+            results = await self._repo.upsert_consultant(consultant_data)
             for _, was_inserted in results:
                 if was_inserted:
                     inserted_count += 1
                 else:
                     updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
             return {"inserted_count": inserted_count, "updated_count": updated_count}
 
         # If no data was prepared for insertion or update
@@ -685,7 +942,7 @@ class TravelService:
 
     async def prepare_consultant_data(
         self, consultant_request: PatchConsultantRequest
-    ) -> Union[Consultant, dict]:
+    ) -> Union[Dict[str, str], Tuple[Consultant, AuditLog]]:
         """Resolves and prepares a consultant patch for insertion."""
         # Check if this consultant exists and needs updating
         existing_consultant_by_id = None
@@ -717,22 +974,50 @@ class TravelService:
                 # No changes detected, return a message indicating so
                 return {"error": "No changes were detected."}
             # If updating, return the existing booking channel with possibly updated fields
-            return Consultant(
+            updated_consultant = Consultant(
                 id=existing_consultant_by_id.id,  # Keep the same ID
                 first_name=consultant_request.first_name,
                 last_name=consultant_request.last_name,
                 is_active=consultant_request.is_active,
                 updated_by=consultant_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="consultants",
+                record_id=existing_consultant_by_id.id,
+                user_name=updated_consultant.updated_by,
+                before_value=existing_consultant_by_id.dict(),
+                after_value=updated_consultant.dict(),
+                action="update",
+            )
+            return updated_consultant, audit_log
         else:
             # If new, prepare the new booking channel data
-            return Consultant(
+            new_consultant = Consultant(
                 first_name=consultant_request.first_name,
                 last_name=consultant_request.last_name,
                 is_active=consultant_request.is_active,
                 updated_by=consultant_request.updated_by,
             )
+            audit_log = AuditLog(
+                table_name="consultants",
+                record_id=new_consultant.id,
+                user_name=new_consultant.updated_by,
+                before_value={},
+                after_value=new_consultant.dict(),
+                action="insert",
+            )
+            return new_consultant, audit_log
 
-    async def delete_consultant(self, consultant_id: UUID):
+    async def delete_consultant(self, consultant_id: UUID, user_email: str):
         """Deletes a Consultant."""
-        return await self._repo.delete_consultant(consultant_id)
+        deleted = await self._repo.delete_consultant(consultant_id)
+        audit_log = AuditLog(
+            table_name="consultants",
+            record_id=consultant_id,
+            user_name=user_email,
+            before_value={"id": consultant_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted

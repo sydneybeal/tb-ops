@@ -164,7 +164,9 @@ def make_app(
         log_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete an accommodation log by its ID."""
-        is_deleted = await travel_svc.delete_accommodation_log(log_id)
+        is_deleted = await travel_svc.delete_accommodation_log(
+            log_id, current_user.email
+        )
         if not is_deleted:
             raise HTTPException(status_code=404, detail="Accommodation log not found")
         return JSONResponse(
@@ -206,7 +208,7 @@ def make_app(
         property_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a property by its ID."""
-        is_deleted = await travel_svc.delete_property(property_id)
+        is_deleted = await travel_svc.delete_property(property_id, current_user.email)
         if not is_deleted:
             raise HTTPException(status_code=404, detail="Property not found")
         return JSONResponse(
@@ -260,7 +262,9 @@ def make_app(
         consultant_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a consultant by its ID."""
-        is_deleted = await travel_svc.delete_consultant(consultant_id)
+        is_deleted = await travel_svc.delete_consultant(
+            consultant_id, current_user.email
+        )
         if not is_deleted:
             raise HTTPException(status_code=404, detail="Consultant not found")
         return JSONResponse(
@@ -302,7 +306,9 @@ def make_app(
         booking_channel_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a booking channel by its ID."""
-        is_deleted = await travel_svc.delete_booking_channel(booking_channel_id)
+        is_deleted = await travel_svc.delete_booking_channel(
+            booking_channel_id, current_user.email
+        )
         if not is_deleted:
             raise HTTPException(status_code=404, detail="Booking channel not found")
         return JSONResponse(
@@ -344,7 +350,7 @@ def make_app(
         agency_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete an agency by its ID."""
-        is_deleted = await travel_svc.delete_agency(agency_id)
+        is_deleted = await travel_svc.delete_agency(agency_id, current_user.email)
         if not is_deleted:
             raise HTTPException(status_code=404, detail="Agency not found")
         return JSONResponse(

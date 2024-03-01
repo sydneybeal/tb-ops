@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 // import ReactDatePicker from 'react-datepicker';
