@@ -135,10 +135,22 @@ ul.sidenav.sidenav-fixed li.logo {
   max-width: 400px;
 }
 
+.react-datepicker__close-icon {
+  background-color: transparent !important; /* Change to your desired color */
+  color: white; /* Adjust text/icon color as needed */
+  /* You might need additional styles here depending on what you're trying to achieve */
+}
+
 .react-datepicker__close-icon::after {
   background-color: #ef9a9a !important; /* Change to your desired color */
   color: white; /* Adjust text/icon color as needed */
   /* You might need additional styles here depending on what you're trying to achieve */
+}
+
+.react-datepicker__close-icon:active::after {
+  transform: scale(1.1); /* Scales the icon up */
+  outline: 2px solid #f58080; /* Adds an outline, adjust color as needed */
+  outline-offset: 0px; /* Adjust the space between the icon and the outline */
 }
 
 .modal.add-log-modal .modal-content {

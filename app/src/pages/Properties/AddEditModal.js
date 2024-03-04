@@ -220,6 +220,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
     }, [isOpen, isEditMode, editPropertyData]);
 
     const resetFormState = () => {
+        setPropertyId(null);
         setPropertyName('');
         setPortfolioName('');
         setSelectedCountryId(null);

@@ -192,6 +192,7 @@ const AddEditBcModal = ({ isOpen, onClose, onRefresh, editBcData = null, isEditM
     }, [isOpen, isEditMode, editBcData]);
 
     const resetFormState = () => {
+        setBookingChannelId(null);
         setName('');
         setValidationErrors({});
     };

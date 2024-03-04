@@ -200,6 +200,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
     }, [isOpen, isEditMode, editConsultantData]);
 
     const resetFormState = () => {
+        setConsultantId(null);
         setFirstName('');
         setLastName('');
         setIsActive(true);

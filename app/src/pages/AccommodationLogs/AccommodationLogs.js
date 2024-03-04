@@ -486,6 +486,8 @@ export const Overview = () => {
                                                     placeholderText="mm/dd/yyyy"
                                                     className="date-input"
                                                     dateFormat="MM/dd/yyyy"
+                                                    minDate={new Date('2000-01-01')}
+                                                    maxDate={new Date('2100-12-31')}
                                                 />
                                             </div>
                                             <span style={{ fontSize: '0.8rem' }}>
@@ -507,6 +509,8 @@ export const Overview = () => {
                                                     placeholderText="mm/dd/yyyy"
                                                     className="date-input"
                                                     dateFormat="MM/dd/yyyy"
+                                                    minDate={new Date('2000-01-01')}
+                                                    maxDate={new Date('2100-12-31')}
                                                 />
                                             </div>
                                             <span style={{ fontSize: '0.8rem' }}>
@@ -809,7 +813,7 @@ export const Overview = () => {
                                                             <span
                                                                 className={`tooltipped`}
                                                                 data-position="left"
-                                                                data-tooltip={`Updated ${moment(item.updated_at).fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
                                                                 data-tooltip-class="tooltip-updated-by"
                                                             >
                                                                 <button
@@ -826,7 +830,7 @@ export const Overview = () => {
                                                                     <span className="material-symbols-outlined grey-text">
                                                                         update
                                                                     </span>
-                                                                    {moment(item.updated_at).fromNow()}
+                                                                    {moment.utc(item.updated_at).local().fromNow()}
                                                                 </em>
                                                             </span>
                                                         </div>

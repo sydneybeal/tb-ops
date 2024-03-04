@@ -1217,6 +1217,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 placeholderText="Select date in"
                                                 className="date-input"
                                                 dateFormat="MM/dd/yyyy"
+                                                minDate={new Date('2000-01-01')}
+                                                maxDate={new Date('2100-12-31')}
                                             />
                                         </div>
                                         <label htmlFor="form-date-in">
@@ -1239,6 +1241,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     placeholderText="Select date out"
                                                     className="date-input"
                                                     dateFormat="MM/dd/yyyy"
+                                                    minDate={new Date('2000-01-01')}
+                                                    maxDate={new Date('2100-12-31')}
                                                 />
                                             </div>
                                         </div>

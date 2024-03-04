@@ -191,6 +191,7 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
     }, [isOpen, isEditMode, editAgencyData]);
 
     const resetFormState = () => {
+        setAgencyId(null);
         setName('');
         setValidationErrors({});
     };

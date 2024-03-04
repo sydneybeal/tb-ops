@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import M from 'materialize-css/dist/js/materialize';
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -14,6 +15,12 @@ export const BedNightReports = () => {
     const [accommodationLogData, setAccommodationLogData] = useState([]);
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
+    const minDate = '2000-01-01';
+    const maxDate = '2099-12-31';
+    const [temporaryStartDate, setTemporaryStartDate] = useState('');
+    const [temporaryEndDate, setTemporaryEndDate] = useState('');
+    const navigate = useNavigate();
+    const location = useLocation();
     const [filterOptions, setFilterOptions] = useState({
         core_destination_name: [],
         country_name: [],
@@ -35,15 +42,111 @@ export const BedNightReports = () => {
         agency: '',
     });
 
+    // Function to construct query string from filters
+    const getQueryString = (params) => {
+        return Object.keys(params)
+            .filter(key => params[key] !== '' && params[key] != null) // Filter out empty values
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+            .join('&');
+    };
+
+    // Function to parse query string into filters object
+    const parseQueryString = (queryString) => {
+        const params = new URLSearchParams(queryString);
+        const filters = {};
+        for (let param of params) {
+            filters[param[0]] = param[1];
+        }
+        return filters;
+    };
+
+    useEffect(() => {
+        const currentQueryString = new URLSearchParams(window.location.search).toString();
+        const newQueryString = getQueryString(filters);
+
+        if (newQueryString !== currentQueryString) {
+            const currentFilters = parseQueryString(currentQueryString);
+            const filtersChanged = Object.keys(filters).some(key => filters[key] !== currentFilters[key]);
+
+            if (filtersChanged) {
+                navigate(`/bed_night_reports?${newQueryString}`, { replace: true });
+            }
+        }
+    }, [filters, navigate]);
+
+    useEffect(() => {
+        if (location.search) {
+            const filtersFromUrl = parseQueryString(location.search);
+
+            const validatedStartDate = validateDateRange(filtersFromUrl.start_date);
+            const validatedEndDate = validateDateRange(filtersFromUrl.end_date);
+
+            setFilters(prevFilters => ({
+                ...prevFilters,
+                // Set each filter conditionally based on whether it exists in filtersFromUrl
+                start_date: validatedStartDate || prevFilters.start_date,
+                end_date: validatedEndDate || prevFilters.end_date,
+            }));
+        }
+    }, [location.search]);
+
+    const validateDateRange = (date) => {
+        if (!date) return '';
+
+        if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
+            M.toast({
+                html: 'An invalid date was passed in the URL and has been reset.',
+                classes: 'yellow lighten-3 grey-text text-darken-3',
+                displayLength: 1500,
+            });
+            return '';
+        }
+
+        const momentDate = moment(date);
+        const momentMin = moment(minDate);
+        const momentMax = moment(maxDate);
+
+        // Check if the date is before minDate or after maxDate and adjust accordingly
+        if (momentDate.isBefore(momentMin)) {
+            M.toast({
+                html: `Date out of range, resetting to ${momentMin.format('MM/DD/yyyy')}.`,
+                classes: 'yellow lighten-3 grey-text text-darken-3',
+                displayLength: 1500,
+            });
+            return momentMin.format('YYYY-MM-DD');
+        } else if (momentDate.isAfter(momentMax)) {
+            M.toast({
+                html: `Date out of range, resetting to ${momentMax.format('MM/DD/yyyy')}.`,
+                classes: 'yellow lighten-3 grey-text text-darken-3',
+                displayLength: 1500,
+            });
+            return momentMax.format('YYYY-MM-DD');
+        } else {
+            return momentDate.format('YYYY-MM-DD');
+        }
+    };
+
+    const confirmStartDateSelection = () => {
+        if (temporaryStartDate && (temporaryStartDate !== filters.start_date)) {
+            setFilters(prevFilters => ({
+                ...prevFilters,
+                start_date: temporaryStartDate,
+            }));
+        }
+    };
+
+    const confirmEndDateSelection = () => {
+
+        if (temporaryEndDate && (temporaryEndDate !== filters.end_date)) {
+            setFilters(prevFilters => ({
+                ...prevFilters,
+                end_date: temporaryEndDate,
+            }));
+        }
+    };
+
     useEffect(() => {
         M.AutoInit();
-        // Function to construct query string from filters
-        const getQueryString = (params) => {
-            return Object.keys(params)
-                .filter(key => params[key] !== '') // Filter out empty values
-                .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-                .join('&');
-        };
 
         const queryString = getQueryString(filters);
         const apiUrl = `${process.env.REACT_APP_API}/v1/bed_night_report?${queryString}`;
@@ -55,7 +158,6 @@ export const BedNightReports = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                console.log(data);
                 setReportData(data);
                 fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
                     headers: {
@@ -108,6 +210,7 @@ export const BedNightReports = () => {
         const filteredData = accommodationLogData.filter(item => {
             // Example filtering logic here; adjust according to your actual filters
             return (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
+                && (!filters.consultant_name || item.consultant_display_name === filters.consultant_name)
                 && (!filters.country_name || item.country_name === filters.country_name)
                 && (!filters.property_name || item.property_name === filters.property_name)
                 && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
@@ -201,7 +304,7 @@ export const BedNightReports = () => {
                         </div>
                     </div>
                     <div className="row center">
-                        <div className="col s3">
+                        <div className="col s4">
                             <Select
                                 placeholder="Search by Agency"
                                 value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
@@ -210,7 +313,7 @@ export const BedNightReports = () => {
                                 isClearable
                             />
                         </div>
-                        <div className="col s3">
+                        <div className="col s4">
                             <Select
                                 placeholder="Search by Booking Channel"
                                 value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
@@ -219,15 +322,59 @@ export const BedNightReports = () => {
                                 isClearable
                             />
                         </div>
-                        <div className="col s6">
+                        <div className="col s4">
+                            <Select
+                                placeholder="Search by Consultant"
+                                value={filterOptions.consultant_name.find(option => option.label === filters.consultant_name) ? { value: filters.consultant_name, label: filters.consultant_name } : null}
+                                onChange={(selectedOption) => setFilters({ ...filters, consultant_name: selectedOption ? selectedOption.label : '' })}
+                                options={filterOptions.consultant_name}
+                                isClearable
+                            />
+                        </div>
+                    </div>
+                    <div className="row center" style={{ marginBottom: '0px' }}>
+                        <div className="col s6 offset-s3">
                             <div className="row">
                                 <div className="col s6">
                                     <div>
                                         <ReactDatePicker
-                                            selected={filters.start_date ? moment(filters.start_date).toDate() : null}
-                                            onChange={(date) =>
-                                                setFilters({ ...filters, start_date: date ? moment(date).format('YYYY-MM-DD') : '' })
-                                            }
+                                            selected={filters.start_date ? moment(filters.start_date).toDate() : ''}
+                                            onChange={(date) => {
+                                                if (date === null) {
+                                                    // Directly update filters if date is cleared
+                                                    setTemporaryStartDate('');
+                                                    if (filters.start_date !== '') {
+                                                        setFilters(prevFilters => ({
+                                                            ...prevFilters,
+                                                            start_date: '',
+                                                        }));
+                                                    }
+                                                } else {
+                                                    const formattedDate = moment(date).format('YYYY-MM-DD');
+                                                    const isBeforeMinDate = moment(formattedDate).isBefore(moment(minDate));
+                                                    const isAfterMaxDate = moment(formattedDate).isAfter(moment(maxDate));
+
+                                                    // Handling dates outside the valid range
+                                                    if (isBeforeMinDate || isAfterMaxDate) {
+                                                        const validDate = isBeforeMinDate ? minDate : maxDate;
+                                                        setTemporaryStartDate(validDate);
+                                                        setFilters(prevFilters => ({
+                                                            ...prevFilters,
+                                                            start_date: validDate
+                                                        }));
+                                                        M.toast({
+                                                            html: `Date out of range, resetting to ${moment(validDate).format('MM/DD/yyyy')}.`,
+                                                            classes: 'yellow lighten-3 grey-text text-darken-3',
+                                                            displayLength: 1500,
+                                                        });
+                                                    } else {
+                                                        setTemporaryStartDate(formattedDate);
+                                                    }
+                                                }
+
+                                            }}
+                                            onBlur={confirmStartDateSelection}
+                                            onCalendarClose={confirmStartDateSelection}
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
@@ -244,10 +391,43 @@ export const BedNightReports = () => {
                                 <div className="col s6">
                                     <div>
                                         <ReactDatePicker
-                                            selected={filters.end_date ? moment(filters.end_date).toDate() : null}
-                                            onChange={(date) =>
-                                                setFilters({ ...filters, end_date: date ? moment(date).format('YYYY-MM-DD') : '' })
-                                            }
+                                            selected={filters.end_date ? moment(filters.end_date).toDate() : ''}
+                                            onChange={(date) => {
+                                                if (date === null) {
+                                                    // Directly update filters if date is cleared
+                                                    setTemporaryEndDate('');
+                                                    if (filters.end_date !== '') {
+                                                        setFilters(prevFilters => ({
+                                                            ...prevFilters,
+                                                            end_date: ''
+                                                        }));
+                                                    }
+
+                                                } else {
+                                                    const formattedDate = moment(date).format('YYYY-MM-DD');
+                                                    const isBeforeMinDate = moment(formattedDate).isBefore(moment(minDate));
+                                                    const isAfterMaxDate = moment(formattedDate).isAfter(moment(maxDate));
+
+                                                    // Handling dates outside the valid range
+                                                    if (isBeforeMinDate || isAfterMaxDate) {
+                                                        const validDate = isBeforeMinDate ? minDate : maxDate;
+                                                        setTemporaryEndDate(validDate);
+                                                        setFilters(prevFilters => ({
+                                                            ...prevFilters,
+                                                            end_date: validDate
+                                                        }));
+                                                        M.toast({
+                                                            html: `Date out of range, resetting to ${moment(validDate).format('MM/DD/yyyy')}.`,
+                                                            classes: 'yellow lighten-3 grey-text text-darken-3',
+                                                            displayLength: 1500,
+                                                        });
+                                                    } else {
+                                                        setTemporaryEndDate(formattedDate);
+                                                    }
+                                                }
+                                            }}
+                                            onBlur={confirmEndDateSelection}
+                                            onCalendarClose={confirmEndDateSelection}
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
@@ -261,38 +441,11 @@ export const BedNightReports = () => {
                                         End Date
                                     </span>
                                 </div>
-
-                                {/* <input
-                                    type="date"
-                                    value={filters.start_date}
-                                    onChange={
-                                        (e) => setFilters({ ...filters, start_date: e.target.value })}
-                                    className="date-input"
-                                    placeholder="Start Date"
-                                />
-                                <button
-                                    className="btn btn-small deep-orange lighten-2"
-                                    onClick={
-                                        (e) => setFilters({ ...filters, start_date: '' })}
-                                >x</button>
-                                <input
-                                    type="date"
-                                    value={filters.end_date}
-                                    onChange={
-                                        (e) => setFilters({ ...filters, end_date: e.target.value })}
-                                    className="date-input"
-                                    placeholder="End Date"
-                                />
-                                <button
-                                    className="btn btn-small deep-orange lighten-2"
-                                    onClick={
-                                        (e) => setFilters({ ...filters, end_date: '' })}
-                                >x</button> */}
                             </div>
                         </div>
                     </div>
 
-                    <div className="row center">
+                    <div className="row center" style={{ marginBottom: '0px' }}>
                         <div>
                             <button className="btn grey" onClick={() => setFilters(
                                 { core_destination_name: '', portfolio_name: '', country_name: '', consultant_name: '', start_date: '', end_date: '' })}>
