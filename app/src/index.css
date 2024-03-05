@@ -171,6 +171,33 @@ table.accommodation-logs-table {
   width: 120px;
 } */
 
+
+.suggestions-list {
+  position: absolute;
+  top: 100%; /* Aligns the top of the suggestions list with the bottom of the input field */
+  left: 0; /* Aligns the list to the left of the container */
+  margin-top: -1px; /* Adjust this value to close the gap */
+  padding: 5px 0; /* Adds padding on top and bottom, removes left/right padding */
+  z-index: 1000;
+  width: 100%; /* Ensure it matches the input field width */
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: white;
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid #ddd;
+  border-top: none;
+}
+
+.suggestions-list li {
+  padding: 8px 10px; /* Adds padding to the left and right of list items */
+  cursor: pointer; /* Changes the mouse cursor to a pointer to indicate clickable items */
+}
+
+.suggestions-list li:hover {
+  background-color: lightblue; /* Changes the background color on hover */
+  font-weight: bold; /* Makes the text bold on hover */
+}
+
 .pagination li button {
   color: #444;
   display: inline-block;

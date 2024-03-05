@@ -22,6 +22,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const [agencies, setAgencies] = useState([]);
     const [validationErrors, setValidationErrors] = useState({});
     const [userNewPropertyInteractions, setUserNewPropertyInteractions] = useState({});
+    const [portfolioNames, setPortfolioNames] = useState([]);
+    const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
+    const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
     const [touched, setTouched] = useState({
         primaryTraveler: false,
         agency: false
@@ -42,6 +45,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             setNumPax(editLogData.num_pax);
             setSelectedAgencyId(editLogData.agency_id);
             setSelectedConsultantId(editLogData.consultant_id);
+            setFilteredPortfolioSuggestions([]);
+            setShowPortfolioSuggestions(false);
         }
     }, [isOpen, isEditMode, editLogData]);
 
@@ -74,7 +79,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             .then((data) => {
                 const formattedProperties = data.map((property) => ({
                     value: property.id,
-                    // TODO: try to put the country in a chip
                     label: `${property.name} (${property.country_name || property.core_destination_name})`,
                     name: property.name,
                     portfolio: property.portfolio_name,
@@ -82,6 +86,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     core_destination_name: property.core_destination_name
                 }));
                 setProperties(formattedProperties);
+                const portfolioNames = [...new Set(data.map(property => property.portfolio_name))];
+                setPortfolioNames(portfolioNames);
+                setFilteredPortfolioSuggestions(portfolioNames);
             })
             .catch((err) => console.error(err));
 
@@ -381,14 +388,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const handleAgencyChange = (selectedOption) => {
         setTouched(prev => ({ ...prev, agency: true }));
         setSelectedAgencyId(selectedOption ? selectedOption.value : '');
-        // Note: No need to set validation errors here as it's handled by useEffect
     };
 
     const handleNewAgencyNameChange = (e) => {
         setTouched(prev => ({ ...prev, agency: true }));
         const value = e.target.value;
         setNewAgencyName(value);
-        // Note: No need to log here; also, commented out code related to consultant validation is not relevant to this context
     };
 
     const handlePrimaryTravelerBlur = () => {
@@ -665,6 +670,80 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         setValidationErrors(prevErrors => ({ ...prevErrors, logs: logErrors }));
     };
 
+    const handlePropertyChange = (index, fieldOrSelectedOption, value) => {
+        if (typeof fieldOrSelectedOption === 'string') {
+            // It's a direct input change, handle it accordingly
+            handleLogChange(index, fieldOrSelectedOption, value);
+
+            if (fieldOrSelectedOption === 'new_property_portfolio_name') {
+                if (value.trim() === '') {
+                    // If the input is empty, clear suggestions and don't show the list
+                    setFilteredPortfolioSuggestions(portfolioNames);
+                    setShowPortfolioSuggestions(true);
+                } else {
+                    // Filter and show suggestions based on the input
+                    const filtered = portfolioNames.filter(portfolioName =>
+                        portfolioName.toLowerCase().includes(value.toLowerCase())
+                    );
+                    setFilteredPortfolioSuggestions(filtered);
+                    setShowPortfolioSuggestions(true);
+                }
+            }
+        } else {
+            // It's a selection from the dropdown
+            const selectedOption = fieldOrSelectedOption;
+            handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
+            handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
+            handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
+            handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
+            handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+        }
+
+        // Check and apply business rule for portfolio vs booking channel regardless of input type
+        validatePropertyAndBookingChannel(index);
+    };
+
+    const handleBookingChannelChange = (index, fieldOrSelectedOption, value) => {
+        if (typeof fieldOrSelectedOption === 'string') {
+            // It's a direct input change for a free-typed booking channel
+            handleLogChange(index, fieldOrSelectedOption, value);
+        } else {
+            // It's a selection from the dropdown
+            const selectedOption = fieldOrSelectedOption;
+            // Update booking channel based on selection
+            handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
+        }
+
+        // Check and apply business rule for portfolio vs booking channel regardless of input type
+        validatePropertyAndBookingChannel(index);
+    };
+
+    const validatePropertyAndBookingChannel = (index) => {
+        const log = accommodationLogs[index];
+        const portfolioName = log.portfolio_name || log.new_property_portfolio_name || '';
+
+        // TODO see if need to look for "Elewana" booking channel too
+        const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label === "Cheli & Peacock")?.value;
+        const directChannelId = bookingChannels.find(channel => channel.label === "Direct")?.value;
+
+        if (portfolioName === "Elewana Collection" && log.booking_channel_id === cheliAndPeacockChannelId) {
+            // Automatically change booking channel to Direct if conditions are met
+            M.toast({
+                html: "Booking channel automatically changed to Direct",
+                displayLength: 4000,
+                classes: 'green darken-1',
+            });
+            handleLogChange(index, 'booking_channel_id', directChannelId);
+
+        }
+    };
+
+    const selectPortfolioSuggestion = (index, suggestion) => {
+        handlePropertyChange(index, 'new_property_portfolio_name', suggestion);
+        setFilteredPortfolioSuggestions([]);
+        setShowPortfolioSuggestions(false);
+    };
+
 
     const handleRemoveClick = (index) => {
         // Remove the log entry at the specified index
@@ -705,8 +784,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
                 <div style={{ textAlign: 'left', marginTop: '50px' }}>
                     <form id="logForm" onSubmit={handleFormSubmit}>
-                        {/* Trip Information Section */}
-                        {/* <div className="teal-text text-lighten-3">Trip Details</div> */}
                         {(validationErrors.primaryTraveler || validationErrors.consultant || validationErrors.numPax || validationErrors.agency) && (
                             <div className="row" style={{ marginBottom: '20px' }}>
                                 {validationErrors.primaryTraveler && (
@@ -743,7 +820,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     Primary Traveler (Last/First)
 
                                 </label>
-                                {/* <span className="helper-text" data-error="wrong" data-success="right">Enter the full name of the primary traveler</span> */}
                             </div>
 
                             <div className="col s1" style={{ textAlign: 'center' }}>
@@ -1014,6 +1090,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                 handleLogChange(index, 'new_property_name', '');
                                                                 handleLogChange(index, 'new_property_portfolio_name', '');
                                                                 handleLogChange(index, 'new_property_country_name', '');
+                                                                setShowPortfolioSuggestions(false);
+                                                                setFilteredPortfolioSuggestions(portfolioNames);
                                                             }}
                                                         >
                                                             <span className="material-symbols-outlined">
@@ -1047,13 +1125,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         placeholder="Search for a property"
                                                         inputId="property_select"
                                                         value={properties.find(prop => prop.value === log.property_id) || ''}
-                                                        onChange={(selectedOption) => {
-                                                            handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-                                                            handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
-                                                            handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
-                                                            handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
-                                                            handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
-                                                        }}
+                                                        onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                                         options={properties}
                                                         styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                                         menuPortalTarget={document.body}
@@ -1085,6 +1157,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         handleLogChange(index, 'new_property_name', '');
                                                                         handleLogChange(index, 'new_property_portfolio_name', '');
                                                                         handleLogChange(index, 'new_property_country_name', '');
+                                                                        setShowPortfolioSuggestions(false);
+                                                                        setFilteredPortfolioSuggestions(portfolioNames);
                                                                     }}
                                                                 >
                                                                     Cancel
@@ -1099,7 +1173,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         type="text"
                                                                         id="new_property_name"
                                                                         value={log.new_property_name || ''}
-                                                                        onChange={(e) => handleLogChange(index, 'new_property_name', e.target.value)}
+                                                                        onChange={(e) => handlePropertyChange(index, 'new_property_name', e.target.value)}
                                                                         placeholder="Property Name"
                                                                         style={{ marginRight: '10px', flexGrow: '1' }}
                                                                     />
@@ -1110,15 +1184,31 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         Property Name
                                                                     </label>
                                                                 </div>
-                                                                <div className="col s6">
-                                                                    <input
-                                                                        type="text"
-                                                                        id="new_property_portfolio_name"
-                                                                        value={log.new_property_portfolio_name || ''}
-                                                                        onChange={(e) => handleLogChange(index, 'new_property_portfolio_name', e.target.value)}
-                                                                        placeholder="Portfolio Name"
-                                                                        style={{ marginRight: '10px', flexGrow: '1' }}
-                                                                    />
+                                                                <div className="col s6" style={{ position: 'relative' }}>
+                                                                    <div>
+                                                                        <input
+                                                                            type="text"
+                                                                            id="new_property_portfolio_name"
+                                                                            value={log.new_property_portfolio_name || ''}
+                                                                            onChange={(e) => handlePropertyChange(index, 'new_property_portfolio_name', e.target.value)}
+                                                                            onFocus={() => setShowPortfolioSuggestions(true)}
+                                                                            placeholder="Portfolio Name"
+                                                                            style={{ marginRight: '10px', flexGrow: '1' }}
+                                                                            autoComplete="off"
+                                                                        />
+                                                                        {showPortfolioSuggestions && filteredPortfolioSuggestions.length > 0 && (
+                                                                            <ul className="suggestions-list">
+                                                                                {filteredPortfolioSuggestions.map((suggestion, suggestionIndex) => (
+                                                                                    <li
+                                                                                        key={suggestionIndex}
+                                                                                        onClick={() => selectPortfolioSuggestion(index, suggestion)}
+                                                                                    >
+                                                                                        {suggestion}
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
+                                                                    </div>
                                                                     <label htmlFor="new_property_portfolio_name">
                                                                         <span className="material-symbols-outlined">
                                                                             store
@@ -1180,13 +1270,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             placeholder="Search for a property"
                                             inputId="property_select"
                                             value={properties.find(prop => prop.value === log.property_id) || ''}
-                                            onChange={(selectedOption) => {
-                                                handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-                                                handleLogChange(index, 'property_name', selectedOption ? selectedOption.name : '');
-                                                handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
-                                                handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
-                                                handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
-                                            }}
+                                            onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                             options={properties}
                                             styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                             menuPortalTarget={document.body}
@@ -1261,9 +1345,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         inputId="booking_channel_select"
                                                         placeholder="Search for a booking channel"
                                                         value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
-                                                        onChange={(selectedOption) => {
-                                                            handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
-                                                        }}
+                                                        onChange={(selectedOption) => handleBookingChannelChange(index, selectedOption)}
                                                         options={bookingChannels}
                                                         isClearable
                                                         style={{ flexGrow: '1' }}
@@ -1275,7 +1357,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         type="text"
                                                         id="booking_channel_select"
                                                         value={log.new_booking_channel_name || ''}
-                                                        onChange={(e) => handleLogChange(index, 'new_booking_channel_name', e.target.value)}
+                                                        onChange={(e) => handleBookingChannelChange(index, 'new_booking_channel_name', e.target.value)}
                                                         placeholder="Booking Channel Name"
                                                         style={{ marginRight: '10px', flexGrow: '1' }}
                                                     />
@@ -1323,9 +1405,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 <Select
                                                     placeholder="Select booking channel"
                                                     value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
-                                                    onChange={(selectedOption) => {
-                                                        handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
-                                                    }}
+                                                    onChange={(selectedOption) => handleBookingChannelChange(index, selectedOption)}
                                                     options={bookingChannels}
                                                     isClearable
                                                     style={{ flexGrow: '1' }}
