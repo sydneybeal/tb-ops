@@ -288,21 +288,58 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 })
                 .then(data => {
                     // Handle success response
-                    const insertedCount = data?.inserted_count ?? 0;
-                    const updatedCount = data?.updated_count ?? 0;
-                    const message = data?.message ?? "No records were added.";
+                    // const insertedCount = data?.inserted_count ?? 0;
+                    // const updatedCount = data?.updated_count ?? 0;
+                    // const message = data?.message ?? "No records were added.";
+                    // let toastHtml = '';
+                    // if (insertedCount > 0) {
+                    //     toastHtml = `Added ${insertedCount} record(s).`;
+                    // } else if (updatedCount > 0) {
+                    //     toastHtml = `Modified ${updatedCount} record(s).`;
+                    // } else {
+                    //     // Use the message from the response if no logs were added
+                    //     toastHtml = message;
+                    // }
+                    // M.toast({
+                    //     html: toastHtml,
+                    //     displayLength: 4000,
+                    //     classes: 'green darken-1',
+                    // });
+                    const auditLogSummary = data ?? {};
                     let toastHtml = '';
-                    if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} record(s).`;
-                    } else if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} record(s).`;
-                    } else {
-                        // Use the message from the response if no logs were added
-                        toastHtml = message;
+                    let totalOperations = 0;
+
+                    // Mapping for category names
+                    const categoryNames = {
+                        accommodation_logs: "service provider entry",
+                        booking_channels: "booking channel",
+                        agencies: "agency",
+                        properties: "property"
+                    };
+
+                    Object.entries(auditLogSummary).forEach(([category, actions]) => {
+                        // Use the mapping if available, or default to the category name with first letter capitalized
+                        const displayName = categoryNames[category] || category.charAt(0).toUpperCase() + category.slice(1);
+                        const inserts = actions.insert || 0;
+                        const updates = actions.update || 0;
+                        totalOperations += inserts + updates;
+
+                        if (inserts > 0) {
+                            toastHtml += `Added ${inserts} ${displayName} record.<br>`;
+                        }
+                        if (updates > 0) {
+                            toastHtml += `Updated ${updates} ${displayName} record.<br>`;
+                        }
+                    });
+
+                    if (totalOperations === 0) {
+                        // Fallback message if no detailed logs were processed
+                        toastHtml = data?.message ?? "No records were added or updated.";
                     }
+
                     M.toast({
                         html: toastHtml,
-                        displayLength: 4000,
+                        displayLength: 8000,
                         classes: 'green darken-1',
                     });
                 })

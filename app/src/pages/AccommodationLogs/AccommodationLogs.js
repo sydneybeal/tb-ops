@@ -302,6 +302,7 @@ export const Overview = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
         setCurrentEditLog(null);
+        document.body.style.overflow = '';
     };
 
     useEffect(() => {

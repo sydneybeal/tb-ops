@@ -14,7 +14,8 @@
 
 """Services for interacting with travel entries."""
 import datetime
-from typing import Optional, Sequence, Union, Tuple, Dict
+from collections import defaultdict
+from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
@@ -103,7 +104,13 @@ class TravelService:
             for log_request in log_requests
         ]
         valid_data = [data for data in prepared_data if data is not None]
-        valid_logs_to_upsert, audit_logs = zip(*valid_data) if valid_data else ([], [])
+        if valid_data:
+            valid_logs_to_upsert, _, _ = zip(*valid_data)
+            accommodation_log_audit_logs = [acc_log for _, acc_log, _ in valid_data]
+            other_audit_logs = [log for item in valid_data for log in item[2]]
+        else:
+            valid_logs_to_upsert = []
+            accommodation_log_audit_logs = []
 
         # Perform the upsert operation for valid logs
         inserted_count = 0
@@ -115,31 +122,57 @@ class TravelService:
                     inserted_count += 1
                 else:
                     updated_count += 1
-            await self.process_audit_logs(audit_logs)
+            await self.process_audit_logs(accommodation_log_audit_logs)
             # try:
             #     await self.process_audit_logs(audit_logs)
             # except:
             #     print(f"Couldn't insert audit logs {audit_logs}")
-            return {"inserted_count": inserted_count, "updated_count": updated_count}
 
-        return {
-            "inserted_count": 0,
-            "updated_count": 0,
-            "message": "No logs were processed.",
-        }
+        all_audit_logs = accommodation_log_audit_logs + other_audit_logs
+
+        summarized_audit_logs = self.summarize_audit_logs(all_audit_logs)
+
+        return summarized_audit_logs
 
     async def process_audit_logs(self, audit_logs):
         """Calls audit service to insert audit logs to the database."""
         await self._audit_svc.add_audit_logs(audit_logs)
 
+    def summarize_audit_logs(self, audit_logs: List) -> Dict[str, Any]:
+        """Gives an overview of audit logs with counts for updates and inserts."""
+        summary = defaultdict(lambda: defaultdict(int))  # Using int to keep counts
+
+        for audit_log in audit_logs:
+            category = audit_log.table_name
+            action = audit_log.action
+            summary[category][action] += 1
+
+        # Convert defaultdict to a regular dict for JSON serialization
+        summary_dict = {
+            category: dict(actions) for category, actions in summary.items()
+        }
+
+        # Optionally, reshape summary_dict here if you need a more tailored structure
+        return summary_dict
+
     async def prepare_accommodation_log_data(
         self, log_request: PatchAccommodationLogRequest
-    ) -> Tuple[Optional[AccommodationLog], AuditLog]:
+    ) -> Tuple[Optional[AccommodationLog], Optional[AuditLog], List[AuditLog]]:
         """Processes an accommodation log add or update request."""
+        other_audit_logs = []
         # Resolve entity IDs
-        agency_id = await self.resolve_agency_id(log_request)
-        booking_channel_id = await self.resolve_booking_channel_id(log_request)
-        property_id = await self.resolve_property_id(log_request)
+        agency_id, agency_audit_log = await self.resolve_agency_id(log_request)
+        booking_channel_id, booking_channel_audit_log = (
+            await self.resolve_booking_channel_id(log_request)
+        )
+        property_id, property_audit_log = await self.resolve_property_id(log_request)
+
+        if agency_audit_log:
+            other_audit_logs.append(agency_audit_log)
+        if booking_channel_audit_log:
+            other_audit_logs.append(booking_channel_audit_log)
+        if property_audit_log:
+            other_audit_logs.append(property_audit_log)
 
         # # Check if this log exists and needs updating or if it's a new log
         if log_request.log_id:
@@ -156,7 +189,7 @@ class TravelService:
             updated_log_data = self.prepare_updated_log_data(
                 log_request, existing_log, property_id, booking_channel_id, agency_id
             )
-            audit_log = AuditLog(
+            accommodation_log_audit_log = AuditLog(
                 table_name="accommodation_logs",
                 record_id=existing_log.id,
                 user_name=log_request.updated_by,
@@ -164,12 +197,12 @@ class TravelService:
                 after_value=updated_log_data.dict(),
                 action="update",
             )
-            return updated_log_data, audit_log
+            return updated_log_data, accommodation_log_audit_log, other_audit_logs
         # If new, prepare the new log data
         new_log_data = self.prepare_new_log_data(
             log_request, property_id, booking_channel_id, agency_id
         )
-        audit_log = AuditLog(
+        accommodation_log_audit_log = AuditLog(
             table_name="accommodation_logs",
             record_id=new_log_data.id,
             user_name=log_request.updated_by,
@@ -177,7 +210,7 @@ class TravelService:
             after_value=new_log_data.dict(),
             action="insert",
         )
-        return new_log_data, audit_log  # Return the prepared data for insertion
+        return new_log_data, accommodation_log_audit_log, other_audit_logs
 
     def prepare_new_log_data(
         self,
@@ -228,15 +261,16 @@ class TravelService:
 
     async def resolve_agency_id(
         self, log_request: PatchAccommodationLogRequest
-    ) -> UUID:
+    ) -> (UUID, Optional[AuditLog]):
         """Gets or creates an agency based on either agency ID or new agency name."""
+        audit_log = None
         if log_request.agency_id:
-            return log_request.agency_id
+            return log_request.agency_id, audit_log
         if log_request.new_agency_name:
             existing_agency = await self.get_agency_by_name(log_request.new_agency_name)
             if existing_agency:
                 print("Passed a new agency name and found it in the database already.")
-                return existing_agency.id
+                return existing_agency.id, audit_log
             else:
                 # Create a new Agency model instance
                 new_agency = Agency(
@@ -257,16 +291,17 @@ class TravelService:
                 agency_created = await self.get_agency_by_name(
                     log_request.new_agency_name
                 )
-                return agency_created.id
+                return agency_created.id, audit_log
         else:
-            return None
+            return None, audit_log
 
     async def resolve_booking_channel_id(
         self, log_request: PatchAccommodationLogRequest
-    ) -> UUID:
+    ) -> (UUID, Optional[AuditLog]):
         """Gets or creates a booking channel based on either ID or new booking channel name."""
+        audit_log = None
         if log_request.booking_channel_id:
-            return log_request.booking_channel_id
+            return log_request.booking_channel_id, audit_log
         elif log_request.new_booking_channel_name:
             existing_booking_channel = await self.get_booking_channel_by_name(
                 log_request.new_booking_channel_name
@@ -275,7 +310,7 @@ class TravelService:
                 print(
                     "Passed a new booking channel name and found it in the database already."
                 )
-                return existing_booking_channel.id
+                return existing_booking_channel.id, audit_log
             else:
                 # Create a new BookingChannel model instance
                 new_booking_channel = BookingChannel(
@@ -297,16 +332,17 @@ class TravelService:
                 booking_channel_created = await self.get_booking_channel_by_name(
                     log_request.new_booking_channel_name
                 )
-                return booking_channel_created.id
+                return booking_channel_created.id, audit_log
         else:
-            return None
+            return None, audit_log
 
     async def resolve_property_id(
         self, log_request: PatchAccommodationLogRequest
-    ) -> UUID:
+    ) -> (UUID, Optional[AuditLog]):
         """Gets or creates a property based on either property ID or new property name."""
+        audit_log = None
         if log_request.property_id:
-            return log_request.property_id
+            return log_request.property_id, audit_log
         existing_property = await self.get_property_by_name(
             log_request.new_property_name,
             log_request.new_property_portfolio_name,
@@ -315,7 +351,7 @@ class TravelService:
         )
         if existing_property:
             print("Passed a new property and found it in the database already.")
-            return existing_property.id
+            return existing_property.id, audit_log
         else:
             # Create a new Property model instance
             new_property = Property(
@@ -343,7 +379,7 @@ class TravelService:
                 log_request.new_property_country_id,
                 log_request.new_property_core_destination_id,
             )
-            return property_created.id
+            return property_created.id, audit_log
 
     # Country
     async def add_country(self, models: Sequence[Country]) -> None:
