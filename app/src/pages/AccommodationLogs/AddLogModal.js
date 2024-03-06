@@ -305,7 +305,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     //     displayLength: 4000,
                     //     classes: 'green darken-1',
                     // });
-                    const auditLogSummary = data ?? {};
+                    const auditLogSummary = data?.summarized_audit_logs ?? {};
                     let toastHtml = '';
                     let totalOperations = 0;
 
@@ -325,12 +325,23 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                         totalOperations += inserts + updates;
 
                         if (inserts > 0) {
-                            toastHtml += `Added ${inserts} ${displayName} record.<br>`;
+                            toastHtml += `Added ${inserts} ${displayName} record(s).<br>`;
                         }
                         if (updates > 0) {
-                            toastHtml += `Updated ${updates} ${displayName} record.<br>`;
+                            toastHtml += `Updated ${updates} ${displayName} record(s).<br>`;
                         }
                     });
+
+                    const messages = data?.messages ?? [];
+                    if (messages.length > 0) {
+                        // Log messages to the console for debugging or informational purposes
+                        console.log("Messages from the response:", messages);
+
+                        // Append messages to the toastHtml
+                        messages.forEach(message => {
+                            toastHtml += `${message}<br>`;
+                        });
+                    }
 
                     if (totalOperations === 0) {
                         // Fallback message if no detailed logs were processed
