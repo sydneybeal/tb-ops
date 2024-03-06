@@ -259,9 +259,6 @@ class TravelService:
         agency_id: UUID,
     ) -> AccommodationLog:
         """Prepares an updated AccommodationLog with the updated fields."""
-        # Compare fields between log_request and existing_log
-        # Only include fields in the update that have changed
-        # This example assumes you will create a new AccommodationLog object with potentially updated values
         updated_log = AccommodationLog(
             id=existing_log.id,  # Keep the same ID
             property_id=property_id,
@@ -366,6 +363,22 @@ class TravelService:
         audit_log = None
         if log_request.property_id:
             return log_request.property_id, audit_log
+
+        if (
+            not log_request.new_property_core_destination_id
+            and log_request.new_property_core_destination_name in ["Ship", "Rail"]
+        ):
+            core_destination = await self.get_core_destination_by_name(
+                log_request.new_property_core_destination_name
+            )
+            if core_destination:
+                log_request.new_property_core_destination_id = core_destination.id
+            else:
+                messages.append(
+                    f"Core destination '{log_request.new_property_core_destination_name}' not found."
+                )
+                return None, audit_log
+
         existing_property = await self.get_property_by_name(
             log_request.new_property_name,
             log_request.new_property_portfolio_name,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
@@ -25,6 +25,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const [portfolioNames, setPortfolioNames] = useState([]);
     const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
     const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
     const [touched, setTouched] = useState({
         primaryTraveler: false,
         agency: false
@@ -260,6 +261,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             new_property_portfolio_name: log.new_property_portfolio_name || null,
             new_property_country_id: log.new_property_country_id || null,
             new_property_core_destination_id: log.new_property_core_destination_id || null,
+            new_property_core_destination_name: log.new_property_core_destination_name || null,
             updated_by: userDetails.email || ''
         }));
         console.log(logsToSubmit);
@@ -287,24 +289,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     return response.json();
                 })
                 .then(data => {
-                    // Handle success response
-                    // const insertedCount = data?.inserted_count ?? 0;
-                    // const updatedCount = data?.updated_count ?? 0;
-                    // const message = data?.message ?? "No records were added.";
-                    // let toastHtml = '';
-                    // if (insertedCount > 0) {
-                    //     toastHtml = `Added ${insertedCount} record(s).`;
-                    // } else if (updatedCount > 0) {
-                    //     toastHtml = `Modified ${updatedCount} record(s).`;
-                    // } else {
-                    //     // Use the message from the response if no logs were added
-                    //     toastHtml = message;
-                    // }
-                    // M.toast({
-                    //     html: toastHtml,
-                    //     displayLength: 4000,
-                    //     classes: 'green darken-1',
-                    // });
                     const auditLogSummary = data?.summarized_audit_logs ?? {};
                     let toastHtml = '';
                     let totalOperations = 0;
@@ -504,15 +488,29 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
         if (!log.date_in) logError.date_in = 'Missing check-in date';
         if (!log.date_out) logError.date_out = 'Missing check-out date';
-        if (!log.property_id && !log.new_property_name) {
-            logError.property = 'Missing property';
-        } else if (!log.property_id) {
+        console.log("in validateLogEntry")
+        console.log("log.new_property_core_destination_name: " + log.new_property_core_destination_name)
+
+        // Validate property
+        if (!log.property_id) { // This check is sufficient to cover both cases where new property might be involved
             if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';
-            if (!log.new_property_country_id) logError.new_property_country_id = 'Missing new property country';
+
+            // Conditionally require new_property_country_id based on coreDestination not being "ship" or "rail"
+            if (!log.new_property_country_id &&
+                !(
+                    log.new_property_core_destination_name === "Ship" ||
+                    log.new_property_core_destination_name === "Rail"
+                )
+            ) {
+                logError.new_property_country_id = 'Missing new property country';
+            }
         }
+
+
         if (!log.booking_channel_id && !log.new_booking_channel_name) {
             logError.property = 'Missing booking channel';
         }
+
 
         return logError;
     };
@@ -584,6 +582,23 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         return overlapErrors;
     };
 
+    // const validateProperty = (log, index) => {
+    //     const errors = {};
+    //     const hasInteractedNewProperty = userNewPropertyInteractions[index];
+
+    //     // property_id is not set and it is not a new property
+    //     if (!log.property_id && !log.is_new_property) {
+    //         errors.property = 'Missing property';
+    //     }
+    //     // user is entering a new property and user has interacted
+    //     if (log.is_new_property && hasInteractedNewProperty) {
+    //         if (!log.new_property_name) errors.newPropertyName = "Missing new property name";
+    //         if (!log.new_property_country_id) errors.newPropertyCountry = "Missing new property country";
+    //     }
+
+    //     return errors;
+    // };
+
     const validateProperty = (log, index) => {
         const errors = {};
         const hasInteractedNewProperty = userNewPropertyInteractions[index];
@@ -595,12 +610,20 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         // user is entering a new property and user has interacted
         if (log.is_new_property && hasInteractedNewProperty) {
             if (!log.new_property_name) errors.newPropertyName = "Missing new property name";
-            if (!log.new_property_country_id) errors.newPropertyCountry = "Missing new property country";
+
+            // Only validate new_property_country_id if neither ship nor rail is selected
+            if (!log.new_property_country_id &&
+                !(
+                    log.new_property_core_destination_name === "Ship" ||
+                    log.new_property_core_destination_name === "Rail"
+                )
+            ) {
+                errors.newPropertyCountry = "Missing new property country";
+            }
         }
 
         return errors;
     };
-
 
     const validateForm = () => {
         let errors = {};
@@ -699,7 +722,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 break;
         }
 
-        if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_portfolio_name', 'is_new_property'].includes(field)) {
+        if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_core_destination_name', 'new_property_portfolio_name', 'is_new_property'].includes(field)) {
             const propertyErrors = validateProperty(updatedLogs[index], index);
 
             // Clear previous property-related errors
@@ -1138,6 +1161,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                 handleLogChange(index, 'new_property_name', '');
                                                                 handleLogChange(index, 'new_property_portfolio_name', '');
                                                                 handleLogChange(index, 'new_property_country_name', '');
+                                                                // handleLogChange(index, 'new_property_is_ship', false);
+                                                                // handleLogChange(index, 'new_property_is_rail', '');
                                                                 setShowPortfolioSuggestions(false);
                                                                 setFilteredPortfolioSuggestions(portfolioNames);
                                                             }}
@@ -1205,6 +1230,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         handleLogChange(index, 'new_property_name', '');
                                                                         handleLogChange(index, 'new_property_portfolio_name', '');
                                                                         handleLogChange(index, 'new_property_country_name', '');
+                                                                        // handleLogChange(index, 'new_property_is_ship', '');
+                                                                        // handleLogChange(index, 'new_property_is_rail', '');
                                                                         setShowPortfolioSuggestions(false);
                                                                         setFilteredPortfolioSuggestions(portfolioNames);
                                                                     }}
@@ -1240,15 +1267,28 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             value={log.new_property_portfolio_name || ''}
                                                                             onChange={(e) => handlePropertyChange(index, 'new_property_portfolio_name', e.target.value)}
                                                                             onFocus={() => setShowPortfolioSuggestions(true)}
+                                                                            onBlur={(e) => {
+                                                                                // First, check if suggestionsRef.current exists to avoid the null reference error
+                                                                                if (suggestionsRef.current && e.relatedTarget) {
+                                                                                    // Then, check if the relatedTarget is not within the suggestions list
+                                                                                    if (!suggestionsRef.current.contains(e.relatedTarget)) {
+                                                                                        setShowPortfolioSuggestions(false);
+                                                                                    }
+                                                                                } else {
+                                                                                    // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
+                                                                                    setShowPortfolioSuggestions(false);
+                                                                                }
+                                                                            }}
                                                                             placeholder="Portfolio Name"
                                                                             style={{ marginRight: '10px', flexGrow: '1' }}
                                                                             autoComplete="off"
                                                                         />
                                                                         {showPortfolioSuggestions && filteredPortfolioSuggestions.length > 0 && (
-                                                                            <ul className="suggestions-list">
+                                                                            <ul className="suggestions-list" ref={suggestionsRef}>
                                                                                 {filteredPortfolioSuggestions.map((suggestion, suggestionIndex) => (
                                                                                     <li
                                                                                         key={suggestionIndex}
+                                                                                        tabIndex="0"
                                                                                         onClick={() => selectPortfolioSuggestion(index, suggestion)}
                                                                                     >
                                                                                         {suggestion}
@@ -1303,6 +1343,28 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             </span>
                                                                         </div>
                                                                     }
+                                                                    <div className="row">
+                                                                        <div className="col s6">
+                                                                            <label>
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={log.new_property_core_destination_name === "Ship"}
+                                                                                    onChange={(e) => handleLogChange(index, 'new_property_core_destination_name', 'Ship')}
+                                                                                />
+                                                                                <span>Ship</span>
+                                                                            </label>
+                                                                        </div>
+                                                                        <div className="col s6">
+                                                                            <label>
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={log.new_property_core_destination_name === "Rail"}
+                                                                                    onChange={(e) => handleLogChange(index, 'new_property_core_destination_name', 'Rail')}
+                                                                                />
+                                                                                <span>Rail</span>
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>

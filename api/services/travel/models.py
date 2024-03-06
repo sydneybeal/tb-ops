@@ -143,6 +143,7 @@ class PatchAccommodationLogRequest(BaseModel):
     new_property_portfolio_name: Optional[str] = None
     new_property_country_id: Optional[UUID] = None
     new_property_core_destination_id: Optional[UUID] = None
+    new_property_core_destination_name: Optional[str] = None
     # required entry data
     consultant_id: UUID
     primary_traveler: str
