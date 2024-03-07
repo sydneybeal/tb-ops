@@ -239,6 +239,7 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
         setAgencyId(null);
         setName('');
         setValidationErrors({});
+        setRelatedEntries([]);
     };
 
     const validateName = (value) => {

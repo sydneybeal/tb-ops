@@ -248,6 +248,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
         setLastName('');
         setIsActive(true);
         setValidationErrors({});
+        setRelatedEntries([]);
     };
 
     const validateFirstName = (value) => {

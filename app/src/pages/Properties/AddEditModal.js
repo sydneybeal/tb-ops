@@ -327,6 +327,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         setTouched({});
         setShowPortfolioSuggestions(false);
         setFilteredPortfolioSuggestions([]);
+        setRelatedEntries([]);
     };
 
     const validatePropertyName = (value) => {

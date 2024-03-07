@@ -130,6 +130,13 @@ const Navbar = ({ title }) => {
                                 </Link>
                             </li>
                         </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/audit_logs'} className="text-bold">
+                                    Audit Logs
+                                </Link>
+                            </li>
+                        </div>
                     </>
                 )}
 

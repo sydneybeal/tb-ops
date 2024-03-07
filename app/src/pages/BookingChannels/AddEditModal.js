@@ -238,6 +238,7 @@ const AddEditBcModal = ({ isOpen, onClose, onRefresh, editBcData = null, isEditM
         setBookingChannelId(null);
         setName('');
         setValidationErrors({});
+        setRelatedEntries([]);
     };
 
     const validateName = (value) => {

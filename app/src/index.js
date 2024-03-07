@@ -12,6 +12,7 @@ import BookingChannels from './pages/BookingChannels/BookingChannels';
 import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
 import TripReports from './pages/TripReports/TripReports';
+import AuditLogs from './pages/AuditLogs/AuditLogs';
 
 
 import 'materialize-css/dist/css/materialize.min.css';
@@ -80,6 +81,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <TripReports />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/audit_logs/',
+    element: (
+      <ProtectedRoute>
+        <AuditLogs />
       </ProtectedRoute>
     ),
   },

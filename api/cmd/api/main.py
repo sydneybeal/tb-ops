@@ -14,7 +14,7 @@
 
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
-from datetime import timedelta
+from datetime import timedelta, datetime
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status
 
@@ -26,6 +26,8 @@ from fastapi.param_functions import Form
 
 from jose import JWTError, jwt
 from api.services.auth.models import User
+from api.services.audit.service import AuditService
+from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.summaries.models import (
     AccommodationLogSummary,
@@ -51,7 +53,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def make_app(
-    travel_svc: TravelService, summary_svc: SummaryService, auth_svc: AuthService
+    travel_svc: TravelService,
+    summary_svc: SummaryService,
+    auth_svc: AuthService,
+    audit_svc: AuditService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -465,6 +470,19 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
+    @app.get(
+        "/v1/audit_logs",
+        operation_id="get_audit_logs",
+        response_model=list[AuditLog],
+        tags=["audit_logs"],
+    )
+    async def get_audit_logs(
+        current_user: User = Depends(get_current_user),
+    ) -> list[AuditLog] | JSONResponse:
+        """Get all AccommodationLog summaries."""
+        time_filter = datetime.now() - timedelta(days=7)
+        return await audit_svc.get_audit_logs(time_filter)
+
     return app
 
 
@@ -474,7 +492,8 @@ if __name__ == "__main__":
     travel_svc = TravelService()
     summary_svc = SummaryService()
     auth_svc = AuthService()
+    audit_svc = AuditService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc)
+    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc)
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

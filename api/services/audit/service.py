@@ -39,4 +39,4 @@ class AuditService:
 
     async def get_audit_logs(self, action_timestamp: datetime) -> Iterable[AuditLog]:
         """Returns AuditLogs from the repository given a timestamp filter."""
-        await self._repo.get(action_timestamp)
+        return await self._repo.get(action_timestamp)

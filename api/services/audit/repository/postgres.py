@@ -98,6 +98,20 @@ class PostgresAuditRepository(PostgresMixin, AuditRepository):
             async with con.transaction():
                 rows = await con.fetch(query, action_timestamp)
 
-        if rows:
-            return [AuditLog(**record) for record in rows]
-        return None
+        # Process each record to handle JSON fields correctly
+        audit_logs = []
+        for record in rows:
+            # Convert asyncpg.Record to dict to allow modifications
+            record_dict = dict(record)
+
+            # Deserialize JSON fields
+            for field in ["before_value", "after_value"]:
+                if record_dict[field] is not None and isinstance(
+                    record_dict[field], str
+                ):
+                    record_dict[field] = json.loads(record_dict[field])
+
+            # Create AuditLog instances
+            audit_logs.append(AuditLog(**record_dict))
+
+        return audit_logs
