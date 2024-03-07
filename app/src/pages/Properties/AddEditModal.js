@@ -208,9 +208,6 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 setPortfolioNames(portfolioNames);
                 setFilteredPortfolioSuggestions(portfolioNames);
 
-                // Handle relatedEntries data (for list of relatedEntries)
-                // const relatedEntries = [...new Set(relatedEntriesData.map(entry => entry.primary_traveler))];
-                // console.log(relatedEntriesData);
                 const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
                 parsedRelatedEntries.sort((a, b) => {
                     if (a.date_in < b.date_in) {
@@ -230,7 +227,6 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 setLoading(false);
             });
     }, [propertyId, isOpen, onClose, userDetails.token]);
-    // console.log("relatedEntries: " + relatedEntries);
 
 
 
@@ -267,9 +263,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     .then(({ status, body }) => {
                         if (status !== 200) {
                             let errorMessage = body.error || 'Unknown API error';
-                            // console.log(body.affected_logs);
                             if (body.affected_logs && body.affected_logs.length > 0) {
-                                // console.log(body.affected_logs);
                                 // Parse the JSON string from each detail into an object
                                 const affected_logs = body.affected_logs.map(detail => JSON.parse(detail));
                                 // Limit the details to 10 for display
@@ -663,20 +657,17 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             <div className="modal-footer" style={{ zIndex: '-1' }}>
                 {!loading &&
                     <>
-                        {Array.isArray(relatedEntries) && relatedEntries.length > 0 && (
+                        {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
                             <>
                                 <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
                                     <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
-                                    {relatedEntries.slice(0, 10).map((item, index) => (
+                                    {relatedEntries.slice(0, 5).map((item, index) => (
                                         <div key={index}>
                                             <div>
-                                                <div className="chip blue-grey lighten-1 grey-text text-lighten-4">
-                                                    <span className="material-symbols-outlined">
-                                                        hiking
-                                                    </span>
-                                                    {item.primary_traveler}
-                                                </div>
-                                                from&nbsp;
+                                                <span className="material-symbols-outlined">
+                                                    hiking
+                                                </span>
+                                                <span className="text-bold">{item.primary_traveler}  </span>
                                                 <div className="chip blue lighten-5">
                                                     <span className="material-symbols-outlined">
                                                         flight_land
@@ -693,11 +684,15 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                             </div>
                                         </div>
                                     ))}
-                                    {relatedEntries.length > 10 && (
-                                        <p>and {relatedEntries.length - 10} more...</p>
+                                    {relatedEntries.length > 5 && (
+                                        <p className="grey-text">and {relatedEntries.length - 5} more...</p>
                                     )}
                                 </div>
                             </>
+                        ) : (
+                            <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                <em className="grey-text text-lighten-1">No associated service provider entries.</em>
+                            </div>
                         )}
                         <div style={{ paddingBottom: '20px' }}>
                             <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>

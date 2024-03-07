@@ -9,6 +9,7 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
     const { userDetails } = useAuth();
     const [agencyId, setAgencyId] = useState(null);
     const [name, setName] = useState('');
+    const [relatedEntries, setRelatedEntries] = useState([]);
     const [validationErrors, setValidationErrors] = useState({});
     const [touched, setTouched] = useState({
         name: false,
@@ -133,8 +134,31 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                 instance.close();
             }
         }
-        if (!isOpen) return;
-    }, [isOpen, onClose, userDetails.token]);
+        if (!isOpen || !agencyId) return;
+
+        fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${agencyId}&identifier_type=agency_id`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then(res => res.json())
+            .then((data) => {
+                const parsedRelatedEntries = data.affected_logs.map(log => JSON.parse(log));
+                parsedRelatedEntries.sort((a, b) => {
+                    if (a.date_in < b.date_in) {
+                        return -1;
+                    }
+                    if (a.date_in > b.date_in) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                setRelatedEntries(parsedRelatedEntries);
+            })
+            .catch((err) => {
+                console.error(err);
+            })
+    }, [agencyId, isOpen, onClose, userDetails.token]);
 
     const handleDelete = () => {
         if (userDetails.role !== 'admin') {
@@ -293,7 +317,44 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                 </div >
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
-                <div>
+                {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
+                    <>
+                        <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                            <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
+                            {relatedEntries.slice(0, 5).map((item, index) => (
+                                <div key={index}>
+                                    <div>
+                                        <span className="material-symbols-outlined">
+                                            hiking
+                                        </span>
+                                        <span className="text-bold">{item.primary_traveler}  </span>
+                                        <div className="chip blue lighten-5">
+                                            <span className="material-symbols-outlined">
+                                                flight_land
+                                            </span>
+                                            {item.date_in}
+                                        </div>
+                                        to&nbsp;
+                                        <div className="chip blue lighten-5">
+                                            <span className="material-symbols-outlined">
+                                                flight_takeoff
+                                            </span>
+                                            {item.date_out}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {relatedEntries.length > 5 && (
+                                <p className="grey-text">and {relatedEntries.length - 5} more...</p>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                        <em className="grey-text text-lighten-1">No associated service provider entries.</em>
+                    </div>
+                )}
+                <div style={{ paddingBottom: '20px' }}>
                     <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                         Close
                     </button>

@@ -99,6 +99,7 @@ export const BookingChannels = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
         setCurrentEditBc(null);
+        document.body.style.overflow = '';
     };
 
     const triggerRefresh = () => {

@@ -99,6 +99,7 @@ export const Agencies = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
         setCurrentEditAgency(null);
+        document.body.style.overflow = '';
     };
 
     const triggerRefresh = () => {

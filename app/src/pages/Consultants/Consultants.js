@@ -106,6 +106,7 @@ export const Consultants = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
         setCurrentEditConsultant(null);
+        document.body.style.overflow = '';
     };
 
     const triggerRefresh = () => {
