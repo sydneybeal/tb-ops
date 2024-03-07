@@ -166,23 +166,42 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                         'Authorization': `Bearer ${userDetails.token}`,
                     },
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('API error');
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(({ status, body }) => {
+                        if (status !== 200) {
+                            let errorMessage = body.error || 'Unknown API error';
+                            console.log(body);
+                            if (body.affected_logs && body.affected_logs.length > 0) {
+                                // console.log(body.affected_logs);
+                                // Parse the JSON string from each detail into an object
+                                const affected_logs = body.affected_logs.map(detail => JSON.parse(detail));
+                                // Limit the details to 10 for display
+                                const limitedDetails = affected_logs.slice(0, 10).map(log =>
+                                    `Traveler: ${log.primary_traveler}, Dates: ${log.date_in} to ${log.date_out}`
+                                ).join('<br/>');
+                                const additionalCount = affected_logs.length - 10;
+                                errorMessage += `<br/><br/>${limitedDetails}` +
+                                    (additionalCount > 0 ? `<br/>...and ${additionalCount} others` : '');
+                            }
+                            throw new Error(errorMessage);
                         }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Handle success - show success message and possibly update the UI
-                        M.toast({ html: 'Consultant successfully deleted', classes: 'green' });
+                        // Handle success here
+                        M.toast({
+                            html: `Consultant '${lastName}/${firstName}' successfully deleted`,
+                            classes: 'green',
+                            displayLength: 2000
+                        });
                         resetFormState();
                         onRefresh();
                         onClose();
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        // Handle error - show error message
-                        M.toast({ html: 'Error deleting consultant', classes: 'red' });
+                        M.toast({
+                            html: error.message,
+                            classes: 'red lighten-1',
+                            displayLength: 8000
+                        });
                     });
             }
         }

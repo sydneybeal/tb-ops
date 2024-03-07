@@ -306,15 +306,29 @@ def make_app(
         consultant_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a consultant by its ID."""
-        is_deleted = await travel_svc.delete_consultant(
-            consultant_id, current_user.email
-        )
-        if not is_deleted:
+        result = await travel_svc.delete_consultant(consultant_id, current_user.email)
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete consultant due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Consultant deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (property not found)
+        else:
             raise HTTPException(status_code=404, detail="Consultant not found")
-        return JSONResponse(
-            content={"message": "Consultant deleted successfully"},
-            status_code=200,
-        )
 
     @app.get(
         "/v1/booking_channels",
@@ -350,15 +364,31 @@ def make_app(
         booking_channel_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a booking channel by its ID."""
-        is_deleted = await travel_svc.delete_booking_channel(
+        result = await travel_svc.delete_booking_channel(
             booking_channel_id, current_user.email
         )
-        if not is_deleted:
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete booking channel due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Booking channel deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (property not found)
+        else:
             raise HTTPException(status_code=404, detail="Booking channel not found")
-        return JSONResponse(
-            content={"message": "Booking channel deleted successfully"},
-            status_code=200,
-        )
 
     @app.get(
         "/v1/agencies",
@@ -394,13 +424,29 @@ def make_app(
         agency_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete an agency by its ID."""
-        is_deleted = await travel_svc.delete_agency(agency_id, current_user.email)
-        if not is_deleted:
+        result = await travel_svc.delete_agency(agency_id, current_user.email)
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete agency due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Agency deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (property not found)
+        else:
             raise HTTPException(status_code=404, detail="Agency not found")
-        return JSONResponse(
-            content={"message": "Agency deleted successfully"},
-            status_code=200,
-        )
 
     @app.get(
         "/v1/bed_night_report",

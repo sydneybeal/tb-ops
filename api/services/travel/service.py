@@ -818,6 +818,15 @@ class TravelService:
 
     async def delete_agency(self, agency_id: UUID, user_email: str):
         """Deletes an Agency."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            agency_id, "agency_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete agency due to related records.",
+                "details": affected_logs,
+            }
         deleted = await self._repo.delete_agency(agency_id)
         audit_log = AuditLog(
             table_name="agencies",
@@ -965,6 +974,15 @@ class TravelService:
 
     async def delete_booking_channel(self, booking_channel_id: UUID, user_email: str):
         """Deletes a BookingChannel."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            booking_channel_id, "booking_channel_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete booking channel due to related records.",
+                "details": affected_logs,
+            }
         deleted = await self._repo.delete_booking_channel(booking_channel_id)
         audit_log = AuditLog(
             table_name="booking_channels",
@@ -1121,6 +1139,15 @@ class TravelService:
 
     async def delete_consultant(self, consultant_id: UUID, user_email: str):
         """Deletes a Consultant."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            consultant_id, "consultant_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete consultant due to related records.",
+                "details": affected_logs,
+            }
         deleted = await self._repo.delete_consultant(consultant_id)
         audit_log = AuditLog(
             table_name="consultants",
@@ -1130,5 +1157,6 @@ class TravelService:
             after_value={},
             action="delete",
         )
+
         await self.process_audit_logs(audit_log)
         return deleted
