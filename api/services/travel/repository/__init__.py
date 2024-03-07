@@ -176,6 +176,11 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_all_core_destinations(self) -> Sequence[CoreDestination]:
+        """Gets all of CoreDestination models from the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def update_core_destination(
         self, core_destinations: Sequence[CoreDestination]
     ) -> None:

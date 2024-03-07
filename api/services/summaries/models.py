@@ -14,10 +14,21 @@
 
 """Models for travel summaries."""
 from datetime import datetime, date
+import json
 from typing import Optional, List, Dict
 from uuid import UUID
 
 from pydantic import BaseModel, computed_field
+
+
+def custom_json_encoder(obj):
+    """Specifies return values for non-serializable fields."""
+    if isinstance(obj, UUID):
+        return str(obj)
+    elif isinstance(obj, datetime) or isinstance(obj, date):
+        return obj.isoformat()
+    # Add more custom encodings here if necessary
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
 
 class AccommodationLogSummary(BaseModel):
@@ -58,6 +69,11 @@ class AccommodationLogSummary(BaseModel):
     def consultant_display_name(self) -> str:
         """Number of bed nights occupied by this record."""
         return f"{self.consultant_last_name}/{self.consultant_first_name}"
+
+    def to_json(self, **kwargs):
+        """Convert the model to a dict, then serialize the dict using the custom encoder."""
+        model_dict = self.dict()
+        return json.dumps(model_dict, default=custom_json_encoder, **kwargs)
 
 
 class PropertySummary(BaseModel):

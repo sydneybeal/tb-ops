@@ -20,12 +20,15 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const [consultants, setConsultants] = useState([]);
     const [bookingChannels, setBookingChannels] = useState([]);
     const [agencies, setAgencies] = useState([]);
+    const [railId, setRailId] = useState('');
+    const [shipId, setShipId] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
     const [userNewPropertyInteractions, setUserNewPropertyInteractions] = useState({});
     const [portfolioNames, setPortfolioNames] = useState([]);
     const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
     const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
     const suggestionsRef = useRef(null);
+    // TODO? propertyNames, filteredPropertySuggestions, showPropertySuggestions?
     const [touched, setTouched] = useState({
         primaryTraveler: false,
         agency: false
@@ -111,6 +114,28 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             })
             .catch((err) => console.error(err));
 
+        // Fetch core destinations
+        fetch(`${process.env.REACT_APP_API}/v1/core_destinations`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then(res => res.json())
+            .then((data) => {
+                // Handle core destinations data
+                const formattedCoreDestinations = data.map(core_dest => ({
+                    value: core_dest.id,
+                    label: core_dest.name
+                }));
+                const railId = formattedCoreDestinations.find(dest => dest.label === "Rail")?.value;
+                const shipId = formattedCoreDestinations.find(dest => dest.label === "Ship")?.value;
+                setRailId(railId || '');
+                setShipId(shipId || '');
+            })
+            .catch((err) => console.error(err));
+
+
+
         // Fetch consultants
         fetch(`${process.env.REACT_APP_API}/v1/consultants`, {
             headers: {
@@ -119,9 +144,23 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         })
             .then((res) => res.json())
             .then((data) => {
-                const formattedConsultants = data.map((consultant) => ({
+                const sortedConsultants = data.sort((a, b) => {
+                    // Sort by is_active, true before false
+                    if (a.is_active && !b.is_active) return -1;
+                    if (!a.is_active && b.is_active) return 1;
+
+                    // Then sort alphabetically by last_name
+                    const lastNameA = a.last_name.toUpperCase();
+                    const lastNameB = b.last_name.toUpperCase();
+                    if (lastNameA < lastNameB) return -1;
+                    if (lastNameA > lastNameB) return 1;
+
+                    return 0;
+                });
+
+                const formattedConsultants = sortedConsultants.map((consultant) => ({
                     value: consultant.id,
-                    label: consultant.display_name
+                    label: `${consultant.display_name} ${consultant.is_active ? '' : '(inactive)'}`,
                 }));
                 setConsultants(formattedConsultants);
             })
@@ -135,7 +174,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         })
             .then((res) => res.json())
             .then((data) => {
-                const formattedBookingChannels = data.map((booking_channel) => ({
+                const directOption = data.find(channel => channel.name === "Direct");
+                const otherOptions = data.filter(channel => channel.name !== "Direct");
+                const formattedBookingChannels = [directOption, ...otherOptions].map((booking_channel) => ({
                     value: booking_channel.id,
                     label: booking_channel.name,
                 }));
@@ -151,7 +192,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         })
             .then((res) => res.json())
             .then((data) => {
-                const formattedAgencies = data.map((agency) => ({
+                const naOption = data.find(agency => agency.name.toLowerCase() === "n/a");
+                const otherAgencies = data.filter(agency => agency.name.toLowerCase() !== "n/a");
+                const formattedAgencies = [naOption, ...otherAgencies].map((agency) => ({
                     value: agency.id,
                     label: agency.name,
                 }));
@@ -318,9 +361,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
                     const messages = data?.messages ?? [];
                     if (messages.length > 0) {
-                        // Log messages to the console for debugging or informational purposes
-                        console.log("Messages from the response:", messages);
-
                         // Append messages to the toastHtml
                         messages.forEach(message => {
                             toastHtml += `${message}<br>`;
@@ -488,8 +528,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
         if (!log.date_in) logError.date_in = 'Missing check-in date';
         if (!log.date_out) logError.date_out = 'Missing check-out date';
-        console.log("in validateLogEntry")
-        console.log("log.new_property_core_destination_name: " + log.new_property_core_destination_name)
 
         // Validate property
         if (!log.property_id) { // This check is sufficient to cover both cases where new property might be involved
@@ -582,23 +620,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         return overlapErrors;
     };
 
-    // const validateProperty = (log, index) => {
-    //     const errors = {};
-    //     const hasInteractedNewProperty = userNewPropertyInteractions[index];
-
-    //     // property_id is not set and it is not a new property
-    //     if (!log.property_id && !log.is_new_property) {
-    //         errors.property = 'Missing property';
-    //     }
-    //     // user is entering a new property and user has interacted
-    //     if (log.is_new_property && hasInteractedNewProperty) {
-    //         if (!log.new_property_name) errors.newPropertyName = "Missing new property name";
-    //         if (!log.new_property_country_id) errors.newPropertyCountry = "Missing new property country";
-    //     }
-
-    //     return errors;
-    // };
-
     const validateProperty = (log, index) => {
         const errors = {};
         const hasInteractedNewProperty = userNewPropertyInteractions[index];
@@ -665,13 +686,37 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const handleLogChange = (index, field, value) => {
         const updatedLogs = [...accommodationLogs];
         if (!updatedLogs[index]) updatedLogs[index] = {};
-        updatedLogs[index][field] = value;
+
+        const isShipOrRail = updatedLogs[index].new_property_core_destination_name === "Ship" ||
+            updatedLogs[index].new_property_core_destination_name === "Rail" ||
+            updatedLogs[index].new_property_core_destination_id === shipId ||
+            updatedLogs[index].new_property_core_destination_id === railId;
+
+        if (field === 'new_property_core_destination_name' && (value === "Ship" || value === "Rail")) {
+            // Directly toggle "Ship"/"Rail" and their respective ids
+            updatedLogs[index][field] = updatedLogs[index][field] === value ? '' : value;
+            // Toggle the id only if setting, not clearing (since clearing would be handled by country change logic)
+            if (value === "Ship" || value === "Rail") {
+                updatedLogs[index]['new_property_core_destination_id'] = value === "Ship" ? shipId : railId;
+            }
+        } else if (field === 'new_property_country_id') {
+            // Update country related fields only if not currently set to "Ship" or "Rail"
+            if (!isShipOrRail) {
+                updatedLogs[index]['new_property_country_id'] = value;
+                // Assume country change logic to fetch and set new_property_core_destination_name and id here if necessary
+            }
+        } else {
+            // For fields other than core_destination_name or country_id, update normally
+            updatedLogs[index][field] = value;
+        }
 
         // Initialize logErrors from current validationErrors state or create a new array if undefined
         const logErrors = validationErrors.logs ? [...validationErrors.logs] : [];
 
         // Ensure there's an object to hold errors for the current log
         if (!logErrors[index]) logErrors[index] = {};
+
+
 
         // Check if dates are provided to calculate bed nights
         if (field === 'date_in' || field === 'date_out') {
@@ -1230,8 +1275,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         handleLogChange(index, 'new_property_name', '');
                                                                         handleLogChange(index, 'new_property_portfolio_name', '');
                                                                         handleLogChange(index, 'new_property_country_name', '');
-                                                                        // handleLogChange(index, 'new_property_is_ship', '');
-                                                                        // handleLogChange(index, 'new_property_is_rail', '');
                                                                         setShowPortfolioSuggestions(false);
                                                                         setFilteredPortfolioSuggestions(portfolioNames);
                                                                     }}
@@ -1348,20 +1391,38 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             <label>
                                                                                 <input
                                                                                     type="checkbox"
+                                                                                    class="filled-in"
                                                                                     checked={log.new_property_core_destination_name === "Ship"}
-                                                                                    onChange={(e) => handleLogChange(index, 'new_property_core_destination_name', 'Ship')}
+                                                                                    onChange={(e) => {
+                                                                                        handleLogChange(index, 'new_property_core_destination_name', 'Ship');
+                                                                                        handleLogChange(index, 'new_property_core_destination_id', shipId);
+                                                                                    }}
                                                                                 />
-                                                                                <span>Ship</span>
+                                                                                <span>
+                                                                                    <span class="material-symbols-outlined">
+                                                                                        directions_boat
+                                                                                    </span>
+                                                                                    Ship
+                                                                                </span>
                                                                             </label>
                                                                         </div>
                                                                         <div className="col s6">
                                                                             <label>
                                                                                 <input
                                                                                     type="checkbox"
+                                                                                    class="filled-in"
                                                                                     checked={log.new_property_core_destination_name === "Rail"}
-                                                                                    onChange={(e) => handleLogChange(index, 'new_property_core_destination_name', 'Rail')}
+                                                                                    onChange={(e) => {
+                                                                                        handleLogChange(index, 'new_property_core_destination_name', 'Rail');
+                                                                                        handleLogChange(index, 'new_property_core_destination_id', railId);
+                                                                                    }}
                                                                                 />
-                                                                                <span>Rail</span>
+                                                                                <span>
+                                                                                    <span class="material-symbols-outlined">
+                                                                                        train
+                                                                                    </span>
+                                                                                    Rail
+                                                                                </span>
                                                                             </label>
                                                                         </div>
                                                                     </div>

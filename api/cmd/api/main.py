@@ -38,6 +38,7 @@ from api.services.travel.models import (
     BookingChannel,
     Agency,
     Consultant,
+    CoreDestination,
     PatchAccommodationLogRequest,
     PatchAgencyRequest,
     PatchBookingChannelRequest,
@@ -155,6 +156,21 @@ def make_app(
         )
         return JSONResponse(content=results)
 
+    @app.get(
+        "/v1/related_entries",
+        operation_id="get_related_entries",
+        tags=["accommodation_logs"],
+    )
+    async def get_related_entries(
+        identifier: UUID,
+        identifier_type: str,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        related_records = await summary_svc.get_related_records_summary(
+            identifier, identifier_type
+        )
+        return JSONResponse(content=related_records)
+
     @app.delete(
         "/v1/accommodation_logs/{log_id}",
         operation_id="delete_accommodation_log",
@@ -208,13 +224,29 @@ def make_app(
         property_id: UUID, current_user: User = Depends(get_current_user)
     ) -> JSONResponse:
         """Delete a property by its ID."""
-        is_deleted = await travel_svc.delete_property(property_id, current_user.email)
-        if not is_deleted:
+        result = await travel_svc.delete_property(property_id, current_user.email)
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete property due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Property deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (property not found)
+        else:
             raise HTTPException(status_code=404, detail="Property not found")
-        return JSONResponse(
-            content={"message": "Property deleted successfully"},
-            status_code=200,
-        )
 
     @app.get(
         "/v1/countries",
@@ -227,6 +259,18 @@ def make_app(
     ) -> list[CountrySummary] | JSONResponse:
         """Get all Country models."""
         return await summary_svc.get_all_countries()
+
+    @app.get(
+        "/v1/core_destinations",
+        operation_id="get_core_destinations",
+        response_model=list[CoreDestination],
+        tags=["core_destinations"],
+    )
+    async def get_core_destinations(
+        current_user: User = Depends(get_current_user),
+    ) -> list[CoreDestination] | JSONResponse:
+        """Get all CoreDestination models."""
+        return await travel_svc.get_all_core_destinations()
 
     @app.get(
         "/v1/consultants",

@@ -458,7 +458,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Updates a sequence of Property models in the repository."""
         raise NotImplementedError
 
-    async def delete_property(self, property_id: UUID) -> None:
+    async def delete_property(self, property_id: UUID) -> bool:
         """Deletes a sequence of Property models from the repository."""
         pool = await self._get_pool()
         query = dedent(
@@ -481,7 +481,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         f"No property found with ID: {property_id}, nothing was deleted."
                     )
                     return False
-                print(f"Successfully deleted log with ID: {property_id}.")
+                print(f"Successfully deleted property with ID: {property_id}.")
                 return True
 
     # Consultant
@@ -738,6 +738,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_at=res["updated_at"],
                         updated_by=res["updated_by"],
                     )
+
+    async def get_all_core_destinations(self) -> Sequence[CoreDestination]:
+        """Gets all of CoreDestination models from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.core_destinations
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                agencies = [CoreDestination(**record) for record in records]
+                return agencies
 
     async def get_core_destinations_by_name(
         self, names: Sequence[str]

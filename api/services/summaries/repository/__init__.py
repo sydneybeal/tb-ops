@@ -51,6 +51,13 @@ class SummaryRepository(ABC):
         """Gets all AccommodationLog models in the repository, joined with their foreign keys."""
         raise NotImplementedError
 
+    @abstractmethod
+    async def get_accommodation_logs_by_filter(
+        self, filters: dict
+    ) -> Sequence[AccommodationLogSummary]:
+        """Gets AccommodationLogSummary models in the repository by a filter."""
+        raise NotImplementedError
+
     # Property
     @abstractmethod
     async def get_property(

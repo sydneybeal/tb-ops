@@ -15,6 +15,7 @@
 """Services for interacting with travel entries."""
 from collections import Counter
 from typing import Sequence, List
+from uuid import UUID
 from api.services.summaries.models import (
     AccommodationLogSummary,
     BedNightReport,
@@ -38,8 +39,8 @@ class SummaryService:
     async def get_bed_night_report(self, labels: dict) -> Sequence[BedNightReport]:
         """Generates a BedNightReport based on input criteria."""
         # futureTODO: remove the updated by filter
-        labels["updated_by"] = "Initialization script"
-        print(labels)
+        # labels["updated_by"] = "Initialization script"
+        # print(labels)
         accommodation_logs = await self._repo.get_accommodation_logs_by_filter(labels)
         report = self.generate_report(accommodation_logs, labels)
         return report
@@ -125,6 +126,25 @@ class SummaryService:
     async def get_all_accommodation_logs(self) -> Sequence[AccommodationLogSummary]:
         """Gets all AccommodationLogSummary models."""
         return await self._repo.get_all_accommodation_logs()
+
+    async def get_accommodation_logs_by_filters(
+        self, filters: dict
+    ) -> Sequence[AccommodationLogSummary]:
+        """Gets all AccommodationLogSummary models based on a filter."""
+        return await self._repo.get_accommodation_logs_by_filter(filters)
+
+    async def get_related_records_summary(
+        self, identifier: UUID, identifier_type: str
+    ) -> Sequence[AccommodationLogSummary]:
+        """Checks the impact of a modification on related records."""
+        filters = {identifier_type: identifier}
+        accommodation_logs = await self.get_accommodation_logs_by_filters(filters)
+
+        if not accommodation_logs:
+            return {"can_modify": True, "affected_logs": []}
+
+        accommodation_logs_summary = [log.to_json() for log in accommodation_logs]
+        return {"can_modify": False, "affected_logs": accommodation_logs_summary}
 
     # Property
     async def get_all_properties(self) -> Sequence[PropertySummary]:

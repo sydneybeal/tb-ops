@@ -48,25 +48,32 @@ export const Consultants = () => {
     };
 
     useEffect(() => {
-        // Perform sorting on filteredData
         let sortedData = [...apiData].sort((a, b) => {
-            let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
-            let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
+            const isActiveA = a.is_active === true || a.is_active === 'true';
+            const isActiveB = b.is_active === true || b.is_active === 'true';
 
-            // If both values are numbers, compare them as numbers.
-            if (typeof aValue === 'number' && typeof bValue === 'number') {
-                return sorting.ascending ? aValue - bValue : bValue - aValue;
+            // Sort by is_active depending on ascending/descending, then by last_name.
+            if (sorting.field === 'is_active') {
+                if (isActiveA !== isActiveB) {
+                    return sorting.ascending ? (isActiveA ? 1 : -1) : (isActiveA ? -1 : 1);
+                }
+                // If both have the same active status, then sort by last_name.
+                return a.last_name.localeCompare(b.last_name);
+            } else {
+                // Your existing sorting logic for other fields.
+                let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
+                let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    return sorting.ascending ? aValue - bValue : bValue - aValue;
+                }
+                aValue = String(aValue);
+                bValue = String(bValue);
+                return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
             }
-
-            // If either value is not a number, convert both to strings and compare.
-            // This handles null, undefined, and other non-number types safely.
-            aValue = String(aValue);
-            bValue = String(bValue);
-            return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         });
         setDisplayData(sortedData);
-
     }, [sorting, apiData]);
+
 
     const openEditModal = (consultant) => {
         if (!userDetails.email) {
@@ -148,22 +155,22 @@ export const Consultants = () => {
                                                 <tr>
                                                     <th
                                                         onClick={() =>
-                                                            applySorting('first_name')
+                                                            applySorting('last_name')
                                                         }
                                                     >
                                                         Last Name
                                                         <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
                                                     <th
                                                         onClick={() =>
-                                                            applySorting('last_name')
+                                                            applySorting('first_name')
                                                         }
                                                     >
                                                         First Name
                                                         <span className="material-symbols-outlined teal-text">
-                                                            {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
                                                     <th

@@ -264,6 +264,7 @@ export const Properties = () => {
         setIsModalOpen(false);
         setIsEditMode(false);
         setCurrentEditProperty(null);
+        document.body.style.overflow = '';
     };
 
     const triggerRefresh = () => {

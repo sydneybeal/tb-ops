@@ -165,7 +165,8 @@ class PatchPropertyRequest(BaseModel):
     property_id: Optional[UUID] = None
     name: str
     portfolio: str
-    country_id: UUID
+    country_id: Optional[UUID] = None
+    core_destination_id: Optional[UUID] = None
     updated_by: str
 
 

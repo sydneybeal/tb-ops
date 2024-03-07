@@ -154,7 +154,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
 
     async def get_accommodation_logs_by_filter(
         self, filters: dict
-    ) -> Sequence[AccommodationLog]:
+    ) -> Sequence[AccommodationLogSummary]:
         """Gets a set of AccommodationLogSummary models by filter."""
         pool = await self._get_pool()
         query_conditions = []
@@ -177,6 +177,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"bc.name = '{value}'")
             elif key == "updated_by":
                 query_conditions.append(f"al.updated_by = '{value}'")
+            elif key == "property_id":
+                query_conditions.append(f"property_id = '{value}'")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)

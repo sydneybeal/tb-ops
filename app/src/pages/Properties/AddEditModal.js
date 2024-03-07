@@ -1,19 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 // import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import TricklingDotsPreloader from '../../components/TricklingDotsPreloader';
 // import moment from 'moment';
 
 const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = null, isEditMode = false }) => {
     const { userDetails } = useAuth();
+    const [loading, setLoading] = useState(false);
     const [propertyId, setPropertyId] = useState(null);
     const [propertyName, setPropertyName] = useState('');
     const [portfolioName, setPortfolioName] = useState('');
     const [selectedCountryId, setSelectedCountryId] = useState(null);
+    const [selectedCoreDestinationId, setSelectedCoreDestinationId] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
     const [countries, setCountries] = useState([]);
+    const [relatedEntries, setRelatedEntries] = useState([]);
+    const [portfolioNames, setPortfolioNames] = useState([]);
+    const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
+    const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
+    const [railId, setRailId] = useState('');
+    const [shipId, setShipId] = useState('');
     const [touched, setTouched] = useState({
         propertyName: false,
         portfolioName: false,
@@ -38,7 +48,8 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             property_id: propertyId || null,
             name: propertyName || null,
             portfolio: portfolioName,
-            country_id: selectedCountryId,
+            country_id: selectedCountryId || null,
+            core_destination_id: selectedCoreDestinationId || null,
             updated_by: userDetails.email || ''
         };
 
@@ -50,6 +61,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             });
         }
         else {
+            setLoading(true);
             fetch(`${process.env.REACT_APP_API}/v1/properties`, {
                 method: 'PATCH',
                 headers: {
@@ -60,9 +72,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             })
                 .then(response => {
                     if (!response.ok) {
-                        // If the response is not ok, throw an error with the status
+                        setLoading(false);
                         throw new Error('Network response was not ok: ' + response.statusText);
                     }
+                    setLoading(false);
                     return response.json();
                 })
                 .then(data => {
@@ -91,12 +104,14 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     });
                 })
                 .finally(() => {
+                    setLoading(false);
                     resetFormState();
                     onRefresh();
                     onClose();
                 })
                 .catch((error) => {
                     console.error('Error:', error);
+                    setLoading(false);
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
@@ -116,7 +131,8 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         if (!(portfolioName || '').trim()) {
             errors.portfolio = 'Missing portfolio name';
         }
-        if (!(selectedCountryId || '').trim()) {
+        const isCountryRequired = selectedCoreDestinationId !== shipId && selectedCoreDestinationId !== railId;
+        if (isCountryRequired && !(selectedCountryId || '').trim()) {
             errors.country = 'Missing country';
         }
 
@@ -142,24 +158,81 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 instance.close();
             }
         }
-        if (!isOpen) return;
+        if (!isOpen || !propertyId) return;
 
-        // Fetch countries
-        fetch(`${process.env.REACT_APP_API}/v1/countries`, {
-            headers: {
-                'Authorization': `Bearer ${userDetails.token}`
-            }
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                const formattedCountries = data.map((country) => ({
+        setLoading(true);
+
+        // Fetch countries and core destinations
+        Promise.all([
+            fetch(`${process.env.REACT_APP_API}/v1/countries`, {
+                headers: {
+                    'Authorization': `Bearer ${userDetails.token}`
+                }
+            }).then(res => res.json()),
+            fetch(`${process.env.REACT_APP_API}/v1/core_destinations`, {
+                headers: {
+                    'Authorization': `Bearer ${userDetails.token}`
+                }
+            }).then(res => res.json()),
+            fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+                headers: {
+                    'Authorization': `Bearer ${userDetails.token}`
+                }
+            }).then(res => res.json()),
+            fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${propertyId}&identifier_type=property_id`, {
+                headers: {
+                    'Authorization': `Bearer ${userDetails.token}`
+                }
+            }).then(res => res.json())
+        ])
+            .then(([countriesData, coreDestinationsData, propertiesData, relatedEntriesData]) => {
+                // Handle countries data
+                const formattedCountries = countriesData.map(country => ({
                     value: country.id,
                     label: country.name
                 }));
                 setCountries(formattedCountries);
+
+                // Handle core destinations data
+                const formattedCoreDestinations = coreDestinationsData.map(core_dest => ({
+                    value: core_dest.id,
+                    label: core_dest.name
+                }));
+                const railId = formattedCoreDestinations.find(dest => dest.label === "Rail")?.value;
+                const shipId = formattedCoreDestinations.find(dest => dest.label === "Ship")?.value;
+                setRailId(railId || '');
+                setShipId(shipId || '');
+
+                // Handle properties data (for list of properties)
+                const portfolioNames = [...new Set(propertiesData.map(property => property.portfolio_name))];
+                setPortfolioNames(portfolioNames);
+                setFilteredPortfolioSuggestions(portfolioNames);
+
+                // Handle relatedEntries data (for list of relatedEntries)
+                // const relatedEntries = [...new Set(relatedEntriesData.map(entry => entry.primary_traveler))];
+                // console.log(relatedEntriesData);
+                const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
+                parsedRelatedEntries.sort((a, b) => {
+                    if (a.date_in < b.date_in) {
+                        return -1;
+                    }
+                    if (a.date_in > b.date_in) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                setRelatedEntries(parsedRelatedEntries);
             })
-            .catch((err) => console.error(err));
-    }, [isOpen, onClose, userDetails.token]);
+            .catch((err) => {
+                console.error(err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [propertyId, isOpen, onClose, userDetails.token]);
+    // console.log("relatedEntries: " + relatedEntries);
+
+
 
     const handleDelete = () => {
         if (userDetails.role !== 'admin') {
@@ -175,7 +248,11 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 // const entryId = property.id : null;
                 // const propertyId = 'abc';
                 if (!propertyId) {
-                    M.toast({ html: 'Error: No property ID found', classes: 'red lighten-2' });
+                    M.toast({
+                        html: 'Error: No property ID found',
+                        classes: 'red lighten-2',
+                        displayLength: 4000
+                    });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
@@ -186,23 +263,42 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                         'Authorization': `Bearer ${userDetails.token}`,
                     },
                 })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('API error');
+                    .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                    .then(({ status, body }) => {
+                        if (status !== 200) {
+                            let errorMessage = body.error || 'Unknown API error';
+                            // console.log(body.affected_logs);
+                            if (body.affected_logs && body.affected_logs.length > 0) {
+                                // console.log(body.affected_logs);
+                                // Parse the JSON string from each detail into an object
+                                const affected_logs = body.affected_logs.map(detail => JSON.parse(detail));
+                                // Limit the details to 10 for display
+                                const limitedDetails = affected_logs.slice(0, 10).map(log =>
+                                    `Traveler: ${log.primary_traveler}, Dates: ${log.date_in} to ${log.date_out}`
+                                ).join('<br/>');
+                                const additionalCount = affected_logs.length - 10;
+                                errorMessage += `<br/><br/>${limitedDetails}` +
+                                    (additionalCount > 0 ? `<br/>...and ${additionalCount} others` : '');
+                            }
+                            throw new Error(errorMessage);
                         }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Handle success - show success message and possibly update the UI
-                        M.toast({ html: 'Property successfully deleted', classes: 'green' });
+                        // Handle success here
+                        M.toast({
+                            html: `Property '${propertyName}' successfully deleted`,
+                            classes: 'green',
+                            displayLength: 2000
+                        });
                         resetFormState();
                         onRefresh();
                         onClose();
                     })
                     .catch(error => {
                         console.error('Error:', error);
-                        // Handle error - show error message
-                        M.toast({ html: 'Error deleting property', classes: 'red' });
+                        M.toast({
+                            html: error.message,
+                            classes: 'red lighten-1',
+                            displayLength: 8000
+                        });
                     });
             }
         }
@@ -210,21 +306,33 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
 
     useEffect(() => {
         if (!isOpen) {
+            setTouched({});
             resetFormState(); // Reset form state when modal closes
         } else if (isOpen && isEditMode && editPropertyData) {
             setPropertyId(editPropertyData.id);
             setPropertyName(editPropertyData.name);
             setPortfolioName(editPropertyData.portfolio_name);
             setSelectedCountryId(editPropertyData.country_id);
+            setSelectedCoreDestinationId(editPropertyData.core_destination_id);
+            setTouched({});
+            const filtered = portfolioNames.filter(portfolioName =>
+                portfolioName.toLowerCase().includes(editPropertyData.portfolio_name.toLowerCase())
+            );
+            setFilteredPortfolioSuggestions(filtered);
+            setShowPortfolioSuggestions(false);
         }
-    }, [isOpen, isEditMode, editPropertyData]);
+    }, [isOpen, isEditMode, editPropertyData, portfolioNames]);
 
     const resetFormState = () => {
         setPropertyId(null);
         setPropertyName('');
         setPortfolioName('');
         setSelectedCountryId(null);
+        setSelectedCoreDestinationId(null);
         setValidationErrors({});
+        setTouched({});
+        setShowPortfolioSuggestions(false);
+        setFilteredPortfolioSuggestions([]);
     };
 
     const validatePropertyName = (value) => {
@@ -262,9 +370,24 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         return '';
     };
 
+    const selectPortfolioSuggestion = (suggestion) => {
+        setPortfolioName(suggestion);
+        if (touched.portfolioName) {
+            setValidationErrors(prevErrors => ({
+                ...prevErrors,
+                portfolio: validatePortfolioName(suggestion),
+            }));
+        }
+
+        setFilteredPortfolioSuggestions([]);
+        setShowPortfolioSuggestions(false);
+    };
+
     const handlePortfolioNameChange = (e) => {
         const value = e.target.value;
         setPortfolioName(value);
+
+        setTouched(prev => ({ ...prev, portfolioName: true }));
 
         // Only validate in real-time if the field has been touched
         if (touched.portfolioName) {
@@ -273,18 +396,23 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 portfolio: validatePortfolioName(value),
             }));
         }
-    };
-
-    const handlePortfolioNameBlur = () => {
-        setTouched(prev => ({ ...prev, portfolioName: true }));
-        setValidationErrors(prevErrors => ({
-            ...prevErrors,
-            portfolio: validatePortfolioName(portfolioName),
-        }));
+        if (value.trim() === '') {
+            // If the input is empty, clear suggestions and don't show the list
+            setFilteredPortfolioSuggestions(portfolioNames);
+            setShowPortfolioSuggestions(true);
+        } else {
+            // Filter and show suggestions based on the input
+            const filtered = portfolioNames.filter(portfolioName =>
+                portfolioName.toLowerCase().includes(value.toLowerCase())
+            );
+            setFilteredPortfolioSuggestions(filtered);
+            setShowPortfolioSuggestions(true);
+        }
     };
 
     const validateSelectedCountryId = (value) => {
-        if (!(value || '').trim()) {
+        const isCountryRequired = selectedCoreDestinationId !== shipId && selectedCoreDestinationId !== railId;
+        if (isCountryRequired && !(value || '').trim()) {
             return 'Missing country';
         }
         return '';
@@ -310,6 +438,51 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }));
     };
 
+    const validateCountry = (coreDestinationId) => {
+        const isCountryRequired = coreDestinationId !== shipId && coreDestinationId !== railId;
+        if (isCountryRequired && !(selectedCountryId || '').trim()) {
+            return 'Missing country';
+        }
+        return '';
+    };
+
+    const handleShipChange = (e) => {
+        const checked = e.target.checked;
+        const newCoreDestinationId = checked ? shipId : null;
+        setSelectedCoreDestinationId(newCoreDestinationId);
+
+        // Re-validate selected country when Ship is checked/unchecked
+        const countryError = validateCountry(newCoreDestinationId);
+        setValidationErrors(prevErrors => {
+            // Remove or update the country error based on validation
+            if (countryError) {
+                return { ...prevErrors, country: countryError };
+            } else {
+                const { country, ...restErrors } = prevErrors; // Remove the country error
+                return restErrors;
+            }
+        });
+    };
+
+    const handleRailChange = (e) => {
+        const checked = e.target.checked;
+        const newCoreDestinationId = checked ? railId : null;
+        setSelectedCoreDestinationId(newCoreDestinationId);
+
+        // Re-validate selected country when Rail is checked/unchecked
+        const countryError = validateCountry(newCoreDestinationId);
+        setValidationErrors(prevErrors => {
+            // Remove or update the country error based on validation
+            if (countryError) {
+                return { ...prevErrors, country: countryError };
+            } else {
+                const { country, ...restErrors } = prevErrors; // Remove the country error
+                return restErrors;
+            }
+        });
+    };
+
+
     return (
         <div id="add-edit-modal" className="modal add-edit-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
@@ -326,102 +499,216 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                         </button>
                     }
                 </h4>
-                <div className="container" style={{ width: '60%' }}>
-                    <div style={{ textAlign: 'left', marginTop: '50px' }}>
-                        <form id="propertyForm" onSubmit={handleFormSubmit}>
-                            {(validationErrors.name || validationErrors.portfolio || validationErrors.country) && (
+                {!loading ? (
+                    <div className="container" style={{ width: '60%' }}>
+                        <div style={{ textAlign: 'left', marginTop: '50px' }}>
+                            <form id="propertyForm" onSubmit={handleFormSubmit}>
+                                {(validationErrors.name || validationErrors.portfolio || validationErrors.country) && (
+                                    <div className="row" style={{ marginBottom: '20px' }}>
+                                        {validationErrors.name && (
+                                            <div className="chip red lighten-4 text-bold">{validationErrors.name}</div>
+                                        )}
+                                        {validationErrors.portfolio && (
+                                            <div className="chip red lighten-4 text-bold">{validationErrors.portfolio}</div>
+                                        )}
+                                        {validationErrors.country && (
+                                            <div className="chip red lighten-4 text-bold">{validationErrors.country}</div>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="row" style={{ marginBottom: '20px' }}>
-                                    {validationErrors.name && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.name}</div>
-                                    )}
-                                    {validationErrors.portfolio && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.portfolio}</div>
-                                    )}
-                                    {validationErrors.country && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.country}</div>
+                                    <input
+                                        type="text"
+                                        id="name"
+                                        value={propertyName}
+                                        onChange={handlePropertyNameChange}
+                                        onBlur={handlePropertyNameBlur}
+                                        placeholder="Property name"
+                                        style={{ marginRight: '10px', flexGrow: '1' }}
+                                        className={validationErrors.name ? 'invalid' : ''}
+                                    />
+                                    <label htmlFor="property_name">
+                                        <span className="material-symbols-outlined">
+                                            hotel
+                                        </span>
+                                        Property Name
+                                    </label>
+                                </div>
+                                <div className="row" style={{
+                                    marginBottom: '20px',
+                                    // position: 'relative'
+                                }}>
+                                    <div
+                                        style={{ position: 'relative' }}
+                                    >
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            value={portfolioName}
+                                            onChange={handlePortfolioNameChange}
+                                            onBlur={(e) => {
+                                                // First, check if suggestionsRef.current exists to avoid the null reference error
+                                                if (suggestionsRef.current && e.relatedTarget) {
+                                                    // Then, check if the relatedTarget is not within the suggestions list
+                                                    if (!suggestionsRef.current.contains(e.relatedTarget)) {
+                                                        setShowPortfolioSuggestions(false);
+                                                    }
+                                                } else {
+                                                    // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
+                                                    setShowPortfolioSuggestions(false);
+                                                }
+                                            }}
+                                            onFocus={() => setShowPortfolioSuggestions(true)}
+                                            placeholder="Portfolio name"
+                                            style={{ marginRight: '10px', flexGrow: '1' }}
+                                            className={validationErrors.portfolio ? 'invalid' : ''}
+                                            autoComplete="off"
+                                        />
+                                        {showPortfolioSuggestions && filteredPortfolioSuggestions.length > 0 && (
+                                            <ul className="suggestions-list" ref={suggestionsRef}>
+                                                {filteredPortfolioSuggestions.map((suggestion, suggestionIndex) => (
+                                                    <li
+                                                        key={suggestionIndex}
+                                                        tabIndex="0"
+                                                        className="suggestion-item"
+                                                        onClick={() => selectPortfolioSuggestion(suggestion)}
+                                                    >
+                                                        {suggestion}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                    <label htmlFor="portfolio_name">
+                                        <span className="material-symbols-outlined">
+                                            store
+                                        </span>
+                                        Portfolio Name
+                                    </label>
+                                </div>
+                                <div className="row" style={{ marginBottom: '20px' }}>
+                                    <Select
+                                        placeholder="Select Country"
+                                        id="country_select"
+                                        value={countries.find(cons => cons.value === selectedCountryId) || ''}
+                                        onChange={handleSelectedCountryIdChange}
+                                        onBlur={handleSelectedCountryIdBlur}
+                                        options={countries}
+                                        isClearable
+                                        style={{ flexGrow: '1' }}
+                                        classNamePrefix="select" // Use this for prefixing generated class names
+                                        className={validationErrors.country ? 'invalid-select' : ''} // This class is for the container
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: validationErrors.country ? 'red' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: validationErrors.country ? 'darkred' : provided['&:hover'].borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                    />
+                                    <label htmlFor="country_select">
+                                        <span className="material-symbols-outlined">
+                                            globe
+                                        </span>
+                                        Country Name
+                                    </label>
+                                </div>
+                                <div className="row">
+                                    <div className="col s6">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                className="filled-in"
+                                                checked={selectedCoreDestinationId === shipId}
+                                                onChange={handleShipChange}
+                                            />
+                                            <span>
+                                                <span className="material-symbols-outlined">
+                                                    directions_boat
+                                                </span>
+                                                Ship
+                                            </span>
+                                        </label>
+                                    </div>
+                                    <div className="col s6">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                className="filled-in"
+                                                checked={selectedCoreDestinationId === railId}
+                                                onChange={handleRailChange}
+                                            />
+                                            <span>
+                                                <span className="material-symbols-outlined">
+                                                    train
+                                                </span>
+                                                Rail
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div >
+                ) : (
+                    <TricklingDotsPreloader show={true} />
+                )
+                }
+            </div >
+            <div className="modal-footer" style={{ zIndex: '-1' }}>
+                {!loading &&
+                    <>
+                        {Array.isArray(relatedEntries) && relatedEntries.length > 0 && (
+                            <>
+                                <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                    <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
+                                    {relatedEntries.slice(0, 10).map((item, index) => (
+                                        <div key={index}>
+                                            <div>
+                                                <div className="chip blue-grey lighten-1 grey-text text-lighten-4">
+                                                    <span className="material-symbols-outlined">
+                                                        hiking
+                                                    </span>
+                                                    {item.primary_traveler}
+                                                </div>
+                                                from&nbsp;
+                                                <div className="chip blue lighten-5">
+                                                    <span className="material-symbols-outlined">
+                                                        flight_land
+                                                    </span>
+                                                    {item.date_in}
+                                                </div>
+                                                to&nbsp;
+                                                <div className="chip blue lighten-5">
+                                                    <span className="material-symbols-outlined">
+                                                        flight_takeoff
+                                                    </span>
+                                                    {item.date_out}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {relatedEntries.length > 10 && (
+                                        <p>and {relatedEntries.length - 10} more...</p>
                                     )}
                                 </div>
-                            )}
-                            <div className="row" style={{ marginBottom: '20px' }}>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    value={propertyName}
-                                    onChange={handlePropertyNameChange}
-                                    onBlur={handlePropertyNameBlur}
-                                    placeholder="Property name"
-                                    style={{ marginRight: '10px', flexGrow: '1' }}
-                                    className={validationErrors.name ? 'invalid' : ''}
-                                />
-                                <label htmlFor="property_name">
-                                    <span className="material-symbols-outlined">
-                                        hotel
-                                    </span>
-                                    Property Name
-                                </label>
-                            </div>
-                            <div className="row" style={{ marginBottom: '20px' }}>
-                                <input
-                                    type="text"
-                                    id="name"
-                                    value={portfolioName}
-                                    onChange={handlePortfolioNameChange}
-                                    onBlur={handlePortfolioNameBlur}
-                                    placeholder="Portfolio name"
-                                    style={{ marginRight: '10px', flexGrow: '1' }}
-                                    className={validationErrors.portfolio ? 'invalid' : ''}
-                                />
-                                <label htmlFor="portfolio_name">
-                                    <span className="material-symbols-outlined">
-                                        store
-                                    </span>
-                                    Portfolio Name
-                                </label>
-                            </div>
-                            <div className="row" style={{ marginBottom: '20px' }}>
-                                <Select
-                                    placeholder="Select Country"
-                                    id="country_select"
-                                    value={countries.find(cons => cons.value === selectedCountryId) || ''}
-                                    onChange={handleSelectedCountryIdChange}
-                                    onBlur={handleSelectedCountryIdBlur}
-                                    options={countries}
-                                    isClearable
-                                    style={{ flexGrow: '1' }}
-                                    classNamePrefix="select" // Use this for prefixing generated class names
-                                    className={validationErrors.country ? 'invalid-select' : ''} // This class is for the container
-                                    styles={{
-                                        control: (provided, state) => ({
-                                            ...provided,
-                                            borderColor: validationErrors.country ? 'red' : provided.borderColor,
-                                            '&:hover': {
-                                                borderColor: validationErrors.country ? 'darkred' : provided['&:hover'].borderColor,
-                                            },
-                                            boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
-                                        }),
-                                        menuPortal: base => ({ ...base, zIndex: 9999 })
-                                    }}
-                                    menuPortalTarget={document.body}
-                                />
-                                <label htmlFor="country_select">
-                                    <span className="material-symbols-outlined">
-                                        globe
-                                    </span>
-                                    Country Name
-                                </label>
-                            </div>
-                        </form>
-                    </div>
-                </div >
-            </div >
-            <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
-                <div>
-                    <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
-                        Close
-                    </button>
-                    &nbsp;&nbsp;
-                    <button type="submit" form="propertyForm" className="btn waves-effect waves-light green">Save</button>
-                </div>
+                            </>
+                        )}
+                        <div style={{ paddingBottom: '20px' }}>
+                            <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                                Close
+                            </button>
+                            &nbsp;&nbsp;
+                            <button type="submit" form="propertyForm" className="btn waves-effect waves-light green">Save</button>
+                        </div>
+
+                    </>
+                }
             </div>
         </div >
     )

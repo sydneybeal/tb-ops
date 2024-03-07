@@ -19,6 +19,8 @@ from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
+from api.services.summaries.service import SummaryService
+from api.services.summaries.models import AccommodationLogSummary
 from api.services.travel.models import (
     AccommodationLog,
     PatchAccommodationLogRequest,
@@ -43,6 +45,7 @@ class TravelService:
         """Initializes with a configured repository."""
         self._repo = PostgresTravelRepository()
         self._audit_svc = AuditService()
+        self._summary_svc = SummaryService()
 
     # AccommodationLog
     async def add_accommodation_log(self, models: Sequence[AccommodationLog]) -> None:
@@ -485,6 +488,10 @@ class TravelService:
 
         await self._repo.add_core_destination(to_be_added)
 
+    async def get_all_core_destinations(self) -> Sequence[CoreDestination]:
+        """Gets all CoreDestination models."""
+        return await self._repo.get_all_core_destinations()
+
     async def get_core_destination_by_name(self, name: str) -> CoreDestination:
         """Gets a sequence of CoreDestination models by core destination name"""
         return await self._repo.get_core_destination_by_name(name)
@@ -554,11 +561,25 @@ class TravelService:
     ) -> Union[Dict[str, str], Tuple[Property, AuditLog]]:
         """Resolves and prepares a property patch for insertion."""
         # Check if this property exists and needs updating
+        core_destination_id = None
 
-        country = await self._repo.get_country_by_id(property_request.country_id)
-        core_destination_id = country.core_destination_id
-        if core_destination_id is None:
-            raise ValueError("Invalid country_id")
+        if property_request.country_id:
+            # Fetch country details based on country_id
+            country = await self._repo.get_country_by_id(property_request.country_id)
+            if country is None:
+                raise ValueError("Invalid country_id")
+            # Set core_destination_id based on the country's default
+            core_destination_id = country.core_destination_id
+
+        # Override the core_destination_id if it's explicitly provided in the request (ship/rail)
+        if property_request.core_destination_id:
+            core_destination_id = property_request.core_destination_id
+
+        # Validate that core_destination_id is set either by country default or manual input
+        if not core_destination_id:
+            raise ValueError(
+                "core_destination_id is required when country_id is not provided"
+            )
 
         existing_property_by_id = None
         if property_request.property_id:
@@ -645,9 +666,20 @@ class TravelService:
         """Gets a single Property model by id."""
         return await self._repo.get_property_by_id(property_id)
 
-    async def delete_property(self, property_id: UUID, user_email: str):
-        """Deletes a Property."""
-        deleted = await self._repo.delete_property(property_id)
+    async def delete_property(
+        self, property_id: UUID, user_email: str
+    ) -> Union[bool, dict]:
+        """Deletes a Property or returns reason that it is unable to delete."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            property_id, "property_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete property due to related records.",
+                "details": affected_logs,
+            }
+        deleted = await self._repo.delete_property(property_id)  # returns bool
         audit_log = AuditLog(
             table_name="properties",
             record_id=property_id,
