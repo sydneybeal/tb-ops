@@ -161,16 +161,17 @@ class SourceTableBuilder:
     async def seed_countries(self):
         """Seeds countries into the DB with their appropriate core destination ID."""
         records_to_add = []
+        all_core_destinations = await self._travel_service.get_all_core_destinations()
+        core_destination_map = {dest.name: dest.id for dest in all_core_destinations}
         for row in self.raw_data["countries"]:
             # Fetch the core_destination_id using the service layer
-            core_destination = await self._travel_service.get_core_destination_by_name(
-                row["core_destination"]
-            )
-            if core_destination:
-                row["core_destination_id"] = core_destination.id
+            core_destination_id = core_destination_map.get(row["core_destination"])
+            if core_destination_id:
+                row["core_destination_id"] = core_destination_id
                 del row["core_destination"]  # Remove the name key
             else:
                 print(f"Core destination {row['core_destination']} not found.")
+                continue
 
             # Add UUID and timestamps
             row["id"] = uuid.uuid4()
@@ -246,22 +247,40 @@ class SourceTableBuilder:
     async def seed_properties(self):
         """Seeds properties into the DB with their appropriate country ID."""
         records_to_add = []
+        all_countries = await self._travel_service.get_all_countries()
+        all_core_destinations = await self._travel_service.get_all_core_destinations()
+        all_portfolios = await self._travel_service.get_all_portfolios()
+
+        # Create dictionaries for quick lookup
+        country_map = {
+            country.name.strip().replace(" / ", "/").title(): country
+            for country in all_countries
+        }
+        core_destination_map = {dest.name: dest for dest in all_core_destinations}
+        portfolio_map = {
+            portfolio.name.strip(): portfolio for portfolio in all_portfolios
+        }
         for row in self.raw_data["properties"]:
-            # Fetch the country_id using the service layer
-            country = await self._travel_service.get_country_by_name(
+            # Initial core destination handling
+            if row["core_destination"].strip().upper() == "SEA":
+                row["core_destination"] = "Asia"
+            core_destination = core_destination_map.get(row["core_destination"])
+
+            # Lookup country ID
+            country = country_map.get(
                 row["country"].strip().replace(" / ", "/").title()
             )
             if country:
                 row["country_id"] = country.id
-                row["core_destination_id"] = country.core_destination_id
+                # Default to the country's core destination unless overridden by "Ship" or "Rail"
+                if core_destination and row["core_destination"] in ["Ship", "Rail"]:
+                    # Keep the core destination ID for "Ship" or "Rail"
+                    row["core_destination_id"] = core_destination.id
+                else:
+                    # Use the country's core destination ID for non-"Ship"/"Rail" destinations
+                    row["core_destination_id"] = country.core_destination_id
             else:
-                if row["core_destination"].strip().upper() == "SEA":
-                    row["core_destination"] = "Asia"
-                core_destination = (
-                    await self._travel_service.get_core_destination_by_name(
-                        row["core_destination"]
-                    )
-                )
+                # Handle cases with no matching country but a specified core destination
                 if core_destination:
                     row["core_destination_id"] = core_destination.id
                 else:
@@ -270,17 +289,13 @@ class SourceTableBuilder:
             del row["core_destination"]
             del row["country"]
 
-            if row.get("portfolio", "") == "":
-                portfolio_name = "Unknown"
-            else:
-                portfolio_name = row["portfolio"].strip()
-
-            portfolio = await self._travel_service.get_portfolio_by_name(portfolio_name)
+            # Lookup portfolio ID
+            portfolio_name = row.get("portfolio", "").strip() or "Unknown"
+            portfolio = portfolio_map.get(portfolio_name)
             if portfolio:
                 row["portfolio_id"] = portfolio.id
             else:
                 print(f"No portfolio found for {portfolio_name}")
-                print(row)
 
             del row["portfolio"]
             del row["representative"]
@@ -304,6 +319,34 @@ class SourceTableBuilder:
     async def seed_accommodation_logs(self):
         """Seeds accommodation logs into the DB with their appropriate foreign keys."""
         records_to_add = []
+        # Pre-fetch all necessary data
+        all_countries = await self._travel_service.get_all_countries()
+        all_core_destinations = await self._travel_service.get_all_core_destinations()
+        all_portfolios = await self._travel_service.get_all_portfolios()
+        all_properties = await self._travel_service.get_all_properties()
+        all_consultants = await self._travel_service.get_all_consultants()
+        all_agencies = await self._travel_service.get_all_agencies()
+        all_booking_channels = await self._travel_service.get_all_booking_channels()
+
+        # Create lookup maps
+        country_map = {country.name: country for country in all_countries}
+        core_destination_map = {cd.name: cd for cd in all_core_destinations}
+        portfolio_map = {portfolio.name: portfolio for portfolio in all_portfolios}
+        property_map = {
+            (
+                prop.name.lower(),
+                prop.portfolio_id,
+                prop.country_id,
+                prop.core_destination_id,
+            ): prop
+            for prop in all_properties
+        }
+        consultant_map = {
+            (cons.last_name, cons.first_name): cons for cons in all_consultants
+        }
+        agency_map = {agency.name: agency for agency in all_agencies}
+        booking_channel_map = {bc.name: bc for bc in all_booking_channels}
+
         for row in self.raw_data["accommodation_logs"]:
             # Clean up invalid records
             row["property_name"] = row["property_name"].strip()
@@ -344,82 +387,140 @@ class SourceTableBuilder:
                 row["country"] = "Tanzania"
             row["primary_traveler"] = row["primary_traveler"].replace(" x2", "").strip()
             # Fetch the country_id using the service layer
-            country = await self._travel_service.get_country_by_name(
-                row["country"].strip()
+            # country = await self._travel_service.get_country_by_name(
+            #     row["country"].strip()
+            # )
+            # if country:
+            #     row["country_id"] = country.id
+            #     row["core_destination_id"] = country.core_destination_id
+            # else:
+            #     core_destination = (
+            #         await self._travel_service.get_core_destination_by_name(
+            #             row["core_destination"].strip()
+            #         )
+            #     )
+            #     if core_destination:
+            #         row["core_destination_id"] = core_destination.id
+            #     else:
+            #         print(
+            #             f"No core destination found for {row['core_destination'].strip()}"
+            #         )
+            # Look up country, core destination, and portfolio by name
+            country = country_map.get(row["country"].strip())
+            core_destination = core_destination_map.get(
+                row.get("core_destination", "").strip()
             )
+            # print(row.get("core_destination", ""))
+            # print(core_destination)
+
+            # override if ship or rail
+            # if row.get("core_destination", "").strip().upper() in ["SHIP", "RAIL"]:
+            #     core_destination = core_destination_map.get(row["core_destination"])
+            #     if core_destination:
+            #         row["core_destination_id"] = core_destination.id
+            #     else:
+            #         print(f"Core destination {row['core_destination']} not found.")
+
+            portfolio = portfolio_map.get(row.get("portfolio", "Unknown").strip())
+
+            # Look up consultant, property, agency, and booking channel by composite keys or names
+            consultant_names = tuple(row["tb_consultant"].split("/"))
+            consultant = consultant_map.get(consultant_names)
+            property_key = (
+                row["property_name"].strip().lower(),
+                portfolio.id,
+                country.id if country else None,
+                core_destination.id,
+            )
+            prop = property_map.get(property_key)
+            if not prop:
+                print(
+                    f"Property not found for key: Name='{row['property_name'].strip()}' "
+                    f"Portfolio ID='{portfolio.id if portfolio else 'None'}' "
+                    f"Country ID='{country.id if country else 'None'}'"
+                    f"Core Dest ID='{core_destination.id if core_destination else 'None'}'"
+                )
+            agency = agency_map.get(row.get("agency", "").strip())
+            booking_channel = booking_channel_map.get(
+                row.get("booking_channel", "").strip()
+            )
+            # country = country_map.get(row["country"].strip())
+            # core_destination = core_destination_map.get(
+            #     row.get("core_destination", "").strip()
+            # )
+            # portfolio = portfolio_map.get(row.get("portfolio", "Unknown").strip())
+
+            # consultant_l_name, consultant_f_name = row["tb_consultant"].split("/")
+
+            # consultant = await self._travel_service.get_consultant_by_name(
+            #     consultant_f_name, consultant_l_name
+            # )
+            # if consultant:
+            #     row["consultant_id"] = consultant.id
+            # else:
+            #     print(
+            #         f"No consultant found for {consultant_l_name}/{consultant_f_name}"
+            #     )
+            #     print(row)
+
+            # if row["portfolio"] != "":
+            #     portfolio = await self._travel_service.get_portfolio_by_name("Unknown")
+            # if row["portfolio"] != "":
+            #     portfolio = await self._travel_service.get_portfolio_by_name(
+            #         row["portfolio"].strip()
+            #     )
+            # if portfolio:
+            #     row["portfolio_id"] = portfolio.id
+            # elif row["portfolio"] != "":
+            #     print(f"Could not find portfolio {row['portfolio']}")
+
+            # prop = await self._travel_service.get_property_by_name(
+            #     row["property_name"],
+            #     row["portfolio_id"],
+            #     row.get("country_id", None),
+            #     row.get("core_destination_id", None),
+            # )
+            # if prop:
+            #     row["property_id"] = prop.id
+            # else:
+            #     print(
+            #         f"""
+            #         Could not find property {row['property_name']}/{row['portfolio_id']}/
+            #         {row.get('country_id', None)}/{row.get('core_destination_id', None)}
+            #         """
+            #     )
+            # if row["agency"] != "":
+            #     agency = await self._travel_service.get_agency_by_name(
+            #         row["agency"].strip()
+            #     )
+            #     if agency:
+            #         row["agency_id"] = agency.id
+            #     else:
+            #         print(f"Could not find agency {row['agency']}")
+            # if row["booking_channel"] != "":
+            #     booking_channel = (
+            #         await self._travel_service.get_booking_channel_by_name(
+            #             row["booking_channel"].strip()
+            #         )
+            #     )
+            #     if booking_channel:
+            #         row["booking_channel_id"] = booking_channel.id
+            #     elif row["booking_channel"] != "":
+            #         print(f"Could not find booking_channel {row['booking_channel']}")
+
             if country:
                 row["country_id"] = country.id
                 row["core_destination_id"] = country.core_destination_id
-            else:
-                core_destination = (
-                    await self._travel_service.get_core_destination_by_name(
-                        row["core_destination"].strip()
-                    )
-                )
-                if core_destination:
-                    row["core_destination_id"] = core_destination.id
-                else:
-                    print(
-                        f"No core destination found for {row['core_destination'].strip()}"
-                    )
-
-            consultant_l_name, consultant_f_name = row["tb_consultant"].split("/")
-
-            consultant = await self._travel_service.get_consultant_by_name(
-                consultant_f_name, consultant_l_name
-            )
             if consultant:
                 row["consultant_id"] = consultant.id
-            else:
-                print(
-                    f"No consultant found for {consultant_l_name}/{consultant_f_name}"
-                )
-                print(row)
-
-            if row["portfolio"] != "":
-                portfolio = await self._travel_service.get_portfolio_by_name("Unknown")
-            if row["portfolio"] != "":
-                portfolio = await self._travel_service.get_portfolio_by_name(
-                    row["portfolio"].strip()
-                )
-            if portfolio:
-                row["portfolio_id"] = portfolio.id
-            elif row["portfolio"] != "":
-                print(f"Could not find portfolio {row['portfolio']}")
-
-            prop = await self._travel_service.get_property_by_name(
-                row["property_name"],
-                row["portfolio_id"],
-                row.get("country_id", None),
-                row.get("core_destination_id", None),
-            )
             if prop:
                 row["property_id"] = prop.id
-            else:
-                print(
-                    f"""
-                    Could not find property {row['property_name']}/{row['portfolio_id']}/
-                    {row.get('country_id', None)}/{row.get('core_destination_id', None)}
-                    """
-                )
-            if row["agency"] != "":
-                agency = await self._travel_service.get_agency_by_name(
-                    row["agency"].strip()
-                )
-                if agency:
-                    row["agency_id"] = agency.id
-                else:
-                    print(f"Could not find agency {row['agency']}")
-            if row["booking_channel"] != "":
-                booking_channel = (
-                    await self._travel_service.get_booking_channel_by_name(
-                        row["booking_channel"].strip()
-                    )
-                )
-                if booking_channel:
-                    row["booking_channel_id"] = booking_channel.id
-                elif row["booking_channel"] != "":
-                    print(f"Could not find booking_channel {row['booking_channel']}")
+            if portfolio:
+                row["portfolio_id"] = portfolio.id
+            if agency:
+                row["agency_id"] = agency.id
+            if booking_channel:
+                row["booking_channel_id"] = booking_channel.id
 
             # Clean date fields
             row["date_in"] = datetime.strptime(row["date_in"], "%m/%d/%y").date()
@@ -480,19 +581,19 @@ class SourceTableBuilder:
 
     async def seed_db(self):
         """Seeds the database table given a source name."""
-        # # step 1 seed the source tables that do not reference other tables
-        # await self.seed_core_destinations()
-        # await self.seed_agencies()
-        # await self.seed_booking_channels()
-        # await self.seed_consultants()
-        # await self.seed_portfolios()
-        # # # # step 2 seed countries table that reference a core destination ID using lookup
-        # await self.seed_countries()
-        # # # step 3 seed properties that reference a country ID using lookup
-        # await self.seed_properties()
-        # # step 4 seed properties found during seed process that did not exist
-        # await self.seed_override_properties()
-        # # step 4 seed accommodation_logs that reference all of the above
+        # step 1 seed the source tables that do not reference other tables
+        await self.seed_core_destinations()
+        await self.seed_agencies()
+        await self.seed_booking_channels()
+        await self.seed_consultants()
+        await self.seed_portfolios()
+        # # # step 2 seed countries table that reference a core destination ID using lookup
+        await self.seed_countries()
+        # # step 3 seed properties that reference a country ID using lookup
+        await self.seed_properties()
+        # step 4 seed properties found during seed process that did not exist
+        await self.seed_override_properties()
+        # step 4 seed accommodation_logs that reference all of the above
         await self.seed_accommodation_logs()
 
     def read_csv(self, file_name) -> list[dict]:

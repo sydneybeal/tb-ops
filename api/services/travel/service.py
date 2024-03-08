@@ -51,12 +51,28 @@ class TravelService:
     async def add_accommodation_log(self, models: Sequence[AccommodationLog]) -> None:
         """Adds accommodation log model to the repository."""
         # Only add countries that don't already exist
+        # to_be_added = [
+        #     model
+        #     for model in models
+        #     if not await self._repo.get_accommodation_log(
+        #         model.primary_traveler, model.property_id, model.date_in, model.date_out
+        #     )
+        # ]
+        existing_records = await self._repo.get_all_accommodation_logs()
+        existing_combinations = {
+            (log.primary_traveler, log.property_id, log.date_in, log.date_out)
+            for log in existing_records
+        }
         to_be_added = [
             model
             for model in models
-            if not await self._repo.get_accommodation_log(
-                model.primary_traveler, model.property_id, model.date_in, model.date_out
+            if (
+                model.primary_traveler.strip(),
+                model.property_id,
+                model.date_in,
+                model.date_out,
             )
+            not in existing_combinations
         ]
         await self._repo.add_accommodation_log(to_be_added)
 
@@ -384,7 +400,7 @@ class TravelService:
 
         existing_property = await self.get_property_by_name(
             log_request.new_property_name,
-            log_request.new_property_portfolio_name,
+            log_request.new_property_portfolio_id,
             log_request.new_property_country_id,
             log_request.new_property_core_destination_id,
         )
@@ -402,7 +418,7 @@ class TravelService:
             # Create a new Property model instance
             new_property = Property(
                 name=log_request.new_property_name,
-                portfolio=log_request.new_property_portfolio_name,
+                portfolio_id=log_request.new_property_portfolio_id,
                 country_id=log_request.new_property_country_id,
                 core_destination_id=log_request.new_property_core_destination_id,
                 updated_by=log_request.updated_by,
@@ -421,7 +437,7 @@ class TravelService:
             # Fetch the newly created or existing property by name to get its ID
             property_created = await self.get_property_by_name(
                 log_request.new_property_name,
-                log_request.new_property_portfolio_name,
+                log_request.new_property_portfolio_id,
                 log_request.new_property_country_id,
                 log_request.new_property_core_destination_id,
             )
@@ -431,10 +447,19 @@ class TravelService:
     async def add_country(self, models: Sequence[Country]) -> None:
         """Adds country model to the repository."""
         # Only add countries that don't already exist
+        # to_be_added = [
+        #     model
+        #     for model in models
+        #     if not await self._repo.get_country_by_name(model.name)
+        # ]
+        existing_records = await self._repo.get_all_countries()
+        existing_country_names = {country.name for country in existing_records}
+
+        # Only add records that don't already exist
         to_be_added = [
             model
             for model in models
-            if not await self._repo.get_country_by_name(model.name)
+            if model.name.strip() not in existing_country_names
         ]
         # audit_logs = []
         # for model in to_be_added:
@@ -450,6 +475,10 @@ class TravelService:
         #     )
         # await self.process_audit_logs(audit_logs)
         await self._repo.add_country(to_be_added)
+
+    async def get_all_countries(self) -> Sequence[Country]:
+        """Gets all Country models."""
+        return await self._repo.get_all_countries()
 
     async def get_country_by_id(self, country_id: UUID) -> Country:
         """Gets a single Country model by name."""
@@ -467,10 +496,17 @@ class TravelService:
     async def add_core_destination(self, models: Sequence[CoreDestination]) -> None:
         """Adds core destination model to the repository."""
         # Only add countries that don't already exist
+        # to_be_added = [
+        #     model
+        #     for model in models
+        #     if not await self._repo.get_core_destination_by_name(model.name)
+        # ]
+        existing_records = await self._repo.get_all_core_destinations()
+        existing_dest_names = {dest.name for dest in existing_records}
+
+        # Only add records that don't already exist
         to_be_added = [
-            model
-            for model in models
-            if not await self._repo.get_core_destination_by_name(model.name)
+            model for model in models if model.name.strip() not in existing_dest_names
         ]
         # audit_logs = []
         # for model in to_be_added:
@@ -500,16 +536,33 @@ class TravelService:
     async def add_property(self, models: Sequence[Property]) -> None:
         """Adds Property models to the repository."""
         # Only add records that don't already exist
+        # to_be_added = [
+        #     model
+        #     for model in models
+        #     if not await self._repo.get_property_by_name(
+        #         model.name,
+        #         model.portfolio_id,
+        #         model.country_id,
+        #         model.core_destination_id,
+        #     )
+        # ]
+        existing_records = await self._repo.get_all_properties()
+        existing_combinations = {
+            (prop.name, prop.portfolio_id, prop.country_id, prop.core_destination_id)
+            for prop in existing_records
+        }
         to_be_added = [
             model
             for model in models
-            if not await self._repo.get_property_by_name(
-                model.name,
+            if (
+                model.name.strip(),
                 model.portfolio_id,
                 model.country_id,
                 model.core_destination_id,
             )
+            not in existing_combinations
         ]
+
         # audit_logs = []
         # for model in to_be_added:
         #     audit_logs.append(
@@ -524,6 +577,10 @@ class TravelService:
         #     )
         # await self.process_audit_logs(audit_logs)
         await self._repo.add_property(to_be_added)
+
+    async def get_all_properties(self) -> Sequence[Property]:
+        """Gets all Property models."""
+        return await self._repo.get_all_properties()
 
     async def process_property_request(
         self, property_request: PatchPropertyRequest
@@ -593,7 +650,7 @@ class TravelService:
         # Check for a name conflict with a different property
         existing_property_by_name = await self.get_property_by_name(
             property_request.name,
-            property_request.portfolio,
+            property_request.portfolio_id,
             property_request.country_id,
             core_destination_id,
         )
@@ -609,7 +666,8 @@ class TravelService:
         if existing_property_by_id:
             if (
                 existing_property_by_id.name == property_request.name
-                and existing_property_by_id.portfolio == property_request.portfolio
+                and existing_property_by_id.portfolio_id
+                == property_request.portfolio_id
                 and existing_property_by_id.country_id == property_request.country_id
                 and existing_property_by_id.core_destination_id == core_destination_id
             ):
@@ -619,7 +677,7 @@ class TravelService:
             updated_property = Property(
                 id=existing_property_by_id.id,  # Keep the same ID
                 name=property_request.name,
-                portfolio=property_request.portfolio,
+                portfolio_id=property_request.portfolio_id,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
                 updated_by=property_request.updated_by,
@@ -637,7 +695,7 @@ class TravelService:
             # If new, prepare the new property data
             new_property = Property(
                 name=property_request.name,
-                portfolio=property_request.portfolio,
+                portfolio_id=property_request.portfolio_id,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
                 updated_by=property_request.updated_by,
@@ -698,10 +756,12 @@ class TravelService:
     async def add_agency(self, models: Sequence[Agency]) -> None:
         """Adds Agency models to the repository."""
         # Only add records that don't already exist
+        existing_records = await self._repo.get_all_agencies()
+        existing_agency_names = {agency.name for agency in existing_records}
+
+        # Only add records that don't already exist
         to_be_added = [
-            model
-            for model in models
-            if not await self._repo.get_agency_by_name(model.name)
+            model for model in models if model.name.strip() not in existing_agency_names
         ]
         # audit_logs = []
         # for model in to_be_added:
@@ -846,10 +906,12 @@ class TravelService:
     async def add_booking_channel(self, models: Sequence[BookingChannel]) -> None:
         """Adds BookingChannel models to the repository."""
         # Only add records that don't already exist
+        existing_records = await self._repo.get_all_booking_channels()
+        existing_bc_names = {bc.name for bc in existing_records}
+
+        # Only add records that don't already exist
         to_be_added = [
-            model
-            for model in models
-            if not await self._repo.get_booking_channel_by_name(model.name)
+            model for model in models if model.name.strip() not in existing_bc_names
         ]
         # audit_logs = []
         # for model in to_be_added:
@@ -1002,11 +1064,14 @@ class TravelService:
     async def add_portfolio(self, models: Sequence[Portfolio]) -> None:
         """Adds Portfolio models to the repository."""
         # Only add records that don't already exist
+        existing_portfolios = await self._repo.get_all_portfolios()
+        existing_portfolio_names = {portfolio.name for portfolio in existing_portfolios}
+
+        # Only add records that don't already exist
         to_be_added = [
-            model
-            for model in models
-            if not await self._repo.get_portfolio_by_name(model.name)
+            model for model in models if model.name not in existing_portfolio_names
         ]
+
         # audit_logs = []
         # for model in to_be_added:
         #     audit_logs.append(
@@ -1034,13 +1099,29 @@ class TravelService:
     async def add_consultant(self, models: Sequence[Consultant]) -> None:
         """Adds BookingChannel models to the repository."""
         # Only add records that don't already exist
+        # old code - matches on first_name and last_name
+        # to_be_added = [
+        #     model
+        #     for model in models
+        #     if not await self._repo.get_consultant_by_name(
+        #         model.first_name, model.last_name
+        #     )
+        # ]
+        existing_records = await self._repo.get_all_consultants()
+        # Create a set of tuples for existing first_name and last_name combinations
+        existing_combinations = {
+            (cons.first_name, cons.last_name) for cons in existing_records
+        }
+
+        # Only add records that don't already exist based on both first_name and last_name
         to_be_added = [
             model
             for model in models
-            if not await self._repo.get_consultant_by_name(
-                model.first_name, model.last_name
-            )
+            if (model.first_name, model.last_name) not in existing_combinations
         ]
+
+        if to_be_added:
+            await self._repo.add_consultant(to_be_added)
         # audit_logs = []
         # for model in to_be_added:
         #     audit_logs.append(

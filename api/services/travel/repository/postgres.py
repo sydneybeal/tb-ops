@@ -190,6 +190,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 print(f"Successfully deleted log with ID: {log_id}.")
                 return True
 
+    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLog]:
+        """Gets all AccommodationLog models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.accommodation_logs
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                consultants = [AccommodationLog(**record) for record in records]
+                return consultants
+
     async def get_accommodation_log(
         self,
         primary_traveler: str,
@@ -316,7 +333,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         INSERT INTO public.properties (
             id,
             name,
-            portfolio,
+            portfolio_id,
             country_id,
             core_destination_id,
             created_at,
@@ -327,7 +344,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         )
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
-            portfolio = EXCLUDED.portfolio,
+            portfolio_id = EXCLUDED.portfolio_id,
             country_id = EXCLUDED.country_id,
             core_destination_id = EXCLUDED.core_destination_id,
             updated_at = EXCLUDED.updated_at,
@@ -344,7 +361,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 args = (
                     property_data.id,
                     property_data.name.strip(),
-                    property_data.portfolio.strip(),
+                    property_data.portfolio_id,
                     property_data.country_id,
                     property_data.core_destination_id,
                     property_data.created_at,
@@ -484,6 +501,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     return False
                 print(f"Successfully deleted property with ID: {property_id}.")
                 return True
+
+    async def get_all_properties(self) -> Sequence[Property]:
+        """Gets all Property models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.properties
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                properties = [Property(**record) for record in records]
+                return properties
 
     # Consultant
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:
@@ -846,6 +880,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     async def delete_country(self, countries: Sequence[Country]) -> None:
         """Deletes a sequence of Country models from the repository."""
         raise NotImplementedError
+
+    async def get_all_countries(self) -> Sequence[Country]:
+        """Gets all Country models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.countries
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                countries = [Country(**record) for record in records]
+                return countries
 
     async def get_countries_by_name(self, names: Sequence[str]) -> Sequence[Country]:
         """Returns the list of Country models in the repository by name."""

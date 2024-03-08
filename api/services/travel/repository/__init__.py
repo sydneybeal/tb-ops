@@ -63,6 +63,10 @@ class TravelRepository(ABC):
         """Gets a single AccommodationLog model in the repository by name."""
         raise NotImplementedError
 
+    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLog]:
+        """Gets all AccommodationLog models."""
+        raise NotImplementedError
+
     @abstractmethod
     async def get_accommodation_log_by_id(
         self,
@@ -117,11 +121,16 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_all_properties(self) -> Sequence[Property]:
+        """Gets all Property models."""
+        raise NotImplementedError
+
+    # Consultant
+    @abstractmethod
     async def get_all_consultants(self) -> Sequence[Consultant]:
         """Gets all Consultant models."""
         raise NotImplementedError
 
-    # Consultant
     @abstractmethod
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:
         """Adds a sequence of Consultant models to the repository."""
@@ -204,6 +213,10 @@ class TravelRepository(ABC):
     @abstractmethod
     async def get_country_by_id(self, country_id: UUID) -> None:
         """Gets a single Country model based on ID."""
+        raise NotImplementedError
+
+    async def get_all_countries(self) -> Sequence[Country]:
+        """Gets all Country models."""
         raise NotImplementedError
 
     @abstractmethod

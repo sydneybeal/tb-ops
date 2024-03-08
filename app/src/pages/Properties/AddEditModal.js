@@ -12,22 +12,25 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
     const [loading, setLoading] = useState(false);
     const [propertyId, setPropertyId] = useState(null);
     const [propertyName, setPropertyName] = useState('');
-    const [portfolioName, setPortfolioName] = useState('');
+    // const [selectedPortfolioId, setSelectedPortfolioId] = useState(n);
     const [selectedCountryId, setSelectedCountryId] = useState(null);
+    const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
     const [selectedCoreDestinationId, setSelectedCoreDestinationId] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
     const [countries, setCountries] = useState([]);
     const [relatedEntries, setRelatedEntries] = useState([]);
-    const [portfolioNames, setPortfolioNames] = useState([]);
-    const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
-    const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
-    const suggestionsRef = useRef(null);
+    const [portfolios, setPortfolios] = useState([]);
+    // const [portfolioNames, setPortfolioNames] = useState([]);
+    // const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
+    // const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
+    // const suggestionsRef = useRef(null);
     const [railId, setRailId] = useState('');
     const [shipId, setShipId] = useState('');
     const [touched, setTouched] = useState({
         propertyName: false,
         portfolioName: false,
         selectedCountryId: false,
+        selectedPortfolioId: false,
     });
 
     const handleFormSubmit = (e) => {
@@ -47,7 +50,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         const propertyToSubmit = {
             property_id: propertyId || null,
             name: propertyName || null,
-            portfolio: portfolioName,
+            portfolio_id: selectedPortfolioId || null,
             country_id: selectedCountryId || null,
             core_destination_id: selectedCoreDestinationId || null,
             updated_by: userDetails.email || ''
@@ -128,7 +131,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         if (!(propertyName || '').trim()) {
             errors.name = 'Missing property name';
         }
-        if (!(portfolioName || '').trim()) {
+        if (!(selectedPortfolioId || '').trim()) {
             errors.portfolio = 'Missing portfolio name';
         }
         const isCountryRequired = selectedCoreDestinationId !== shipId && selectedCoreDestinationId !== railId;
@@ -158,12 +161,12 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 instance.close();
             }
         }
-        if (!isOpen || !propertyId) return;
+        if (!isOpen) return;
 
         setLoading(true);
 
-        // Fetch countries and core destinations
-        Promise.all([
+
+        let promises = [
             fetch(`${process.env.REACT_APP_API}/v1/countries`, {
                 headers: {
                     'Authorization': `Bearer ${userDetails.token}`
@@ -174,18 +177,27 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     'Authorization': `Bearer ${userDetails.token}`
                 }
             }).then(res => res.json()),
-            fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+            fetch(`${process.env.REACT_APP_API}/v1/portfolios`, {
                 headers: {
                     'Authorization': `Bearer ${userDetails.token}`
                 }
             }).then(res => res.json()),
-            fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${propertyId}&identifier_type=property_id`, {
-                headers: {
-                    'Authorization': `Bearer ${userDetails.token}`
-                }
-            }).then(res => res.json())
-        ])
-            .then(([countriesData, coreDestinationsData, propertiesData, relatedEntriesData]) => {
+        ];
+
+        // Only add this promise if propertyId is not null
+        if (propertyId) {
+            promises.push(
+                fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${propertyId}&identifier_type=property_id`, {
+                    headers: {
+                        'Authorization': `Bearer ${userDetails.token}`
+                    }
+                }).then(res => res.json())
+            );
+        }
+
+        Promise.all(promises)
+            .then((results) => {
+                const [countriesData, coreDestinationsData, portfoliosData, relatedEntriesData] = results;
                 // Handle countries data
                 const formattedCountries = countriesData.map(country => ({
                     value: country.id,
@@ -203,22 +215,26 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 setRailId(railId || '');
                 setShipId(shipId || '');
 
-                // Handle properties data (for list of properties)
-                const portfolioNames = [...new Set(propertiesData.map(property => property.portfolio_name))];
-                setPortfolioNames(portfolioNames);
-                setFilteredPortfolioSuggestions(portfolioNames);
+                // Handle portfolios data
+                const formattedPortfolios = portfoliosData.map(portfolio => ({
+                    value: portfolio.id,
+                    label: portfolio.name
+                }));
+                setPortfolios(formattedPortfolios);
 
-                const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
-                parsedRelatedEntries.sort((a, b) => {
-                    if (a.date_in < b.date_in) {
-                        return -1;
-                    }
-                    if (a.date_in > b.date_in) {
-                        return 1;
-                    }
-                    return 0;
-                });
-                setRelatedEntries(parsedRelatedEntries);
+                if (relatedEntriesData) {
+                    const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
+                    parsedRelatedEntries.sort((a, b) => {
+                        if (a.date_in < b.date_in) {
+                            return -1;
+                        }
+                        if (a.date_in > b.date_in) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    setRelatedEntries(parsedRelatedEntries);
+                }
             })
             .catch((err) => {
                 console.error(err);
@@ -305,28 +321,29 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         } else if (isOpen && isEditMode && editPropertyData) {
             setPropertyId(editPropertyData.id);
             setPropertyName(editPropertyData.name);
-            setPortfolioName(editPropertyData.portfolio_name);
+            // setPortfolioName(editPropertyData.portfolio_name);
+            setSelectedPortfolioId(editPropertyData.portfolio_id);
             setSelectedCountryId(editPropertyData.country_id);
             setSelectedCoreDestinationId(editPropertyData.core_destination_id);
             setTouched({});
-            const filtered = portfolioNames.filter(portfolioName =>
-                portfolioName.toLowerCase().includes(editPropertyData.portfolio_name.toLowerCase())
-            );
-            setFilteredPortfolioSuggestions(filtered);
-            setShowPortfolioSuggestions(false);
+            // const filtered = portfolioNames.filter(portfolioName =>
+            //     portfolioName.toLowerCase().includes(editPropertyData.portfolio_name.toLowerCase())
+            // );
+            // setFilteredPortfolioSuggestions(filtered);
+            // setShowPortfolioSuggestions(false);
         }
-    }, [isOpen, isEditMode, editPropertyData, portfolioNames]);
+    }, [isOpen, isEditMode, editPropertyData]);
 
     const resetFormState = () => {
         setPropertyId(null);
         setPropertyName('');
-        setPortfolioName('');
         setSelectedCountryId(null);
+        setSelectedPortfolioId(null);
         setSelectedCoreDestinationId(null);
         setValidationErrors({});
         setTouched({});
-        setShowPortfolioSuggestions(false);
-        setFilteredPortfolioSuggestions([]);
+        // setShowPortfolioSuggestions(false);
+        // setFilteredPortfolioSuggestions([]);
         setRelatedEntries([]);
     };
 
@@ -358,52 +375,52 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }));
     };
 
-    const validatePortfolioName = (value) => {
-        if (!(value || '').trim()) {
-            return 'Missing portfolio name';
-        }
-        return '';
-    };
+    // const validatePortfolioName = (value) => {
+    //     if (!(value || '').trim()) {
+    //         return 'Missing portfolio name';
+    //     }
+    //     return '';
+    // };
 
-    const selectPortfolioSuggestion = (suggestion) => {
-        setPortfolioName(suggestion);
-        if (touched.portfolioName) {
-            setValidationErrors(prevErrors => ({
-                ...prevErrors,
-                portfolio: validatePortfolioName(suggestion),
-            }));
-        }
+    // const selectPortfolioSuggestion = (suggestion) => {
+    //     setPortfolioName(suggestion);
+    //     if (touched.portfolioName) {
+    //         setValidationErrors(prevErrors => ({
+    //             ...prevErrors,
+    //             portfolio: validatePortfolioName(suggestion),
+    //         }));
+    //     }
 
-        setFilteredPortfolioSuggestions([]);
-        setShowPortfolioSuggestions(false);
-    };
+    //     // setFilteredPortfolioSuggestions([]);
+    //     // setShowPortfolioSuggestions(false);
+    // };
 
-    const handlePortfolioNameChange = (e) => {
-        const value = e.target.value;
-        setPortfolioName(value);
+    // const handlePortfolioNameChange = (e) => {
+    //     const value = e.target.value;
+    //     setPortfolioName(value);
 
-        setTouched(prev => ({ ...prev, portfolioName: true }));
+    //     setTouched(prev => ({ ...prev, portfolioName: true }));
 
-        // Only validate in real-time if the field has been touched
-        if (touched.portfolioName) {
-            setValidationErrors(prevErrors => ({
-                ...prevErrors,
-                portfolio: validatePortfolioName(value),
-            }));
-        }
-        if (value.trim() === '') {
-            // If the input is empty, clear suggestions and don't show the list
-            setFilteredPortfolioSuggestions(portfolioNames);
-            setShowPortfolioSuggestions(true);
-        } else {
-            // Filter and show suggestions based on the input
-            const filtered = portfolioNames.filter(portfolioName =>
-                portfolioName.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredPortfolioSuggestions(filtered);
-            setShowPortfolioSuggestions(true);
-        }
-    };
+    //     // Only validate in real-time if the field has been touched
+    //     if (touched.portfolioName) {
+    //         setValidationErrors(prevErrors => ({
+    //             ...prevErrors,
+    //             portfolio: validatePortfolioName(value),
+    //         }));
+    //     }
+    //     // if (value.trim() === '') {
+    //     //     // If the input is empty, clear suggestions and don't show the list
+    //     //     setFilteredPortfolioSuggestions(portfolioNames);
+    //     //     setShowPortfolioSuggestions(true);
+    //     // } else {
+    //     //     // Filter and show suggestions based on the input
+    //     //     const filtered = portfolioNames.filter(portfolioName =>
+    //     //         portfolioName.toLowerCase().includes(value.toLowerCase())
+    //     //     );
+    //     //     setFilteredPortfolioSuggestions(filtered);
+    //     //     setShowPortfolioSuggestions(true);
+    //     // }
+    // };
 
     const validateSelectedCountryId = (value) => {
         const isCountryRequired = selectedCoreDestinationId !== shipId && selectedCoreDestinationId !== railId;
@@ -440,6 +457,36 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }
         return '';
     };
+
+    const validateSelectedPortfolioId = (value) => {
+        if (!(value || '').trim()) {
+            return 'Missing portfolio';
+        }
+        return '';
+    };
+
+
+    const handleSelectedPortfolioIdChange = (selectedOption) => {
+        setSelectedPortfolioId(selectedOption ? selectedOption.value : '');
+
+        // Only validate in real-time if the field has been touched
+        if (touched.selectedPortfolioId) {
+            setValidationErrors(prevErrors => ({
+                ...prevErrors,
+                portfolio: validateSelectedPortfolioId(selectedOption ? selectedOption.value : ''),
+            }));
+        }
+    };
+
+    const handleSelectedPortfolioIdBlur = () => {
+        setTouched(prev => ({ ...prev, selectedPortfolioId: true }));
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            portfolio: validateSelectedPortfolioId(selectedPortfolioId),
+        }));
+    };
+
+
 
     const handleShipChange = (e) => {
         const checked = e.target.checked;
@@ -533,10 +580,40 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                     marginBottom: '20px',
                                     // position: 'relative'
                                 }}>
-                                    <div
-                                        style={{ position: 'relative' }}
-                                    >
-                                        <input
+                                    {/* <div
+                                    style={{ position: 'relative' }}
+                                    > */}
+                                    <Select
+                                        placeholder="Select Portfolio"
+                                        id="portfolio_select"
+                                        value={portfolios.find(cons => cons.value === selectedPortfolioId) || ''}
+                                        onChange={handleSelectedPortfolioIdChange}
+                                        onBlur={handleSelectedPortfolioIdBlur}
+                                        options={portfolios}
+                                        isClearable
+                                        style={{ flexGrow: '1' }}
+                                        classNamePrefix="select" // Use this for prefixing generated class names
+                                        className={validationErrors.portfolio ? 'invalid-select' : ''} // This class is for the container
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: validationErrors.portfolio ? 'red' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: validationErrors.portfolio ? 'darkred' : provided['&:hover'].borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? (validationErrors.portfolio ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                    />
+                                    <label htmlFor="portfolio_select">
+                                        <span className="material-symbols-outlined">
+                                            store
+                                        </span>
+                                        Portfolio Name
+                                    </label>
+                                    {/* <input
                                             type="text"
                                             id="name"
                                             value={portfolioName}
@@ -579,7 +656,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                             store
                                         </span>
                                         Portfolio Name
-                                    </label>
+                                    </label> */}
                                 </div>
                                 <div className="row" style={{ marginBottom: '20px' }}>
                                     <Select
@@ -658,11 +735,15 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             <div className="modal-footer" style={{ zIndex: '-1' }}>
                 {!loading &&
                     <>
-                        <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                            <em className="grey-text">
-                                <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
-                            </em>
-                        </div>
+                        {isEditMode &&
+
+
+                            <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                <em className="grey-text">
+                                    <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
+                                </em>
+                            </div>
+                        }
                         {/* {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
                     <>
                         <div style={{ textAlign: 'center', paddingBottom: '20px' }}>

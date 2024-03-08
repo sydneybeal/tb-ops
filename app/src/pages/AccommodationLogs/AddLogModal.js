@@ -20,14 +20,15 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     const [consultants, setConsultants] = useState([]);
     const [bookingChannels, setBookingChannels] = useState([]);
     const [agencies, setAgencies] = useState([]);
+    const [portfolios, setPortfolios] = useState([]);
     const [railId, setRailId] = useState('');
     const [shipId, setShipId] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
     const [userNewPropertyInteractions, setUserNewPropertyInteractions] = useState({});
-    const [portfolioNames, setPortfolioNames] = useState([]);
-    const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
-    const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
-    const suggestionsRef = useRef(null);
+    // const [portfolioNames, setPortfolioNames] = useState([]);
+    // const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
+    // const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
+    // const suggestionsRef = useRef(null);
     // TODO? propertyNames, filteredPropertySuggestions, showPropertySuggestions?
     const [touched, setTouched] = useState({
         primaryTraveler: false,
@@ -49,8 +50,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             setNumPax(editLogData.num_pax);
             setSelectedAgencyId(editLogData.agency_id);
             setSelectedConsultantId(editLogData.consultant_id);
-            setFilteredPortfolioSuggestions([]);
-            setShowPortfolioSuggestions(false);
+            // setFilteredPortfolioSuggestions([]);
+            // setShowPortfolioSuggestions(false);
         }
     }, [isOpen, isEditMode, editLogData]);
 
@@ -85,14 +86,30 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     value: property.id,
                     label: `${property.name} (${property.country_name || property.core_destination_name})`,
                     name: property.name,
-                    portfolio: property.portfolio_name,
+                    portfolio_id: property.portfolio_id,
                     country_name: property.country_name,
                     core_destination_name: property.core_destination_name
                 }));
                 setProperties(formattedProperties);
-                const portfolioNames = [...new Set(data.map(property => property.portfolio_name))];
-                setPortfolioNames(portfolioNames);
-                setFilteredPortfolioSuggestions(portfolioNames);
+                // const portfolioNames = [...new Set(data.map(property => property.portfolio_name))];
+                // setPortfolioNames(portfolioNames);
+                // setFilteredPortfolioSuggestions(portfolioNames);
+            })
+            .catch((err) => console.error(err));
+
+        // Fetch portfolios
+        fetch(`${process.env.REACT_APP_API}/v1/portfolios`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                const formattedPortfolios = data.map((portfolio) => ({
+                    value: portfolio.id,
+                    label: portfolio.name
+                }));
+                setPortfolios(formattedPortfolios);
             })
             .catch((err) => console.error(err));
 
@@ -299,9 +316,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             new_agency_name: newAgencyName || null,
             booking_channel_id: log.booking_channel_id ? (log.booking_channel_id !== '' ? log.booking_channel_id : null) : null,
             // if property_id was selected, but then changed to new_property, set property_id as null instead of ''
-            property_id: log.new_property_name || log.new_property_portfolio_name || log.new_property_country_id || log.new_property_core_destination_id ? null : log.property_id,
+            property_id: log.new_property_name || log.new_property_portfolio_id || log.new_property_country_id || log.new_property_core_destination_id ? null : log.property_id,
             new_property_name: log.new_property_name || null,
             new_property_portfolio_name: log.new_property_portfolio_name || null,
+            new_property_portfolio_id: log.new_property_portfolio_id || null,
             new_property_country_id: log.new_property_country_id || null,
             new_property_core_destination_id: log.new_property_core_destination_id || null,
             new_property_core_destination_name: log.new_property_core_destination_name || null,
@@ -730,7 +748,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             }
         }
 
-        if (['new_property_name', 'new_property_country_id', 'new_property_portfolio_name'].includes(field)) {
+        if (['new_property_name', 'new_property_country_id', 'new_property_portfolio_id'].includes(field)) {
             setUserNewPropertyInteractions({
                 ...userNewPropertyInteractions,
                 [index]: true
@@ -767,7 +785,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 break;
         }
 
-        if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_core_destination_name', 'new_property_portfolio_name', 'is_new_property'].includes(field)) {
+        if (['property_id', 'new_property_name', 'new_property_country_id', 'new_property_core_destination_name', 'new_property_portfolio_id'].includes(field)) {
             const propertyErrors = validateProperty(updatedLogs[index], index);
 
             // Clear previous property-related errors
@@ -791,26 +809,26 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             // It's a direct input change, handle it accordingly
             handleLogChange(index, fieldOrSelectedOption, value);
 
-            if (fieldOrSelectedOption === 'new_property_portfolio_name') {
-                if (value.trim() === '') {
-                    // If the input is empty, clear suggestions and don't show the list
-                    setFilteredPortfolioSuggestions(portfolioNames);
-                    setShowPortfolioSuggestions(true);
-                } else {
-                    // Filter and show suggestions based on the input
-                    const filtered = portfolioNames.filter(portfolioName =>
-                        portfolioName.toLowerCase().includes(value.toLowerCase())
-                    );
-                    setFilteredPortfolioSuggestions(filtered);
-                    setShowPortfolioSuggestions(true);
-                }
-            }
+            // if (fieldOrSelectedOption === 'new_property_portfolio_name') {
+            //     if (value.trim() === '') {
+            //         // If the input is empty, clear suggestions and don't show the list
+            //         setFilteredPortfolioSuggestions(portfolioNames);
+            //         setShowPortfolioSuggestions(true);
+            //     } else {
+            //         // Filter and show suggestions based on the input
+            //         const filtered = portfolioNames.filter(portfolioName =>
+            //             portfolioName.toLowerCase().includes(value.toLowerCase())
+            //         );
+            //         setFilteredPortfolioSuggestions(filtered);
+            //         setShowPortfolioSuggestions(true);
+            //     }
+            // }
         } else {
             // It's a selection from the dropdown
             const selectedOption = fieldOrSelectedOption;
             handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
             handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
-            handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio : '');
+            handleLogChange(index, 'portfolio_id', selectedOption ? selectedOption.portfolio_id : '');
             handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
             handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
         }
@@ -836,13 +854,15 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
     const validatePropertyAndBookingChannel = (index) => {
         const log = accommodationLogs[index];
-        const portfolioName = log.portfolio_name || log.new_property_portfolio_name || '';
+        // const portfolioName = log.portfolio_name || log.new_property_portfolio_name || '';
 
         // TODO see if need to look for "Elewana" booking channel too
         const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label === "Cheli & Peacock")?.value;
         const directChannelId = bookingChannels.find(channel => channel.label === "Direct")?.value;
 
-        if (portfolioName === "Elewana Collection" && log.booking_channel_id === cheliAndPeacockChannelId) {
+        const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label === "Elewana Collection")?.value;
+
+        if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to Direct",
@@ -854,11 +874,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         }
     };
 
-    const selectPortfolioSuggestion = (index, suggestion) => {
-        handlePropertyChange(index, 'new_property_portfolio_name', suggestion);
-        setFilteredPortfolioSuggestions([]);
-        setShowPortfolioSuggestions(false);
-    };
+    // const selectPortfolioSuggestion = (index, suggestion) => {
+    //     handlePropertyChange(index, 'new_property_portfolio_name', suggestion);
+    //     setFilteredPortfolioSuggestions([]);
+    //     setShowPortfolioSuggestions(false);
+    // };
 
 
     const handleRemoveClick = (index) => {
@@ -1190,7 +1210,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 {/* Property Info */}
                                 {userDetails.role === 'admin' ? (
                                     <>
-                                        {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_name)) && (
+                                        {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_id)) && (
                                             <div className="row">
                                                 <div>
                                                     <em className="grey-text text-lighten-1">
@@ -1205,11 +1225,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                 handleLogChange(index, 'new_property_core_destination_id', '');
                                                                 handleLogChange(index, 'new_property_name', '');
                                                                 handleLogChange(index, 'new_property_portfolio_name', '');
+                                                                handleLogChange(index, 'new_property_portfolio_id', '');
                                                                 handleLogChange(index, 'new_property_country_name', '');
                                                                 // handleLogChange(index, 'new_property_is_ship', false);
                                                                 // handleLogChange(index, 'new_property_is_rail', '');
-                                                                setShowPortfolioSuggestions(false);
-                                                                setFilteredPortfolioSuggestions(portfolioNames);
+                                                                // setShowPortfolioSuggestions(false);
+                                                                // setFilteredPortfolioSuggestions(portfolioNames);
                                                             }}
                                                         >
                                                             <span className="material-symbols-outlined">
@@ -1274,9 +1295,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         handleLogChange(index, 'new_property_core_destination_id', '');
                                                                         handleLogChange(index, 'new_property_name', '');
                                                                         handleLogChange(index, 'new_property_portfolio_name', '');
+                                                                        handleLogChange(index, 'new_property_portfolio_id', '');
                                                                         handleLogChange(index, 'new_property_country_name', '');
-                                                                        setShowPortfolioSuggestions(false);
-                                                                        setFilteredPortfolioSuggestions(portfolioNames);
+                                                                        // setShowPortfolioSuggestions(false);
+                                                                        // setFilteredPortfolioSuggestions(portfolioNames);
                                                                     }}
                                                                 >
                                                                     Cancel
@@ -1302,8 +1324,44 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         Property Name
                                                                     </label>
                                                                 </div>
-                                                                <div className="col s6" style={{ position: 'relative' }}>
-                                                                    <div>
+                                                                <div
+                                                                    className="col s6"
+                                                                    style={{ position: 'relative' }}
+                                                                >
+                                                                    <Select
+                                                                        placeholder="Select Portfolio"
+                                                                        id="portfolio_select"
+                                                                        value={portfolios.find(cons => cons.value === log.new_property_portfolio_id) || ''}
+                                                                        onChange={(selectedOption) => {
+                                                                            handleLogChange(index, 'new_property_portfolio_id', selectedOption ? selectedOption.value : '');
+                                                                            handleLogChange(index, 'new_property_portfolio_name', selectedOption ? selectedOption.label : '');
+                                                                        }}
+                                                                        // onBlur={handleSelectedPortfolioIdBlur}
+                                                                        options={portfolios}
+                                                                        isClearable
+                                                                        style={{ flexGrow: '1' }}
+                                                                        classNamePrefix="select" // Use this for prefixing generated class names
+                                                                        className={validationErrors.portfolio ? 'invalid-select' : ''} // This class is for the container
+                                                                        styles={{
+                                                                            control: (provided, state) => ({
+                                                                                ...provided,
+                                                                                borderColor: validationErrors.portfolio ? 'red' : provided.borderColor,
+                                                                                '&:hover': {
+                                                                                    borderColor: validationErrors.portfolio ? 'darkred' : provided['&:hover'].borderColor,
+                                                                                },
+                                                                                boxShadow: state.isFocused ? (validationErrors.portfolio ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                                            }),
+                                                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                        }}
+                                                                        menuPortalTarget={document.body}
+                                                                    />
+                                                                    <label htmlFor="portfolio_select">
+                                                                        <span className="material-symbols-outlined">
+                                                                            store
+                                                                        </span>
+                                                                        Portfolio Name
+                                                                    </label>
+                                                                    {/* <div>
                                                                         <input
                                                                             type="text"
                                                                             id="new_property_portfolio_name"
@@ -1345,7 +1403,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             store
                                                                         </span>
                                                                         Portfolio Name
-                                                                    </label>
+                                                                    </label> */}
                                                                 </div>
                                                             </div>
                                                             <div className="row">
