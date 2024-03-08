@@ -12,9 +12,15 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-CREATE TABLE IF NOT EXISTS users (
+-- DROP TABLE IF EXISTS public.audit_logs CASCADE;
+
+CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID NOT NULL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    hashed_password VARCHAR(255) NOT NULL,
-    role VARCHAR(255) NOT NULL
+    table_name VARCHAR(255) NOT NULL,
+    record_id UUID NOT NULL,
+    user_name VARCHAR(255) NOT NULL,
+    before_value JSON NOT NULL,
+    after_value JSON NOT NULL,
+    "action" VARCHAR(255) NOT NULL,
+    action_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

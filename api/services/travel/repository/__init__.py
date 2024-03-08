@@ -25,6 +25,7 @@ from api.services.travel.models import (
     Consultant,
     Agency,
     BookingChannel,
+    Portfolio,
 )
 
 
@@ -87,7 +88,7 @@ class TravelRepository(ABC):
     async def get_property_by_name(
         self,
         name: str,
-        portfolio_name: str,
+        portfolio_id: UUID,
         country_id: UUID,
         core_destination_id: UUID,
     ) -> Property:
@@ -303,4 +304,20 @@ class TravelRepository(ABC):
     @abstractmethod
     async def delete_booking_channel(self, booking_channel_id: UUID) -> bool:
         """Deletes a sequence of BookingChannel models from the repository."""
+        raise NotImplementedError
+
+    # Portfolio
+    @abstractmethod
+    async def add_portfolio(self, portfolios: Sequence[Portfolio]) -> None:
+        """Adds a sequence of Portfolio models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_portfolio_by_name(self, name: str) -> Portfolio:
+        """Gets a single Portfolio model based on name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_portfolios(self) -> Sequence[Portfolio]:
+        """Gets all Portfolio models."""
         raise NotImplementedError

@@ -132,6 +132,13 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
+                                <Link to={'/portfolios'} className="text-bold">
+                                    Manage Portfolios
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
                                 <Link to={'/audit_logs'} className="text-bold">
                                     Audit Logs
                                 </Link>

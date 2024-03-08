@@ -116,8 +116,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.date_out,
                 al.num_pax,
                 p.name AS property_name,
-                p.portfolio AS property_portfolio,
-                p.representative AS property_representative,
+                p.id AS property_portfolio_id,
+                pf.name AS property_portfolio,
                 bc.name AS booking_channel_name,
                 a.name AS agency_name,
                 al.consultant_id,
@@ -131,6 +131,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.updated_by
             FROM public.accommodation_logs al
             JOIN public.properties p ON al.property_id = p.id
+            JOIN public.portfolios pf ON p.portfolio_id = pf.id
             JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
@@ -166,7 +167,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             elif key == "country_name":
                 query_conditions.append(f"c.name = '{value}'")
             elif key == "portfolio_name":
-                query_conditions.append(f"p.portfolio = '{value}'")
+                query_conditions.append(f"pf.name = '{value}'")
             elif key == "property_name":
                 query_conditions.append(f"p.name = '{value}'")
             elif key == "core_destination_name":
@@ -185,6 +186,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"booking_channel_id = '{value}'")
             elif key == "agency_id":
                 query_conditions.append(f"agency_id = '{value}'")
+            elif key == "portfolio_id":
+                query_conditions.append(f"portfolio_id = '{value}'")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)
@@ -201,8 +204,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.date_out,
                 al.num_pax,
                 p.name AS property_name,
-                p.portfolio AS property_portfolio,
-                p.representative AS property_representative,
+                pf.name AS property_portfolio,
+                p.portfolio_id AS property_portfolio_id,
                 bc.name AS booking_channel_name,
                 a.name AS agency_name,
                 al.consultant_id,
@@ -216,6 +219,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.updated_by
             FROM public.accommodation_logs al
             JOIN public.properties p ON al.property_id = p.id
+            JOIN public.portfolios pf ON p.portfolio_id = pf.id
             JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
@@ -272,13 +276,15 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.name,
                 cd.name as core_destination_name,
                 c.name as country_name,
-                p.portfolio as portfolio_name,
+                pf.name as portfolio_name,
+                p.portfolio_id as portfolio_id,
                 cd.id as core_destination_id,
                 c.id country_id,
                 p.created_at,
                 p.updated_at,
                 p.updated_by
             FROM public.properties p
+            JOIN public.portfolios pf ON p.portfolio_id = pf.id
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id
             ORDER BY p.name asc

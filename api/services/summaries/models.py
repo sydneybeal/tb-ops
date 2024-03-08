@@ -44,6 +44,7 @@ class AccommodationLogSummary(BaseModel):
     date_out: date
     num_pax: int
     property_name: str
+    property_portfolio_id: UUID
     property_portfolio: str
     booking_channel_name: Optional[str] = None
     agency_name: Optional[str] = None
@@ -84,6 +85,7 @@ class PropertySummary(BaseModel):
     core_destination_name: str
     country_name: Optional[str] = None
     portfolio_name: str
+    portfolio_id: UUID
     core_destination_id: UUID
     country_id: Optional[UUID] = None
     created_at: datetime

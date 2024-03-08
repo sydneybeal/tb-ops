@@ -41,6 +41,7 @@ from api.services.travel.models import (
     Agency,
     Consultant,
     CoreDestination,
+    Portfolio,
     PatchAccommodationLogRequest,
     PatchAgencyRequest,
     PatchBookingChannelRequest,
@@ -452,6 +453,18 @@ def make_app(
         # If the deletion failed (property not found)
         else:
             raise HTTPException(status_code=404, detail="Agency not found")
+
+    @app.get(
+        "/v1/portfolios",
+        operation_id="get_portfolios",
+        response_model=list[Portfolio],
+        tags=["portfolios"],
+    )
+    async def get_all_portfolios(
+        current_user: User = Depends(get_current_user),
+    ) -> list[Agency] | JSONResponse:
+        """Get all Agency models."""
+        return await travel_svc.get_all_portfolios()
 
     @app.get(
         "/v1/bed_night_report",

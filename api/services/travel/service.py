@@ -20,7 +20,6 @@ from uuid import UUID
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.summaries.service import SummaryService
-from api.services.summaries.models import AccommodationLogSummary
 from api.services.travel.models import (
     AccommodationLog,
     PatchAccommodationLogRequest,
@@ -32,6 +31,7 @@ from api.services.travel.models import (
     PatchConsultantRequest,
     CoreDestination,
     Country,
+    Portfolio,
     Property,
     PatchPropertyRequest,
 )
@@ -504,7 +504,10 @@ class TravelService:
             model
             for model in models
             if not await self._repo.get_property_by_name(
-                model.name, model.portfolio, model.country_id, model.core_destination_id
+                model.name,
+                model.portfolio_id,
+                model.country_id,
+                model.core_destination_id,
             )
         ]
         # audit_logs = []
@@ -653,13 +656,13 @@ class TravelService:
     async def get_property_by_name(
         self,
         name: str,
-        portfolio_name: str,
+        portfolio_id: UUID,
         country_id: Optional[str],
         core_destination_id: Optional[str],
     ) -> Property:
         """Gets a single Property model by name, portfolio, country, core_destination."""
         return await self._repo.get_property_by_name(
-            name, portfolio_name, country_id, core_destination_id
+            name, portfolio_id, country_id, core_destination_id
         )
 
     async def get_property_by_id(self, property_id: UUID) -> Property:
@@ -994,6 +997,38 @@ class TravelService:
         )
         await self.process_audit_logs(audit_log)
         return deleted
+
+    # Portfolio
+    async def add_portfolio(self, models: Sequence[Portfolio]) -> None:
+        """Adds Portfolio models to the repository."""
+        # Only add records that don't already exist
+        to_be_added = [
+            model
+            for model in models
+            if not await self._repo.get_portfolio_by_name(model.name)
+        ]
+        # audit_logs = []
+        # for model in to_be_added:
+        #     audit_logs.append(
+        #         AuditLog(
+        #             table_name="portfolios",
+        #             record_id=model.id,
+        #             user_name=model.updated_by,
+        #             before_value={},
+        #             after_value=model.dict(),
+        #             action="insert",
+        #         )
+        #     )
+        # await self.process_audit_logs(audit_logs)
+        await self._repo.add_portfolio(to_be_added)
+
+    async def get_portfolio_by_name(self, name: str) -> Portfolio:
+        """Gets a single Portfolio model by name."""
+        return await self._repo.get_portfolio_by_name(name)
+
+    async def get_all_portfolios(self) -> Sequence[Portfolio]:
+        """Gets all Agency models."""
+        return await self._repo.get_all_portfolios()
 
     # Consultant
     async def add_consultant(self, models: Sequence[Consultant]) -> None:

@@ -13,11 +13,11 @@
 # limitations under the License.
 
 """Seeds database tables with historical data."""
-import asyncio
-import asyncpg
 import csv
 import uuid
 from datetime import datetime
+import asyncio
+import asyncpg
 from api.services.travel.models import (
     CoreDestination,
     Country,
@@ -26,6 +26,7 @@ from api.services.travel.models import (
     AccommodationLog,
     Agency,
     BookingChannel,
+    Portfolio,
 )
 from api.services.travel.service import TravelService
 
@@ -44,6 +45,7 @@ class SourceTableBuilder:
             "consultants": self.read_csv("consultants"),
             "properties": self.read_csv("properties"),
             "accommodation_logs": self.read_csv("accommodation_logs"),
+            "portfolios": self.read_csv("portfolios"),
         }
 
     async def seed_core_destinations(self):
@@ -114,6 +116,48 @@ class SourceTableBuilder:
         await self._travel_service.add_consultant(records_to_add)
         print(f"Successfully seeded {len(records_to_add)} Consultant records.")
 
+    async def seed_portfolios(self):
+        """Seeds portfolios into the DB."""
+        # # Old code - keep template for previous Excel sheets
+        # records_to_add = []
+        # properties = self.raw_data.get("properties", [])
+
+        # # Create a set of distinct portfolio names, defaulting to "Unknown" if blank
+        # portfolio_names = {
+        #     prop.get("portfolio", "Unknown").strip() or "Unknown" for prop in properties
+        # }
+
+        # # Prepare list of portfolios to add, each as a dict
+        # portfolios_to_add = [{"name": name} for name in portfolio_names]
+
+        # for row in portfolios_to_add:
+        #     # Add UUID and timestamps
+        #     row["id"] = uuid.uuid4()
+        #     row["created_at"] = datetime.now()
+        #     row["updated_at"] = datetime.now()
+        #     row["updated_by"] = "Initialization script"
+
+        #     # Convert row dict to model instance
+        #     record = Portfolio(**row)
+        #     records_to_add.append(record)
+
+        # await self._travel_service.add_portfolio(records_to_add)
+        # print(f"Successfully seeded {len(records_to_add)} Portfolio records.")
+        records_to_add = []
+        for row in self.raw_data["portfolios"]:
+            # Add UUID and timestamps
+            row["id"] = uuid.uuid4()
+            row["created_at"] = datetime.now()
+            row["updated_at"] = datetime.now()
+            row["updated_by"] = "Initialization script"
+
+            # Convert row dict to model instance
+            record = Portfolio(**row)
+            records_to_add.append(record)
+
+        await self._travel_service.add_portfolio(records_to_add)
+        print(f"Successfully seeded {len(records_to_add)} new Portfolio records.")
+
     async def seed_countries(self):
         """Seeds countries into the DB with their appropriate core destination ID."""
         records_to_add = []
@@ -148,14 +192,14 @@ class SourceTableBuilder:
             {
                 "name": "Waldorf Astoria Cairo Helipolis",
                 "portfolio": "Unknown",
-                "representative": "Unknown",
+                # "representative": "Unknown",
                 "core_destination": "Africa",
                 "country": "Egypt",
             },
             {
                 "name": "Mbali Mbali Gombe Lodge",
                 "portfolio": "Unknown",
-                "representative": "Unknown",
+                # "representative": "Unknown",
                 "core_destination": "Africa",
                 "country": "Tanzania",
             },
@@ -177,6 +221,17 @@ class SourceTableBuilder:
                     row["core_destination_id"] = core_destination.id
                 else:
                     print(f"Core destination {row['core_destination']} not found.")
+
+            portfolio = await self._travel_service.get_portfolio_by_name(
+                row["portfolio"]
+            )
+            if portfolio:
+                row["portfolio_id"] = portfolio.id
+            else:
+                print(f"No portfolio found for {row['portfolio']}")
+                print(row)
+
+            del row["portfolio"]
 
             # Add UUID and timestamps
             row["id"] = uuid.uuid4()
@@ -215,13 +270,28 @@ class SourceTableBuilder:
             del row["core_destination"]
             del row["country"]
 
+            if row.get("portfolio", "") == "":
+                portfolio_name = "Unknown"
+            else:
+                portfolio_name = row["portfolio"].strip()
+
+            portfolio = await self._travel_service.get_portfolio_by_name(portfolio_name)
+            if portfolio:
+                row["portfolio_id"] = portfolio.id
+            else:
+                print(f"No portfolio found for {portfolio_name}")
+                print(row)
+
+            del row["portfolio"]
+            del row["representative"]
+
             # Add UUID and timestamps
             row["id"] = uuid.uuid4()
             row["created_at"] = datetime.now()
             row["updated_at"] = datetime.now()
             row["updated_by"] = "Initialization script"
-            if row.get("portfolio", "") == "":
-                row["portfolio"] = "Unknown"
+            # if row.get("portfolio", "") == "":
+            #     row["portfolio"] = "Unknown"
 
             # Convert row dict to model instance
             record = Property(**row)
@@ -306,9 +376,20 @@ class SourceTableBuilder:
                 )
                 print(row)
 
+            if row["portfolio"] != "":
+                portfolio = await self._travel_service.get_portfolio_by_name("Unknown")
+            if row["portfolio"] != "":
+                portfolio = await self._travel_service.get_portfolio_by_name(
+                    row["portfolio"].strip()
+                )
+            if portfolio:
+                row["portfolio_id"] = portfolio.id
+            elif row["portfolio"] != "":
+                print(f"Could not find portfolio {row['portfolio']}")
+
             prop = await self._travel_service.get_property_by_name(
                 row["property_name"],
-                row["portfolio"],
+                row["portfolio_id"],
                 row.get("country_id", None),
                 row.get("core_destination_id", None),
             )
@@ -317,7 +398,7 @@ class SourceTableBuilder:
             else:
                 print(
                     f"""
-                    Could not find property {row['property_name']}/{row['portfolio']}/
+                    Could not find property {row['property_name']}/{row['portfolio_id']}/
                     {row.get('country_id', None)}/{row.get('core_destination_id', None)}
                     """
                 )
@@ -404,9 +485,10 @@ class SourceTableBuilder:
         # await self.seed_agencies()
         # await self.seed_booking_channels()
         # await self.seed_consultants()
-        # # step 2 seed countries table that reference a core destination ID using lookup
+        # await self.seed_portfolios()
+        # # # # step 2 seed countries table that reference a core destination ID using lookup
         # await self.seed_countries()
-        # # step 3 seed properties that reference a country ID using lookup
+        # # # step 3 seed properties that reference a country ID using lookup
         # await self.seed_properties()
         # # step 4 seed properties found during seed process that did not exist
         # await self.seed_override_properties()

@@ -40,6 +40,16 @@ class Agency(BaseModel):
     updated_by: str
 
 
+class Portfolio(BaseModel):
+    """Record for a portfolio that operates properties."""
+
+    id: UUID = Field(default_factory=uuid4)
+    name: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+
+
 class BookingChannel(BaseModel):
     """Record for an external booking channel."""
 
@@ -84,7 +94,7 @@ class Property(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     name: str
-    portfolio: str
+    portfolio_id: Optional[UUID] = None
     representative: Optional[str] = None
     country_id: Optional[UUID] = None
     core_destination_id: Optional[UUID] = None
@@ -140,6 +150,7 @@ class PatchAccommodationLogRequest(BaseModel):
     # either selected property or NewPropertyEntity for property
     property_id: Optional[UUID] = None
     new_property_name: Optional[str] = None
+    new_property_portfolio_id: Optional[UUID] = None
     new_property_portfolio_name: Optional[str] = None
     new_property_country_id: Optional[UUID] = None
     new_property_core_destination_id: Optional[UUID] = None
@@ -164,7 +175,7 @@ class PatchPropertyRequest(BaseModel):
 
     property_id: Optional[UUID] = None
     name: str
-    portfolio: str
+    portfolio_id: Optional[UUID] = None
     country_id: Optional[UUID] = None
     core_destination_id: Optional[UUID] = None
     updated_by: str

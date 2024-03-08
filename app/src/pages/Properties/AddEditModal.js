@@ -658,43 +658,48 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             <div className="modal-footer" style={{ zIndex: '-1' }}>
                 {!loading &&
                     <>
-                        {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
-                            <>
-                                <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                                    <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
-                                    {relatedEntries.slice(0, 5).map((item, index) => (
-                                        <div key={index}>
-                                            <div>
-                                                <span className="material-symbols-outlined">
-                                                    hiking
-                                                </span>
-                                                <span className="text-bold">{item.primary_traveler}  </span>
-                                                <div className="chip blue lighten-5">
-                                                    <span className="material-symbols-outlined">
-                                                        flight_land
-                                                    </span>
-                                                    {item.date_in}
-                                                </div>
-                                                to&nbsp;
-                                                <div className="chip blue lighten-5">
-                                                    <span className="material-symbols-outlined">
-                                                        flight_takeoff
-                                                    </span>
-                                                    {item.date_out}
-                                                </div>
-                                            </div>
+                        <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                            <em className="grey-text">
+                                <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
+                            </em>
+                        </div>
+                        {/* {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
+                    <>
+                        <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                            <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
+                            {relatedEntries.slice(0, 5).map((item, index) => (
+                                <div key={index}>
+                                    <div>
+                                        <span className="material-symbols-outlined">
+                                            hiking
+                                        </span>
+                                        <span className="text-bold">{item.primary_traveler}  </span>
+                                        <div className="chip blue lighten-5">
+                                            <span className="material-symbols-outlined">
+                                                flight_land
+                                            </span>
+                                            {item.date_in}
                                         </div>
-                                    ))}
-                                    {relatedEntries.length > 5 && (
-                                        <p className="grey-text">and {relatedEntries.length - 5} more...</p>
-                                    )}
+                                        to&nbsp;
+                                        <div className="chip blue lighten-5">
+                                            <span className="material-symbols-outlined">
+                                                flight_takeoff
+                                            </span>
+                                            {item.date_out}
+                                        </div>
+                                    </div>
                                 </div>
-                            </>
-                        ) : (
-                            <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                                <em className="grey-text text-lighten-1">No associated service provider entries.</em>
-                            </div>
-                        )}
+                            ))}
+                            {relatedEntries.length > 5 && (
+                                <p className="grey-text">and {relatedEntries.length - 5} more...</p>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                        <em className="grey-text text-lighten-1">No associated service provider entries.</em>
+                    </div>
+                )} */}
                         <div style={{ paddingBottom: '20px' }}>
                             <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                                 Close

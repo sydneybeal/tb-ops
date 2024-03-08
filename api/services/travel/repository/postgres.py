@@ -31,6 +31,7 @@ from api.services.travel.models import (
     Consultant,
     Agency,
     BookingChannel,
+    Portfolio,
 )
 
 
@@ -271,8 +272,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             INSERT INTO public.properties (
                 id,
                 name,
-                portfolio,
-                representative,
+                portfolio_id,
                 country_id,
                 core_destination_id,
                 created_at,
@@ -280,9 +280,9 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 updated_by
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9
+                $1, $2, $3, $4, $5, $6, $7, $8
             )
-            ON CONFLICT (name, portfolio, country_id, core_destination_id) DO NOTHING;
+            ON CONFLICT (name, portfolio_id, country_id, core_destination_id) DO NOTHING;
             """
         )
         async with pool.acquire() as con:
@@ -294,8 +294,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     (
                         prop.id,
                         prop.name.strip(),
-                        prop.portfolio.strip(),
-                        prop.representative.strip() if prop.representative else None,
+                        prop.portfolio_id,
                         prop.country_id,
                         prop.core_destination_id,
                         prop.created_at,
@@ -318,19 +317,17 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             id,
             name,
             portfolio,
-            representative,
             country_id,
             core_destination_id,
             created_at,
             updated_at,
             updated_by
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9
+            $1, $2, $3, $4, $5, $6, $7, $8
         )
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
             portfolio = EXCLUDED.portfolio,
-            representative = EXCLUDED.representative,
             country_id = EXCLUDED.country_id,
             core_destination_id = EXCLUDED.core_destination_id,
             updated_at = EXCLUDED.updated_at,
@@ -348,11 +345,6 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     property_data.id,
                     property_data.name.strip(),
                     property_data.portfolio.strip(),
-                    (
-                        property_data.representative.strip()
-                        if property_data.representative
-                        else None
-                    ),
                     property_data.country_id,
                     property_data.core_destination_id,
                     property_data.created_at,
@@ -382,7 +374,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     async def get_property_by_name(
         self,
         name: str,
-        portfolio_name: str,
+        portfolio_id: UUID,
         country_id: Optional[UUID],
         core_destination_id: Optional[UUID],
     ) -> Property:
@@ -407,13 +399,22 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         else:
             core_destination_id_uuid = core_destination_id
 
+        # Repeat the similar check and conversion for core_destination_id
+        if isinstance(portfolio_id, str) and portfolio_id:
+            try:
+                portfolio_id_uuid = UUID(portfolio_id)
+            except ValueError:
+                portfolio_id_uuid = None
+        else:
+            portfolio_id_uuid = portfolio_id
+
         # Pass the UUID conversions to the function
         pool = await self._get_pool()
         query = dedent(
             """
             SELECT * FROM public.properties
             WHERE UPPER(name) = $1
-            AND UPPER(portfolio) = $2
+            AND portfolio_id IS NOT DISTINCT FROM $2
             AND country_id IS NOT DISTINCT FROM $3
             AND core_destination_id IS NOT DISTINCT FROM $4
             """
@@ -426,7 +427,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 res = await con.fetchrow(
                     query,
                     name.strip().upper(),
-                    portfolio_name.strip().upper(),
+                    portfolio_id_uuid,
                     country_id_uuid,
                     core_destination_id_uuid,
                 )
@@ -1283,3 +1284,82 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     f"Successfully deleted booking channel with ID: {booking_channel_id}."
                 )
                 return True
+
+    async def add_portfolio(self, portfolios: Sequence[Portfolio]) -> None:
+        """Adds a sequence of Portfolio models to the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.portfolios (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (name) DO NOTHING;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        portfolio.id,
+                        portfolio.name.strip(),
+                        portfolio.created_at,
+                        portfolio.updated_at,
+                        portfolio.updated_by,
+                    )
+                    for portfolio in portfolios
+                ]
+                await con.executemany(query, args)
+        print(
+            f"Successfully added {len(args)} new portfolio record(s) to the repository."
+        )
+
+    async def get_portfolio_by_name(self, name: str) -> Portfolio:
+        """Gets a single Portfolio model based on name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.portfolios
+            WHERE UPPER(name) = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, name.strip().upper())
+                if res:
+                    return Portfolio(
+                        id=res["id"],
+                        name=res["name"],
+                        created_at=res["created_at"],
+                        updated_at=res["updated_at"],
+                        updated_by=res["updated_by"],
+                    )
+
+    async def get_all_portfolios(self) -> Sequence[Portfolio]:
+        """Gets all Portfolio models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.portfolios
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                agencies = [Portfolio(**record) for record in records]
+                return agencies

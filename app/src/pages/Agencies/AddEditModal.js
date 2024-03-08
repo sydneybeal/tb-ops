@@ -318,7 +318,12 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                 </div >
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
-                {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
+                <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                    <em className="grey-text">
+                        <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
+                    </em>
+                </div>
+                {/* {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
                     <>
                         <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
                             <h5 className="grey-text text-darken-3" style={{ marginBottom: '30px' }}>Related Service Provider Entries</h5>
@@ -354,7 +359,7 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                     <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
                         <em className="grey-text text-lighten-1">No associated service provider entries.</em>
                     </div>
-                )}
+                )} */}
                 <div style={{ paddingBottom: '20px' }}>
                     <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
                         Close
