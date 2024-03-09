@@ -67,9 +67,9 @@ const Navbar = ({ title }) => {
                     <a id="logo-container" href="/" className="brand-logo">
                         <img
                             id="front-page-logo"
-                            src={`${process.env.PUBLIC_URL}/tblogo.png`}
+                            src={`${process.env.PUBLIC_URL}/rrlogo.png`}
                             alt="tb operations"
-                            style={{ maxWidth: '100%', display: 'block', margin: '0 auto' }} />
+                            style={{ maxWidth: '70%', display: 'block', margin: '0 auto' }} />
                     </a>
                 </li>
                 <div className="container" style={{ width: '100%' }}>

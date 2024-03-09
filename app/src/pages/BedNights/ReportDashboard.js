@@ -19,15 +19,15 @@ const ReportDashboard = ({ reportData }) => {
     const formatValue = (value) => value || "ALL";
 
     const colorPalette = [
-        '#b2dfdb',
-        '#80cbc4',
-        '#4db6ac',
-        '#26a69a',
-        '#009688',
-        '#00897b',
-        '#00796b',
-        '#00695c',
-        '#004d40',
+        '#147580',
+        '#19838c',
+        '#217f8a',
+        '#2c8e9c',
+        '#2ea8b8',
+        '#3fa7b5',
+        '#4cb4c2',
+        '#51c6d6',
+        '#65d6e6',
     ];
 
     // Bed Nights by Country Chart Data
@@ -127,7 +127,7 @@ const ReportDashboard = ({ reportData }) => {
                 horizontal: false,
             },
         },
-        colors: ['#26a69a'], // Replace with your desired regular color
+        colors: ['#0e9bac'], // Replace with your desired regular color
         states: {
             hover: {
                 filter: {
@@ -157,23 +157,23 @@ const ReportDashboard = ({ reportData }) => {
             </div>
             <div className="card">
                 <div className="card-content">
-                    <h4>Bed Night Report</h4>
-                    <div className="chip teal lighten-4">
+                    <h4 className="report-title">Bed Night Report</h4>
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">Start Date:</span> {formatValue(report_inputs.start_date)}
                     </div>
-                    <div className="chip teal lighten-4">
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">End Date:</span> {formatValue(report_inputs.end_date)}
                     </div>
-                    <div className="chip teal lighten-4">
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">Consultant:</span> {formatValue(report_inputs.consultant_name)}
                     </div>
-                    <div className="chip teal lighten-4">
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">Country:</span> {formatValue(report_inputs.country_name)}
                     </div>
-                    <div className="chip teal lighten-4">
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">Portfolio:</span> {formatValue(report_inputs.portfolio_name)}
                     </div>
-                    <div className="chip teal lighten-4">
+                    <div className="chip tb-teal lighten-2">
                         <span className="text-bold">Property:</span> {formatValue(report_inputs.property_name)}
                     </div>
                     <br />

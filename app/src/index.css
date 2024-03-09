@@ -1,5 +1,25 @@
 @import url('https://fonts.cdnfonts.com/css/hvdtrial-brandon-grotesque');
 
+@font-face {
+  font-family: Freeland;
+  src: url("../public/Freeland.otf") format("opentype");
+}
+
+@font-face {
+  font-family: Bodoni;
+  src: url("../public/Bodoni.otf") format("opentype");
+}
+
+@font-face {
+  font-family: BrandonGrotesque-Regular;
+  src: url("../public/BrandonGrotesque-Regular.otf") format("opentype");
+}
+
+@font-face {
+  font-family: BrandonGrotesque-Bold;
+  src: url("../public/BrandonGrotesque-Bold.otf") format("opentype");
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;
@@ -43,6 +63,11 @@ main {
   padding-top: 30px;
   padding-bottom: 30px;
 }
+
+/* .header {
+  font-family: 'Bodoni', sans-serif;
+  color: #47443e; dark grey
+} */
 
 .text-bold {
   font-weight: 700 !important;
@@ -95,9 +120,13 @@ input {
 }
 
 .apexcharts-text tspan {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: 'HvDTrial Brandon Grotesque', 'Noto Sans', sans-serif !important;
   font-size: 0.9rem;
   color: #47443e;
+}
+
+.apexcharts-legend-text {
+  font-family: 'HvDTrial Brandon Grotesque', 'Noto Sans', sans-serif !important;
 }
 
 nav.top-nav {
@@ -135,6 +164,11 @@ a.sidenav-trigger.top-nav {
   height: 57px;
   margin-bottom: 32px;
   height: 100%;
+}
+
+.report-title {
+  font-family: 'Bodoni', sans-serif;
+  color: #47443e;
 }
 
 ul.sidenav.sidenav-fixed li.logo:hover,
