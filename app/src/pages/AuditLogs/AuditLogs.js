@@ -182,7 +182,7 @@ export const AuditLogs = () => {
                                                                 <span className="material-symbols-outlined text-bold">expand_more</span>
                                                             </td>
                                                             <td onClick={() => toggleRowExpansion(index)}>
-                                                                <div className="chip blue lighten-5">
+                                                                <div className="chip tb-teal lighten-2">
                                                                     <span className="material-symbols-outlined">
                                                                         schedule
                                                                     </span>

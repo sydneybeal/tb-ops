@@ -310,7 +310,7 @@ export const Overview = () => {
         const tooltipElems = document.querySelectorAll('.tooltipped');
         M.Tooltip.init(tooltipElems, {
             exitDelay: 100,
-            enterDelay: 100,
+            enterDelay: 10,
             html: false,
             margin: 0,
             inDuration: 300,
@@ -563,7 +563,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     hotel
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'property_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -583,7 +583,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     person
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'primary_traveler' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -604,7 +604,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     airline_seat_recline_extra
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'num_pax' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -627,7 +627,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     date_range
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'date_in' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -648,7 +648,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     dark_mode
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'bed_nights' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -668,7 +668,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     badge
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'consultant_display_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -688,7 +688,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     alt_route
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'booking_channel_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -708,7 +708,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     contact_mail
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'agency_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -729,7 +729,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     explore
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -749,7 +749,7 @@ export const Overview = () => {
                                                 <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
                                                     update
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text">
+                                                <span className="material-symbols-outlined teal-text text-lighten-3">
                                                     {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>

@@ -5,6 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
 import AddEditPortfolioModal from './AddEditModal';
+import moment from 'moment';
 
 export const Portfolios = () => {
     const [apiData, setApiData] = useState([]);
@@ -109,6 +110,38 @@ export const Portfolios = () => {
         setFilteredData(newFilteredData);
 
     }, [apiData, searchQuery]);
+
+    useEffect(() => {
+        // Initialize tooltips
+        const tooltipElems = document.querySelectorAll('.tooltipped');
+        M.Tooltip.init(tooltipElems, {
+            exitDelay: 100,
+            enterDelay: 10,
+            html: false,
+            margin: 0,
+            inDuration: 300,
+            outDuration: 250,
+            position: 'bottom',
+            transitionMovement: 10
+        });
+
+        setTimeout(() => {
+            document.querySelectorAll('.material-tooltip').forEach(tooltipElem => {
+                const relatedTrigger = tooltipElems[Array.from(document.querySelectorAll('.tooltipped')).findIndex(elem => elem.getAttribute('data-tooltip-id') === tooltipElem.getAttribute('id'))];
+                if (relatedTrigger) {
+                    const customClass = relatedTrigger.getAttribute('data-tooltip-class');
+                    if (customClass) {
+                        tooltipElem.classList.add(customClass);
+                    }
+                }
+            });
+        }, 10);
+
+        // Clean up function to destroy initialized tooltips to prevent memory leaks
+        return () => {
+            M.Tooltip.getInstance(tooltipElems)?.destroy();
+        };
+    }, [displayData]);
 
     const openEditModal = (portfolio) => {
         if (!userDetails.email) {
@@ -259,7 +292,7 @@ export const Portfolios = () => {
                                                             {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
-                                                    <th style={{ width: '90px' }} className="center">
+                                                    <th style={{ width: '200px', textAlign: 'right' }}>
                                                         <span
                                                             className={`tooltipped`}
                                                             data-position="bottom"
@@ -281,13 +314,29 @@ export const Portfolios = () => {
                                                                 <td style={{ verticalAlign: 'top' }}>
                                                                     <p className="text-bold">{item.name}</p>
                                                                 </td>
-                                                                <td style={{ width: '90px' }}>
-                                                                    <button
-                                                                        className="btn waves-effect waves-light deep-orange lighten-3"
-                                                                        onClick={() => openEditModal(item)}
-                                                                    >
-                                                                        Edit
-                                                                    </button>
+                                                                <td style={{ width: '200px' }}>
+                                                                    <div style={{ textAlign: 'right', padding: '0px' }}>
+                                                                        <span
+                                                                            className={`tooltipped`}
+                                                                            data-position="left"
+                                                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                            data-tooltip-class="tooltip-updated-by"
+                                                                        >
+                                                                            <button
+                                                                                className="btn waves-effect waves-light deep-orange lighten-3"
+                                                                                onClick={() => openEditModal(item)}
+                                                                            >
+                                                                                Edit
+                                                                            </button>
+                                                                            <br />
+                                                                            <em className="grey-text" style={{ fontSize: '0.75rem' }}>
+                                                                                <span className="material-symbols-outlined grey-text">
+                                                                                    update
+                                                                                </span>
+                                                                                {moment.utc(item.updated_at).local().fromNow()}
+                                                                            </em>
+                                                                        </span>
+                                                                    </div>
                                                                 </td>
                                                             </tr>
                                                         </React.Fragment>
