@@ -28,7 +28,7 @@ const LoginModal = ({ onClose }) => {
             </header>
 
             <main className="grey lighten-5">
-                <div className="container center" style={{ width: '50%' }}>
+                <div className="container center" style={{ width: '50%', height: '100%' }}>
 
                     {/* <div className="modal">
                         <div className="modal-content" style={{ zIndex: '1000' }}> */}
@@ -49,7 +49,7 @@ const LoginModal = ({ onClose }) => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
-                        <button className="btn" type="submit">Log In</button>
+                        <button className="btn tb-teal lighten-1" type="submit">Log In</button>
                     </form>
                 </div>
                 {/* </div>

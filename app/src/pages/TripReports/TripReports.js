@@ -21,9 +21,9 @@ export const Properties = () => {
 
             <main className="grey lighten-5">
                 <div className="container center" style={{ width: '90%' }}>
-                    <div>
-                        Welcome to Trip Reports!
-                    </div>
+                    <h5>
+                        Coming soon...
+                    </h5>
                 </div>
             </main>
         </>

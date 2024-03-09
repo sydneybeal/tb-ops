@@ -1026,9 +1026,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             <div>
                                                 <em className="grey-text text-lighten-1">
                                                     <a
-                                                        className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                        className="text-bold new-existing-prop tb-teal-text text-lighten-2"
                                                         href="/#"
-                                                        onClick={() => {
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
                                                             setIsNewAgency(false);
                                                         }}
                                                     >
@@ -1042,7 +1043,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     <a
                                                         className="text-bold new-existing-prop green-text text-lighten-2"
                                                         href="/#"
-                                                        onClick={() => setIsNewAgency(true)} >
+                                                        onClick={(e) => { e.preventDefault(); setIsNewAgency(true); }} >
                                                         <span className="material-symbols-outlined">
                                                             add_circle
                                                         </span>
@@ -1132,7 +1133,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 <div className="row">
                                     <div className="col s11">
                                         {!isEditMode &&
-                                            <div className="chip teal accent-4 text-bold">{index + 1}</div>
+                                            <div
+                                                className="chip tb-teal lighten-2 text-bold"
+                                                style={{ width: '30px', height: '30px', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                            >
+                                                {index + 1}
+                                            </div>
                                         }
                                         {log.bed_nights > 0 &&
                                             <div className="chip blue lighten-2">
@@ -1191,7 +1197,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             <a
                                                 className="btn-floating btn-small waves-effect waves-light red lighten-2"
                                                 href="/#"
-                                                onClick={() => handleRemoveClick(index)}>
+                                                onClick={(e) => { e.preventDefault(); handleRemoveClick(index); }}>
                                                 <i className="material-icons">remove</i>
                                             </a>
                                         }
@@ -1216,9 +1222,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     <em className="grey-text text-lighten-1">
                                                         Please select an&nbsp;
                                                         <a
-                                                            className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                            className="text-bold new-existing-prop tb-teal-text text-lighten-2"
                                                             href="/#"
-                                                            onClick={() => {
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
                                                                 handleLogChange(index, 'is_new_property', false);
                                                                 handleLogChange(index, 'new_property_country_id', '');
                                                                 handleLogChange(index, 'new_property_core_destination_name', '');
@@ -1243,7 +1250,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         <a
                                                             className="text-bold new-existing-prop green-text text-lighten-2"
                                                             href="/#"
-                                                            onClick={() => handleLogChange(index, 'is_new_property', true)}>
+                                                            onClick={(e) => { e.preventDefault(); handleLogChange(index, 'is_new_property', true); }}>
                                                             <span className="material-symbols-outlined">
                                                                 add_circle
                                                             </span>
@@ -1288,7 +1295,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                 <a
                                                                     className="text-bold new-existing-prop red-text text-lighten-3"
                                                                     href="/#"
-                                                                    onClick={() => {
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
                                                                         handleLogChange(index, 'is_new_property', false);
                                                                         handleLogChange(index, 'new_property_country_id', '');
                                                                         handleLogChange(index, 'new_property_core_destination_name', '');
@@ -1602,9 +1610,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         <em className="grey-text text-lighten-1">
                                                             Select an&nbsp;
                                                             <a
-                                                                className="text-bold new-existing-prop teal-text text-lighten-2"
+                                                                className="text-bold new-existing-prop tb-teal-text text-lighten-2"
                                                                 href="/#"
-                                                                onClick={() => {
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
                                                                     handleLogChange(index, 'is_new_booking_channel', false);
                                                                     handleLogChange(index, 'new_booking_channel_name', '');
                                                                 }}
@@ -1619,7 +1628,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                             <a
                                                                 className="text-bold new-existing-prop green-text text-lighten-2"
                                                                 href="/#"
-                                                                onClick={() => handleLogChange(index, 'is_new_booking_channel', true)}>
+                                                                onClick={(e) => { e.preventDefault(); handleLogChange(index, 'is_new_booking_channel', true); }}>
                                                                 <span className="material-symbols-outlined">
                                                                     add_circle
                                                                 </span>
@@ -1652,7 +1661,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                             // </>
                         ))}
                         {!isEditMode &&
-                            <button type="button" className="btn" onClick={addLogEntry}>Add More</button>
+                            <button type="button" className="btn tb-teal" onClick={addLogEntry}>Add More</button>
                         }
                     </form>
                 </div>

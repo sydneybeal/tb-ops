@@ -138,6 +138,10 @@ const ReportDashboard = ({ reportData }) => {
         },
         xaxis: {
             categories: filledByMonth.map(item => item.name),
+            labels: {
+                rotate: -45,
+                rotateAlways: true,
+            },
         }
     };
 

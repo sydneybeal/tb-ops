@@ -177,34 +177,28 @@ export const Portfolios = () => {
                                         <div className="col s10">
                                             <ul className="pagination">
                                                 <li className={currentPage === 0 ? 'disabled' : ''}>
-                                                    <button
-                                                        onClick={() => currentPage > 0 && changePage(currentPage - 1)}
-                                                        className="btn-flat"
-                                                        style={{ padding: '0px' }}>
+                                                    <a
+                                                        onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                                        href="#!"
+                                                    >
                                                         <i className="material-icons">chevron_left</i>
-                                                    </button>
+                                                    </a>
                                                 </li>
                                                 {Array.from({ length: totalPages }, (_, idx) => (
                                                     <li
                                                         className={
-                                                            `waves-effect waves-light ${currentPage === idx ? 'active red lighten-2' : ''
+                                                            `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-2' : ''
                                                             }`
                                                         }
                                                         key={idx}
                                                         onClick={() => changePage(idx)}
                                                     >
-                                                        <button
-                                                            className="btn-flat teal-text text-lighten-2"
-                                                            style={{ padding: '0px 12px' }}
-                                                        >
-                                                            {idx + 1}
-                                                        </button>
+                                                        <a onClick={(e) => e.preventDefault()} className="grey-text text-darken-1" href="#!">{idx + 1}</a>
                                                     </li>
                                                 ))}
                                                 <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
                                                     <a
-                                                        onClick={
-                                                            () => currentPage + 1 < totalPages && changePage(currentPage + 1)}
+                                                        onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
                                                         href="#!"
                                                     >
                                                         <i className="material-icons">chevron_right</i>
@@ -215,7 +209,7 @@ export const Portfolios = () => {
                                         <div className="col s2">
                                             <button
                                                 href=""
-                                                className="btn-float btn-large waves-effect waves-light green lighten-2"
+                                                className="btn-float btn-large waves-effect waves-light green lighten-3"
                                                 onClick={openModal}
                                             >
                                                 <span className="material-symbols-outlined">
@@ -234,7 +228,7 @@ export const Portfolios = () => {
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 className="search-input" // Apply any styling as needed
                                             />
-                                            <span className="material-symbols-outlined">
+                                            <span className="material-symbols-outlined grey-text text-darken-1">
                                                 search
                                             </span>
                                         </div>
@@ -245,6 +239,9 @@ export const Portfolios = () => {
                                                 setSearchQuery('');
                                             }}>
                                                 Reset Filters
+                                                <span className="material-symbols-outlined">
+                                                    refresh
+                                                </span>
                                             </button>
                                         </div>
                                     </div>
@@ -258,7 +255,7 @@ export const Portfolios = () => {
                                                         }
                                                     >
                                                         Name
-                                                        <span className="material-symbols-outlined teal-text">
+                                                        <span className="material-symbols-outlined teal-text text-lighten-3">
                                                             {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
@@ -286,7 +283,7 @@ export const Portfolios = () => {
                                                                 </td>
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
-                                                                        className="btn waves-effect waves-light orange lighten-3"
+                                                                        className="btn waves-effect waves-light deep-orange lighten-3"
                                                                         onClick={() => openEditModal(item)}
                                                                     >
                                                                         Edit

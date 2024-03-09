@@ -141,7 +141,7 @@ export const Consultants = () => {
                                             <div className="col s2 offset-s10">
                                                 <button
                                                     href=""
-                                                    className="btn-float btn-large waves-effect waves-light green lighten-2"
+                                                    className="btn-float btn-large waves-effect waves-light green lighten-3"
                                                     onClick={openModal}
                                                 >
                                                     <span className="material-symbols-outlined">
@@ -217,7 +217,7 @@ export const Consultants = () => {
                                                                 </td>
                                                                 <td style={{ width: '90px' }}>
                                                                     <button
-                                                                        className="btn waves-effect waves-light orange lighten-3"
+                                                                        className="btn waves-effect waves-light deep-orange lighten-3"
                                                                         onClick={() => openEditModal(item)}
                                                                     >
                                                                         Edit

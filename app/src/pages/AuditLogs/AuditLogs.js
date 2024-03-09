@@ -109,7 +109,7 @@ export const AuditLogs = () => {
             case 'delete':
                 return 'red lighten-3';
             case 'insert':
-                return 'green';
+                return 'green lighten-2';
             default:
                 return 'grey'; // Default color if action does not match
         }

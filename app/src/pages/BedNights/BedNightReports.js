@@ -381,7 +381,7 @@ export const BedNightReports = () => {
                                             dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
-                                    <span style={{ fontSize: '0.8rem' }}>
+                                    <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
                                         <span className="material-symbols-outlined">
                                             today
                                         </span>
@@ -434,7 +434,7 @@ export const BedNightReports = () => {
                                             dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
-                                    <span style={{ fontSize: '0.8rem' }}>
+                                    <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
                                         <span className="material-symbols-outlined">
                                             event
                                         </span>
@@ -450,6 +450,9 @@ export const BedNightReports = () => {
                             <button className="btn grey" onClick={() => setFilters(
                                 { core_destination_name: '', portfolio_name: '', country_name: '', consultant_name: '', start_date: '', end_date: '' })}>
                                 Reset Filters
+                                <span className="material-symbols-outlined">
+                                    refresh
+                                </span>
                             </button>
                         </div>
                     </div>

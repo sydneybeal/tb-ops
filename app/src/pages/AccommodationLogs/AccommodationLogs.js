@@ -366,26 +366,28 @@ export const Overview = () => {
                                 <div className="col s10">
                                     <ul className="pagination">
                                         <li className={currentPage === 0 ? 'disabled' : ''}>
-                                            <a onClick={() => currentPage > 0 && changePage(currentPage - 1)} href="#!">
+                                            <a
+                                                onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                                href="#!"
+                                            >
                                                 <i className="material-icons">chevron_left</i>
                                             </a>
                                         </li>
                                         {Array.from({ length: totalPages }, (_, idx) => (
                                             <li
                                                 className={
-                                                    `waves-effect waves-light ${currentPage === idx ? 'active red lighten-2' : ''
+                                                    `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-2' : ''
                                                     }`
                                                 }
                                                 key={idx}
                                                 onClick={() => changePage(idx)}
                                             >
-                                                <a className="teal-text text-lighten-2" href="#!">{idx + 1}</a>
+                                                <a className="grey-text text-darken-1" onClick={(e) => e.preventDefault()} href="#!">{idx + 1}</a>
                                             </li>
                                         ))}
                                         <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
                                             <a
-                                                onClick={
-                                                    () => currentPage + 1 < totalPages && changePage(currentPage + 1)}
+                                                onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
                                                 href="#!"
                                             >
                                                 <i className="material-icons">chevron_right</i>
@@ -396,7 +398,7 @@ export const Overview = () => {
                                 <div className="col s2">
                                     {/* <button className="btn" onClick={openModal}>New</button> */}
                                     {/* <div className="row" style={{ textAlign: 'right' }}> */}
-                                    <button className="btn-float btn-large waves-effect waves-light green lighten-2" onClick={openModal}>
+                                    <button className="btn-float btn-large waves-effect waves-light green lighten-3" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
                                         </span>
@@ -415,7 +417,7 @@ export const Overview = () => {
                                             options={filterOptions.core_dest}
                                             isClearable
                                         />
-                                        <span className="material-symbols-outlined">
+                                        <span className="material-symbols-outlined grey-text text-darken-1">
                                             explore
                                         </span>
                                     </div>
@@ -427,7 +429,7 @@ export const Overview = () => {
                                             options={filterOptions.country}
                                             isClearable
                                         />
-                                        <span className="material-symbols-outlined">
+                                        <span className="material-symbols-outlined grey-text text-darken-1">
                                             globe
                                         </span>
                                     </div>
@@ -439,7 +441,7 @@ export const Overview = () => {
                                             options={filterOptions.consultant}
                                             isClearable
                                         />
-                                        <span className="material-symbols-outlined">
+                                        <span className="material-symbols-outlined grey-text text-darken-1">
                                             badge
                                         </span>
                                     </div>
@@ -455,7 +457,7 @@ export const Overview = () => {
                                         options={filterOptions.property}
                                         isClearable
                                     />
-                                    <span className="material-symbols-outlined">
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
                                         hotel
                                     </span>
                                 </div>
@@ -469,7 +471,7 @@ export const Overview = () => {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="search-input" // Apply any styling as needed
                                     />
-                                    <span className="material-symbols-outlined">
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
                                         search
                                     </span>
                                 </div>
@@ -491,7 +493,7 @@ export const Overview = () => {
                                                     maxDate={new Date('2100-12-31')}
                                                 />
                                             </div>
-                                            <span style={{ fontSize: '0.8rem' }}>
+                                            <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
                                                 <span className="material-symbols-outlined">
                                                     today
                                                 </span>
@@ -514,7 +516,7 @@ export const Overview = () => {
                                                     maxDate={new Date('2100-12-31')}
                                                 />
                                             </div>
-                                            <span style={{ fontSize: '0.8rem' }}>
+                                            <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
                                                 <span className="material-symbols-outlined">
                                                     event
                                                 </span>
@@ -533,6 +535,9 @@ export const Overview = () => {
                                         setSearchQuery('');
                                     }}>
                                         Reset Filters
+                                        <span className="material-symbols-outlined">
+                                            refresh
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -798,7 +803,7 @@ export const Overview = () => {
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
                                                         <p>{item.country_name}</p>
-                                                        <span className="chip blue lighten-4 text-bold" style={{
+                                                        <span className="chip tb-teal lighten-2 text-bold" style={{
                                                             padding: '0px 6px',
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
