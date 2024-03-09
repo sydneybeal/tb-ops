@@ -221,7 +221,7 @@ export const Agencies = () => {
                                                                             data-tooltip-class="tooltip-updated-by"
                                                                         >
                                                                             <button
-                                                                                className="btn waves-effect waves-light deep-orange lighten-3"
+                                                                                className="btn waves-effect waves-light tb-gray lighten-2 grey-text text-darken-3"
                                                                                 onClick={() => openEditModal(item)}
                                                                             >
                                                                                 Edit

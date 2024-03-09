@@ -528,7 +528,7 @@ export const Overview = () => {
                             </div>
                             <div className="row center">
                                 <div>
-                                    <button className="btn grey" onClick={() => {
+                                    <button className="btn tb-gray lighten-2" onClick={() => {
                                         setFilters(
                                             { core_dest: '', country: '', consultant: '' }
                                         );
@@ -770,10 +770,10 @@ export const Overview = () => {
                                                     <td>{item.primary_traveler}</td>
                                                     <td style={{ width: '60px' }}>{item.num_pax}</td>
                                                     <td style={{ width: '100px' }}>
-                                                        <span className="chip blue-grey lighten-3 text-bold">
+                                                        <span className="chip tb-gray lighten-2 text-bold">
                                                             {moment(item.date_in).format("M/D/YY")}
                                                         </span>
-                                                        <span className="chip blue-grey lighten-3 text-bold">
+                                                        <span className="chip tb-gray lighten-2 text-bold">
                                                             {moment(item.date_out).format("M/D/YY")}
                                                         </span>
                                                     </td>
@@ -791,14 +791,14 @@ export const Overview = () => {
                                                         <p>
                                                             {item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
                                                                 ? item.booking_channel_name
-                                                                : <span className="chip">n/a</span>}
+                                                                : <span className="chip tb-gray lighten-2">n/a</span>}
                                                         </p>
                                                     </td>
                                                     <td style={{ verticalAlign: 'top' }}>
                                                         <p>
                                                             {item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
                                                                 ? item.agency_name
-                                                                : <span className="chip">n/a</span>}
+                                                                : <span className="chip tb-gray lighten-2">n/a</span>}
                                                         </p>
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
@@ -823,7 +823,7 @@ export const Overview = () => {
                                                                 data-tooltip-class="tooltip-updated-by"
                                                             >
                                                                 <button
-                                                                    className="btn-floating btn-small waves-effect waves-light orange lighten-4"
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-gray lighten-3"
                                                                     onClick={() => openEditModal(item)}
                                                                 >
                                                                     <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>

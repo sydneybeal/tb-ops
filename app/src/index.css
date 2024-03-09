@@ -85,6 +85,26 @@ main {
   background-color: #9fdbe3 !important;
 }
 
+.tb-md-black {
+  background-color: #363839 !important;
+}
+
+.tb-gray {
+  background-color: #47443e !important;
+}
+
+.tb-gray.lighten-1 {
+  background-color: #8c8782 !important;
+}
+
+.tb-gray.lighten-2 {
+  background-color: #bdb6b0 !important;
+}
+
+.tb-gray.lighten-3 {
+  background-color: #f2f0e7 !important;
+}
+
 .tb-teal-text {
   color: #0e9bac !important;
 }
@@ -217,6 +237,28 @@ ul.sidenav.sidenav-fixed li.logo {
   min-width: 200px;
   max-width: 400px;
 }
+
+ul.custom-icons {
+  list-style-type: none; /* Removes default bullet points */
+  padding-left: 10px; /* Adds indentation to the list itself */
+}
+
+ul.custom-icons li {
+  position: relative;
+  padding-left: 44px; /* Adjusted space for the icon to ensure text doesn't overlap with the icon */
+}
+
+ul.custom-icons li:before {
+  content: 'chevron_right'; /* Use 'favorite' icon or any other Material Icon */
+  position: absolute;
+  left: 20px; /* Aligns the icon with the text start, adjusted for better positioning */
+  top: 0; /* Adjust as needed to align vertically with your list item text */
+  /* transform: translateX(200%); Moves the icon to the left of its starting point */
+  font-family: 'Material Icons';
+  color: #bdb6b0; /* Custom color for the icon */
+  font-size: 20px; /* Adjust size as needed, considering the overall alignment and appearance */
+}
+
 
 .react-datepicker__close-icon {
   background-color: transparent !important; /* Change to your desired color */

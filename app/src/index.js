@@ -14,6 +14,7 @@ import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLogs from './pages/AuditLogs/AuditLogs';
+import FaqPage from './pages/FAQ/FAQ';
 
 
 import 'materialize-css/dist/css/materialize.min.css';
@@ -42,6 +43,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <BedNightReports />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/faq/',
+    element: (
+      <ProtectedRoute>
+        <FaqPage />
       </ProtectedRoute>
     ),
   },

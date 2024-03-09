@@ -93,6 +93,13 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                <div className="container" style={{ width: '100%' }}>
+                    <li>
+                        <Link to={'/faq'} className="text-bold">
+                            FAQ
+                        </Link>
+                    </li>
+                </div>
                 {userDetails?.role === 'admin' && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
