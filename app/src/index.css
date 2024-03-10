@@ -28,6 +28,7 @@ html, body, #root {
 body > #root {
   display: flex;
   flex-direction: column;
+  color: #363839;
 }
 
 #root > main {
@@ -73,44 +74,242 @@ main {
   font-weight: 700 !important;
 }
 
+/* tb-md-black */
+.tb-md-black {
+  background-color: #363839 !important;
+}
+
+.tb-md-black-text {
+  color: #363839 !important;
+}
+
+/* tb-off-white */
+.tb-off-white {
+  background-color: #f2f0e7 !important;
+}
+
+.tb-off-white-text {
+  color: #f2f0e7 !important;
+}
+
+/* tb-teal */
 .tb-teal {
   background-color: #0e9bac !important;
 }
 
 .tb-teal.lighten-1 {
-  background-color: #5db7c2 !important;
+  background-color: #2eabba !important;
 }
 
 .tb-teal.lighten-2 {
-  background-color: #9fdbe3 !important;
+  background-color: #56bfcc !important;
 }
 
-.tb-md-black {
-  background-color: #363839 !important;
+.tb-teal.lighten-3 {
+  background-color: #7fd3dc !important;
 }
 
-.tb-gray {
-  background-color: #47443e !important;
+.tb-teal.lighten-4 {
+  background-color: #b2ebee !important;
 }
 
-.tb-gray.lighten-1 {
-  background-color: #8c8782 !important;
+.tb-teal.lighten-5 {
+  background-color: #e9fcfd !important;
 }
 
-.tb-gray.lighten-2 {
-  background-color: #bdb6b0 !important;
+.tb-teal.darken-1 {
+  background-color: #098c9c !important;
 }
 
-.tb-gray.lighten-3 {
-  background-color: #f2f0e7 !important;
+.tb-teal.darken-2 {
+  background-color: #057e8c !important;
+}
+
+.tb-teal.darken-3 {
+  background-color: #02707d !important;
+}
+
+.tb-teal.darken-4 {
+  background-color: #00626e !important;
 }
 
 .tb-teal-text {
   color: #0e9bac !important;
 }
 
+.tb-teal-text.text-lighten-1 {
+  color: #2eabba !important;
+}
+
 .tb-teal-text.text-lighten-2 {
-  color: #5db7c2 !important;
+  color: #56bfcc !important;
+}
+
+.tb-teal-text.text-lighten-3 {
+  color: #7fd3dc !important;
+}
+
+.tb-teal-text.text-lighten-4 {
+  color: #b2ebee !important;
+}
+
+.tb-teal-text.text-lighten-5 {
+  color: #e9fcfd !important;
+}
+
+.tb-teal-text.text-darken-1 {
+  color: #098c9c !important;
+}
+
+.tb-teal-text.text-darken-2 {
+  color: #057e8c !important;
+}
+
+.tb-teal-text.text-darken-3 {
+  color: #02707d !important;
+}
+
+.tb-teal-text.text-darken-4 {
+  color: #00626e !important;
+}
+
+/* tb-grey */
+.tb-grey {
+  background-color: #8c8782 !important;
+}
+
+.tb-grey.lighten-1 {
+  background-color: #a39e9a !important;
+}
+
+.tb-grey.lighten-2 {
+  background-color: #bab5b1 !important;
+}
+
+.tb-grey.lighten-3 {
+  background-color: #d1cdc9 !important;
+}
+
+.tb-grey.lighten-4 {
+  background-color: #e8e5e1 !important;
+}
+
+.tb-grey.lighten-5 {
+  background-color: #fdf7f3 !important;
+}
+
+.tb-grey.lighten-6 {
+  background-color: #fffefd !important;
+}
+
+.tb-grey.darken-1 {
+  background-color: #75716c !important;
+}
+
+.tb-grey.darken-2 {
+  background-color: #5e5a56 !important;
+}
+
+.tb-grey.darken-3 {
+  background-color: #47443e !important;
+}
+
+.tb-grey.darken-4 {
+  background-color: #302e2b !important;
+}
+
+.tb-grey-text {
+  color: #8c8782 !important;
+}
+
+.tb-grey-text.text-lighten-1 {
+  color: #a39e9a !important;
+}
+
+.tb-grey-text.text-lighten-2 {
+  color: #bab5b1 !important;
+}
+
+.tb-grey-text.text-lighten-3 {
+  color: #d1cdc9 !important;
+}
+
+.tb-grey-text.text-lighten-4 {
+  color: #e8e5e1 !important;
+}
+
+.tb-grey-text.text-lighten-5 {
+  color: #fdf7f3 !important;
+}
+
+.tb-grey-text.text-darken-1 {
+  color: #75716c !important;
+}
+
+.tb-grey-text.text-darken-2 {
+  color: #5e5a56 !important;
+}
+
+.tb-grey-text.text-darken-3 {
+  color: #47443e !important;
+}
+
+.tb-grey-text.text-darken-4 {
+  color: #302e2b !important;
+}
+
+/* success-green */
+.success-green {
+  background-color: #4bb079 !important;
+}
+
+.success-green-text {
+  color: #4bb079 !important;
+}
+
+/* success-green-light */
+.success-green-light {
+  background-color: #a5d7be !important;
+}
+
+.success-green-light-text {
+  color: #a5d7be !important;
+}
+
+/* error-red */
+.error-red {
+  background-color: #e68473 !important;
+}
+
+.error-red-text {
+  color: #e68473 !important;
+}
+
+/* error-red-light */
+.error-red-light {
+  background-color: #f5b2a7 !important;
+}
+
+.error-red-light-text {
+  color: #f5b2a7 !important;
+}
+
+/* warning-yellow-light */
+.warning-yellow {
+  background-color: #f3c666 !important;
+}
+
+.warning-yellow-text {
+  color: #f3c666 !important;
+}
+
+/* warning-yellow-light */
+.warning-yellow-light {
+  background-color: #fde5b3 !important;
+}
+
+.warning-yellow-light-text {
+  color: #fde5b3 !important;
 }
 
 @media only screen and (max-width : 992px) {
@@ -267,14 +466,14 @@ ul.custom-icons li:before {
 }
 
 .react-datepicker__close-icon::after {
-  background-color: #ef9a9a !important; /* Change to your desired color */
+  background-color: #f5b2a7 !important; /* Change to your desired color */
   color: white; /* Adjust text/icon color as needed */
   /* You might need additional styles here depending on what you're trying to achieve */
 }
 
 .react-datepicker__close-icon:active::after {
   transform: scale(1.1); /* Scales the icon up */
-  outline: 2px solid #f58080; /* Adds an outline, adjust color as needed */
+  outline: 2px solid #e68473; /* Adds an outline, adjust color as needed */
   outline-offset: 0px; /* Adjust the space between the icon and the outline */
 }
 
@@ -360,11 +559,11 @@ td {
 }
 
 .accommodation-logs-table tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #e8e5e1;
 }
 
 .accommodation-logs-table tr:nth-child(odd) {
-  background-color: #f2f2f2;
+  background-color: #fdf7f3;
 }
 
 .accommodation-logs-table tr:hover {

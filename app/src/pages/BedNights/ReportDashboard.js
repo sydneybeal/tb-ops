@@ -19,15 +19,15 @@ const ReportDashboard = ({ reportData }) => {
     const formatValue = (value) => value || "ALL";
 
     const colorPalette = [
-        '#147580',
-        '#19838c',
-        '#217f8a',
-        '#2c8e9c',
-        '#2ea8b8',
-        '#3fa7b5',
-        '#4cb4c2',
-        '#51c6d6',
-        '#65d6e6',
+        '#00626e',
+        // '#02707d',
+        '#057e8c',
+        // '#098c9c',
+        '#0e9bac',
+        // '#2eabba',
+        '#56bfcc',
+        // '#7fd3dc',
+        '#b2ebee',
     ];
 
     // Bed Nights by Country Chart Data
@@ -158,22 +158,22 @@ const ReportDashboard = ({ reportData }) => {
             <div className="card">
                 <div className="card-content">
                     <h4 className="report-title">Bed Night Report</h4>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">Start Date:</span> {formatValue(report_inputs.start_date)}
                     </div>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">End Date:</span> {formatValue(report_inputs.end_date)}
                     </div>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">Consultant:</span> {formatValue(report_inputs.consultant_name)}
                     </div>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">Country:</span> {formatValue(report_inputs.country_name)}
                     </div>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">Portfolio:</span> {formatValue(report_inputs.portfolio_name)}
                     </div>
-                    <div className="chip tb-teal lighten-2">
+                    <div className="chip tb-teal lighten-3">
                         <span className="text-bold">Property:</span> {formatValue(report_inputs.property_name)}
                     </div>
                     <br />
@@ -183,15 +183,15 @@ const ReportDashboard = ({ reportData }) => {
                         <div className="col s12 m6 vertically-centered">
                             <div className="container vertically-centered">
                                 <h5>Total Bed Nights</h5>
-                                <span className="chip large-chip text-bold">{calculations.total_bed_nights}</span>
+                                <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.total_bed_nights}</span>
                             </div>
                             <div className="container vertically-centered">
                                 <h5>Total Countries</h5>
-                                <span className="chip large-chip text-bold">{calculations.by_country.length}</span>
+                                <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_country.length}</span>
                             </div>
                             <div className="container vertically-centered">
                                 <h5>Total Properties</h5>
-                                <span className="chip large-chip text-bold">{calculations.by_property.length}</span>
+                                <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_property.length}</span>
                             </div>
                         </div>
                         <div className="col s12 m6">

@@ -299,7 +299,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             M.toast({
                 html: 'Please check the form for errors.',
                 displayLength: 4000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             // Prevent form submission if validation fails
             return;
@@ -330,7 +330,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -407,7 +407,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
-                        classes: 'amber darken-1',
+                        classes: 'warning-yellow tb-md-black-text',
                     });
                 });
             // }
@@ -420,7 +420,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             M.toast({
                 html: 'Only admins are able to delete from the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -428,7 +428,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             if (confirmDelete) {
                 const entryId = accommodationLogs.length > 0 ? accommodationLogs[0].id : null;
                 if (!entryId) {
-                    M.toast({ html: 'Error: No entry ID found', classes: 'red lighten-2' });
+                    M.toast({ html: 'Error: No entry ID found', classes: 'error-red' });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
@@ -455,7 +455,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     .catch(error => {
                         console.error('Error:', error);
                         // Handle error - show error message
-                        M.toast({ html: 'Error deleting entry', classes: 'red' });
+                        M.toast({ html: 'Error deleting entry', classes: 'error-red' });
                     });
             }
         }
@@ -904,14 +904,14 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     return (
         <div id="add-log-modal" className="modal add-log-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
-                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
+                <h4 className="tb-grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
                     {!isEditMode ? 'New' : 'Editing'} Service Provider Entry&nbsp;&nbsp;
                     {isEditMode &&
                         <button
-                            className="btn waves-effect waves-light red lighten-3"
+                            className="btn waves-effect waves-light error-red"
                             onClick={handleDelete}
                         >
-                            <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                            <span className="material-symbols-outlined tb-grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
                                 delete_forever
                             </span>
                         </button>
@@ -923,16 +923,16 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                         {(validationErrors.primaryTraveler || validationErrors.consultant || validationErrors.numPax || validationErrors.agency) && (
                             <div className="row" style={{ marginBottom: '20px' }}>
                                 {validationErrors.primaryTraveler && (
-                                    <div className="chip red lighten-4 text-bold">{validationErrors.primaryTraveler}</div>
+                                    <div className="chip error-red-light text-bold">{validationErrors.primaryTraveler}</div>
                                 )}
                                 {validationErrors.consultant && (
-                                    <div className="chip red lighten-4 text-bold">{validationErrors.consultant}</div>
+                                    <div className="chip error-red-light text-bold">{validationErrors.consultant}</div>
                                 )}
                                 {validationErrors.numPax && (
-                                    <div className="chip red lighten-4 text-bold">{validationErrors.numPax}</div>
+                                    <div className="chip error-red-light text-bold">{validationErrors.numPax}</div>
                                 )}
                                 {validationErrors.agency && (
-                                    <div className="chip red lighten-4 text-bold">{validationErrors.agency}</div>
+                                    <div className="chip error-red-light text-bold">{validationErrors.agency}</div>
                                 )}
                             </div>
                         )}
@@ -1024,9 +1024,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         </label>
                                         {(!selectedAgencyId && !newAgencyName) && (
                                             <div>
-                                                <em className="grey-text text-lighten-1">
+                                                <em className="tb-grey-text text-lighten-1">
                                                     <a
-                                                        className="text-bold new-existing-prop tb-teal-text text-lighten-2"
+                                                        className="text-bold new-existing-prop tb-teal-text text-darken-1"
                                                         href="/#"
                                                         onClick={(e) => {
                                                             e.preventDefault();
@@ -1041,7 +1041,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     &nbsp;or&nbsp;
 
                                                     <a
-                                                        className="text-bold new-existing-prop green-text text-lighten-2"
+                                                        className="text-bold new-existing-prop success-green-text"
                                                         href="/#"
                                                         onClick={(e) => { e.preventDefault(); setIsNewAgency(true); }} >
                                                         <span className="material-symbols-outlined">
@@ -1120,7 +1120,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                         {validationErrors.date_overlaps && validationErrors.date_overlaps.length > 0 && (
                             <div className="row">
                                 {validationErrors.date_overlaps.map((errorMessage, index) => (
-                                    <div key={index} className="chip red lighten-4 text-bold">
+                                    <div key={index} className="chip error-red-light text-bold">
                                         {errorMessage}
                                     </div>
                                 ))}
@@ -1141,7 +1141,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             </div>
                                         }
                                         {log.bed_nights > 0 &&
-                                            <div className="chip blue lighten-2">
+                                            <div className="chip tb-teal lighten-3">
                                                 <span className="text-bold">
                                                     Bed Nights:&nbsp;
                                                 </span>
@@ -1153,7 +1153,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             </div>
                                         }
                                         {(log.portfolio_name || log.new_property_portfolio_name) &&
-                                            <div className="chip">
+                                            <div className="chip tb-grey lighten-3">
+                                                {/* TODO figure out why portfolio name isn't populating */}
                                                 <span className="text-bold">
                                                     Portfolio:&nbsp;
                                                 </span>
@@ -1165,7 +1166,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             </div>
                                         }
                                         {(log.country_name || log.new_property_country_name) &&
-                                            <div className="chip">
+                                            <div className="chip tb-grey lighten-3">
                                                 <span className="text-bold">
                                                     Country:&nbsp;
                                                 </span>
@@ -1177,7 +1178,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             </div>
                                         }
                                         {(log.core_destination_name || log.new_property_core_destination_name) &&
-                                            <div className="chip">
+                                            <div className="chip tb-grey lighten-3">
                                                 <span className="text-bold">
                                                     Core Destination:&nbsp;
                                                 </span>
@@ -1195,7 +1196,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     <div className="col s1" style={{ textAlign: 'right' }}>
                                         {!isEditMode &&
                                             <a
-                                                className="btn-floating btn-small waves-effect waves-light red lighten-2"
+                                                className="btn-floating btn-small waves-effect waves-light error-red-light"
                                                 href="/#"
                                                 onClick={(e) => { e.preventDefault(); handleRemoveClick(index); }}>
                                                 <i className="material-icons">remove</i>
@@ -1206,7 +1207,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 {validationErrors.logs && validationErrors.logs[index] && Object.keys(validationErrors.logs[index]).length > 0 && (
                                     <div className="row">
                                         {Object.keys(validationErrors.logs[index]).map((errorKey) => (
-                                            <div key={errorKey} className="chip red lighten-4 text-bold">
+                                            <div key={errorKey} className="chip error-red-light text-bold">
                                                 {validationErrors.logs[index][errorKey]}
                                             </div>
                                         ))}
@@ -1219,10 +1220,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_id)) && (
                                             <div className="row">
                                                 <div>
-                                                    <em className="grey-text text-lighten-1">
+                                                    <em className="tb-grey-text text-lighten-1">
                                                         Please select an&nbsp;
                                                         <a
-                                                            className="text-bold new-existing-prop tb-teal-text text-lighten-2"
+                                                            className="text-bold new-existing-prop tb-teal-text text-darken-1"
                                                             href="/#"
                                                             onClick={(e) => {
                                                                 e.preventDefault();
@@ -1248,7 +1249,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         &nbsp;or&nbsp;
 
                                                         <a
-                                                            className="text-bold new-existing-prop green-text text-lighten-2"
+                                                            className="text-bold new-existing-prop success-green-text"
                                                             href="/#"
                                                             onClick={(e) => { e.preventDefault(); handleLogChange(index, 'is_new_property', true); }}>
                                                             <span className="material-symbols-outlined">
@@ -1286,14 +1287,14 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 </div>
                                             ) : (
                                                 <div className="col s12">
-                                                    <div className="card new-property-card cyan lighten-5">
+                                                    <div className="card new-property-card tb-teal lighten-5">
                                                         <div className="card-content">
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <em className="grey-text">
+                                                                <em className="tb-grey-text text-darken-1">
                                                                     Creating a new property...&nbsp;
                                                                 </em>
                                                                 <a
-                                                                    className="text-bold new-existing-prop red-text text-lighten-3"
+                                                                    className="text-bold new-existing-prop error-red-light-text"
                                                                     href="/#"
                                                                     onClick={(e) => {
                                                                         e.preventDefault();
@@ -1464,7 +1465,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                                         handleLogChange(index, 'new_property_core_destination_id', shipId);
                                                                                     }}
                                                                                 />
-                                                                                <span>
+                                                                                <span className="text-bold">
                                                                                     <span class="material-symbols-outlined">
                                                                                         directions_boat
                                                                                     </span>
@@ -1476,14 +1477,14 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             <label>
                                                                                 <input
                                                                                     type="checkbox"
-                                                                                    class="filled-in"
+                                                                                    class="filled-in tb-teal"
                                                                                     checked={log.new_property_core_destination_name === "Rail"}
                                                                                     onChange={(e) => {
                                                                                         handleLogChange(index, 'new_property_core_destination_name', 'Rail');
                                                                                         handleLogChange(index, 'new_property_core_destination_id', railId);
                                                                                     }}
                                                                                 />
-                                                                                <span>
+                                                                                <span className="text-bold">
                                                                                     <span class="material-symbols-outlined">
                                                                                         train
                                                                                     </span>
@@ -1607,10 +1608,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 </label>
                                                 {(!log.booking_channel_id && !(log.new_booking_channel_name)) && (
                                                     <div>
-                                                        <em className="grey-text text-lighten-1">
-                                                            Select an&nbsp;
+                                                        <em className="tb-grey-text text-lighten-1">
+                                                            Please seelect an&nbsp;
                                                             <a
-                                                                className="text-bold new-existing-prop tb-teal-text text-lighten-2"
+                                                                className="text-bold new-existing-prop tb-teal-text text-darken-1"
                                                                 href="/#"
                                                                 onClick={(e) => {
                                                                     e.preventDefault();
@@ -1626,7 +1627,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                             &nbsp;or&nbsp;
 
                                                             <a
-                                                                className="text-bold new-existing-prop green-text text-lighten-2"
+                                                                className="text-bold new-existing-prop success-green-text"
                                                                 href="/#"
                                                                 onClick={(e) => { e.preventDefault(); handleLogChange(index, 'is_new_booking_channel', true); }}>
                                                                 <span className="material-symbols-outlined">
@@ -1670,8 +1671,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     accommodationLogs.length >= 1 &&
                     accommodationLogs.some(log => log.bed_nights && log.property_name) && (
                         <div className="summary-row" style={{ textAlign: 'left', marginTop: '40px' }}>
+                            {/* TODO figure out why summary isn't populating*/}
                             <h5>Summary</h5>
-                            <div className="chip blue lighten-4">
+                            <div className="chip tb-teal lighten-3">
                                 <span className="text-bold">
                                     Bed Nights:&nbsp;
                                 </span>
@@ -1683,7 +1685,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     dark_mode
                                 </span>
                             </div>
-                            <div className="chip blue lighten-4">
+                            <div className="chip tb-teal lighten-3">
                                 <span className="text-bold">
                                     Number of properties:&nbsp;
                                 </span>
@@ -1693,7 +1695,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     hotel
                                 </span>
                             </div>
-                            <div className="chip blue lighten-4">
+                            <div className="chip tb-teal lighten-3">
                                 <span className="text-bold">
                                     Start date:&nbsp;
                                 </span>
@@ -1709,7 +1711,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     flight_land
                                 </span>
                             </div>
-                            <div className="chip blue lighten-4">
+                            <div className="chip tb-teal lighten-3">
                                 <span className="text-bold">
                                     End date:&nbsp;
                                 </span>
@@ -1743,11 +1745,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
                 <div>
-                    <a href="#!" className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                    <a href="#!" className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                         Close
                     </a>
                     &nbsp;&nbsp;
-                    <button type="submit" form="logForm" className="btn waves-effect waves-light green">Save</button>
+                    <button type="submit" form="logForm" className="btn waves-effect waves-light success-green">Save</button>
                 </div>
             </div>
         </div >

@@ -19,7 +19,7 @@ const Navbar = ({ title }) => {
             <nav className="top-nav">
                 <div className="nav-wrapper">
                     <div className="row" style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', justifyContent: 'space-between' }}>
-                        <div className="col s12 m6 grey-text text-darken-3">
+                        <div className="col s12 m6 tb-md-black-text">
                             <h4 className="header">{title}</h4>
                         </div>
                         {userDetails &&
@@ -28,21 +28,21 @@ const Navbar = ({ title }) => {
                                     <div
                                         style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
                                     >
-                                        <span className="material-symbols-outlined grey-text" style={{ fontSize: '2rem' }}>
+                                        <span className="material-symbols-outlined tb-md-black-text" style={{ fontSize: '2rem' }}>
                                             account_circle
                                         </span>
-                                        <span className="grey-text text-darken-2">
+                                        <span className="tb-md-black-text">
                                             Welcome, <span className="text-bold">{userDetails.email.split('@')[0]}</span>
                                         </span>
 
                                         {userDetails.role === 'admin' &&
-                                            <span className="chip green lighten-4 dark-grey-text text-darken-5 text-bold" style={{ margin: '0px' }}>
+                                            <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
                                                 {userDetails.role.toUpperCase()}
                                             </span>
                                         }
 
                                         <button
-                                            className='btn btn-floating red lighten-2'
+                                            className='btn btn-floating error-red'
                                             onClick={logout}
                                             style={{ margin: '0px' }}
                                         >
@@ -58,7 +58,7 @@ const Navbar = ({ title }) => {
                 </div>
             </nav>
             <div className="container">
-                <a href="/#" data-target="slide-out" className="top-nav sidenav-trigger full hide-on-large-only">
+                <a href="/#" data-target="slide-out" className="top-nav sidenav-trigger full hide-on-large-only tb-teal-text text-darken-4">
                     <i className="material-icons">menu</i>
                 </a>
             </div>
@@ -68,7 +68,7 @@ const Navbar = ({ title }) => {
                         <img
                             id="front-page-logo"
                             src={`${process.env.PUBLIC_URL}/rrlogo.png`}
-                            alt="tb operations"
+                            alt="roam & report"
                             style={{ maxWidth: '70%', display: 'block', margin: '0 auto' }} />
                     </a>
                 </li>
@@ -104,7 +104,7 @@ const Navbar = ({ title }) => {
                     <>
                         <div className="container" style={{ width: '80%' }}>
                             <li>
-                                <div className="chip small grey lighten-2">
+                                <div className="chip small tb-grey lighten-3">
                                     ADMIN
                                 </div>
                             </li>

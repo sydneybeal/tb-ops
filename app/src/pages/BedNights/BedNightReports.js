@@ -96,7 +96,7 @@ export const BedNightReports = () => {
         if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
             M.toast({
                 html: 'An invalid date was passed in the URL and has been reset.',
-                classes: 'yellow lighten-3 grey-text text-darken-3',
+                classes: 'warning-yellow-light tb-grey-text text-darken-4',
                 displayLength: 1500,
             });
             return '';
@@ -110,14 +110,14 @@ export const BedNightReports = () => {
         if (momentDate.isBefore(momentMin)) {
             M.toast({
                 html: `Date out of range, resetting to ${momentMin.format('MM/DD/yyyy')}.`,
-                classes: 'yellow lighten-3 grey-text text-darken-3',
+                classes: 'warning-yellow-light tb-grey-text text-darken-4',
                 displayLength: 1500,
             });
             return momentMin.format('YYYY-MM-DD');
         } else if (momentDate.isAfter(momentMax)) {
             M.toast({
                 html: `Date out of range, resetting to ${momentMax.format('MM/DD/yyyy')}.`,
-                classes: 'yellow lighten-3 grey-text text-darken-3',
+                classes: 'warning-yellow-light tb-grey-text text-darken-4',
                 displayLength: 1500,
             });
             return momentMax.format('YYYY-MM-DD');
@@ -171,7 +171,7 @@ export const BedNightReports = () => {
                             M.toast({
                                 html: 'Your session has timed out, please log in again.',
                                 displayLength: 4000,
-                                classes: 'red lighten-2',
+                                classes: 'error-red-light',
                             });
                             logout();
                             return;
@@ -261,7 +261,7 @@ export const BedNightReports = () => {
                 <Navbar title="Reports" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
                     <div className="row center">
                         <div>
@@ -364,7 +364,7 @@ export const BedNightReports = () => {
                                                         }));
                                                         M.toast({
                                                             html: `Date out of range, resetting to ${moment(validDate).format('MM/DD/yyyy')}.`,
-                                                            classes: 'yellow lighten-3 grey-text text-darken-3',
+                                                            classes: 'warning-yellow-light tb-grey-text text-darken-4',
                                                             displayLength: 1500,
                                                         });
                                                     } else {
@@ -381,7 +381,7 @@ export const BedNightReports = () => {
                                             dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
-                                    <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
+                                    <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">
                                         <span className="material-symbols-outlined">
                                             today
                                         </span>
@@ -418,7 +418,7 @@ export const BedNightReports = () => {
                                                         }));
                                                         M.toast({
                                                             html: `Date out of range, resetting to ${moment(validDate).format('MM/DD/yyyy')}.`,
-                                                            classes: 'yellow lighten-3 grey-text text-darken-3',
+                                                            classes: 'warning-yellow-light tb-grey-text text-darken-4',
                                                             displayLength: 1500,
                                                         });
                                                     } else {
@@ -434,7 +434,7 @@ export const BedNightReports = () => {
                                             dateFormat="MM/dd/yyyy"
                                         />
                                     </div>
-                                    <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
+                                    <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">
                                         <span className="material-symbols-outlined">
                                             event
                                         </span>
@@ -447,7 +447,7 @@ export const BedNightReports = () => {
 
                     <div className="row center" style={{ marginBottom: '0px' }}>
                         <div>
-                            <button className="btn grey" onClick={() => setFilters(
+                            <button className="btn tb-grey lighten-2" onClick={() => setFilters(
                                 { core_destination_name: '', portfolio_name: '', country_name: '', consultant_name: '', start_date: '', end_date: '' })}>
                                 Reset Filters
                                 <span className="material-symbols-outlined">

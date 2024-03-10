@@ -23,7 +23,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
             M.toast({
                 html: 'Please check the form for errors.',
                 displayLength: 4000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             // Prevent form submission if validation fails
             return;
@@ -41,7 +41,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -65,19 +65,19 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
                     let toastHtml = '';
-                    let toastColor = 'green darken-1';
+                    let toastColor = 'success-green';
 
                     // Check for error first
                     if (data?.error) {
                         toastHtml = data.error;
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     } else if (insertedCount > 0) {
                         toastHtml = `Added ${insertedCount} portfolio.`;
                     } else if (updatedCount > 0) {
                         toastHtml = `Modified ${updatedCount} portfolio.`;
                     } else {
                         toastHtml = data?.message ?? "No portfolios were added.";
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     }
 
                     console.log(toastHtml);
@@ -97,7 +97,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
-                        classes: 'amber darken-1',
+                        classes: 'warning-yellow tb-md-black-text',
                     });
                 });
             // }
@@ -164,14 +164,14 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
             M.toast({
                 html: 'Only admins are able to delete from the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
             const confirmDelete = window.confirm("Are you sure you want to delete this portfolio?");
             if (confirmDelete) {
                 if (!portfolioId) {
-                    M.toast({ html: 'Error: No portfolio ID found', classes: 'red lighten-2' });
+                    M.toast({ html: 'Error: No portfolio ID found', classes: 'error-red' });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
@@ -204,7 +204,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                         // Handle success here
                         M.toast({
                             html: `Portfolio '${name}' successfully deleted`,
-                            classes: 'green',
+                            classes: 'success-green',
                             displayLength: 2000
                         });
                     })
@@ -217,7 +217,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                         console.error('Error:', error);
                         M.toast({
                             html: error.message,
-                            classes: 'red lighten-1',
+                            classes: 'error-red',
                             displayLength: 8000
                         });
                     });
@@ -275,7 +275,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                     {!isEditMode ? 'New' : 'Editing'} Portfolio&nbsp;&nbsp;
                     {isEditMode &&
                         <button
-                            className="btn waves-effect waves-light red lighten-3"
+                            className="btn waves-effect waves-light error-red-light"
                             onClick={handleDelete}
                         >
                             <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
@@ -290,7 +290,7 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                             {validationErrors.name && (
                                 <div className="row" style={{ marginBottom: '20px' }}>
                                     {validationErrors.name && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.name}</div>
+                                        <div className="chip error-red-light text-bold">{validationErrors.name}</div>
                                     )}
                                 </div>
                             )}
@@ -360,11 +360,11 @@ const AddEditPortfolioModal = ({ isOpen, onClose, onRefresh, editPortfolioData =
                     </div>
                 )} */}
                 <div style={{ paddingBottom: '20px' }}>
-                    <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                    <button className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                         Close
                     </button>
                     &nbsp;&nbsp;
-                    <button type="submit" form="consultantForm" className="btn waves-effect waves-light green">Save</button>
+                    <button type="submit" form="consultantForm" className="btn waves-effect waves-light success-green">Save</button>
                 </div>
             </div>
         </div >

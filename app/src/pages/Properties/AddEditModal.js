@@ -20,10 +20,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
     const [countries, setCountries] = useState([]);
     const [relatedEntries, setRelatedEntries] = useState([]);
     const [portfolios, setPortfolios] = useState([]);
-    // const [portfolioNames, setPortfolioNames] = useState([]);
-    // const [filteredPortfolioSuggestions, setFilteredPortfolioSuggestions] = useState([]);
-    // const [showPortfolioSuggestions, setShowPortfolioSuggestions] = useState(false);
-    // const suggestionsRef = useRef(null);
+    const [propertyNames, setPropertyNames] = useState([]);
+    const [filteredPropertySuggestions, setFilteredPropertySuggestions] = useState([]);
+    const [showPropertySuggestions, setShowPropertySuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
     const [railId, setRailId] = useState('');
     const [shipId, setShipId] = useState('');
     const [touched, setTouched] = useState({
@@ -41,7 +41,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             M.toast({
                 html: 'Please check the form for errors.',
                 displayLength: 4000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             // Prevent form submission if validation fails
             return;
@@ -60,7 +60,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -86,19 +86,19 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
                     let toastHtml = '';
-                    let toastColor = 'green darken-1';
+                    let toastColor = 'success-green';
 
                     // Check for error first
                     if (data?.error) {
                         toastHtml = data.error;
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     } else if (insertedCount > 0) {
                         toastHtml = `Added ${insertedCount} property.`;
                     } else if (updatedCount > 0) {
                         toastHtml = `Modified ${updatedCount} property.`;
                     } else {
                         toastHtml = data?.message ?? "No properties were added.";
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     }
                     M.toast({
                         html: toastHtml,
@@ -118,7 +118,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
-                        classes: 'amber darken-1',
+                        classes: 'warning-yellow tb-md-black-text',
                     });
                 });
             // }
@@ -182,6 +182,11 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     'Authorization': `Bearer ${userDetails.token}`
                 }
             }).then(res => res.json()),
+            fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+                headers: {
+                    'Authorization': `Bearer ${userDetails.token}`
+                }
+            }).then(res => res.json()),
         ];
 
         // Only add this promise if propertyId is not null
@@ -197,7 +202,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
 
         Promise.all(promises)
             .then((results) => {
-                const [countriesData, coreDestinationsData, portfoliosData, relatedEntriesData] = results;
+                const [countriesData, coreDestinationsData, portfoliosData, propertiesData, relatedEntriesData] = results;
                 // Handle countries data
                 const formattedCountries = countriesData.map(country => ({
                     value: country.id,
@@ -222,6 +227,12 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 }));
                 setPortfolios(formattedPortfolios);
 
+                // Handle properties data
+                const portfolioNames = [...new Set(propertiesData.map(property => property.name))];
+                setPropertyNames(portfolioNames);
+                setFilteredPropertySuggestions(portfolioNames);
+
+                // Handle related entries
                 if (relatedEntriesData) {
                     const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
                     parsedRelatedEntries.sort((a, b) => {
@@ -251,7 +262,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             M.toast({
                 html: 'Only admins are able to delete from the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -262,7 +273,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 if (!propertyId) {
                     M.toast({
                         html: 'Error: No property ID found',
-                        classes: 'red lighten-2',
+                        classes: 'error-red',
                         displayLength: 4000
                     });
                     return;
@@ -295,7 +306,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                         // Handle success here
                         M.toast({
                             html: `Property '${propertyName}' successfully deleted`,
-                            classes: 'green',
+                            classes: 'success-green',
                             displayLength: 2000
                         });
                         resetFormState();
@@ -306,7 +317,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                         console.error('Error:', error);
                         M.toast({
                             html: error.message,
-                            classes: 'red lighten-1',
+                            classes: 'error-red',
                             displayLength: 8000
                         });
                     });
@@ -326,13 +337,13 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             setSelectedCountryId(editPropertyData.country_id);
             setSelectedCoreDestinationId(editPropertyData.core_destination_id);
             setTouched({});
-            // const filtered = portfolioNames.filter(portfolioName =>
-            //     portfolioName.toLowerCase().includes(editPropertyData.portfolio_name.toLowerCase())
-            // );
-            // setFilteredPortfolioSuggestions(filtered);
-            // setShowPortfolioSuggestions(false);
+            const filtered = propertyNames.filter(propertyName =>
+                propertyName.toLowerCase().includes(editPropertyData.name.toLowerCase())
+            );
+            setFilteredPropertySuggestions(filtered);
+            setShowPropertySuggestions(false);
         }
-    }, [isOpen, isEditMode, editPropertyData]);
+    }, [isOpen, isEditMode, editPropertyData, propertyNames]);
 
     const resetFormState = () => {
         setPropertyId(null);
@@ -532,7 +543,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     {!isEditMode ? 'New' : 'Editing'} Property&nbsp;&nbsp;
                     {isEditMode &&
                         <button
-                            className="btn waves-effect waves-light red lighten-3"
+                            className="btn waves-effect waves-light error-red-light"
                             onClick={handleDelete}
                         >
                             <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
@@ -548,13 +559,13 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                 {(validationErrors.name || validationErrors.portfolio || validationErrors.country) && (
                                     <div className="row" style={{ marginBottom: '20px' }}>
                                         {validationErrors.name && (
-                                            <div className="chip red lighten-4 text-bold">{validationErrors.name}</div>
+                                            <div className="chip error-red-light text-bold">{validationErrors.name}</div>
                                         )}
                                         {validationErrors.portfolio && (
-                                            <div className="chip red lighten-4 text-bold">{validationErrors.portfolio}</div>
+                                            <div className="chip error-red-light text-bold">{validationErrors.portfolio}</div>
                                         )}
                                         {validationErrors.country && (
-                                            <div className="chip red lighten-4 text-bold">{validationErrors.country}</div>
+                                            <div className="chip error-red-light text-bold">{validationErrors.country}</div>
                                         )}
                                     </div>
                                 )}
@@ -782,11 +793,11 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     </div>
                 )} */}
                         <div style={{ paddingBottom: '20px' }}>
-                            <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                            <button className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                                 Close
                             </button>
                             &nbsp;&nbsp;
-                            <button type="submit" form="propertyForm" className="btn waves-effect waves-light green">Save</button>
+                            <button type="submit" form="propertyForm" className="btn waves-effect waves-light success-green">Save</button>
                         </div>
 
                     </>

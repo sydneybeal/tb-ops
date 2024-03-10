@@ -105,13 +105,13 @@ export const AuditLogs = () => {
     const getActionColor = (action) => {
         switch (action) {
             case 'update':
-                return 'amber lighten-3';
+                return 'warning-yellow-light';
             case 'delete':
-                return 'red lighten-3';
+                return 'error-red-light';
             case 'insert':
-                return 'green lighten-2';
+                return 'success-green-light';
             default:
-                return 'grey'; // Default color if action does not match
+                return 'tb-grey'; // Default color if action does not match
         }
     };
 
@@ -148,7 +148,7 @@ export const AuditLogs = () => {
                 <Navbar title="Audit Logs" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
@@ -182,7 +182,7 @@ export const AuditLogs = () => {
                                                                 <span className="material-symbols-outlined text-bold">expand_more</span>
                                                             </td>
                                                             <td onClick={() => toggleRowExpansion(index)}>
-                                                                <div className="chip tb-teal lighten-2">
+                                                                <div className="chip tb-teal lighten-3">
                                                                     <span className="material-symbols-outlined">
                                                                         schedule
                                                                     </span>
@@ -190,7 +190,7 @@ export const AuditLogs = () => {
                                                                 </div>
                                                             </td>
                                                             <td onClick={() => toggleRowExpansion(index)}>
-                                                                <div className={`chip ${actionColor} text-bold grey-text text-darken-4`}>
+                                                                <div className={`chip ${actionColor} text-bold tb-md-black-text`}>
                                                                     <span className="material-symbols-outlined">
                                                                         {actionSymbol}
                                                                     </span>
@@ -208,7 +208,7 @@ export const AuditLogs = () => {
                                                             expandedRows.has(index) && (
                                                                 <tr>
                                                                     <td colSpan="4" style={{ padding: '0px' }}> {/* Adjust colspan as needed */}
-                                                                        <div style={{ backgroundColor: '#f0f0f0', padding: '10px' }}>
+                                                                        <div className="tb-grey lighten-4" style={{ padding: '10px' }}>
                                                                             {Object.entries(calculateDifferences(item.before_value, item.after_value)).map(([key, { before, after }]) => (
                                                                                 <div key={key}>
                                                                                     <span>{key}: </span>

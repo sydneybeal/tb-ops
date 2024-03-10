@@ -49,7 +49,7 @@ const LoginModal = ({ onClose }) => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
-                        <button className="btn tb-teal lighten-1" type="submit">Log In</button>
+                        <button className="btn tb-teal darken-3" type="submit">Log In</button>
                     </form>
                 </div>
                 {/* </div>

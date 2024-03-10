@@ -17,7 +17,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                 <Navbar title="FAQ" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container" style={{ width: '90%' }}>
                     <div style={{ marginBottom: '40px' }}>
                         <div style={{ marginBottom: '10px' }}>

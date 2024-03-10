@@ -152,7 +152,7 @@ export const Consultants = () => {
                 <Navbar title="Consultant Management" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
@@ -174,7 +174,7 @@ export const Consultants = () => {
                                             <div className="col s2 offset-s10">
                                                 <button
                                                     href=""
-                                                    className="btn-float btn-large waves-effect waves-light green lighten-3"
+                                                    className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
                                                     onClick={openModal}
                                                 >
                                                     <span className="material-symbols-outlined">
@@ -186,14 +186,14 @@ export const Consultants = () => {
                                         </div>
                                         <table className="accommodation-logs-table center">
                                             <thead>
-                                                <tr>
+                                                <tr className="tb-md-black-text text-bold">
                                                     <th
                                                         onClick={() =>
                                                             applySorting('last_name')
                                                         }
                                                     >
                                                         Last Name
-                                                        <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                             {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
@@ -203,7 +203,7 @@ export const Consultants = () => {
                                                         }
                                                     >
                                                         First Name
-                                                        <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                             {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
@@ -213,19 +213,27 @@ export const Consultants = () => {
                                                         }
                                                     >
                                                         Active?
-                                                        <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                             {sorting.field === 'is_active' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
-                                                    <th style={{ width: '200px', textAlign: 'right' }}>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('updated_at')
+                                                        }
+                                                        style={{ width: '200px', textAlign: 'right' }}
+                                                    >
                                                         <span
                                                             className={`tooltipped`}
                                                             data-position="bottom"
-                                                            data-tooltip="Edit"
+                                                            data-tooltip="Last updated"
                                                             data-tooltip-class="tooltip-light"
                                                         >
-                                                            <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
-                                                                edit
+                                                            <span className="material-symbols-outlined tb-md-black-text text-bold">
+                                                                update
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                             </span>
                                                         </span>
                                                     </th>
@@ -243,7 +251,7 @@ export const Consultants = () => {
                                                                     <p className="text-bold">{item.first_name}</p>
                                                                 </td>
                                                                 <td>{item.is_active ? (
-                                                                    <span className="chip green lighten-3">YES</span>
+                                                                    <span className="chip success-green-light">YES</span>
                                                                 ) : (
                                                                     <span className="chip tb-grey lighten-2">NO</span>
                                                                 )}
@@ -257,14 +265,16 @@ export const Consultants = () => {
                                                                             data-tooltip-class="tooltip-updated-by"
                                                                         >
                                                                             <button
-                                                                                className="btn waves-effect waves-light tb-gray lighten-2 grey-text text-darken-3"
+                                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
                                                                                 onClick={() => openEditModal(item)}
                                                                             >
-                                                                                Edit
+                                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                                    edit_note
+                                                                                </span>
                                                                             </button>
                                                                             <br />
-                                                                            <em className="grey-text" style={{ fontSize: '0.75rem' }}>
-                                                                                <span className="material-symbols-outlined grey-text">
+                                                                            <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                                                <span className="material-symbols-outlined">
                                                                                     update
                                                                                 </span>
                                                                                 {moment.utc(item.updated_at).local().fromNow()}

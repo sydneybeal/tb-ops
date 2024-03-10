@@ -19,7 +19,7 @@ export const Properties = () => {
                 <Navbar title="Trip Reports" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
                     <h5>
                         Coming soon...

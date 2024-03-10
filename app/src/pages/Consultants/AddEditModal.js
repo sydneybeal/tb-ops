@@ -27,7 +27,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             M.toast({
                 html: 'Please check the form for errors.',
                 displayLength: 4000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             // Prevent form submission if validation fails
             return;
@@ -45,7 +45,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             M.toast({
                 html: 'Your entry was valid, but only admins are able to save to the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
@@ -69,19 +69,19 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
                     let toastHtml = '';
-                    let toastColor = 'green darken-1';
+                    let toastColor = 'success-green';
 
                     // Check for error first
                     if (data?.error) {
                         toastHtml = data.error;
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     } else if (insertedCount > 0) {
                         toastHtml = `Added ${insertedCount} consultant.`;
                     } else if (updatedCount > 0) {
                         toastHtml = `Modified ${updatedCount} consultant.`;
                     } else {
                         toastHtml = data?.message ?? "No consultants were added.";
-                        toastColor = 'red lighten-2';
+                        toastColor = 'error-red';
                     }
                     M.toast({
                         html: toastHtml,
@@ -99,7 +99,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
-                        classes: 'amber darken-1',
+                        classes: 'warning-yellow tb-md-black-text',
                     });
                 });
             // }
@@ -172,14 +172,14 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
             M.toast({
                 html: 'Only admins are able to delete from the database at this time.',
                 displayLength: 4000,
-                classes: 'amber darken-1',
+                classes: 'warning-yellow tb-md-black-text',
             });
         }
         else {
             const confirmDelete = window.confirm("Are you sure you want to delete this consultant?");
             if (confirmDelete) {
                 if (!consultantId) {
-                    M.toast({ html: 'Error: No consultant ID found', classes: 'red lighten-2' });
+                    M.toast({ html: 'Error: No consultant ID found', classes: 'error-red' });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
@@ -212,7 +212,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                         // Handle success here
                         M.toast({
                             html: `Consultant '${lastName}/${firstName}' successfully deleted`,
-                            classes: 'green',
+                            classes: 'success-green',
                             displayLength: 2000
                         });
                         resetFormState();
@@ -223,7 +223,7 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                         console.error('Error:', error);
                         M.toast({
                             html: error.message,
-                            classes: 'red lighten-1',
+                            classes: 'error-red',
                             displayLength: 8000
                         });
                     });
@@ -331,10 +331,10 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     {!isEditMode ? 'New' : 'Editing'} Consultant&nbsp;&nbsp;
                     {isEditMode &&
                         <button
-                            className="btn waves-effect waves-light red lighten-3"
+                            className="btn waves-effect waves-light error-red-light"
                             onClick={handleDelete}
                         >
-                            <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                            <span className="material-symbols-outlined tb-grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
                                 delete_forever
                             </span>
                         </button>
@@ -346,13 +346,13 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                             {(validationErrors.firstName || validationErrors.lastName || validationErrors.isActive) && (
                                 <div className="row" style={{ marginBottom: '20px' }}>
                                     {validationErrors.firstName && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.firstName}</div>
+                                        <div className="chip error-red-light text-bold">{validationErrors.firstName}</div>
                                     )}
                                     {validationErrors.lastName && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.lastName}</div>
+                                        <div className="chip error-red-light text-bold">{validationErrors.lastName}</div>
                                     )}
                                     {validationErrors.isActive && (
-                                        <div className="chip red lighten-4 text-bold">{validationErrors.isActive}</div>
+                                        <div className="chip error-red-light text-bold">{validationErrors.isActive}</div>
                                     )}
                                 </div>
                             )}
@@ -454,11 +454,11 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                     </div>
                 )} */}
                 <div style={{ paddingBottom: '20px' }}>
-                    <button className="btn modal-close waves-effect waves-light red lighten-2" onClick={onClose}>
+                    <button className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                         Close
                     </button>
                     &nbsp;&nbsp;
-                    <button type="submit" form="consultantForm" className="btn waves-effect waves-light green">Save</button>
+                    <button type="submit" form="consultantForm" className="btn waves-effect waves-light success-green">Save</button>
                 </div>
             </div>
         </div >

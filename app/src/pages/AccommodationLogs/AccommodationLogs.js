@@ -348,7 +348,7 @@ export const Overview = () => {
                 <Navbar title="Service Providers" />
             </header>
 
-            <main className="grey lighten-5">
+            <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
                     <AddLogModal
                         isOpen={isModalOpen}
@@ -376,13 +376,13 @@ export const Overview = () => {
                                         {Array.from({ length: totalPages }, (_, idx) => (
                                             <li
                                                 className={
-                                                    `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-2' : ''
+                                                    `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
                                                     }`
                                                 }
                                                 key={idx}
                                                 onClick={() => changePage(idx)}
                                             >
-                                                <a className="grey-text text-darken-1" onClick={(e) => e.preventDefault()} href="#!">{idx + 1}</a>
+                                                <a className="tb-grey-text text-darken-1" onClick={(e) => e.preventDefault()} href="#!">{idx + 1}</a>
                                             </li>
                                         ))}
                                         <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
@@ -398,7 +398,7 @@ export const Overview = () => {
                                 <div className="col s2">
                                     {/* <button className="btn" onClick={openModal}>New</button> */}
                                     {/* <div className="row" style={{ textAlign: 'right' }}> */}
-                                    <button className="btn-float btn-large waves-effect waves-light green lighten-3" onClick={openModal}>
+                                    <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
                                         </span>
@@ -528,7 +528,7 @@ export const Overview = () => {
                             </div>
                             <div className="row center">
                                 <div>
-                                    <button className="btn tb-gray lighten-2" onClick={() => {
+                                    <button className="btn tb-grey lighten-2" onClick={() => {
                                         setFilters(
                                             { core_dest: '', country: '', consultant: '' }
                                         );
@@ -560,10 +560,10 @@ export const Overview = () => {
                                                 data-tooltip="Property & Portfolio"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     hotel
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'property_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -580,10 +580,10 @@ export const Overview = () => {
                                                 data-tooltip="Primary Traveler Name"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     person
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'primary_traveler' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -601,10 +601,10 @@ export const Overview = () => {
                                                 data-tooltip="Number of Passengers"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     airline_seat_recline_extra
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'num_pax' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -624,10 +624,10 @@ export const Overview = () => {
                                                 data-tooltip="Date Range"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     date_range
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'date_in' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -645,10 +645,10 @@ export const Overview = () => {
                                                 data-tooltip="Bed Nights"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     dark_mode
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'bed_nights' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -665,10 +665,10 @@ export const Overview = () => {
                                                 data-tooltip="Travel Beyond Consultant"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     badge
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'consultant_display_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -685,10 +685,10 @@ export const Overview = () => {
                                                 data-tooltip="Booking Channel"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     alt_route
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'booking_channel_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -705,10 +705,10 @@ export const Overview = () => {
                                                 data-tooltip="Agency"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     contact_mail
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'agency_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -726,10 +726,10 @@ export const Overview = () => {
                                                 data-tooltip="Country/Core Destination"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     explore
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -746,10 +746,10 @@ export const Overview = () => {
                                                 data-tooltip="Last updated"
                                                 data-tooltip-class="tooltip-light"
                                             >
-                                                <span className="material-symbols-outlined blue-grey-text text-darken-4 text-bold">
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
                                                     update
                                                 </span>
-                                                <span className="material-symbols-outlined teal-text text-lighten-3">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                     {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
                                             </span>
@@ -770,10 +770,10 @@ export const Overview = () => {
                                                     <td>{item.primary_traveler}</td>
                                                     <td style={{ width: '60px' }}>{item.num_pax}</td>
                                                     <td style={{ width: '100px' }}>
-                                                        <span className="chip tb-gray lighten-2 text-bold">
+                                                        <span className="chip tb-grey lighten-3 text-bold">
                                                             {moment(item.date_in).format("M/D/YY")}
                                                         </span>
-                                                        <span className="chip tb-gray lighten-2 text-bold">
+                                                        <span className="chip tb-grey lighten-3 text-bold">
                                                             {moment(item.date_out).format("M/D/YY")}
                                                         </span>
                                                     </td>
@@ -791,19 +791,19 @@ export const Overview = () => {
                                                         <p>
                                                             {item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
                                                                 ? item.booking_channel_name
-                                                                : <span className="chip tb-gray lighten-2">n/a</span>}
+                                                                : <span className="chip tb-grey lighten-3">n/a</span>}
                                                         </p>
                                                     </td>
                                                     <td style={{ verticalAlign: 'top' }}>
                                                         <p>
                                                             {item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
                                                                 ? item.agency_name
-                                                                : <span className="chip tb-gray lighten-2">n/a</span>}
+                                                                : <span className="chip tb-grey lighten-3">n/a</span>}
                                                         </p>
                                                     </td>
                                                     <td className="center" style={{ verticalAlign: 'top' }}>
                                                         <p>{item.country_name}</p>
-                                                        <span className="chip tb-teal lighten-2 text-bold" style={{
+                                                        <span className="chip tb-teal lighten-3 text-bold" style={{
                                                             padding: '0px 6px',
                                                             whiteSpace: 'nowrap',
                                                             overflow: 'hidden',
@@ -823,17 +823,16 @@ export const Overview = () => {
                                                                 data-tooltip-class="tooltip-updated-by"
                                                             >
                                                                 <button
-                                                                    className="btn-floating btn-small waves-effect waves-light tb-gray lighten-3"
+                                                                    className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
                                                                     onClick={() => openEditModal(item)}
                                                                 >
-                                                                    <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                    <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
                                                                         edit_note
                                                                     </span>
                                                                 </button>
                                                                 <br />
-                                                                <br />
-                                                                <em className="grey-text" style={{ fontSize: '0.75rem' }}>
-                                                                    <span className="material-symbols-outlined grey-text">
+                                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                                    <span className="material-symbols-outlined">
                                                                         update
                                                                     </span>
                                                                     {moment.utc(item.updated_at).local().fromNow()}
