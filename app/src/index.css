@@ -260,11 +260,11 @@ main {
 
 /* success-green */
 .success-green {
-  background-color: #4bb079 !important;
+  background-color: #3d9973 !important;
 }
 
 .success-green-text {
-  color: #4bb079 !important;
+  color: #9adbc0 !important;
 }
 
 /* success-green-light */
@@ -278,7 +278,7 @@ main {
 
 /* error-red */
 .error-red {
-  background-color: #e68473 !important;
+  background-color: #d1685d !important;
 }
 
 .error-red-text {
@@ -296,7 +296,7 @@ main {
 
 /* warning-yellow-light */
 .warning-yellow {
-  background-color: #f3c666 !important;
+  background-color: #fde5b3 !important;
 }
 
 .warning-yellow-text {
@@ -426,12 +426,12 @@ ul.sidenav.sidenav-fixed li.logo {
 } */
 
 .material-tooltip.tooltip-light {
-  background-color: rgba(47, 79, 79, 0.8) !important;
+  background-color: rgba(0, 98, 110, 0.8) !important;
   border-radius: 4px !important;
 }
 
 .material-tooltip.tooltip-updated-by {
-  background-color: rgba(47, 79, 79, 0.8) !important;
+  background-color: rgba(0, 98, 110, 0.8) !important;
   border-radius: 4px !important;
   min-width: 200px;
   max-width: 400px;
@@ -518,7 +518,7 @@ table.accommodation-logs-table {
 }
 
 .suggestions-list li:hover {
-  background-color: lightblue; /* Changes the background color on hover */
+  background-color: #e9fcfd; /* Changes the background color on hover */
   font-weight: bold; /* Makes the text bold on hover */
 }
 
@@ -558,6 +558,10 @@ td {
   background-color: #0e9bac;
 }
 
+.accommodation-logs-table tr {
+  transition: background-color 0.3s ease-in-out; /* Add this line */
+}
+
 .accommodation-logs-table tr:nth-child(even) {
   background-color: #e8e5e1;
 }
@@ -567,7 +571,7 @@ td {
 }
 
 .accommodation-logs-table tr:hover {
-  background-color: #ddd;
+  background-color: #d1cdc9;
 }
 
 table.accommodation-logs-table td {

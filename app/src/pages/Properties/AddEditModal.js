@@ -189,20 +189,9 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             }).then(res => res.json()),
         ];
 
-        // Only add this promise if propertyId is not null
-        if (propertyId) {
-            promises.push(
-                fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${propertyId}&identifier_type=property_id`, {
-                    headers: {
-                        'Authorization': `Bearer ${userDetails.token}`
-                    }
-                }).then(res => res.json())
-            );
-        }
-
         Promise.all(promises)
             .then((results) => {
-                const [countriesData, coreDestinationsData, portfoliosData, propertiesData, relatedEntriesData] = results;
+                const [countriesData, coreDestinationsData, portfoliosData, propertiesData] = results;
                 // Handle countries data
                 const formattedCountries = countriesData.map(country => ({
                     value: country.id,
@@ -227,25 +216,17 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 }));
                 setPortfolios(formattedPortfolios);
 
-                // Handle properties data
-                const portfolioNames = [...new Set(propertiesData.map(property => property.name))];
-                setPropertyNames(portfolioNames);
-                setFilteredPropertySuggestions(portfolioNames);
+                const propertiesMap = propertiesData.reduce((acc, property) => {
+                    if (!acc[property.name]) {
+                        acc[property.name] = property; // Store the whole object
+                    }
+                    return acc;
+                }, {});
 
-                // Handle related entries
-                if (relatedEntriesData) {
-                    const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
-                    parsedRelatedEntries.sort((a, b) => {
-                        if (a.date_in < b.date_in) {
-                            return -1;
-                        }
-                        if (a.date_in > b.date_in) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                    setRelatedEntries(parsedRelatedEntries);
-                }
+                const uniqueProperties = Object.values(propertiesMap);
+
+                setPropertyNames(uniqueProperties);
+                setFilteredPropertySuggestions(uniqueProperties);
             })
             .catch((err) => {
                 console.error(err);
@@ -253,7 +234,35 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             .finally(() => {
                 setLoading(false);
             });
-    }, [propertyId, isOpen, onClose, userDetails.token]);
+    }, [isOpen, onClose, userDetails.token]);
+
+    useEffect(() => {
+        if (!propertyId || !isOpen) return;
+
+        setLoading(true);
+
+        fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${propertyId}&identifier_type=property_id`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then(res => res.json())
+            .then((relatedEntriesData) => {
+                const parsedRelatedEntries = relatedEntriesData.affected_logs.map(log => JSON.parse(log));
+                parsedRelatedEntries.sort((a, b) => {
+                    if (a.date_in < b.date_in) {
+                        return -1;
+                    }
+                    if (a.date_in > b.date_in) {
+                        return 1;
+                    }
+                    return 0;
+                });
+                setRelatedEntries(parsedRelatedEntries);
+            })
+            .catch((err) => console.error(err))
+            .finally(() => setLoading(false));
+    }, [propertyId, isOpen, userDetails.token]);
 
 
 
@@ -268,8 +277,6 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         else {
             const confirmDelete = window.confirm("Are you sure you want to delete this property?");
             if (confirmDelete) {
-                // const entryId = property.id : null;
-                // const propertyId = 'abc';
                 if (!propertyId) {
                     M.toast({
                         html: 'Error: No property ID found',
@@ -278,7 +285,6 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                     });
                     return;
                 }
-                // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
                 fetch(`${process.env.REACT_APP_API}/v1/properties/${propertyId}`, {
                     method: 'DELETE',
                     headers: {
@@ -337,8 +343,8 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             setSelectedCountryId(editPropertyData.country_id);
             setSelectedCoreDestinationId(editPropertyData.core_destination_id);
             setTouched({});
-            const filtered = propertyNames.filter(propertyName =>
-                propertyName.toLowerCase().includes(editPropertyData.name.toLowerCase())
+            const filtered = propertyNames.filter(property =>
+                property.name.toLowerCase().includes(editPropertyData.name.toLowerCase())
             );
             setFilteredPropertySuggestions(filtered);
             setShowPropertySuggestions(false);
@@ -352,9 +358,9 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         setSelectedPortfolioId(null);
         setSelectedCoreDestinationId(null);
         setValidationErrors({});
+        setFilteredPropertySuggestions([]);
+        setShowPropertySuggestions(false);
         setTouched({});
-        // setShowPortfolioSuggestions(false);
-        // setFilteredPortfolioSuggestions([]);
         setRelatedEntries([]);
     };
 
@@ -376,6 +382,18 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                 name: validatePropertyName(value),
             }));
         }
+        if (value.trim() === '') {
+            // If the input is empty, clear suggestions and don't show the list
+            setFilteredPropertySuggestions(propertyNames);
+            setShowPropertySuggestions(true);
+        } else {
+            // Filter and show suggestions based on the input
+            const filtered = propertyNames.filter(property =>
+                property.name.toLowerCase().includes(value.toLowerCase())
+            );
+            setFilteredPropertySuggestions(filtered);
+            setShowPropertySuggestions(true);
+        }
     };
 
     const handlePropertyNameBlur = () => {
@@ -386,52 +404,20 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }));
     };
 
-    // const validatePortfolioName = (value) => {
-    //     if (!(value || '').trim()) {
-    //         return 'Missing portfolio name';
-    //     }
-    //     return '';
-    // };
+    const selectPropertySuggestion = (suggestion) => {
+        console.log(suggestion);
+        setPropertyName(suggestion.name);
+        setPropertyId(suggestion.id);
+        if (touched.propertyName) {
+            setValidationErrors(prevErrors => ({
+                ...prevErrors,
+                portfolio: validatePropertyName(suggestion.name),
+            }));
+        }
 
-    // const selectPortfolioSuggestion = (suggestion) => {
-    //     setPortfolioName(suggestion);
-    //     if (touched.portfolioName) {
-    //         setValidationErrors(prevErrors => ({
-    //             ...prevErrors,
-    //             portfolio: validatePortfolioName(suggestion),
-    //         }));
-    //     }
-
-    //     // setFilteredPortfolioSuggestions([]);
-    //     // setShowPortfolioSuggestions(false);
-    // };
-
-    // const handlePortfolioNameChange = (e) => {
-    //     const value = e.target.value;
-    //     setPortfolioName(value);
-
-    //     setTouched(prev => ({ ...prev, portfolioName: true }));
-
-    //     // Only validate in real-time if the field has been touched
-    //     if (touched.portfolioName) {
-    //         setValidationErrors(prevErrors => ({
-    //             ...prevErrors,
-    //             portfolio: validatePortfolioName(value),
-    //         }));
-    //     }
-    //     // if (value.trim() === '') {
-    //     //     // If the input is empty, clear suggestions and don't show the list
-    //     //     setFilteredPortfolioSuggestions(portfolioNames);
-    //     //     setShowPortfolioSuggestions(true);
-    //     // } else {
-    //     //     // Filter and show suggestions based on the input
-    //     //     const filtered = portfolioNames.filter(portfolioName =>
-    //     //         portfolioName.toLowerCase().includes(value.toLowerCase())
-    //     //     );
-    //     //     setFilteredPortfolioSuggestions(filtered);
-    //     //     setShowPortfolioSuggestions(true);
-    //     // }
-    // };
+        setFilteredPropertySuggestions([]);
+        setShowPropertySuggestions(false);
+    };
 
     const validateSelectedCountryId = (value) => {
         const isCountryRequired = selectedCoreDestinationId !== shipId && selectedCoreDestinationId !== railId;
@@ -570,16 +556,51 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                     </div>
                                 )}
                                 <div className="row" style={{ marginBottom: '20px' }}>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        value={propertyName}
-                                        onChange={handlePropertyNameChange}
-                                        onBlur={handlePropertyNameBlur}
-                                        placeholder="Property name"
-                                        style={{ marginRight: '10px', flexGrow: '1' }}
-                                        className={validationErrors.name ? 'invalid' : ''}
-                                    />
+                                    <div
+                                        style={{ position: 'relative' }}
+                                    >
+                                        <input
+                                            type="text"
+                                            id="name"
+                                            value={propertyName}
+                                            onChange={handlePropertyNameChange}
+                                            // onBlur={handlePropertyNameBlur}
+                                            onBlur={(e) => {
+                                                // First, check if suggestionsRef.current exists to avoid the null reference error
+                                                if (suggestionsRef.current && e.relatedTarget) {
+                                                    // Then, check if the relatedTarget is not within the suggestions list
+                                                    if (!suggestionsRef.current.contains(e.relatedTarget)) {
+                                                        setShowPropertySuggestions(false);
+                                                    }
+                                                } else {
+                                                    // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
+                                                    setShowPropertySuggestions(false);
+                                                }
+                                                handlePropertyNameBlur();
+                                            }}
+                                            onFocus={() => setShowPropertySuggestions(true)}
+                                            placeholder="Property name"
+                                            style={{ marginRight: '10px', flexGrow: '1' }}
+                                            className={validationErrors.name ? 'invalid' : ''}
+                                            autoComplete="off"
+                                        />
+
+                                        {showPropertySuggestions && filteredPropertySuggestions.length > 0 && (
+                                            <ul className="suggestions-list" ref={suggestionsRef}>
+                                                {filteredPropertySuggestions.map((suggestion, suggestionIndex) => (
+                                                    <li
+                                                        key={suggestionIndex}
+                                                        tabIndex="0"
+                                                        className="suggestion-item"
+                                                        onClick={() => selectPropertySuggestion(suggestion)}
+                                                    >
+                                                        {suggestion.name} {/* Display the name field */}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+
+                                    </div>
                                     <label htmlFor="property_name">
                                         <span className="material-symbols-outlined">
                                             hotel
@@ -608,11 +629,24 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                         styles={{
                                             control: (provided, state) => ({
                                                 ...provided,
-                                                borderColor: validationErrors.portfolio ? 'red' : provided.borderColor,
+                                                borderColor: validationErrors.portfolio ? '#d1685d' : provided.borderColor,
                                                 '&:hover': {
-                                                    borderColor: validationErrors.portfolio ? 'darkred' : provided['&:hover'].borderColor,
+                                                    borderColor: validationErrors.portfolio ? '#d1685d' : provided['&:hover'].borderColor,
                                                 },
-                                                boxShadow: state.isFocused ? (validationErrors.portfolio ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                boxShadow: state.isFocused ? (validationErrors.portfolio ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac' // Background color for selected options
+                                                    : state.isFocused
+                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                        : '#ffffff', // Default background color for other states
+                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                },
                                             }),
                                             menuPortal: base => ({ ...base, zIndex: 9999 })
                                         }}
@@ -684,11 +718,24 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                         styles={{
                                             control: (provided, state) => ({
                                                 ...provided,
-                                                borderColor: validationErrors.country ? 'red' : provided.borderColor,
+                                                borderColor: validationErrors.country ? '#d1685d' : provided.borderColor,
                                                 '&:hover': {
-                                                    borderColor: validationErrors.country ? 'darkred' : provided['&:hover'].borderColor,
+                                                    borderColor: validationErrors.country ? '#d1685d' : provided['&:hover'].borderColor,
                                                 },
-                                                boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac' // Background color for selected options
+                                                    : state.isFocused
+                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                        : '#ffffff', // Default background color for other states
+                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                },
                                             }),
                                             menuPortal: base => ({ ...base, zIndex: 9999 })
                                         }}
@@ -746,15 +793,23 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             <div className="modal-footer" style={{ zIndex: '-1' }}>
                 {!loading &&
                     <>
-                        {isEditMode &&
-
-
+                        {isEditMode ? (
                             <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                                <em className="grey-text">
-                                    <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
+                                <em className="tb-grey-text">
+                                    This property has <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
                                 </em>
                             </div>
-                        }
+                        ) : (
+                            relatedEntries.length > 0 ? (
+                                <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                    <em className="error-red-text">
+                                        The selected property already exists and has <span className="text-bold">{relatedEntries.length} </span>
+                                        related entries. Please double check.
+                                    </em>
+                                </div>
+                            ) : null // Or any other content you'd want to show when not in edit mode and there are no related entries
+                        )}
+
                         {/* {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
                     <>
                         <div style={{ textAlign: 'center', paddingBottom: '20px' }}>

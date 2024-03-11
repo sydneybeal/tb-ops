@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
@@ -880,6 +880,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     //     setShowPortfolioSuggestions(false);
     // };
 
+    console.log(validationErrors);
+
 
     const handleRemoveClick = (index) => {
         // Remove the log entry at the specified index
@@ -995,11 +997,24 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 styles={{
                                                     control: (provided, state) => ({
                                                         ...provided,
-                                                        borderColor: validationErrors.agency ? 'red' : provided.borderColor,
+                                                        borderColor: validationErrors.agency ? '#d1685d' : provided.borderColor,
                                                         '&:hover': {
-                                                            borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
+                                                            borderColor: validationErrors.agency ? '#d1685d' : provided['&:hover'].borderColor,
                                                         },
-                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                    }),
+                                                    option: (provided, state) => ({
+                                                        ...provided,
+                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                        backgroundColor: state.isSelected
+                                                            ? '#0e9bac' // Background color for selected options
+                                                            : state.isFocused
+                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                : '#ffffff', // Default background color for other states
+                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                        },
                                                     }),
                                                     menuPortal: base => ({ ...base, zIndex: 9999 })
                                                 }}
@@ -1069,11 +1084,24 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 styles={{
                                                     control: (provided, state) => ({
                                                         ...provided,
-                                                        borderColor: validationErrors.agency ? 'red' : provided.borderColor,
+                                                        borderColor: validationErrors.agency ? '#d1685d' : provided.borderColor,
                                                         '&:hover': {
-                                                            borderColor: validationErrors.agency ? 'darkred' : provided['&:hover'].borderColor,
+                                                            borderColor: validationErrors.agency ? '#d1685d' : provided['&:hover'].borderColor,
                                                         },
-                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                        boxShadow: state.isFocused ? (validationErrors.agency ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                    }),
+                                                    option: (provided, state) => ({
+                                                        ...provided,
+                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                        backgroundColor: state.isSelected
+                                                            ? '#0e9bac' // Background color for selected options
+                                                            : state.isFocused
+                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                : '#ffffff', // Default background color for other states
+                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                        },
                                                     }),
                                                     menuPortal: base => ({ ...base, zIndex: 9999 })
                                                 }}
@@ -1098,11 +1126,24 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     styles={{
                                         control: (provided, state) => ({
                                             ...provided,
-                                            borderColor: validationErrors.consultant ? 'red' : provided.borderColor,
+                                            borderColor: validationErrors.consultant ? '#d1685d' : provided.borderColor,
                                             '&:hover': {
-                                                borderColor: validationErrors.consultant ? 'darkred' : provided['&:hover'].borderColor,
+                                                borderColor: validationErrors.consultant ? '#d1685d' : provided['&:hover'].borderColor,
                                             },
-                                            boxShadow: state.isFocused ? (validationErrors.consultant ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                            boxShadow: state.isFocused ? (validationErrors.consultant ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac' // Background color for selected options
+                                                : state.isFocused
+                                                    ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                    : '#ffffff', // Default background color for other states
+                                            color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                            ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                            },
                                         }),
                                         menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
@@ -1274,7 +1315,31 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         value={properties.find(prop => prop.value === log.property_id) || ''}
                                                         onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                                         options={properties}
-                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        // styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        styles={{
+                                                            control: (provided, state) => ({
+                                                                ...provided,
+                                                                borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided.borderColor,
+                                                                '&:hover': {
+                                                                    borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided['&:hover'].borderColor,
+                                                                },
+                                                                boxShadow: state.isFocused ? (validationErrors?.[index]?.property ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                            }),
+                                                            option: (provided, state) => ({
+                                                                ...provided,
+                                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                backgroundColor: state.isSelected
+                                                                    ? '#0e9bac' // Background color for selected options
+                                                                    : state.isFocused
+                                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                        : '#ffffff', // Default background color for other states
+                                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                },
+                                                            }),
+                                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                        }}
                                                         menuPortalTarget={document.body}
                                                         isClearable
                                                     />
@@ -1287,7 +1352,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 </div>
                                             ) : (
                                                 <div className="col s12">
-                                                    <div className="card new-property-card tb-teal lighten-5">
+                                                    <div className="card new-property-card tb-grey lighten-4">
                                                         <div className="card-content">
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                                 <em className="tb-grey-text text-darken-1">
@@ -1354,11 +1419,24 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         styles={{
                                                                             control: (provided, state) => ({
                                                                                 ...provided,
-                                                                                borderColor: validationErrors.portfolio ? 'red' : provided.borderColor,
+                                                                                borderColor: validationErrors?.[index]?.portfolio ? '#d1685d' : provided.borderColor,
                                                                                 '&:hover': {
-                                                                                    borderColor: validationErrors.portfolio ? 'darkred' : provided['&:hover'].borderColor,
+                                                                                    borderColor: validationErrors?.[index]?.portfolio ? '#d1685d' : provided['&:hover'].borderColor,
                                                                                 },
-                                                                                boxShadow: state.isFocused ? (validationErrors.portfolio ? '0 0 0 1px darkred' : provided.boxShadow) : 'none',
+                                                                                boxShadow: state.isFocused ? (validationErrors?.[index]?.portfolio ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                                            }),
+                                                                            option: (provided, state) => ({
+                                                                                ...provided,
+                                                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                                backgroundColor: state.isSelected
+                                                                                    ? '#0e9bac' // Background color for selected options
+                                                                                    : state.isFocused
+                                                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                        : '#ffffff', // Default background color for other states
+                                                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                                },
                                                                             }),
                                                                             menuPortal: base => ({ ...base, zIndex: 9999 })
                                                                         }}
@@ -1430,7 +1508,30 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         isClearable
                                                                         style={{ flexGrow: '1' }}
                                                                         id="new_country_select"
-                                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                                        styles={{
+                                                                            control: (provided, state) => ({
+                                                                                ...provided,
+                                                                                borderColor: validationErrors?.[index]?.new_property_country_id ? '#d1685d' : provided.borderColor,
+                                                                                '&:hover': {
+                                                                                    borderColor: validationErrors?.[index]?.portfolio ? '#d1685d' : provided['&:hover'].borderColor,
+                                                                                },
+                                                                                boxShadow: state.isFocused ? (validationErrors?.[index]?.new_property_country_id ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                                            }),
+                                                                            option: (provided, state) => ({
+                                                                                ...provided,
+                                                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                                backgroundColor: state.isSelected
+                                                                                    ? '#0e9bac' // Background color for selected options
+                                                                                    : state.isFocused
+                                                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                        : '#ffffff', // Default background color for other states
+                                                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                                },
+                                                                            }),
+                                                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                        }}
                                                                         menuPortalTarget={document.body}
                                                                     />
                                                                     <label htmlFor="new_country_select">
@@ -1510,7 +1611,30 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             value={properties.find(prop => prop.value === log.property_id) || ''}
                                             onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                             options={properties}
-                                            styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                            styles={{
+                                                control: (provided, state) => ({
+                                                    ...provided,
+                                                    borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided.borderColor,
+                                                    '&:hover': {
+                                                        borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided['&:hover'].borderColor,
+                                                    },
+                                                    boxShadow: state.isFocused ? (validationErrors?.[index]?.property ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                }),
+                                                option: (provided, state) => ({
+                                                    ...provided,
+                                                    fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                    backgroundColor: state.isSelected
+                                                        ? '#0e9bac' // Background color for selected options
+                                                        : state.isFocused
+                                                            ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                            : '#ffffff', // Default background color for other states
+                                                    color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                    ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                        backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                    },
+                                                }),
+                                                menuPortal: base => ({ ...base, zIndex: 9999 })
+                                            }}
                                             menuPortalTarget={document.body}
                                             isClearable
                                         />
@@ -1587,7 +1711,30 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         options={bookingChannels}
                                                         isClearable
                                                         style={{ flexGrow: '1' }}
-                                                        styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        styles={{
+                                                            control: (provided, state) => ({
+                                                                ...provided,
+                                                                borderColor: validationErrors?.[index]?.booking_channel ? '#d1685d' : provided.borderColor,
+                                                                '&:hover': {
+                                                                    borderColor: validationErrors?.[index]?.booking_channel ? '#d1685d' : provided['&:hover'].borderColor,
+                                                                },
+                                                                boxShadow: state.isFocused ? (validationErrors?.[index]?.booking_channel ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                            }),
+                                                            option: (provided, state) => ({
+                                                                ...provided,
+                                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                backgroundColor: state.isSelected
+                                                                    ? '#0e9bac' // Background color for selected options
+                                                                    : state.isFocused
+                                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                        : '#ffffff', // Default background color for other states
+                                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                },
+                                                            }),
+                                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                        }}
                                                         menuPortalTarget={document.body}
                                                     />
                                                 ) : (
@@ -1648,7 +1795,30 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     options={bookingChannels}
                                                     isClearable
                                                     style={{ flexGrow: '1' }}
-                                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: validationErrors?.[index]?.booking_channel ? '#d1685d' : provided.borderColor,
+                                                            '&:hover': {
+                                                                borderColor: validationErrors?.[index]?.booking_channel ? '#d1685d' : provided['&:hover'].borderColor,
+                                                            },
+                                                            boxShadow: state.isFocused ? (validationErrors?.[index]?.booking_channel ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac' // Background color for selected options
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                    : '#ffffff', // Default background color for other states
+                                                            color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                            ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                            },
+                                                        }),
+                                                        menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                    }}
                                                     menuPortalTarget={document.body}
                                                 />
                                             </div>
