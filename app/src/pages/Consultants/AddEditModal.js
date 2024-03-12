@@ -411,11 +411,13 @@ const AddEditConsultantModal = ({ isOpen, onClose, onRefresh, editConsultantData
                 </div >
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
-                <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                    <em className="grey-text">
-                        <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
-                    </em>
-                </div>
+                {isEditMode &&
+                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                        <em className="grey-text">
+                            <span className="text-bold">{relatedEntries.length}</span> associated service provider entries.
+                        </em>
+                    </div>
+                }
                 {/* {Array.isArray(relatedEntries) && relatedEntries.length > 0 ? (
                     <>
                         <div style={{ textAlign: 'center', paddingBottom: '20px' }}>

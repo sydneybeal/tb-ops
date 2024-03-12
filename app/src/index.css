@@ -620,6 +620,44 @@ table.accommodation-logs-table>tbody>tr>td {
   /* This will space out the children elements */
 }
 
+.spinner-blue, .spinner-blue-only {
+  border-color: #0e9bac !important;
+}
+
+.spinner-red, .spinner-red-only {
+  border-color: #8c8782 !important;
+}
+
+.spinner-yellow, .spinner-yellow-only {
+  border-color: #057e8c !important;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker__day--selected {
+  background-color: #0e9bac !important; /* Your desired color for selected date */
+  color: white !important; /* Optional: change text color for better readability */
+}
+
+/* Change the background color of the date on hover */
+.react-datepicker__day--keyboard-selected,
+.react-datepicker__day:hover {
+  background-color: #e8e5e1 !important; /* Your desired color for hovered date */
+  color: black !important; /* Optional: change text color for better readability */
+}
+
+.react-datepicker__navigation--previous:active,
+.react-datepicker__navigation--next:active {
+  background-color: #8c8782 !important; /* Your desired color for the button background when clicked */
+}
+
+.react-datepicker__navigation--previous:focus,
+.react-datepicker__navigation--next:focus {
+  background-color: #8c8782 !important; /* Your desired color for the button background when clicked */
+}
+
 .vertically-centered {
   display: flex;
   flex-direction: column;

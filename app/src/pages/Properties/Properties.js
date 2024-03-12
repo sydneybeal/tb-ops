@@ -377,10 +377,67 @@ export const Properties = () => {
                                         <div>
                                             <div className="col s12 m4">
                                                 <Select
+                                                    placeholder="Search by Core Destination"
+                                                    value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.core_destination}
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                                    explore
+                                                </span>
+                                            </div>
+                                            {/* TODO: change filters to drill down on other selections*/}
+                                            <div className="col s12 m4">
+                                                <Select
                                                     placeholder="Search by Country"
                                                     value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.country}
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
                                                     isClearable
                                                 />
                                                 <span className="material-symbols-outlined tb-grey-text text-darken-1">
@@ -389,22 +446,32 @@ export const Properties = () => {
                                             </div>
                                             <div className="col s12 m4">
                                                 <Select
-                                                    placeholder="Search by Core Destination"
-                                                    value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
-                                                    options={filterOptions.core_destination}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                    explore
-                                                </span>
-                                            </div>
-                                            <div className="col s12 m4">
-                                                <Select
                                                     placeholder="Search by Portfolio"
                                                     value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.portfolio}
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
                                                     isClearable
                                                 />
                                                 <span className="material-symbols-outlined tb-grey-text text-darken-1">

@@ -8,11 +8,13 @@ import CircularPreloader from '../../components/CircularPreloader';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
 import ReportDashboard from './ReportDashboard';
+import BedNightTable from '../AccommodationLogs/BedNightTable';
 import moment from 'moment';
 
 export const BedNightReports = () => {
     const [reportData, setReportData] = useState({});
     const [accommodationLogData, setAccommodationLogData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
     const minDate = '2000-01-01';
@@ -241,6 +243,7 @@ export const BedNightReports = () => {
         const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
         const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
 
+        setFilteredData(filteredData);
         // Update filter options state
         setFilterOptions({
             core_destination_name: coreDestOptions,
@@ -271,6 +274,28 @@ export const BedNightReports = () => {
                                     value={filterOptions.core_destination_name.find(option => option.label === filters.core_destination_name) ? { value: filters.core_destination_name, label: filters.core_destination_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, core_destination_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.core_destination_name}
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac'
+                                                : state.isFocused
+                                                    ? '#e8e5e1'
+                                                    : '#ffffff',
+                                            ':active': {
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                            },
+                                        }),
+                                    }}
                                     isClearable
                                 />
                             </div>
@@ -280,6 +305,28 @@ export const BedNightReports = () => {
                                     value={filterOptions.country_name.find(option => option.label === filters.country_name) ? { value: filters.country_name, label: filters.country_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, country_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.country_name}
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac'
+                                                : state.isFocused
+                                                    ? '#e8e5e1'
+                                                    : '#ffffff',
+                                            ':active': {
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                            },
+                                        }),
+                                    }}
                                     isClearable
                                 />
                             </div>
@@ -289,6 +336,28 @@ export const BedNightReports = () => {
                                     value={filterOptions.portfolio_name.find(option => option.label === filters.portfolio_name) ? { value: filters.portfolio_name, label: filters.portfolio_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, portfolio_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.portfolio_name}
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac'
+                                                : state.isFocused
+                                                    ? '#e8e5e1'
+                                                    : '#ffffff',
+                                            ':active': {
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                            },
+                                        }),
+                                    }}
                                     isClearable
                                 />
                             </div>
@@ -298,6 +367,28 @@ export const BedNightReports = () => {
                                     value={filterOptions.property_name.find(option => option.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.property_name}
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac'
+                                                : state.isFocused
+                                                    ? '#e8e5e1'
+                                                    : '#ffffff',
+                                            ':active': {
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                            },
+                                        }),
+                                    }}
                                     isClearable
                                 />
                             </div>
@@ -310,6 +401,28 @@ export const BedNightReports = () => {
                                 value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, agency: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.agency}
+                                styles={{
+                                    control: (provided, state) => ({
+                                        ...provided,
+                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        '&:hover': {
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        },
+                                        boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                    }),
+                                    option: (provided, state) => ({
+                                        ...provided,
+                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                        backgroundColor: state.isSelected
+                                            ? '#0e9bac'
+                                            : state.isFocused
+                                                ? '#e8e5e1'
+                                                : '#ffffff',
+                                        ':active': {
+                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                        },
+                                    }),
+                                }}
                                 isClearable
                             />
                         </div>
@@ -319,6 +432,28 @@ export const BedNightReports = () => {
                                 value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, booking_channel: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.booking_channel}
+                                styles={{
+                                    control: (provided, state) => ({
+                                        ...provided,
+                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        '&:hover': {
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        },
+                                        boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                    }),
+                                    option: (provided, state) => ({
+                                        ...provided,
+                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                        backgroundColor: state.isSelected
+                                            ? '#0e9bac'
+                                            : state.isFocused
+                                                ? '#e8e5e1'
+                                                : '#ffffff',
+                                        ':active': {
+                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                        },
+                                    }),
+                                }}
                                 isClearable
                             />
                         </div>
@@ -328,6 +463,28 @@ export const BedNightReports = () => {
                                 value={filterOptions.consultant_name.find(option => option.label === filters.consultant_name) ? { value: filters.consultant_name, label: filters.consultant_name } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, consultant_name: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.consultant_name}
+                                styles={{
+                                    control: (provided, state) => ({
+                                        ...provided,
+                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        '&:hover': {
+                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                        },
+                                        boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                    }),
+                                    option: (provided, state) => ({
+                                        ...provided,
+                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                        backgroundColor: state.isSelected
+                                            ? '#0e9bac'
+                                            : state.isFocused
+                                                ? '#e8e5e1'
+                                                : '#ffffff',
+                                        ':active': {
+                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                        },
+                                    }),
+                                }}
                                 isClearable
                             />
                         </div>
@@ -460,6 +617,13 @@ export const BedNightReports = () => {
                         <>
                             <br />
                             <ReportDashboard reportData={reportData} />
+                            <br />
+                            <h5>Matching Bed Nights</h5>
+                            <BedNightTable
+                                filteredData={filteredData}
+                                isEditable={false}
+                                pageSize={10}
+                            />
                         </>
                     ) : (
                         <div>
