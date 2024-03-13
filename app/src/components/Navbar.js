@@ -17,51 +17,60 @@ const Navbar = ({ title }) => {
     return (
         <>
             <nav className="top-nav">
-                <div className="nav-wrapper">
-                    <div className="row" style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', justifyContent: 'space-between' }}>
-                        <div className="col s12 m6 tb-md-black-text">
-                            <h4 className="header">{title}</h4>
+                <div className="nav-wrapper container tb-md-black-text" style={{ width: '95%' }} >
+                    <div className="row" style={{ margin: 0, alignItems: 'center' }}>
+                        {/* Sidenav Trigger */}
+                        <div className="col s2 m2 hide-on-large-only">
+                            <a href="/#" data-target="slide-out" className="sidenav-trigger tb-teal-text text-darken-4">
+                                <i className="material-icons">menu</i>
+                            </a>
                         </div>
-                        {userDetails &&
-                            <>
-                                <div className="col s12 m6" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                    <div
-                                        style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                                    >
-                                        <span className="material-symbols-outlined tb-md-black-text" style={{ fontSize: '2rem' }}>
-                                            account_circle
+                        {/* Title */}
+                        <div className="col s8 m8 l6 header-container" >
+                            <h4 className="header hide-on-large-only center-align" style={{ margin: 0, marginTop: '20px', fontSize: '1.8rem' }}>{title}</h4>
+                            <h4 className="header hide-on-med-and-down left-align" style={{ margin: 0, marginTop: '20px', fontSize: '2.0rem' }}>{title}</h4>
+                            {/* User info for small and medium screens */}
+                            {userDetails && (
+                                <div className="hide-on-large-only center-align" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <i className="material-icons" style={{ fontSize: '1.2rem' }}>account_circle</i>
+                                    <span className="text-bold" style={{ margin: '0 5px' }}>{userDetails.email.split('@')[0]}</span>
+                                    {userDetails.role === 'admin' && (
+                                        <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
+                                            {userDetails.role.toUpperCase()}
                                         </span>
-                                        <span className="tb-md-black-text">
-                                            Welcome, <span className="text-bold">{userDetails.email.split('@')[0]}</span>
-                                        </span>
-
-                                        {userDetails.role === 'admin' &&
-                                            <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
-                                                {userDetails.role.toUpperCase()}
-                                            </span>
-                                        }
-
-                                        <button
-                                            className='btn btn-floating error-red'
-                                            onClick={logout}
-                                            style={{ margin: '0px' }}
-                                        >
-                                            <span className="material-symbols-outlined">
-                                                logout
-                                            </span>
-                                        </button>
-                                    </div>
+                                    )}
                                 </div>
-                            </>
-                        }
+                            )}
+                        </div>
+                        {/* User Info & Logout for large screens */}
+                        {userDetails && (
+                            <div className="col l6 hide-on-med-and-down right-align" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                <i className="material-icons" style={{ fontSize: '1.2rem' }}>account_circle</i>
+                                <span className="hide-on-med-and-down" > Welcome, </span>
+                                <span className="text-bold" style={{ margin: '0 5px' }}>
+                                    {userDetails.email.split('@')[0]}
+                                </span>
+                                {userDetails.role === 'admin' && (
+                                    <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
+                                        {userDetails.role.toUpperCase()}
+                                    </span>
+                                )}
+                                <button className='btn btn-floating error-red' onClick={logout} style={{ height: '30px', width: '30px', lineHeight: '30px', padding: '0', marginLeft: '10px' }}>
+                                    <i className="material-icons" style={{ fontSize: '18px', lineHeight: '30px' }}>logout</i>
+                                </button>
+                            </div>
+                        )}
+                        {/* Logout button for small and medium screens */}
+                        {userDetails && (
+                            <div className="col s2 m2 hide-on-large-only right-align">
+                                <button className='btn btn-floating error-red' onClick={logout} style={{ height: '30px', width: '30px', lineHeight: '30px', padding: '0' }}>
+                                    <i className="material-icons" style={{ fontSize: '18px', lineHeight: '30px' }}>logout</i>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </nav>
-            <div className="container">
-                <a href="/#" data-target="slide-out" className="top-nav sidenav-trigger full hide-on-large-only tb-teal-text text-darken-4">
-                    <i className="material-icons">menu</i>
-                </a>
-            </div>
+            </nav >
             <ul id="slide-out" className="sidenav sidenav-fixed" style={{ transform: 'translateX(0%)' }}>
                 <li className="logo">
                     <a id="logo-container" href="/" className="brand-logo">
@@ -69,7 +78,13 @@ const Navbar = ({ title }) => {
                             id="front-page-logo"
                             src={`${process.env.PUBLIC_URL}/rrlogo.png`}
                             alt="roam & report"
-                            style={{ maxWidth: '70%', display: 'block', margin: '0 auto' }} />
+                            style={{
+                                maxWidth: '70%',
+                                height: 'auto', // Ensures the height scales in proportion to the width
+                                objectFit: 'contain', // Keeps the aspect ratio and fits the content within the bounds of its container
+                                display: 'block',
+                                margin: '0 auto'
+                            }} />
                     </a>
                 </li>
                 <div className="container" style={{ width: '100%' }}>

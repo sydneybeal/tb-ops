@@ -210,15 +210,24 @@ export const BedNightReports = () => {
     useEffect(() => {
         // Initialize or dynamically update filter options based on `accommodationLogData` and current `filters`
         const filteredData = accommodationLogData.filter(item => {
-            // Example filtering logic here; adjust according to your actual filters
+            // Check for "No agency" filter and match against null or "n/a"
+            const agencyCondition = filters.agency === "No agency"
+                ? (!item.agency_name || item.agency_name === 'n/a')
+                : item.agency_name === filters.agency;
+
+            const bookingChannelCondition = filters.booking_channel === "Direct"
+                ? (!item.booking_channel_name)
+                : item.booking_channel_name === filters.booking_channel;
+
             return (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
                 && (!filters.consultant_name || item.consultant_display_name === filters.consultant_name)
                 && (!filters.country_name || item.country_name === filters.country_name)
                 && (!filters.property_name || item.property_name === filters.property_name)
                 && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
-                && (!filters.agency || item.agency_name === filters.agency)
-                && (!filters.booking_channel || item.booking_channel_name === filters.booking_channel);
+                && (!filters.agency || agencyCondition)
+                && (!filters.booking_channel || bookingChannelCondition);
         });
+
 
         // Maps for creating filter options from filtered data
         const coreDestMap = {}, countryMap = {}, consultantMap = {}, propertyMap = {}, portfolioMap = {}, agencyMap = {}, bookingChannelMap = {};
@@ -230,8 +239,9 @@ export const BedNightReports = () => {
             consultantMap[item.consultant_id] = { value: item.consultant_id || '', label: item.consultant_display_name || 'No consultant' };
             propertyMap[item.property_id] = { value: item.property_id || '', label: item.property_name || 'No property' };
             portfolioMap[item.property_portfolio] = { value: item.property_portfolio || 'No portfolio', label: item.property_portfolio || 'No portfolio' };
-            agencyMap[item.agency_name] = { value: item.agency_name || 'No agency', label: item.agency_name || 'No agency' };
-            bookingChannelMap[item.booking_channel_name] = { value: item.booking_channel_name || 'No booking channel', label: item.booking_channel_name || 'No booking channel' };
+            const agencyLabel = item.agency_name ? (item.agency_name === 'n/a' ? 'No agency' : item.agency_name) : 'No agency';
+            agencyMap[agencyLabel] = { value: agencyLabel, label: agencyLabel };
+            bookingChannelMap[item.booking_channel_name] = { value: item.booking_channel_name || 'Direct', label: item.booking_channel_name || 'Direct' };
         });
 
         // Convert maps to arrays and sort for filter options
@@ -240,8 +250,18 @@ export const BedNightReports = () => {
         const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
         const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
         const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
-        const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
-        const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
+        // No agency first for agency
+        const noAgencyOption = Object.values(agencyMap).find(option => option.label === 'No agency');
+        const sortedAgencyOptions = Object.values(agencyMap)
+            .filter(option => option.label !== 'No agency')
+            .sort((a, b) => a.label.localeCompare(b.label));
+        const agencyOptions = noAgencyOption ? [noAgencyOption, ...sortedAgencyOptions] : sortedAgencyOptions;
+        // Direct first for booking channel
+        const noBookingChannelOption = Object.values(bookingChannelMap).find(option => option.label === 'Direct');
+        const sortedBookingChannelOptions = Object.values(bookingChannelMap)
+            .filter(option => option.label !== 'Direct')
+            .sort((a, b) => a.label.localeCompare(b.label));
+        const bookingChannelOptions = noBookingChannelOption ? [noBookingChannelOption, ...sortedBookingChannelOptions] : sortedBookingChannelOptions;
 
         setFilteredData(filteredData);
         // Update filter options state
@@ -268,7 +288,7 @@ export const BedNightReports = () => {
                 <div className="container center" style={{ width: '90%' }}>
                     <div className="row center">
                         <div>
-                            <div className="col s3">
+                            <div className="col s12 l3">
                                 <Select
                                     placeholder="Search by Core Destination"
                                     value={filterOptions.core_destination_name.find(option => option.label === filters.core_destination_name) ? { value: filters.core_destination_name, label: filters.core_destination_name } : null}
@@ -299,7 +319,7 @@ export const BedNightReports = () => {
                                     isClearable
                                 />
                             </div>
-                            <div className="col s3">
+                            <div className="col s12 l3">
                                 <Select
                                     placeholder="Search by Country"
                                     value={filterOptions.country_name.find(option => option.label === filters.country_name) ? { value: filters.country_name, label: filters.country_name } : null}
@@ -330,7 +350,7 @@ export const BedNightReports = () => {
                                     isClearable
                                 />
                             </div>
-                            <div className="col s3">
+                            <div className="col s12 l3">
                                 <Select
                                     placeholder="Search by Portfolio"
                                     value={filterOptions.portfolio_name.find(option => option.label === filters.portfolio_name) ? { value: filters.portfolio_name, label: filters.portfolio_name } : null}
@@ -361,7 +381,7 @@ export const BedNightReports = () => {
                                     isClearable
                                 />
                             </div>
-                            <div className="col s3">
+                            <div className="col s12 l3">
                                 <Select
                                     placeholder="Search by Property"
                                     value={filterOptions.property_name.find(option => option.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
@@ -395,7 +415,7 @@ export const BedNightReports = () => {
                         </div>
                     </div>
                     <div className="row center">
-                        <div className="col s4">
+                        <div className="col s12 l4">
                             <Select
                                 placeholder="Search by Agency"
                                 value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
@@ -426,7 +446,7 @@ export const BedNightReports = () => {
                                 isClearable
                             />
                         </div>
-                        <div className="col s4">
+                        <div className="col s12 l4">
                             <Select
                                 placeholder="Search by Booking Channel"
                                 value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
@@ -457,7 +477,7 @@ export const BedNightReports = () => {
                                 isClearable
                             />
                         </div>
-                        <div className="col s4">
+                        <div className="col s12 l4">
                             <Select
                                 placeholder="Search by Consultant"
                                 value={filterOptions.consultant_name.find(option => option.label === filters.consultant_name) ? { value: filters.consultant_name, label: filters.consultant_name } : null}
@@ -490,7 +510,7 @@ export const BedNightReports = () => {
                         </div>
                     </div>
                     <div className="row center" style={{ marginBottom: '0px' }}>
-                        <div className="col s6 offset-s3">
+                        <div className="col s12 l6 offset-l3">
                             <div className="row">
                                 <div className="col s6">
                                     <div>

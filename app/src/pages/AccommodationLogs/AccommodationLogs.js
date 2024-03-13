@@ -265,7 +265,7 @@ export const Overview = () => {
                         <>
 
                             <div className="row center">
-                                <div className="col s2 offset-s10">
+                                <div className="col s12 m2 offset-m10">
                                     <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
@@ -276,7 +276,7 @@ export const Overview = () => {
                             </div>
                             <div className="row center">
                                 <div>
-                                    <div className="col s4">
+                                    <div className="col s12 l4">
                                         <Select
                                             placeholder="Search by Core Destination"
                                             value={filterOptions.core_dest.find(core_dest => core_dest.label === filters.core_dest) ? { value: filters.core_dest, label: filters.core_dest } : null}
@@ -312,7 +312,7 @@ export const Overview = () => {
                                             explore
                                         </span>
                                     </div>
-                                    <div className="col s4">
+                                    <div className="col s12 l4">
                                         <Select
                                             placeholder="Search by Country"
                                             value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
@@ -348,7 +348,7 @@ export const Overview = () => {
                                             globe
                                         </span>
                                     </div>
-                                    <div className="col s4">
+                                    <div className="col s12 l4">
                                         <Select
                                             placeholder="Search by Consultant"
                                             value={filterOptions.consultant.find(consultant => consultant.label === filters.consultant) ? { value: filters.consultant, label: filters.consultant } : null}
@@ -388,7 +388,7 @@ export const Overview = () => {
                             </div>
                             <div className="row center">
 
-                                <div className="col s4">
+                                <div className="col s12 l4">
                                     <Select
                                         placeholder="Search by Property"
                                         value={filterOptions.property.find(prop => prop.label === filters.property) ? { value: filters.property, label: filters.property } : null}
@@ -424,7 +424,7 @@ export const Overview = () => {
                                         hotel
                                     </span>
                                 </div>
-                                <div className="col s3">
+                                <div className="col s12 l3">
 
                                     <input
                                         type="text"
@@ -438,7 +438,7 @@ export const Overview = () => {
                                         search
                                     </span>
                                 </div>
-                                <div className="col s5">
+                                <div className="col s12 l5">
                                     <div className="row">
                                         <div className="col s6">
                                             <div>

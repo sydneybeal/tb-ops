@@ -172,8 +172,14 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"p.name = '{value}'")
             elif key == "core_destination_name":
                 query_conditions.append(f"cd.name = '{value}'")
+            elif key == "agency" and value == "No agency":
+                # Handle the special case where "No agency" should match both "n/a" and null.
+                query_conditions.append("(a.name IS NULL OR a.name = 'n/a')")
             elif key == "agency":
                 query_conditions.append(f"a.name = '{value}'")
+            elif key == "booking_channel" and value == "Direct":
+                # Handle the special case where "Direct" should match both "Direct" and null.
+                query_conditions.append("(bc.name IS NULL OR bc.name = 'Direct')")
             elif key == "booking_channel":
                 query_conditions.append(f"bc.name = '{value}'")
             elif key == "updated_by":

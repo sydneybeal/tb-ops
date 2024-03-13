@@ -35,6 +35,17 @@ export const Properties = () => {
         portfolio: '',
     });
 
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1400);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobileView(window.innerWidth <= 1400);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     useEffect(() => {
         M.AutoInit();
         fetch(`${process.env.REACT_APP_API}/v1/properties`, {
@@ -375,7 +386,7 @@ export const Properties = () => {
                                     </div>
                                     <div className="row center">
                                         <div>
-                                            <div className="col s12 m4">
+                                            <div className="col s12 l4">
                                                 <Select
                                                     placeholder="Search by Core Destination"
                                                     value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
@@ -410,7 +421,7 @@ export const Properties = () => {
                                                 </span>
                                             </div>
                                             {/* TODO: change filters to drill down on other selections*/}
-                                            <div className="col s12 m4">
+                                            <div className="col s12 l4">
                                                 <Select
                                                     placeholder="Search by Country"
                                                     value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
@@ -444,7 +455,7 @@ export const Properties = () => {
                                                     globe
                                                 </span>
                                             </div>
-                                            <div className="col s12 m4">
+                                            <div className="col s12 l4">
                                                 <Select
                                                     placeholder="Search by Portfolio"
                                                     value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
@@ -481,7 +492,7 @@ export const Properties = () => {
                                         </div>
                                     </div>
                                     <div className="row center">
-                                        <div className="col s12 m6 offset-m3">
+                                        <div className="col s12 l6 offset-l3">
                                             <input
                                                 type="text"
                                                 placeholder="Search by text..."
@@ -660,6 +671,45 @@ export const Properties = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        {isMobileView && (
+                                            <div className="mobile-friendly-table">
+                                                {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
+                                                    <>
+                                                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                                                            <div className="card-content">
+                                                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                                                    <div className="col s10">
+                                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i>
+                                                                            <span className="text-bold">{item.name}</span>
+                                                                        </div>
+                                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i>
+                                                                            <span>{item.portfolio_name}</span>
+                                                                        </div>
+                                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
+                                                                            ? item.country_name
+                                                                            : <span>n/a</span>}</span></div>
+                                                                        <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
+                                                                    </div>
+                                                                    <div className="col s2">
+                                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="card-footer">
+                                                                <div className="row">
+                                                                    <div className="col s12" style={{ textAlign: 'right' }}>
+                                                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div >
+                                                    </>
+                                                ))}
+                                            </div >
+                                        )}
                                     </div>
                                 </>
                             ) : (

@@ -37,7 +37,7 @@ body > #root {
 
 body {
   margin: 0;
-  font-family: 'HvDTrial Brandon Grotesque', 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -45,7 +45,7 @@ body {
 }
 
 body {
-  font-family: 'HvDTrial Brandon Grotesque', 'Segoe UI', sans-serif !important;
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', sans-serif !important;
   font-size: 1.1rem;
 }
 
@@ -312,6 +312,10 @@ main {
   color: #fde5b3 !important;
 }
 
+/* .mobile-friendly-table {
+  display: none;
+}
+
 @media only screen and (max-width : 992px) {
 
   header,
@@ -332,29 +336,94 @@ main {
   }
 }
 
-input {
-  font-family: 'HvDTrial Brandon Grotesque', 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif !important;
+@media only screen and (max-width : 992px) {
+  header, main, footer {
+    padding-left: 0;
+  }
+  .accommodation-logs-table thead, 
+  .accommodation-logs-table tbody tr {
+    display: none;
+  }
 }
 
-.apexcharts-text tspan {
-  font-family: 'HvDTrial Brandon Grotesque', 'Noto Sans', sans-serif !important;
-  font-size: 0.9rem;
-  color: #47443e;
+@media only screen and (max-width: 600px) {
+  .mobile-friendly-table {
+    display: block;
+  }
+  
+  .accommodation-logs-table thead, 
+  .accommodation-logs-table tbody tr {
+    display: none;
+  }
+} */
+
+.mobile-friendly-table {
+  display: none; /* Hide by default */
 }
 
-.apexcharts-legend-text {
-  font-family: 'HvDTrial Brandon Grotesque', 'Noto Sans', sans-serif !important;
+@media only screen and (max-width: 1400px) {
+  /* Show the mobile-friendly layout and hide the regular table layout at or below 1400px */
+  .mobile-friendly-table {
+    display: block; /* Or flex, grid, etc., depending on layout needs */
+    /* Add more styling here */
+  }
+
+  .accommodation-logs-table thead, .accommodation-logs-table tbody tr {
+    display: none;
+  }
 }
 
 nav.top-nav {
-  height: 80px;
+  height: 100px;
   -webkit-box-shadow: none;
   box-shadow: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.14);
   background-color: transparent;
 }
+
+@media only screen and (max-width: 992px) {
+  header, main, footer {
+    padding-left: 0;
+  }
+}
+
+@media only screen and (min-width: 992px) {
+  nav.top-nav {
+    height: 80px;
+  }
+}
+
+@media only screen and (min-width: 601px) {
+  nav, nav .nav-wrapper i, nav a.sidenav-trigger, nav a.sidenav-trigger i {
+    height: 64px;
+    line-height: 64px;
+  }
+}
+
+
+input {
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif !important;
+}
+
+.apexcharts-text tspan {
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Noto Sans', sans-serif !important;
+  font-size: 0.9rem;
+  color: #47443e;
+}
+
+.apexcharts-legend-text {
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Noto Sans', sans-serif !important;
+}
+
+
+
+/* @media screen and (min-width: 993px) {
+  nav.top-nav {
+    height: 80px;
+  }
+} */
 
 .nav-wrapper .row {
   margin-bottom: 0px !important;

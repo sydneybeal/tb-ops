@@ -4,7 +4,8 @@ steps:
       [
         "build",
         "--build-arg",
-        "REACT_APP_API=https://tb-ops-api-xph2abo56a-uc.a.run.app",
+        # "REACT_APP_API=https://tb-ops-api-xph2abo56a-uc.a.run.app",
+        "REACT_APP_API=https://www.api.roamandreport.com",
         "-t",
         "us-central1-docker.pkg.dev/tb-ops-413205/tb-ops-repository/tb-ops-webapp",
         "./",
