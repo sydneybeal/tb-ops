@@ -12,15 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-DROP TABLE IF EXISTS public.core_destinations CASCADE;
-DROP TABLE IF EXISTS public.countries CASCADE;
-DROP TABLE IF EXISTS public.agencies CASCADE;
-DROP TABLE IF EXISTS public.booking_channels CASCADE;
-DROP TABLE IF EXISTS public.portfolios CASCADE;
-DROP TABLE IF EXISTS public.consultants CASCADE;
-DROP TABLE IF EXISTS public.properties CASCADE;
-DROP TABLE IF EXISTS public.accommodation_logs CASCADE;
-
 CREATE TABLE IF NOT EXISTS public.core_destinations (
     id UUID NOT NULL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,

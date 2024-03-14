@@ -20,6 +20,15 @@ export const AuditLogs = () => {
     // const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
+        const elems = document.querySelectorAll('.sidenav, .sidenav-overlay');
+        M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
+        var overlay = document.querySelector('.sidenav-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }, []);
+
+    useEffect(() => {
         fetch(`${process.env.REACT_APP_API}/v1/audit_logs`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`

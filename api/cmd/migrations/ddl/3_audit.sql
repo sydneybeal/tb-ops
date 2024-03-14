@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-DROP TABLE IF EXISTS public.audit_logs CASCADE;
-
 CREATE TABLE IF NOT EXISTS public.audit_logs (
     id UUID NOT NULL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL,

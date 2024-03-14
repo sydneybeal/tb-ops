@@ -326,9 +326,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             updated_by: userDetails.email || ''
         }));
         console.log(logsToSubmit);
-        if (userDetails.role !== 'admin') {
+        if (userDetails.role !== 'admin' && userDetails.role !== 'user') {
             M.toast({
-                html: 'Your entry was valid, but only admins are able to save to the database at this time.',
+                html: 'Your entry was valid, but only admins & users are able to save to the database.',
                 displayLength: 4000,
                 classes: 'warning-yellow tb-md-black-text',
             });

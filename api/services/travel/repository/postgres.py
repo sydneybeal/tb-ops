@@ -62,7 +62,8 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-            );
+            )
+            ON CONFLICT (primary_traveler, property_id, date_in, date_out) DO NOTHING;
             """
         )
         async with pool.acquire() as con:
@@ -87,8 +88,23 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     )
                     for log in accommodation_logs
                 ]
-                await con.executemany(query, args)
-        print(f"Successfully added {len(args)} new log(s) to the repository.")
+                # Execute the query for each log individually to count successes
+                success_count = 0
+                for arg in args:
+                    try:
+                        await con.execute(query, *arg)
+                        success_count += 1
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+
+                if success_count < len(args):
+                    print(
+                        f"Duplicate entries found. Successfully added {success_count} new log(s) to the repository."
+                    )
+                else:
+                    print(
+                        f"Successfully added {len(args)} new log(s) to the repository."
+                    )
 
     async def upsert_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]

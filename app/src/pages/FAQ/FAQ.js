@@ -11,6 +11,15 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
 
+    useEffect(() => {
+        const elems = document.querySelectorAll('.sidenav, .sidenav-overlay');
+        M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
+        var overlay = document.querySelector('.sidenav-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }, []);
+
     return (
         <>
             <header>

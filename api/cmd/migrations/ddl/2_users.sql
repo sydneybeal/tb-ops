@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- DROP TABLE IF EXISTS public.users CASCADE;
-
 CREATE TABLE IF NOT EXISTS users (
     id UUID NOT NULL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
