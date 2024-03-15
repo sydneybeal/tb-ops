@@ -14,7 +14,7 @@
 
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status
 
@@ -46,6 +46,8 @@ from api.services.travel.models import (
     PatchAgencyRequest,
     PatchBookingChannelRequest,
     PatchConsultantRequest,
+    PatchCountryRequest,
+    PatchPortfolioRequest,
     PatchPropertyRequest,
 )
 from api.services.travel.service import TravelService
@@ -177,6 +179,15 @@ def make_app(
         )
         return JSONResponse(content=related_records)
 
+    # @app.get("/v1/overlaps", tags=["accommodation_logs"])
+    # async def get_overlaps(
+    #     start_date: date = datetime.strptime("2017-01-01", "%Y-%m-%d").date(),
+    #     end_date: date = datetime.strptime("2028-01-01", "%Y-%m-%d").date(),
+    #     current_user: User = Depends(get_current_user),
+    # ) -> JSONResponse:
+    #     overlaps = await summary_svc.get_overlaps(start_date, end_date)
+    #     return JSONResponse(content={"overlaps": overlaps})
+
     @app.delete(
         "/v1/accommodation_logs/{log_id}",
         operation_id="delete_accommodation_log",
@@ -265,6 +276,52 @@ def make_app(
     ) -> list[CountrySummary] | JSONResponse:
         """Get all Country models."""
         return await summary_svc.get_all_countries()
+
+    @app.patch(
+        "/v1/countries",
+        operation_id="post_countries",
+        tags=["countries"],
+    )
+    async def post_countries(
+        country_data: PatchCountryRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Country."""
+        results = await travel_svc.process_country_request(country_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/countries/{country_id}",
+        operation_id="delete_country",
+        tags=["countries"],
+    )
+    async def delete_country(
+        country_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete a country by its ID."""
+        result = await travel_svc.delete_country(country_id, current_user.email)
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete country due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Country deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (property not found)
+        else:
+            raise HTTPException(status_code=404, detail="Consultant not found")
 
     @app.get(
         "/v1/core_destinations",
@@ -465,6 +522,52 @@ def make_app(
     ) -> list[Agency] | JSONResponse:
         """Get all Agency models."""
         return await travel_svc.get_all_portfolios()
+
+    @app.patch(
+        "/v1/portfolios",
+        operation_id="post_portfolios",
+        tags=["portfolios"],
+    )
+    async def post_portfolios(
+        portfolio_data: PatchPortfolioRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Portfolio."""
+        results = await travel_svc.process_portfolio_request(portfolio_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/portfolios/{portfolio_id}",
+        operation_id="delete_portfolio",
+        tags=["portfolios"],
+    )
+    async def delete_portfolio(
+        portfolio_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete a booking channel by its ID."""
+        result = await travel_svc.delete_portfolio(portfolio_id, current_user.email)
+        # Check if the result is a dictionary indicating an error
+        if isinstance(result, dict):
+            # Extract error details from the result dictionary
+            error_detail = result.get(
+                "error", "Cannot delete portfolio due to related records."
+            )
+            affected_logs = result.get("details", [])
+            return JSONResponse(
+                content={"error": error_detail, "affected_logs": affected_logs},
+                status_code=400,  # or another appropriate status code
+            )
+
+        # Check if the deletion was successful
+        elif result:
+            return JSONResponse(
+                content={"message": "Portfolio deleted successfully"},
+                status_code=200,
+            )
+
+        # If the deletion failed (portfolio not found)
+        else:
+            raise HTTPException(status_code=404, detail="Portfolio not found")
 
     @app.get(
         "/v1/bed_night_report",

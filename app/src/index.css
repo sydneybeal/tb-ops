@@ -361,7 +361,7 @@ main {
   display: none; /* Hide by default */
 }
 
-@media only screen and (max-width: 1400px) {
+@media only screen and (max-width: 1100px) {
   /* Show the mobile-friendly layout and hide the regular table layout at or below 1400px */
   .mobile-friendly-table {
     display: block; /* Or flex, grid, etc., depending on layout needs */

@@ -14,6 +14,7 @@
 
 """Services for interacting with travel entries."""
 from collections import Counter
+from datetime import date
 from typing import Sequence, List
 from uuid import UUID
 from api.services.summaries.models import (
@@ -24,6 +25,7 @@ from api.services.summaries.models import (
     PropertySummary,
     ReportAggregations,
     ReportInput,
+    Overlap,
 )
 from api.services.summaries.repository.postgres import PostgresSummaryRepository
 
@@ -142,6 +144,10 @@ class SummaryService:
 
         accommodation_logs_summary = [log.to_json() for log in accommodation_logs]
         return {"can_modify": False, "affected_logs": accommodation_logs_summary}
+
+    # async def get_overlaps(self, start_date: date, end_date: date) -> Sequence[Overlap]:
+    #     """Gets records where clients will be overlapping."""
+    #     return await self.get_overlaps(start_date, end_date)
 
     # Property
     async def get_all_properties(self) -> Sequence[PropertySummary]:

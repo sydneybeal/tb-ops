@@ -179,6 +179,13 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_core_destination_by_id(
+        self, core_destination_id: UUID
+    ) -> CoreDestination:
+        """Gets a single CoreDestination model based on ID."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_core_destinations_by_name(
         self, names: Sequence[str]
     ) -> Sequence[CoreDestination]:
@@ -235,7 +242,7 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def delete_country(self, countries: Sequence[Country]) -> None:
+    async def delete_country(self, country_id: UUID) -> None:
         """Deletes a sequence of Country models from the repository."""
         raise NotImplementedError
 
@@ -326,8 +333,25 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def upsert_portfolio(
+        self, portfolio_data: Portfolio
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a portfolio into the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def get_portfolio_by_name(self, name: str) -> Portfolio:
         """Gets a single Portfolio model based on name."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_portfolio_by_id(self, portfolio_id: UUID) -> Portfolio:
+        """Gets a single Portfolio model based on id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_portfolio(self, portfolio_id: UUID) -> bool:
+        """Deletes a sequence of Portfolio models from the repository."""
         raise NotImplementedError
 
     @abstractmethod

@@ -205,3 +205,20 @@ class PatchBookingChannelRequest(BaseModel):
     booking_channel_id: Optional[UUID] = None
     name: str
     updated_by: str
+
+
+class PatchPortfolioRequest(BaseModel):
+    """A request object model that contains information for a new Portfolio."""
+
+    portfolio_id: Optional[UUID] = None
+    name: str
+    updated_by: str
+
+
+class PatchCountryRequest(BaseModel):
+    """A request object model that contains information for a new Country."""
+
+    country_id: Optional[UUID] = None
+    name: str
+    core_destination_id: Optional[UUID] = None
+    updated_by: str

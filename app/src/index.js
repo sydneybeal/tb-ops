@@ -12,6 +12,7 @@ import BookingChannels from './pages/BookingChannels/BookingChannels';
 import Portfolios from './pages/Portfolios/Portfolios';
 import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
+import Countries from './pages/Countries/Countries';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLogs from './pages/AuditLogs/AuditLogs';
 import FaqPage from './pages/FAQ/FAQ';
@@ -91,6 +92,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Portfolios />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/countries/',
+    element: (
+      <ProtectedRoute>
+        <Countries />
       </ProtectedRoute>
     ),
   },

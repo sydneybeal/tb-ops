@@ -31,7 +31,9 @@ from api.services.travel.models import (
     PatchConsultantRequest,
     CoreDestination,
     Country,
+    PatchCountryRequest,
     Portfolio,
+    PatchPortfolioRequest,
     Property,
     PatchPropertyRequest,
 )
@@ -123,38 +125,45 @@ class TravelService:
             await self.prepare_accommodation_log_data(log_request, messages)
             for log_request in log_requests
         ]
-        valid_data = [data for data in prepared_data if data is not None]
+        valid_data = [data for data in prepared_data if data[0] is not None]
+
+        # Proceed only if there is valid data to upsert
         if valid_data:
-            valid_logs_to_upsert, _, _ = zip(*valid_data)
-            accommodation_log_audit_logs = [acc_log for _, acc_log, _ in valid_data]
-            other_audit_logs = [log for item in valid_data for log in item[2]]
-        else:
-            valid_logs_to_upsert = []
-            accommodation_log_audit_logs = []
+            valid_logs_to_upsert, accommodation_log_audit_logs, other_audit_logs = zip(
+                *valid_data
+            )
 
-        # Perform the upsert operation for valid logs
-        inserted_count = 0
-        updated_count = 0
-        if valid_logs_to_upsert:
+            # Perform the upsert operation for valid logs
             results = await self._repo.upsert_accommodation_log(valid_logs_to_upsert)
-            for _, was_inserted in results:
-                if was_inserted:
-                    inserted_count += 1
+            inserted_count = 0
+            updated_count = 0
+            for _, was_inserted, error_message in results:
+                if error_message:
+                    messages.append(error_message)
                 else:
-                    updated_count += 1
-            await self.process_audit_logs(accommodation_log_audit_logs)
-            # try:
-            #     await self.process_audit_logs(audit_logs)
-            # except:
-            #     print(f"Couldn't insert audit logs {audit_logs}")
+                    if was_inserted:
+                        inserted_count += 1
+                    else:
+                        updated_count += 1
 
-        all_audit_logs = accommodation_log_audit_logs + other_audit_logs
+            await self.process_audit_logs(
+                [log for log in accommodation_log_audit_logs if log is not None]
+                + [log for sublist in other_audit_logs for log in sublist]
+            )
 
+        else:
+            # If there are no valid logs to upsert, ensure variables are initialized to handle this scenario.
+            accommodation_log_audit_logs = []
+            other_audit_logs = []
+
+        all_audit_logs = [
+            log for log in accommodation_log_audit_logs if log is not None
+        ] + [log for sublist in other_audit_logs for log in sublist]
         summarized_audit_logs = self.summarize_audit_logs(all_audit_logs)
 
         return {
             "summarized_audit_logs": summarized_audit_logs,
-            "messages": messages,  # Add this line
+            "messages": messages,
         }
 
     async def process_audit_logs(self, audit_logs):
@@ -183,6 +192,7 @@ class TravelService:
     ) -> Tuple[Optional[AccommodationLog], Optional[AuditLog], List[AuditLog]]:
         """Processes an accommodation log add or update request."""
         other_audit_logs = []
+
         # Resolve entity IDs
         agency_id, agency_audit_log = await self.resolve_agency_id(
             log_request, messages
@@ -201,27 +211,39 @@ class TravelService:
         if property_audit_log:
             other_audit_logs.append(property_audit_log)
 
-        # # Check if this log exists and needs updating or if it's a new log
+        # Additional check for a unique constraint violation
         if log_request.log_id:
-            existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
-        else:
-            existing_log = await self.get_accommodation_log(
+            # Check if an update would cause a duplicate record, excluding the current log being updated
+            potential_conflict_log = await self.get_accommodation_log(
                 log_request.primary_traveler,
                 log_request.property_id,
                 log_request.date_in,
                 log_request.date_out,
             )
+            if (
+                potential_conflict_log
+                and potential_conflict_log.id != log_request.log_id
+            ):
+                # Construct and append the error message
+                error_message = (
+                    f"A record for {log_request.primary_traveler} from date {log_request.date_in} to {log_request.date_out} "
+                    "already exists. Updating this record would result in a duplicate entry."
+                )
+                messages.append(error_message)
+                return None, None, other_audit_logs
+
+        # If new or if the existing log can be safely updated, proceed with preparing the log data and audit log
+        existing_log = None
+        if log_request.log_id:
+            existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
+        else:
+            existing_log = await self.get_accommodation_log(
+                log_request.primary_traveler,
+                property_id,
+                log_request.date_in,
+                log_request.date_out,
+            )
         if existing_log:
-            print(
-                f"Entry for traveler {log_request.primary_traveler} from date "
-                f"{log_request.date_in} to {log_request.date_out} "
-                "already existed and has been updated."
-            )
-            messages.append(
-                f"Entry for traveler {log_request.primary_traveler} from date "
-                f"{log_request.date_in} to {log_request.date_out} "
-                "already existed and has been updated."
-            )
             updated_log_data = self.prepare_updated_log_data(
                 log_request, existing_log, property_id, booking_channel_id, agency_id
             )
@@ -234,7 +256,6 @@ class TravelService:
                 action="update",
             )
             return updated_log_data, accommodation_log_audit_log, other_audit_logs
-        # If new, prepare the new log data
         new_log_data = self.prepare_new_log_data(
             log_request, property_id, booking_channel_id, agency_id
         )
@@ -492,6 +513,139 @@ class TravelService:
         """Gets a sequence of Country models by country name."""
         return await self._repo.get_countries_by_name(names)
 
+    async def process_country_request(
+        self, country_request: PatchCountryRequest
+    ) -> dict:
+        """Adds or edits accommodation log models in the repository."""
+        prepared_data_or_error = await self.prepare_country_data(country_request)
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a conflict or issue
+            return {"error": prepared_data_or_error["error"]}
+
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            country_data, audit_logs = prepared_data_or_error
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_country(country_data)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid country data provided for processing."}
+
+    async def prepare_country_data(
+        self, country_request: PatchCountryRequest
+    ) -> Union[Dict[str, str], Tuple[Country, AuditLog]]:
+        """Resolves and prepares a country patch for insertion."""
+        # Check if this country exists and needs updating
+        core_destination_id = None
+
+        if country_request.core_destination_id:
+            # Fetch country details based on country_id
+            core_dest = await self._repo.get_core_destination_by_id(
+                country_request.core_destination_id
+            )
+            if core_dest is None:
+                raise ValueError("Invalid core_destination_id")
+            # Set core_destination_id based on the country's default
+            core_destination_id = core_dest.id
+
+        existing_country_by_id = None
+        if country_request.country_id:
+            existing_country_by_id = await self.get_country_by_id(
+                country_request.country_id
+            )
+
+        # Check for a name conflict with a different property
+        existing_country_by_name = await self.get_country_by_name(
+            country_request.name,
+        )
+        if existing_country_by_name and (
+            not existing_country_by_id
+            or existing_country_by_id.id != existing_country_by_name.id
+        ):
+            # Found a name conflict with another property
+            return {"error": f"Property '{country_request.name}' already exists."}
+
+        if existing_country_by_id:
+            if (
+                existing_country_by_id.name == country_request.name
+                and existing_country_by_id.core_destination_id == core_destination_id
+            ):
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing property with possibly updated fields
+            updated_country = Country(
+                id=existing_country_by_id.id,  # Keep the same ID
+                name=country_request.name,
+                core_destination_id=core_destination_id,
+                updated_by=country_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="countries",
+                record_id=existing_country_by_id.id,
+                user_name=country_request.updated_by,
+                before_value=existing_country_by_id.dict(),
+                after_value=country_request.dict(),
+                action="update",
+            )
+            return updated_country, audit_log
+        else:
+            # If new, prepare the new property data
+            new_country = Country(
+                name=country_request.name,
+                core_destination_id=core_destination_id,
+                updated_by=country_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="countries",
+                record_id=new_country.id,
+                user_name=new_country.updated_by,
+                before_value={},
+                after_value=new_country.dict(),
+                action="insert",
+            )
+
+            return new_country, audit_log
+
+    async def delete_country(self, country_id: UUID, user_email: str):
+        """Deletes a Country."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            country_id, "country_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete country due to related records.",
+                "details": affected_logs,
+            }
+        deleted = await self._repo.delete_country(country_id)
+        audit_log = AuditLog(
+            table_name="countries",
+            record_id=country_id,
+            user_name=user_email,
+            before_value={"id": country_id},
+            after_value={},
+            action="delete",
+        )
+
+        await self.process_audit_logs(audit_log)
+        return deleted
+
     # CoreDestination
     async def add_core_destination(self, models: Sequence[CoreDestination]) -> None:
         """Adds core destination model to the repository."""
@@ -527,6 +681,12 @@ class TravelService:
     async def get_all_core_destinations(self) -> Sequence[CoreDestination]:
         """Gets all CoreDestination models."""
         return await self._repo.get_all_core_destinations()
+
+    async def get_core_destination_by_id(
+        self, core_destination_id: UUID
+    ) -> CoreDestination:
+        """Gets a sequence of CoreDestination models by ID"""
+        return await self._repo.get_core_destination_by_id(core_destination_id)
 
     async def get_core_destination_by_name(self, name: str) -> CoreDestination:
         """Gets a sequence of CoreDestination models by core destination name"""
@@ -1087,13 +1247,133 @@ class TravelService:
         # await self.process_audit_logs(audit_logs)
         await self._repo.add_portfolio(to_be_added)
 
+    async def process_portfolio_request(
+        self, portfolio_request: PatchPortfolioRequest
+    ) -> dict:
+        """Adds or edits portfolio models in the repository."""
+        prepared_data_or_error = await self.prepare_portfolio_data(portfolio_request)
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a conflict or issue
+            return {"error": prepared_data_or_error["error"]}
+
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            portfolio_data, audit_logs = prepared_data_or_error
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_portfolio(portfolio_data)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid portfolio data provided for processing."}
+
+    async def prepare_portfolio_data(
+        self, portfolio_request: PatchPortfolioRequest
+    ) -> Union[Dict[str, str], Tuple[Agency, AuditLog]]:
+        """Resolves and prepares a portfolio patch for insertion or update."""
+        # Check if this portfolio exists and needs updating
+        existing_portfolio_by_id = None
+        if portfolio_request.portfolio_id:
+            existing_portfolio_by_id = await self.get_portfolio_by_id(
+                portfolio_request.portfolio_id
+            )
+
+        # Check for a name conflict with a different portfolio
+        existing_portfolio_by_name = await self.get_portfolio_by_name(
+            portfolio_request.name
+        )
+        if existing_portfolio_by_name and (
+            not existing_portfolio_by_id
+            or existing_portfolio_by_id.id != existing_portfolio_by_name.id
+        ):
+            # Found a name conflict with another portfolio
+            return {
+                "error": f"A portfolio with the name '{portfolio_request.name}' already exists."
+            }
+
+        if existing_portfolio_by_id:
+            if existing_portfolio_by_id.name == portfolio_request.name:
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing portfolio with possibly updated fields
+            updated_portfolio = Agency(
+                id=existing_portfolio_by_id.id,  # Keep the same ID
+                name=portfolio_request.name,
+                updated_by=portfolio_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="portfolios",
+                record_id=existing_portfolio_by_id.id,
+                user_name=updated_portfolio.updated_by,
+                before_value=existing_portfolio_by_id.dict(),
+                after_value=updated_portfolio.dict(),
+                action="update",
+            )
+            return updated_portfolio, audit_log
+        else:
+            # If new, prepare the new agency data
+            new_portfolio = Agency(
+                name=portfolio_request.name,
+                updated_by=portfolio_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="portfolios",
+                record_id=new_portfolio.id,
+                user_name=new_portfolio.updated_by,
+                before_value={},
+                after_value=new_portfolio.dict(),
+                action="insert",
+            )
+            return new_portfolio, audit_log
+
     async def get_portfolio_by_name(self, name: str) -> Portfolio:
         """Gets a single Portfolio model by name."""
         return await self._repo.get_portfolio_by_name(name)
 
+    async def get_portfolio_by_id(self, portfolio_id: UUID) -> Portfolio:
+        """Gets a single Portfolio model by name."""
+        return await self._repo.get_portfolio_by_id(portfolio_id)
+
     async def get_all_portfolios(self) -> Sequence[Portfolio]:
         """Gets all Agency models."""
         return await self._repo.get_all_portfolios()
+
+    async def delete_portfolio(self, portfolio_id: UUID, user_email: str):
+        """Deletes a Portfolio."""
+        impact_info = await self._summary_svc.get_related_records_summary(
+            portfolio_id, "portfolio_id"
+        )
+        if not impact_info["can_modify"]:
+            affected_logs = impact_info["affected_logs"]
+            return {
+                "error": "Cannot delete portfolio due to related records.",
+                "details": affected_logs,
+            }
+        deleted = await self._repo.delete_portfolio(portfolio_id)
+        audit_log = AuditLog(
+            table_name="booking_channels",
+            record_id=portfolio_id,
+            user_name=user_email,
+            before_value={"id": portfolio_id},
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
 
     # Consultant
     async def add_consultant(self, models: Sequence[Consultant]) -> None:

@@ -117,16 +117,6 @@ export const Overview = () => {
             }
             return acc;
         }, {});
-        // const consultantOptions = [...new Set(apiData.map((item) => item.consultant_display_name))].sort();
-        const consultantMap = apiData.reduce((acc, item) => {
-            if (!acc[item.consultant_id]) {
-                acc[item.consultant_id] = {
-                    value: item.consultant_id || '',
-                    label: item.consultant_display_name || ''
-                };
-            }
-            return acc;
-        }, {});
         const propertyMap = apiData.reduce((acc, item) => {
             if (!acc[item.property_id]) {
                 acc[item.property_id] = {
@@ -138,9 +128,37 @@ export const Overview = () => {
         }, {});
         const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
-        const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
         const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
+        const uniqueConsultants = apiData.reduce((acc, item) => {
+            if (!acc[item.consultant_id]) {
+                acc[item.consultant_id] = {
+                    consultant_id: item.consultant_id,
+                    consultant_display_name: item.consultant_display_name,
+                    consultant_is_active: item.consultant_is_active
+                };
+            }
+            return acc;
+        }, {});
+        const distinctConsultants = Object.values(uniqueConsultants);
+        const consultantOptions = distinctConsultants
+            .map(item => ({
+                value: item.consultant_id || '',
+                label: item.consultant_display_name || '',
+                consultant_is_active: item.consultant_is_active
+            }))
+            .sort((a, b) => {
+                // Sort by is_active, true before false
+                if (a.consultant_is_active && !b.consultant_is_active) return -1;
+                if (!a.consultant_is_active && b.consultant_is_active) return 1;
 
+                // Then sort alphabetically by label
+                return a.label.localeCompare(b.label);
+            })
+            .map(item => ({
+                value: item.value,
+                label: `${item.label} ${item.consultant_is_active ? '' : '(inactive)'}`, // Append (inactive) if not active
+                apiLabel: item.label
+            }));
 
         setFilterOptions({
             core_dest: coreDestOptions,
@@ -209,7 +227,36 @@ export const Overview = () => {
         // Update filter options based on newFilteredData
         const coreDestOptions = [...new Set(newFilteredData.map(item => item.core_destination_name))].sort().map(name => ({ value: name, label: name }));
         const countryOptions = [...new Set(newFilteredData.map(item => item.country_name))].sort().map(name => ({ value: name, label: name }));
-        const consultantOptions = [...new Set(newFilteredData.map(item => item.consultant_display_name))].sort().map(name => ({ value: name, label: name }));
+        const uniqueConsultants = apiData.reduce((acc, item) => {
+            if (!acc[item.consultant_id]) {
+                acc[item.consultant_id] = {
+                    consultant_id: item.consultant_id,
+                    consultant_display_name: item.consultant_display_name,
+                    consultant_is_active: item.consultant_is_active
+                };
+            }
+            return acc;
+        }, {});
+        const distinctConsultants = Object.values(uniqueConsultants);
+        const consultantOptions = distinctConsultants
+            .map(item => ({
+                value: item.consultant_id || '',
+                label: item.consultant_display_name || '',
+                consultant_is_active: item.consultant_is_active
+            }))
+            .sort((a, b) => {
+                // Sort by is_active, true before false
+                if (a.consultant_is_active && !b.consultant_is_active) return -1;
+                if (!a.consultant_is_active && b.consultant_is_active) return 1;
+
+                // Then sort alphabetically by label
+                return a.label.localeCompare(b.label);
+            })
+            .map(item => ({
+                value: item.value,
+                label: `${item.label} ${item.consultant_is_active ? '' : '(inactive)'}`, // Append (inactive) if not active
+                apiLabel: item.label
+            }));
         const propertyOptions = [...new Set(newFilteredData.map(item => item.property_name))].sort().map(name => ({ value: name, label: name }));
 
         setFilterOptions({
@@ -351,8 +398,12 @@ export const Overview = () => {
                                     <div className="col s12 l4">
                                         <Select
                                             placeholder="Search by Consultant"
-                                            value={filterOptions.consultant.find(consultant => consultant.label === filters.consultant) ? { value: filters.consultant, label: filters.consultant } : null}
-                                            onChange={(selectedOption) => setFilters({ ...filters, consultant: selectedOption ? selectedOption.label : '' })}
+                                            value={
+                                                filterOptions.consultant.find(consultant => consultant.value === filters.consultant)
+                                                    ? filterOptions.consultant.find(consultant => consultant.value === filters.consultant)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) => setFilters({ ...filters, consultant: selectedOption ? selectedOption.apiLabel : '' })}
                                             options={filterOptions.consultant}
                                             styles={{
                                                 control: (provided, state) => ({

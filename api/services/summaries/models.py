@@ -51,6 +51,7 @@ class AccommodationLogSummary(BaseModel):
     consultant_id: UUID
     consultant_first_name: str
     consultant_last_name: str
+    consultant_is_active: bool
     property_id: UUID
     booking_channel_id: Optional[UUID] = None
     agency_id: Optional[UUID] = None
@@ -146,3 +147,18 @@ class BedNightReport(BaseModel):
 
     report_inputs: ReportInput
     calculations: ReportAggregations
+
+
+class Overlap(BaseModel):
+    """Accommodation logs that overlap between two travelers"""
+
+    traveler1: str
+    date_in_traveler1: date
+    date_out_traveler1: date
+    traveler2: str
+    date_in_traveler2: date
+    date_out_traveler2: date
+    property_id: UUID
+    property_name: str
+    country_name: Optional[str] = None
+    core_destination_name: str

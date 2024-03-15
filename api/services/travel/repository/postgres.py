@@ -19,7 +19,7 @@ from uuid import UUID
 from typing import Optional, Sequence
 from textwrap import dedent
 
-# from asyncpg.connection import inspect
+from asyncpg import UniqueViolationError
 
 from api.adapters.repository import PostgresMixin
 from api.services.travel.repository import TravelRepository
@@ -108,7 +108,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
 
     async def upsert_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]
-    ) -> list[Tuple[UUID, bool]]:
+    ) -> list[Tuple[UUID, bool, str]]:
         """Upserts a sequence of AccommodationLog models into the repository."""
         pool = await self._get_pool()
         query = dedent(
@@ -149,37 +149,45 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 for log in accommodation_logs:
-                    args = (
-                        log.id,
-                        log.property_id,
-                        log.consultant_id,
-                        log.primary_traveler.strip(),
-                        log.num_pax,
-                        log.date_in,
-                        log.date_out,
-                        log.booking_channel_id,
-                        log.agency_id,
-                        datetime.datetime.now(),  # Set updated_at to now
-                        log.updated_by,
-                    )
-                    row = await con.fetchrow(query, *args)
-                    if row:
-                        # Append log ID and whether it was an insert (True) or an update (False)
-                        results.append((row["id"], row["was_inserted"]))
-        # Initialize counters
-        inserted_count = 0
-        updated_count = 0
+                    try:
+                        args = (
+                            log.id,
+                            log.property_id,
+                            log.consultant_id,
+                            log.primary_traveler.strip(),
+                            log.num_pax,
+                            log.date_in,
+                            log.date_out,
+                            log.booking_channel_id,
+                            log.agency_id,
+                            datetime.datetime.now(),  # Set updated_at to now
+                            log.updated_by,
+                        )
+                        row = await con.fetchrow(query, *args)
+                        if row:
+                            # Append log ID and whether it was an insert (True) or an update (False)
+                            results.append((row["id"], row["was_inserted"], ""))
+                    except UniqueViolationError:
+                        # Construct a more user-friendly error message
+                        error_message = (
+                            f"A record for {log.primary_traveler} from date"
+                            f"{log.date_in} to {log.date_out} already exists."
+                        )
+                        results.append((log.id, False, error_message))
+        # # Initialize counters
+        # inserted_count = 0
+        # updated_count = 0
 
-        # Process the results to count inserts and updates
-        for _, was_inserted in results:
-            if was_inserted:
-                inserted_count += 1
-            else:
-                updated_count += 1
+        # # Process the results to count inserts and updates
+        # for _, was_inserted in results:
+        #     if was_inserted:
+        #         inserted_count += 1
+        #     else:
+        #         updated_count += 1
 
-        print(f"Processed {len(results)} upsert operation(s).")
-        print(f"Inserted {inserted_count} new log(s).")
-        print(f"Updated {updated_count} existing log(s).")
+        # print(f"Processed {len(results)} upsert operation(s).")
+        # print(f"Inserted {inserted_count} new log(s).")
+        # print(f"Updated {updated_count} existing log(s).")
         return results
 
     async def delete_accommodation_log(self, log_id: UUID) -> bool:
@@ -790,6 +798,25 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_by=res["updated_by"],
                     )
 
+    async def get_core_destination_by_id(
+        self, core_destination_id: UUID
+    ) -> CoreDestination:
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.core_destinations
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, core_destination_id)
+                if res:
+                    return CoreDestination(**res)
+
     async def get_all_core_destinations(self) -> Sequence[CoreDestination]:
         """Gets all of CoreDestination models from the repository."""
         pool = await self._get_pool()
@@ -889,12 +916,90 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new country record(s) to the repository."
         )
 
+    async def upsert_country(self, country_data: Property) -> list[Tuple[UUID, bool]]:
+        """Upserts a sequence of Country models into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+        INSERT INTO public.countries (
+            id,
+            name,
+            core_destination_id,
+            created_at,
+            updated_at,
+            updated_by
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            core_destination_id = EXCLUDED.core_destination_id,
+            updated_at = EXCLUDED.updated_at,
+            updated_by = EXCLUDED.updated_by
+        RETURNING id, (xmax = 0) AS was_inserted;
+    """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    country_data.id,
+                    country_data.name.strip(),
+                    country_data.core_destination_id,
+                    country_data.created_at,
+                    country_data.updated_at,
+                    country_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new country(ies).")
+        print(f"Updated {updated_count} existing country(ies).")
+        return results
+
+    async def delete_country(self, country_id: UUID) -> bool:
+        """Deletes a sequence of Country models from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.countries
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, country_id)
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No consultant found with ID: {country_id}, nothing was deleted."
+                    )
+                    return False
+                print(f"Successfully deleted consultant with ID: {country_id}.")
+                return True
+
     async def update_country(self, countries: Sequence[Country]) -> None:
         """Updates a sequence of Country models in the repository."""
-        raise NotImplementedError
-
-    async def delete_country(self, countries: Sequence[Country]) -> None:
-        """Deletes a sequence of Country models from the repository."""
         raise NotImplementedError
 
     async def get_all_countries(self) -> Sequence[Country]:
@@ -1389,6 +1494,105 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         print(
             f"Successfully added {len(args)} new portfolio record(s) to the repository."
         )
+
+    async def upsert_portfolio(
+        self, portfolio_data: Portfolio
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a portfolio into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.portfolios (
+                id,
+                name,
+                created_at,
+                updated_at,
+                updated_by
+            ) VALUES (
+                $1, $2, $3, $4, $5
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    portfolio_data.id,
+                    portfolio_data.name.strip(),
+                    portfolio_data.created_at,
+                    portfolio_data.updated_at,
+                    portfolio_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new portfolio(s).")
+        print(f"Updated {updated_count} existing portfolio(s).")
+        return results
+
+    async def get_portfolio_by_id(self, portfolio_id: UUID) -> Portfolio:
+        """Gets a single Portfolio model based on id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.portfolios
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, portfolio_id)
+                if res:
+                    return BookingChannel(**res)
+
+    async def delete_portfolio(self, portfolio_id: UUID) -> bool:
+        """Deletes a sequence of Portfolio models from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.portfolios
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                result = await con.execute(query, portfolio_id)
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No portfolio found with ID: {portfolio_id}, nothing was deleted."
+                    )
+                    return False
+                print(f"Successfully deleted portfolio with ID: {portfolio_id}.")
+                return True
 
     async def get_portfolio_by_name(self, name: str) -> Portfolio:
         """Gets a single Portfolio model based on name."""

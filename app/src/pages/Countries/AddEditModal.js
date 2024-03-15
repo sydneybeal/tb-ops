@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
+import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 // import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 // import moment from 'moment';
 
-const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null, isEditMode = false }) => {
+const AddEditCountryModal = ({ isOpen, onClose, onRefresh, editCountryData = null, isEditMode = false }) => {
     const { userDetails } = useAuth();
-    const [agencyId, setAgencyId] = useState(null);
-    const [name, setName] = useState('');
+    const [countryId, setCountryId] = useState(null);
+    const [name, setName] = useState(null);
+    const [coreDestinations, setCoreDestinations] = useState([]);
+    const [selectedCoreDestinationId, setSelectedCoreDestinationId] = useState('');
     const [relatedEntries, setRelatedEntries] = useState([]);
     const [validationErrors, setValidationErrors] = useState({});
     const [touched, setTouched] = useState({
-        name: false,
+        country: false,
+        coreDestination: false,
     });
 
     const handleFormSubmit = (e) => {
@@ -29,13 +33,12 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
             return;
         }
 
-        const agencyToSubmit = {
-            agency_id: agencyId || null,
+        const countryToSubmit = {
+            country_id: countryId || null,
             name: name || null,
+            core_destination_id: selectedCoreDestinationId || null,
             updated_by: userDetails.email || ''
         };
-
-        console.log(agencyToSubmit);
 
         if (userDetails.role !== 'admin') {
             M.toast({
@@ -45,13 +48,13 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
             });
         }
         else {
-            fetch(`${process.env.REACT_APP_API}/v1/agencies`, {
+            fetch(`${process.env.REACT_APP_API}/v1/countries`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${userDetails.token}`,
                 },
-                body: JSON.stringify(agencyToSubmit, null, 2),
+                body: JSON.stringify(countryToSubmit, null, 2),
             })
                 .then(response => {
                     if (!response.ok) {
@@ -61,7 +64,6 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                     return response.json();
                 })
                 .then(data => {
-                    console.log(data);
                     // Handle success response
                     const insertedCount = data?.inserted_count ?? 0;
                     const updatedCount = data?.updated_count ?? 0;
@@ -73,15 +75,13 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                         toastHtml = data.error;
                         toastColor = 'error-red';
                     } else if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} agency.`;
+                        toastHtml = `Added ${insertedCount} country.`;
                     } else if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} agency.`;
+                        toastHtml = `Modified ${updatedCount} country.`;
                     } else {
-                        toastHtml = data?.message ?? "No agencies were added.";
+                        toastHtml = data?.message ?? "No countries were added.";
                         toastColor = 'error-red';
                     }
-
-                    console.log(toastHtml);
                     M.toast({
                         html: toastHtml,
                         displayLength: 4000,
@@ -109,7 +109,10 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
         let errors = {};
 
         if (!(name || '').trim()) {
-            errors.name = 'Missing agency name';
+            errors.name = 'Missing country name';
+        }
+        if (selectedCoreDestinationId === null) {
+            errors.coreDestination = 'Missing core destination';
         }
 
         setValidationErrors(errors);
@@ -134,9 +137,9 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                 instance.close();
             }
         }
-        if (!isOpen || !agencyId) return;
+        if (!isOpen || !countryId) return;
 
-        fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${agencyId}&identifier_type=agency_id`, {
+        fetch(`${process.env.REACT_APP_API}/v1/related_entries?identifier=${countryId}&identifier_type=country_id`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
             }
@@ -158,7 +161,27 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
             .catch((err) => {
                 console.error(err);
             })
-    }, [agencyId, isOpen, onClose, userDetails.token]);
+    }, [countryId, isOpen, onClose, userDetails.token]);
+
+    useEffect(() => {
+        fetch(`${process.env.REACT_APP_API}/v1/core_destinations`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then(res => res.json())
+            .then((data) => {
+                console.log("core destinations queried");
+                console.log(data);
+                const formattedCoreDestinations = data.map((dest) => ({
+                    value: dest.id,
+                    label: dest.name
+                }));
+                console.log(formattedCoreDestinations);
+                setCoreDestinations(formattedCoreDestinations);
+            })
+            .catch((err) => console.error(err));
+    }, [isOpen, onClose, userDetails.token]);
 
     const handleDelete = () => {
         if (userDetails.role !== 'admin') {
@@ -169,14 +192,14 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
             });
         }
         else {
-            const confirmDelete = window.confirm("Are you sure you want to delete this agency?");
+            const confirmDelete = window.confirm("Are you sure you want to delete this country?");
             if (confirmDelete) {
-                if (!agencyId) {
-                    M.toast({ html: 'Error: No agency ID found', classes: 'error-red' });
+                if (!countryId) {
+                    M.toast({ html: 'Error: No country ID found', classes: 'error-red' });
                     return;
                 }
                 // Replace `/your-api-endpoint/` with the actual endpoint and `entryId` with the actual ID
-                fetch(`${process.env.REACT_APP_API}/v1/agencies/${agencyId}`, {
+                fetch(`${process.env.REACT_APP_API}/v1/countries/${countryId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -204,12 +227,10 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                         }
                         // Handle success here
                         M.toast({
-                            html: `Agency '${name}' successfully deleted`,
+                            html: `Country '${name}' successfully deleted`,
                             classes: 'success-green',
                             displayLength: 2000
                         });
-                    })
-                    .finally(() => {
                         resetFormState();
                         onRefresh();
                         onClose();
@@ -229,22 +250,24 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
     useEffect(() => {
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
-        } else if (isOpen && isEditMode && editAgencyData) {
-            setAgencyId(editAgencyData.id);
-            setName(editAgencyData.name);
+        } else if (isOpen && isEditMode && editCountryData) {
+            setCountryId(editCountryData.id);
+            setName(editCountryData.name);
+            setSelectedCoreDestinationId(editCountryData.core_destination_id);
         }
-    }, [isOpen, isEditMode, editAgencyData]);
+    }, [isOpen, isEditMode, editCountryData]);
 
     const resetFormState = () => {
-        setAgencyId(null);
+        setCountryId(null);
         setName('');
+        setSelectedCoreDestinationId(null);
         setValidationErrors({});
         setRelatedEntries([]);
     };
 
     const validateName = (value) => {
         if (!(value || '').trim()) {
-            return 'Missing agency name';
+            return 'Missing name';
         }
         return '';
     };
@@ -253,7 +276,7 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
         const value = e.target.value;
         setName(value);
 
-        if (touched.name) {
+        if (touched.firstName) {
             setValidationErrors(prevErrors => ({
                 ...prevErrors,
                 name: validateName(value),
@@ -262,24 +285,52 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
     };
 
     const handleNameBlur = () => {
-        setTouched(prev => ({ ...prev, name: true }));
+        setTouched(prev => ({ ...prev, firstName: true }));
         setValidationErrors(prevErrors => ({
             ...prevErrors,
             name: validateName(name),
         }));
     };
 
+    const validateSelectedCoreDestinationId = (value) => {
+        if (!(value || '').trim()) {
+            return 'Missing core destination';
+        }
+        return '';
+    };
+
+    const handleSelectedCoreDestinationIdChange = (selectedOption) => {
+        setSelectedCoreDestinationId(selectedOption ? selectedOption.value : '');
+
+        // Only validate in real-time if the field has been touched
+        if (touched.selectedCountryId) {
+            setValidationErrors(prevErrors => ({
+                ...prevErrors,
+                coreDestination: validateSelectedCoreDestinationId(selectedOption ? selectedOption.value : ''),
+            }));
+        }
+    };
+
+    const handleSelectedCoreDestinationIdBlur = () => {
+        setTouched(prev => ({ ...prev, selectedCoreDestinationId: true }));
+        setValidationErrors(prevErrors => ({
+            ...prevErrors,
+            coreDestination: validateSelectedCoreDestinationId(selectedCoreDestinationId),
+        }));
+    };
+
+
     return (
         <div id="add-edit-modal" className="modal add-edit-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
-                    {!isEditMode ? 'New' : 'Editing'} Agency&nbsp;&nbsp;
+                    {!isEditMode ? 'New' : 'Editing'} Country&nbsp;&nbsp;
                     {isEditMode &&
                         <button
                             className="btn waves-effect waves-light error-red-light"
                             onClick={handleDelete}
                         >
-                            <span className="material-symbols-outlined grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                            <span className="material-symbols-outlined tb-grey-text text-darken-2" style={{ marginBottom: '0px', marginRight: '0px' }}>
                                 delete_forever
                             </span>
                         </button>
@@ -288,29 +339,77 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
                 <div className="container" style={{ width: '60%' }}>
                     <div style={{ textAlign: 'left', marginTop: '50px' }}>
                         <form id="consultantForm" onSubmit={handleFormSubmit}>
-                            {validationErrors.name && (
+                            {(validationErrors.name || validationErrors.coreDestination) && (
                                 <div className="row" style={{ marginBottom: '20px' }}>
                                     {validationErrors.name && (
                                         <div className="chip error-red-light text-bold">{validationErrors.name}</div>
+                                    )}
+                                    {validationErrors.coreDestination && (
+                                        <div className="chip error-red-light text-bold">{validationErrors.coreDestination}</div>
                                     )}
                                 </div>
                             )}
                             <div className="row" style={{ marginBottom: '20px' }}>
                                 <input
                                     type="text"
-                                    id="agency_name"
+                                    id="name"
                                     value={name}
                                     onChange={handleNameChange}
                                     onBlur={handleNameBlur}
-                                    placeholder="Agency name"
+                                    placeholder="Country name"
                                     style={{ marginRight: '10px', flexGrow: '1' }}
                                     className={validationErrors.name ? 'invalid' : ''}
                                 />
-                                <label htmlFor="agency_name">
+                                <label htmlFor="name">
                                     <span className="material-symbols-outlined">
-                                        contact_mail
+                                        globe
                                     </span>
-                                    Agency Name
+                                    Country Name
+                                </label>
+                            </div>
+                            <div className="row" style={{ marginBottom: '20px' }}>
+                                <Select
+                                    placeholder="Select Core Destination"
+                                    id="core_destination_select"
+                                    value={coreDestinations.find(cons => cons.value === selectedCoreDestinationId) || ''}
+                                    onChange={handleSelectedCoreDestinationIdChange}
+                                    onBlur={handleSelectedCoreDestinationIdBlur}
+                                    options={coreDestinations}
+                                    isClearable
+                                    style={{ flexGrow: '1' }}
+                                    classNamePrefix="select" // Use this for prefixing generated class names
+                                    className={validationErrors.country ? 'invalid-select' : ''} // This class is for the container
+                                    styles={{
+                                        control: (provided, state) => ({
+                                            ...provided,
+                                            borderColor: validationErrors.coreDestination ? '#d1685d' : provided.borderColor,
+                                            '&:hover': {
+                                                borderColor: validationErrors.coreDestination ? '#d1685d' : provided['&:hover'].borderColor,
+                                            },
+                                            boxShadow: state.isFocused ? (validationErrors.coreDestination ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
+                                        }),
+                                        option: (provided, state) => ({
+                                            ...provided,
+                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                            backgroundColor: state.isSelected
+                                                ? '#0e9bac' // Background color for selected options
+                                                : state.isFocused
+                                                    ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                    : '#ffffff', // Default background color for other states
+                                            color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                            ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                            },
+                                        }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
+                                    }}
+                                    menuPortalTarget={document.body}
+                                />
+                                <label htmlFor="core_destination_select">
+                                    <span className="material-symbols-outlined">
+                                        explore
+                                    </span>
+                                    Core Desination
                                 </label>
                             </div>
                         </form>
@@ -374,4 +473,4 @@ const AddEditAgencyModal = ({ isOpen, onClose, onRefresh, editAgencyData = null,
     )
 };
 
-export default AddEditAgencyModal;
+export default AddEditCountryModal;

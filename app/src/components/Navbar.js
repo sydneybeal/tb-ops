@@ -101,13 +101,13 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                <div className="container" style={{ width: '100%' }}>
+                {/* <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/trip_reports'} className="text-bold">
                             Trip Reports
                         </Link>
                     </li>
-                </div>
+                </div> */}
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/faq'} className="text-bold">
@@ -156,6 +156,13 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/portfolios'} className="text-bold">
                                     Manage Portfolios
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/countries'} className="text-bold">
+                                    Manage Countries
                                 </Link>
                             </li>
                         </div>

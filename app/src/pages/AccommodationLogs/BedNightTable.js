@@ -10,11 +10,11 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
     const [totalPages, setTotalPages] = useState(0);
     const itemsPerPage = pageSize;
 
-    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1400);
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1100);
 
     useEffect(() => {
         const handleResize = () => {
-            setIsMobileView(window.innerWidth <= 1400);
+            setIsMobileView(window.innerWidth <= 1100);
         };
 
         window.addEventListener('resize', handleResize);
@@ -26,13 +26,13 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
         const numberOfPages = Math.ceil(filteredData.length / itemsPerPage);
         setTotalPages(numberOfPages);
         setCurrentPage(0);
-    }, [filteredData]);
+    }, [filteredData, itemsPerPage]);
 
     useEffect(() => {
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
         setDisplayData(sortedData.slice(start, end));
-    }, [currentPage, sortedData, sorting]);
+    }, [currentPage, sortedData, sorting, itemsPerPage]);
 
     useEffect(() => {
         // Perform sorting on filteredData
@@ -525,67 +525,65 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
             {isMobileView && (
                 <div className="mobile-friendly-table">
                     {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
-                        <>
-                            <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
-                                <div className="card-content">
+                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                            <div className="card-content">
 
-                                    {isEditable && (
-                                        <div className="row" style={{ margin: '0px' }}>
-                                            <div className="col s12">
-                                                <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                    <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                </button>
-                                            </div>
+                                {isEditable && (
+                                    <div className="row" style={{ margin: '0px' }}>
+                                        <div className="col s12">
+                                            <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                            </button>
                                         </div>
-                                    )}
-                                    <div className="row" style={{ textAlign: 'left' }}>
-                                        <div className="col s4">
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">person</i><span className="text-bold">{item.primary_traveler}</span></div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">airline_seat_recline_extra</i>{item.num_pax}</div>
-                                            <div>
-                                                <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_in).format("M/D/YY")}</span>
-                                                <span> to </span>
-                                                <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_out).format("M/D/YY")}</span>
-                                            </div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">dark_mode</i><span className="text-bold">{item.bed_nights}</span></div>
+                                    </div>
+                                )}
+                                <div className="row" style={{ textAlign: 'left' }}>
+                                    <div className="col s4">
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">person</i><span className="text-bold">{item.primary_traveler}</span></div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">airline_seat_recline_extra</i>{item.num_pax}</div>
+                                        <div>
+                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_in).format("M/D/YY")}</span>
+                                            <span> to </span>
+                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_out).format("M/D/YY")}</span>
                                         </div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">dark_mode</i><span className="text-bold">{item.bed_nights}</span></div>
+                                    </div>
 
-                                        <div className="col s4">
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i><span>{item.property_name}</span></div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i><span>{item.property_portfolio}</span></div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
-                                                ? item.country_name
-                                                : <span>n/a</span>}</span></div>
-                                            <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
+                                    <div className="col s4">
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i><span>{item.property_name}</span></div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i><span>{item.property_portfolio}</span></div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
+                                            ? item.country_name
+                                            : <span>n/a</span>}</span></div>
+                                        <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
+                                    </div>
+                                    <div className="col s4">
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>&nbsp;Consultant:&nbsp;
+                                            <span className="chip tb-grey lighten-2 text-bold">{item.consultant_display_name}</span></div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">alt_route</i>&nbsp;Booking Channel:&nbsp;
+                                            <span className="chip tb-grey lighten-2 text-bold">{item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
+                                                ? item.booking_channel_name
+                                                : <span>n/a</span>}
+                                            </span>
                                         </div>
-                                        <div className="col s4">
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>&nbsp;Consultant:&nbsp;
-                                                <span className="chip tb-grey lighten-2 text-bold">{item.consultant_display_name}</span></div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">alt_route</i>&nbsp;Booking Channel:&nbsp;
-                                                <span className="chip tb-grey lighten-2 text-bold">{item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
-                                                    ? item.booking_channel_name
-                                                    : <span>n/a</span>}
-                                                </span>
-                                            </div>
-                                            <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i>&nbsp;Agency:&nbsp;
-                                                <span className="chip tb-grey lighten-2 text-bold">{item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
-                                                    ? item.agency_name
-                                                    : <span>n/a</span>}
-                                                </span>
-                                            </div>
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i>&nbsp;Agency:&nbsp;
+                                            <span className="chip tb-grey lighten-2 text-bold">{item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
+                                                ? item.agency_name
+                                                : <span>n/a</span>}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="card-footer">
-                                    <div className="row">
-                                        <div className="col s12" style={{ textAlign: 'right' }}>
-                                            <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
-                                            <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
-                                        </div>
+                            </div>
+                            <div className="card-footer">
+                                <div className="row">
+                                    <div className="col s12" style={{ textAlign: 'right' }}>
+                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
                                     </div>
                                 </div>
-                            </div >
-                        </>
+                            </div>
+                        </div >
                     ))}
                 </div >
             )}

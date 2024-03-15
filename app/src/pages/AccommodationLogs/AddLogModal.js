@@ -45,6 +45,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
         } else if (isOpen && isEditMode && editLogData) {
+            console.log([editLogData]);
             setAccommodationLogs([editLogData]);
             setPrimaryTraveler(editLogData.primary_traveler);
             setNumPax(editLogData.num_pax);
@@ -82,11 +83,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         })
             .then((res) => res.json())
             .then((data) => {
+
                 const formattedProperties = data.map((property) => ({
                     value: property.id,
                     label: `${property.name} (${property.country_name || property.core_destination_name})`,
                     name: property.name,
                     portfolio_id: property.portfolio_id,
+                    portfolio_name: property.portfolio_name,
                     country_name: property.country_name,
                     core_destination_name: property.core_destination_name
                 }));
@@ -352,6 +355,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 .then(data => {
                     const auditLogSummary = data?.summarized_audit_logs ?? {};
                     let toastHtml = '';
+                    let toastClass = 'success-green';
                     let totalOperations = 0;
 
                     // Mapping for category names
@@ -379,21 +383,24 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
                     const messages = data?.messages ?? [];
                     if (messages.length > 0) {
-                        // Append messages to the toastHtml
+                        // Append messages to the toastHtml with specific styling for warnings
                         messages.forEach(message => {
-                            toastHtml += `${message}<br>`;
+                            // Here you're adding a 'warning-message' class to style these messages
+                            toastHtml += `${message}`;
+                            toastClass = 'warning-yellow text-bold tb-md-black-text';
                         });
                     }
 
-                    if (totalOperations === 0) {
+                    if (totalOperations === 0 && toastHtml === '') {
                         // Fallback message if no detailed logs were processed
                         toastHtml = data?.message ?? "No records were added or updated.";
+                        toastClass = 'warning-yellow text-bold tb-md-black-text';
                     }
 
                     M.toast({
                         html: toastHtml,
                         displayLength: 8000,
-                        classes: 'green darken-1',
+                        classes: toastClass,
                     });
                 })
                 .finally(() => {
@@ -447,7 +454,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                     })
                     .then(data => {
                         // Handle success - show success message and possibly update the UI
-                        M.toast({ html: 'Entry successfully deleted', classes: 'green' });
+                        M.toast({ html: 'Entry successfully deleted', classes: 'success-green' });
                         resetFormState();
                         onRefresh();
                         onClose();
@@ -829,6 +836,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
             handleLogChange(index, 'property_name', selectedOption ? selectedOption.label : '');
             handleLogChange(index, 'portfolio_id', selectedOption ? selectedOption.portfolio_id : '');
+            handleLogChange(index, 'portfolio_name', selectedOption ? selectedOption.portfolio_name : '');
             handleLogChange(index, 'country_name', selectedOption ? selectedOption.country_name : '');
             handleLogChange(index, 'core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
         }
@@ -867,7 +875,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             M.toast({
                 html: "Booking channel automatically changed to Direct",
                 displayLength: 4000,
-                classes: 'green darken-1',
+                classes: 'success-green darken-1',
             });
             handleLogChange(index, 'booking_channel_id', directChannelId);
 
@@ -879,9 +887,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     //     setFilteredPortfolioSuggestions([]);
     //     setShowPortfolioSuggestions(false);
     // };
-
-    console.log(validationErrors);
-
 
     const handleRemoveClick = (index) => {
         // Remove the log entry at the specified index
@@ -1193,13 +1198,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 </span>
                                             </div>
                                         }
-                                        {(log.portfolio_name || log.new_property_portfolio_name) &&
-                                            <div className="chip tb-grey lighten-3">
+                                        {(log.portfolio_name || log.new_property_portfolio_name || log.property_portfolio) &&
+                                            <div className="chip tb-teal lighten-3">
                                                 {/* TODO figure out why portfolio name isn't populating */}
                                                 <span className="text-bold">
                                                     Portfolio:&nbsp;
                                                 </span>
-                                                {log.portfolio_name || log.new_property_portfolio_name}
+                                                {log.portfolio_name || log.new_property_portfolio_name || log.property_portfolio}
                                                 &nbsp;
                                                 <span className="material-symbols-outlined">
                                                     store

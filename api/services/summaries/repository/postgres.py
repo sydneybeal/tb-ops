@@ -25,6 +25,7 @@ from api.services.summaries.models import (
     BedNightReport,
     CountrySummary,
     PropertySummary,
+    Overlap,
 )
 from api.services.travel.models import (
     AccommodationLog,
@@ -61,6 +62,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
         #         al.consultant_id,
         #         cons.first_name AS consultant_first_name,
         #         cons.last_name AS consultant_last_name,
+        #         cons.is_active AS consultant_is_active,
         #         al.property_id,
         #         al.booking_channel_id,
         #         al.agency_id,
@@ -123,6 +125,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.consultant_id,
                 cons.first_name AS consultant_first_name,
                 cons.last_name AS consultant_last_name,
+                cons.is_active AS consultant_is_active,
                 al.property_id,
                 al.booking_channel_id,
                 al.agency_id,
@@ -194,6 +197,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"agency_id = '{value}'")
             elif key == "portfolio_id":
                 query_conditions.append(f"portfolio_id = '{value}'")
+            elif key == "country_id":
+                query_conditions.append(f"p.country_id = '{value}'")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)
@@ -205,6 +210,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.id,
                 al.primary_traveler,
                 cd.name AS core_destination_name,
+                c.id as country_id,
                 c.name AS country_name,
                 al.date_in,
                 al.date_out,
@@ -217,6 +223,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.consultant_id,
                 cons.first_name AS consultant_first_name,
                 cons.last_name AS consultant_last_name,
+                cons.is_active AS consultant_is_active,
                 al.property_id,
                 al.booking_channel_id,
                 al.agency_id,
@@ -260,6 +267,48 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                     accommodation_log_summaries = accommodation_log_summaries_temp
 
                 return accommodation_log_summaries
+
+    # async def get_overlaps(
+    #     self, start_date: datetime.date, end_date: datetime.date
+    # ) -> Sequence[Overlap]:
+    #     """Returns accommodation logs where clients are overlapping at a property by >0 days."""
+    #     pool = await self._get_pool()
+    #     query = """
+    #     SELECT
+    #         a1.primary_traveler AS traveler1,
+    #         a1.date_in AS date_in_traveler1,
+    #         a1.date_out AS date_out_traveler1,
+    #         a2.primary_traveler AS traveler2,
+    #         a2.date_in AS date_in_traveler2,
+    #         a2.date_out AS date_out_traveler2,
+    #         p.id AS property_id,
+    #         p.name AS property_name,
+    #         c.name AS country_name,
+    #         cons.first_name AS consultant_first_name,
+    #         cons.last_name AS consultant_last_name,
+    #         cons.is_active AS consultant_is_active,
+    #         cd.name AS core_destination_name
+    #     FROM public.accommodation_logs a1
+    #     JOIN public.accommodation_logs a2 ON a1.property_id = a2.property_id
+    #         AND a1.id <> a2.id
+    #         AND a1.date_out > a2.date_in
+    #         AND a2.date_out > a1.date_in
+    #     JOIN public.properties p ON a1.property_id = p.id
+    #     LEFT JOIN public.countries c ON p.country_id = c.id
+    #     JOIN public.consultants cons ON a1.consultant_id = cons.id
+    #     JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+    #     WHERE (a1.date_in BETWEEN $1 AND $2 OR a1.date_out BETWEEN $1 AND $2)
+    #         AND (a2.date_in BETWEEN $1 AND $2 OR a2.date_out BETWEEN $1 AND $2)
+    #     ORDER BY a1.date_in DESC
+    #     """
+    #     async with pool.acquire() as con:
+    #         await con.set_type_codec(
+    #             "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+    #         )
+    #         async with con.transaction():
+    #             records = await con.fetch(query, start_date, end_date)
+    #             overlaps = [Overlap(**record) for record in records]
+    #             return overlaps
 
     # Property
     async def get_property(
