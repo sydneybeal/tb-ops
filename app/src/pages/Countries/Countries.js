@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
-import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
