@@ -116,7 +116,7 @@ export const Consultants = () => {
         return () => {
             M.Tooltip.getInstance(tooltipElems)?.destroy();
         };
-    }, [displayData]);
+    }, [displayData, refreshData]);
 
 
     const openEditModal = (consultant) => {

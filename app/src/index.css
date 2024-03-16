@@ -373,6 +373,19 @@ main {
   }
 }
 
+#toast-container {
+  bottom: auto !important;
+  left: auto !important;
+  top: 15% !important;
+  right: 6% !important;
+
+}
+
+.toast {
+  font-size: 1.2rem !important;
+  font-weight: bold !important;
+}
+
 nav.top-nav {
   height: 100px;
   -webkit-box-shadow: none;

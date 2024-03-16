@@ -97,7 +97,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
         return () => {
             M.Tooltip.getInstance(tooltipElems)?.destroy();
         };
-    }, [displayData]);
+    }, [displayData, displayData]);
 
     const changePage = (newPage) => {
         const start = newPage * itemsPerPage;
@@ -244,7 +244,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
-                                data-tooltip="Primary Traveler Name"
+                                data-tooltip="Primary Traveler & Number of Passengers"
                                 data-tooltip-class="tooltip-light"
                             >
                                 <span className="material-symbols-outlined tb-md-black-text text-bold">
@@ -255,13 +255,12 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                 </span>
                             </span>
                         </th>
-                        <th
+                        {/* <th
                             onClick={() =>
                                 applySorting('num_pax')
                             }
                             style={{ width: '60px' }}
                         >
-                            {/* Pax */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -275,7 +274,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                     {sorting.field === 'num_pax' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                 </span>
                             </span>
-                        </th>
+                        </th> */}
                         <th
                             onClick={() =>
                                 applySorting('date_in')
@@ -303,7 +302,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             onClick={() =>
                                 applySorting('bed_nights')
                             }
-                            style={{ width: '60px' }}
+                            style={{ maxWidth: '60px' }}
                             className="center"
                         >
                             <span
@@ -434,17 +433,31 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                             {item.property_portfolio}
                                         </div>
                                     </td>
-                                    <td>{item.primary_traveler}</td>
-                                    <td style={{ width: '60px' }}>{item.num_pax}</td>
+                                    <td>
+                                        <p>{item.primary_traveler}</p>
+                                        <span className="chip tb-teal lighten-3" style={{ maxWidth: '100%', whiteSpace: 'nowrap', display: 'inline-block', overflow: 'hidden' }}>
+                                            <span
+                                                className="material-symbols-outlined tb-md-black-text"
+                                                style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}
+                                            >
+                                                airline_seat_recline_extra
+                                            </span>
+                                            {item.num_pax}
+                                        </span>
+                                    </td>
+                                    {/* <td style={{ width: '60px' }}>{item.num_pax}</td> */}
                                     <td style={{ width: '100px' }}>
-                                        <span className="chip tb-grey lighten-3 text-bold">
+                                        <span className="chip tb-grey lighten-2 text-bold">
                                             {moment(item.date_in).format("M/D/YY")}
                                         </span>
-                                        <span className="chip tb-grey lighten-3 text-bold">
+                                        <span className="chip tb-grey lighten-2 text-bold">
                                             {moment(item.date_out).format("M/D/YY")}
                                         </span>
                                     </td>
-                                    <td className="center" style={{ width: '60px' }}>
+                                    <td
+                                        className="center"
+                                        style={{ maxWidth: '60px' }}
+                                    >
                                         {/* <span className="chip blue lighten-3"> */}
                                         {item.bed_nights}
                                         {/* </span> */}
@@ -456,16 +469,24 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                     </td>
                                     <td style={{ verticalAlign: 'top' }}>
                                         <p>
-                                            {item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
-                                                ? item.booking_channel_name
-                                                : <span className="chip tb-grey lighten-3">n/a</span>}
+                                            {!item.booking_channel_name
+                                                ? <span className="chip tb-grey lighten-2 text-bold">
+                                                    <span class="material-symbols-outlined">
+                                                        live_help
+                                                    </span>
+                                                </span>
+                                                : item.booking_channel_name}
                                         </p>
                                     </td>
                                     <td style={{ verticalAlign: 'top' }}>
                                         <p>
-                                            {item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
-                                                ? item.agency_name
-                                                : <span className="chip tb-grey lighten-3">n/a</span>}
+                                            {!item.agency_name
+                                                ? <span className="chip tb-grey lighten-2 text-bold">
+                                                    <span class="material-symbols-outlined">
+                                                        live_help
+                                                    </span>
+                                                </span>
+                                                : item.agency_name}
                                         </p>
                                     </td>
                                     <td className="center" style={{ verticalAlign: 'top' }}>
@@ -567,10 +588,12 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                             </span>
                                         </div>
                                         <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i>&nbsp;Agency:&nbsp;
-                                            <span className="chip tb-grey lighten-2 text-bold">{item.agency_name && item.agency_name.trim().toLowerCase() !== "n/a"
-                                                ? item.agency_name
-                                                : <span>n/a</span>}
+                                            <span>
+                                                {item.agency_name === "n/a"
+                                                    ? <span className="chip tb-grey lighten-2 text-bold">item.agency_name</span>
+                                                    : item.agency_name}
                                             </span>
+
                                         </div>
                                     </div>
                                 </div>

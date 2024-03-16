@@ -31,7 +31,10 @@ from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.summaries.models import (
     AccommodationLogSummary,
+    AgencySummary,
+    BookingChannelSummary,
     CountrySummary,
+    PortfolioSummary,
     PropertySummary,
     BedNightReport,
 )
@@ -179,14 +182,14 @@ def make_app(
         )
         return JSONResponse(content=related_records)
 
-    # @app.get("/v1/overlaps", tags=["accommodation_logs"])
-    # async def get_overlaps(
-    #     start_date: date = datetime.strptime("2017-01-01", "%Y-%m-%d").date(),
-    #     end_date: date = datetime.strptime("2028-01-01", "%Y-%m-%d").date(),
-    #     current_user: User = Depends(get_current_user),
-    # ) -> JSONResponse:
-    #     overlaps = await summary_svc.get_overlaps(start_date, end_date)
-    #     return JSONResponse(content={"overlaps": overlaps})
+    @app.get("/v1/overlaps", tags=["accommodation_logs"])
+    async def get_overlaps(
+        start_date: date = datetime.strptime("2017-01-01", "%Y-%m-%d").date(),
+        end_date: date = datetime.strptime("2028-01-01", "%Y-%m-%d").date(),
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        overlaps = await summary_svc.get_overlaps(start_date, end_date)
+        return JSONResponse(content=overlaps)
 
     @app.delete(
         "/v1/accommodation_logs/{log_id}",
@@ -396,14 +399,14 @@ def make_app(
     @app.get(
         "/v1/booking_channels",
         operation_id="get_booking_channels",
-        response_model=list[BookingChannel],
+        response_model=list[BookingChannelSummary],
         tags=["booking_channels"],
     )
     async def get_all_booking_channels(
         current_user: User = Depends(get_current_user),
-    ) -> list[BookingChannel] | JSONResponse:
+    ) -> list[BookingChannelSummary] | JSONResponse:
         """Get all BookingChannel models."""
-        return await travel_svc.get_all_booking_channels()
+        return await summary_svc.get_all_booking_channels()
 
     @app.patch(
         "/v1/booking_channels",
@@ -456,14 +459,14 @@ def make_app(
     @app.get(
         "/v1/agencies",
         operation_id="get_agencies",
-        response_model=list[Agency],
+        response_model=list[AgencySummary],
         tags=["agencies"],
     )
     async def get_all_agencies(
         current_user: User = Depends(get_current_user),
-    ) -> list[Agency] | JSONResponse:
+    ) -> list[AgencySummary] | JSONResponse:
         """Get all Agency models."""
-        return await travel_svc.get_all_agencies()
+        return await summary_svc.get_all_agencies()
 
     @app.patch(
         "/v1/agencies",
@@ -514,14 +517,14 @@ def make_app(
     @app.get(
         "/v1/portfolios",
         operation_id="get_portfolios",
-        response_model=list[Portfolio],
+        response_model=list[PortfolioSummary],
         tags=["portfolios"],
     )
     async def get_all_portfolios(
         current_user: User = Depends(get_current_user),
-    ) -> list[Agency] | JSONResponse:
-        """Get all Agency models."""
-        return await travel_svc.get_all_portfolios()
+    ) -> list[PortfolioSummary] | JSONResponse:
+        """Get all Portfolio models."""
+        return await summary_svc.get_all_portfolios()
 
     @app.patch(
         "/v1/portfolios",

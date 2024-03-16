@@ -109,6 +109,8 @@ export const Portfolios = () => {
 
     }, [sorting, apiData, currentPage, filteredData]);
 
+    console.log(displayData);
+
     useEffect(() => {
         let newFilteredData = apiData;
 
@@ -152,7 +154,7 @@ export const Portfolios = () => {
         return () => {
             M.Tooltip.getInstance(tooltipElems)?.destroy();
         };
-    }, [displayData]);
+    }, [displayData, refreshData]);
 
     const openEditModal = (portfolio) => {
         if (!userDetails.email) {
@@ -305,6 +307,49 @@ export const Portfolios = () => {
                                                     </th>
                                                     <th
                                                         onClick={() =>
+                                                            applySorting('num_related_properties')
+                                                        }
+                                                    >
+                                                        {/* Dates */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Number of Related Properties"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                tag
+                                                            </span>
+                                                            <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'num_related_properties' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('num_related')
+                                                        }
+                                                    >
+                                                        {/* Dates */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Number of Related Entries"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                tag
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
                                                             applySorting('updated_at')
                                                         }
                                                         style={{ width: '200px', textAlign: 'right' }}
@@ -333,6 +378,8 @@ export const Portfolios = () => {
                                                                 <td style={{ verticalAlign: 'top' }}>
                                                                     <p className="text-bold">{item.name}</p>
                                                                 </td>
+                                                                <td><span className="chip tb-grey lighten-2">{item.num_related_properties}</span></td>
+                                                                <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
                                                                 <td style={{ width: '200px' }}>
                                                                     <div style={{ textAlign: 'right', padding: '0px' }}>
                                                                         <span

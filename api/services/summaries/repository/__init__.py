@@ -19,8 +19,11 @@ from abc import ABC, abstractmethod
 from typing import Sequence
 from api.services.summaries.models import (
     AccommodationLogSummary,
+    AgencySummary,
     BedNightReport,
+    BookingChannelSummary,
     CountrySummary,
+    PortfolioSummary,
     PropertySummary,
 )
 
@@ -78,4 +81,19 @@ class SummaryRepository(ABC):
     @abstractmethod
     async def get_all_countries(self) -> Sequence[CountrySummary]:
         """Gets all Country models joined with their foreign keys."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_booking_channels(self) -> Sequence[BookingChannelSummary]:
+        """Gets all BookingChannel models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_agencies(self) -> Sequence[AgencySummary]:
+        """Gets all Agency models joined with their foreign keys."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
+        """Gets all Portfolio models joined with their foreign keys."""
         raise NotImplementedError

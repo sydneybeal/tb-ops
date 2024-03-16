@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
+    const version = 'v0.1.2';
 
     useEffect(() => {
         // Initialize Sidenav
@@ -35,9 +36,14 @@ const Navbar = ({ title }) => {
                                     <i className="material-icons" style={{ fontSize: '1.2rem' }}>account_circle</i>
                                     <span className="text-bold" style={{ margin: '0 5px' }}>{userDetails.email.split('@')[0]}</span>
                                     {userDetails.role === 'admin' && (
-                                        <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
-                                            {userDetails.role.toUpperCase()}
-                                        </span>
+                                        <>
+                                            <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
+                                                {userDetails.role.toUpperCase()}
+                                            </span>
+                                            <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                                                {version}
+                                            </span>
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -51,9 +57,14 @@ const Navbar = ({ title }) => {
                                     {userDetails.email.split('@')[0]}
                                 </span>
                                 {userDetails.role === 'admin' && (
-                                    <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
-                                        {userDetails.role.toUpperCase()}
-                                    </span>
+                                    <>
+                                        <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px 10px 0px 0px' }}>
+                                            {userDetails.role.toUpperCase()}
+                                        </span>
+                                        <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                                            {version}
+                                        </span>
+                                    </>
                                 )}
                                 <button className='btn btn-floating error-red' onClick={logout} style={{ height: '30px', width: '30px', lineHeight: '30px', padding: '0', marginLeft: '10px' }}>
                                     <i className="material-icons" style={{ fontSize: '18px', lineHeight: '30px' }}>logout</i>
@@ -170,6 +181,20 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/audit_logs'} className="text-bold">
                                     Audit Logs
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '80%' }}>
+                            <li>
+                                <div className="chip small tb-teal lighten-3">
+                                    BETA
+                                </div>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/overlaps'} className="text-bold">
+                                    Client Overlaps
                                 </Link>
                             </li>
                         </div>

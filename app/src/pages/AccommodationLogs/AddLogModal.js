@@ -360,7 +360,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
                     // Mapping for category names
                     const categoryNames = {
-                        accommodation_logs: "service provider entry",
+                        accommodation_logs: "service provider",
                         booking_channels: "booking channel",
                         agencies: "agency",
                         properties: "property"
@@ -854,33 +854,70 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             const selectedOption = fieldOrSelectedOption;
             // Update booking channel based on selection
             handleLogChange(index, 'booking_channel_id', selectedOption ? selectedOption.value : '');
+            handleLogChange(index, 'booking_channel_name', selectedOption ? selectedOption.label : '');
         }
 
         // Check and apply business rule for portfolio vs booking channel regardless of input type
         validatePropertyAndBookingChannel(index);
     };
 
+    // const validatePropertyAndBookingChannel = (index) => {
+    //     const log = accommodationLogs[index];
+    //     // const portfolioName = log.portfolio_name || log.new_property_portfolio_name || '';
+
+    //     // TODO see if need to look for "Elewana" booking channel too
+    //     const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label === "Cheli & Peacock")?.value;
+    //     const directChannelId = bookingChannels.find(channel => channel.label === "Direct")?.value;
+
+    //     const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label === "Elewana Collection")?.value;
+
+    //     if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
+    //         // Automatically change booking channel to Direct if conditions are met
+    //         M.toast({
+    //             html: "Booking channel automatically changed to Direct",
+    //             displayLength: 4000,
+    //             classes: 'success-green darken-1',
+    //         });
+    //         handleLogChange(index, 'booking_channel_id', directChannelId);
+
+    //     }
+    // };
     const validatePropertyAndBookingChannel = (index) => {
         const log = accommodationLogs[index];
-        // const portfolioName = log.portfolio_name || log.new_property_portfolio_name || '';
 
-        // TODO see if need to look for "Elewana" booking channel too
-        const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label === "Cheli & Peacock")?.value;
-        const directChannelId = bookingChannels.find(channel => channel.label === "Direct")?.value;
+        // Retrieve the 'Direct' channel ID once at the beginning to improve performance
+        const directChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "direct")?.value;
 
-        const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label === "Elewana Collection")?.value;
+        // Special case handling for "Elewana" portfolio and "Cheli & Peacock" booking channel
+        const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "cheli & peacock")?.value;
+        const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "elewana collection")?.value;
 
+        // First check for the special case
         if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
-                html: "Booking channel automatically changed to Direct",
+                html: "Booking channel automatically changed to 'Direct' for Elewana Collection",
                 displayLength: 4000,
-                classes: 'success-green darken-1',
+                classes: 'success-green',
             });
             handleLogChange(index, 'booking_channel_id', directChannelId);
+        } else {
+            // General case: match booking channel with portfolio name exactly (case-insensitive and trimmed)
+            const portfolioName = portfolios.find(portfolio => portfolio.value === log.portfolio_id)?.label.trim().toLowerCase();
+            const bookingChannelName = bookingChannels.find(channel => channel.value === log.booking_channel_id)?.label.trim().toLowerCase();
 
+            if (portfolioName && bookingChannelName && portfolioName === bookingChannelName) {
+                // If the names match, automatically consider the booking channel as "Direct"
+                M.toast({
+                    html: "Booking channel automatically changed to 'Direct' due to matching names",
+                    displayLength: 4000,
+                    classes: 'success-green',
+                });
+                handleLogChange(index, 'booking_channel_id', directChannelId);
+            }
         }
     };
+
 
     // const selectPortfolioSuggestion = (index, suggestion) => {
     //     handlePropertyChange(index, 'new_property_portfolio_name', suggestion);
@@ -1670,6 +1707,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 dateFormat="MM/dd/yyyy"
                                                 minDate={new Date('2000-01-01')}
                                                 maxDate={new Date('2100-12-31')}
+                                                autoComplete="off"
                                             />
                                         </div>
                                         <label htmlFor="form-date-in">
@@ -1694,6 +1732,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     dateFormat="MM/dd/yyyy"
                                                     minDate={new Date('2000-01-01')}
                                                     maxDate={new Date('2100-12-31')}
+                                                    autoComplete="off"
                                                 />
                                             </div>
                                         </div>
@@ -1747,7 +1786,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         type="text"
                                                         id="booking_channel_select"
                                                         value={log.new_booking_channel_name || ''}
-                                                        onChange={(e) => handleBookingChannelChange(index, 'new_booking_channel_name', e.target.value)}
+                                                        onChange={(e) => {
+                                                            handleBookingChannelChange(index, 'new_booking_channel_name', e.target.value);
+                                                            handleBookingChannelChange(index, 'booking_channel_name', e.target.value);
+                                                        }}
                                                         placeholder="Booking Channel Name"
                                                         style={{ marginRight: '10px', flexGrow: '1' }}
                                                     />
@@ -1920,9 +1962,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             </div >
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
                 <div>
-                    <a href="#!" className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
+                    <button className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                         Close
-                    </a>
+                    </button>
                     &nbsp;&nbsp;
                     <button type="submit" form="logForm" className="btn waves-effect waves-light success-green">Save</button>
                 </div>

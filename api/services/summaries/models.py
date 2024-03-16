@@ -85,6 +85,7 @@ class PropertySummary(BaseModel):
     name: str
     core_destination_name: str
     country_name: Optional[str] = None
+    num_related: Optional[int] = None
     portfolio_name: str
     portfolio_id: UUID
     core_destination_id: UUID
@@ -101,6 +102,41 @@ class CountrySummary(BaseModel):
     name: str
     core_destination_id: UUID
     core_destination_name: str
+    num_related: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    updated_by: str
+
+
+class AgencySummary(BaseModel):
+    """Record for an agency with its number of records."""
+
+    id: UUID
+    name: str
+    num_related: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    updated_by: str
+
+
+class BookingChannelSummary(BaseModel):
+    """Record for a booking channel with its number of records."""
+
+    id: UUID
+    name: str
+    num_related: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+    updated_by: str
+
+
+class PortfolioSummary(BaseModel):
+    """Record for a portfolio with its number of records."""
+
+    id: UUID
+    name: str
+    num_related_properties: Optional[int] = None
+    num_related: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     updated_by: str
@@ -158,7 +194,15 @@ class Overlap(BaseModel):
     traveler2: str
     date_in_traveler2: date
     date_out_traveler2: date
+    overlap_days: int
     property_id: UUID
     property_name: str
     country_name: Optional[str] = None
     core_destination_name: str
+    consultant_first_name: str
+    consultant_last_name: str
+
+    def to_json(self, **kwargs):
+        """Convert the model to a dict, then serialize the dict using the custom encoder."""
+        model_dict = self.dict()
+        return json.dumps(model_dict, default=custom_json_encoder, **kwargs)

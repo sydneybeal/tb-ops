@@ -19,9 +19,12 @@ from typing import Sequence, List
 from uuid import UUID
 from api.services.summaries.models import (
     AccommodationLogSummary,
+    AgencySummary,
     BedNightReport,
+    BookingChannelSummary,
     BreakdownItem,
     CountrySummary,
+    PortfolioSummary,
     PropertySummary,
     ReportAggregations,
     ReportInput,
@@ -145,9 +148,11 @@ class SummaryService:
         accommodation_logs_summary = [log.to_json() for log in accommodation_logs]
         return {"can_modify": False, "affected_logs": accommodation_logs_summary}
 
-    # async def get_overlaps(self, start_date: date, end_date: date) -> Sequence[Overlap]:
-    #     """Gets records where clients will be overlapping."""
-    #     return await self.get_overlaps(start_date, end_date)
+    async def get_overlaps(self, start_date: date, end_date: date) -> Sequence[Overlap]:
+        """Gets records where clients will be overlapping."""
+        overlap_data = await self._repo.get_overlaps(start_date, end_date)
+        overlaps = [overlap.to_json() for overlap in overlap_data]
+        return overlaps
 
     # Property
     async def get_all_properties(self) -> Sequence[PropertySummary]:
@@ -158,3 +163,18 @@ class SummaryService:
     async def get_all_countries(self) -> Sequence[CountrySummary]:
         """Gets all CountrySummary models."""
         return await self._repo.get_all_countries()
+
+    # Agency
+    async def get_all_agencies(self) -> Sequence[AgencySummary]:
+        """Gets all AgencySummary models."""
+        return await self._repo.get_all_agencies()
+
+    # BookingChannel
+    async def get_all_booking_channels(self) -> Sequence[BookingChannelSummary]:
+        """Gets all BookingChannelSummary models."""
+        return await self._repo.get_all_booking_channels()
+
+    # Portfolio
+    async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
+        """Gets all PortfolioSummary models."""
+        return await self._repo.get_all_portfolios()

@@ -48,7 +48,9 @@ class PostgresAuditRepository(PostgresMixin, AuditRepository):
                 action_timestamp
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, NOW()::TIMESTAMP WITHOUT TIME ZONE
-            );
+            )
+            ON CONFLICT (id) 
+            DO NOTHING;
         """
         )
         async with pool.acquire() as con:

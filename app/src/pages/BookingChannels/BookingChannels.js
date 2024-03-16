@@ -110,7 +110,7 @@ export const BookingChannels = () => {
         return () => {
             M.Tooltip.getInstance(tooltipElems)?.destroy();
         };
-    }, [displayData]);
+    }, [displayData, refreshData]);
 
     const openEditModal = (booking_channel) => {
         if (!userDetails.email) {
@@ -203,6 +203,26 @@ export const BookingChannels = () => {
                                                     </th>
                                                     <th
                                                         onClick={() =>
+                                                            applySorting('num_related')
+                                                        }
+                                                    >
+                                                        {/* Dates */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Number of Related Entries"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                tag
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
                                                             applySorting('updated_at')
                                                         }
                                                         style={{ width: '200px', textAlign: 'right' }}
@@ -231,6 +251,7 @@ export const BookingChannels = () => {
                                                                 <td style={{ verticalAlign: 'top' }}>
                                                                     <p className="text-bold">{item.name}</p>
                                                                 </td>
+                                                                <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
                                                                 <td style={{ width: '200px' }}>
                                                                     <div style={{ textAlign: 'right', padding: '0px' }}>
                                                                         <span

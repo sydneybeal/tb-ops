@@ -22,8 +22,11 @@ from api.adapters.repository import PostgresMixin
 from api.services.summaries.repository import SummaryRepository
 from api.services.summaries.models import (
     AccommodationLogSummary,
+    AgencySummary,
     BedNightReport,
+    BookingChannelSummary,
     CountrySummary,
+    PortfolioSummary,
     PropertySummary,
     Overlap,
 )
@@ -140,7 +143,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id
-            ORDER BY al.date_in desc
+            ORDER BY al.updated_at desc
         """
         )
         async with pool.acquire() as con:
@@ -239,7 +242,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id
             {condition_string}
-            ORDER BY al.date_in desc
+            ORDER BY al.updated_at desc
         """
         )
         print("condition_string:")
@@ -268,47 +271,49 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
 
                 return accommodation_log_summaries
 
-    # async def get_overlaps(
-    #     self, start_date: datetime.date, end_date: datetime.date
-    # ) -> Sequence[Overlap]:
-    #     """Returns accommodation logs where clients are overlapping at a property by >0 days."""
-    #     pool = await self._get_pool()
-    #     query = """
-    #     SELECT
-    #         a1.primary_traveler AS traveler1,
-    #         a1.date_in AS date_in_traveler1,
-    #         a1.date_out AS date_out_traveler1,
-    #         a2.primary_traveler AS traveler2,
-    #         a2.date_in AS date_in_traveler2,
-    #         a2.date_out AS date_out_traveler2,
-    #         p.id AS property_id,
-    #         p.name AS property_name,
-    #         c.name AS country_name,
-    #         cons.first_name AS consultant_first_name,
-    #         cons.last_name AS consultant_last_name,
-    #         cons.is_active AS consultant_is_active,
-    #         cd.name AS core_destination_name
-    #     FROM public.accommodation_logs a1
-    #     JOIN public.accommodation_logs a2 ON a1.property_id = a2.property_id
-    #         AND a1.id <> a2.id
-    #         AND a1.date_out > a2.date_in
-    #         AND a2.date_out > a1.date_in
-    #     JOIN public.properties p ON a1.property_id = p.id
-    #     LEFT JOIN public.countries c ON p.country_id = c.id
-    #     JOIN public.consultants cons ON a1.consultant_id = cons.id
-    #     JOIN public.core_destinations cd ON p.core_destination_id = cd.id
-    #     WHERE (a1.date_in BETWEEN $1 AND $2 OR a1.date_out BETWEEN $1 AND $2)
-    #         AND (a2.date_in BETWEEN $1 AND $2 OR a2.date_out BETWEEN $1 AND $2)
-    #     ORDER BY a1.date_in DESC
-    #     """
-    #     async with pool.acquire() as con:
-    #         await con.set_type_codec(
-    #             "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
-    #         )
-    #         async with con.transaction():
-    #             records = await con.fetch(query, start_date, end_date)
-    #             overlaps = [Overlap(**record) for record in records]
-    #             return overlaps
+    async def get_overlaps(
+        self, start_date: datetime.date, end_date: datetime.date
+    ) -> Sequence[Overlap]:
+        """Returns accommodation logs where clients are overlapping at a property by >0 days."""
+        pool = await self._get_pool()
+        query = """
+        SELECT
+            a1.primary_traveler AS traveler1,
+            a1.date_in AS date_in_traveler1,
+            a1.date_out AS date_out_traveler1,
+            a2.primary_traveler AS traveler2,
+            a2.date_in AS date_in_traveler2,
+            a2.date_out AS date_out_traveler2,
+            p.id AS property_id,
+            p.name AS property_name,
+            c.name AS country_name,
+            cons.first_name AS consultant_first_name,
+            cons.last_name AS consultant_last_name,
+            cons.is_active AS consultant_is_active,
+            cd.name AS core_destination_name,
+            -- Calculate the overlap in days
+            GREATEST(0, LEAST(a1.date_out, a2.date_out) - GREATEST(a1.date_in, a2.date_in)) AS overlap_days
+        FROM public.accommodation_logs a1
+        JOIN public.accommodation_logs a2 ON a1.property_id = a2.property_id
+            AND a1.id < a2.id  -- Ensure unique pairings
+            AND a1.date_out > a2.date_in
+            AND a2.date_out > a1.date_in
+        JOIN public.properties p ON a1.property_id = p.id
+        LEFT JOIN public.countries c ON p.country_id = c.id
+        JOIN public.consultants cons ON a1.consultant_id = cons.id
+        JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+        WHERE (a1.date_in BETWEEN $1 AND $2 OR a1.date_out BETWEEN $1 AND $2)
+            AND (a2.date_in BETWEEN $1 AND $2 OR a2.date_out BETWEEN $1 AND $2)
+        ORDER BY overlap_days ASC, a1.date_in DESC  -- Order by fewest overlap days first, then by date_in
+        """
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query, start_date, end_date)
+                overlaps = [Overlap(**record) for record in records]
+                return overlaps
 
     # Property
     async def get_property(
@@ -329,20 +334,23 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             SELECT
                 p.id,
                 p.name,
-                cd.name as core_destination_name,
-                c.name as country_name,
-                pf.name as portfolio_name,
-                p.portfolio_id as portfolio_id,
-                cd.id as core_destination_id,
-                c.id country_id,
+                cd.name AS core_destination_name,
+                c.name AS country_name,
+                pf.name AS portfolio_name,
+                p.portfolio_id,
+                cd.id AS core_destination_id,
+                c.id AS country_id,
                 p.created_at,
                 p.updated_at,
-                p.updated_by
+                p.updated_by,
+                COUNT(al.id) AS num_related -- Count of occurrences in accommodation_logs
             FROM public.properties p
             JOIN public.portfolios pf ON p.portfolio_id = pf.id
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id
-            ORDER BY p.name asc
+            LEFT JOIN public.accommodation_logs al ON p.id = al.property_id -- Join with accommodation_logs
+            GROUP BY p.id, p.name, cd.name, c.name, pf.name, p.portfolio_id, cd.id, c.id, p.created_at, p.updated_at, p.updated_by
+            ORDER BY p.name ASC
         """
         )
         async with pool.acquire() as con:
@@ -363,10 +371,14 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             """
             SELECT
                 c.*,
-                cd.name as core_destination_name
-            FROM public.countries c
-            LEFT JOIN public.core_destinations cd
-            ON c.core_destination_id = cd.id
+                cd.name AS core_destination_name,
+                COUNT(al.id) AS num_related -- Counting logs for each country based on property
+            FROM public.accommodation_logs al
+            JOIN public.properties p ON al.property_id = p.id -- Joining logs to properties
+            JOIN public.countries c ON p.country_id = c.id -- Joining properties to countries on country_id
+            LEFT JOIN public.core_destinations cd ON c.core_destination_id = cd.id -- Linking countries to core destinations
+            GROUP BY c.id, cd.name
+            ORDER BY c.name ASC
             """
         )
         async with pool.acquire() as con:
@@ -376,4 +388,77 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             async with con.transaction():
                 records = await con.fetch(query)
                 property_summaries = [CountrySummary(**record) for record in records]
+                return property_summaries
+
+    async def get_all_booking_channels(self) -> Sequence[BookingChannelSummary]:
+        """Gets all BookingChannel models in the repository, joined with their foreign keys."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                bc.*,
+                COUNT(al.id) AS num_related
+            FROM public.booking_channels bc
+            LEFT JOIN public.accommodation_logs al ON bc.id = al.booking_channel_id
+            GROUP BY bc.id
+            ORDER BY bc.name ASC;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                property_summaries = [
+                    BookingChannelSummary(**record) for record in records
+                ]
+                return property_summaries
+
+    async def get_all_agencies(self) -> Sequence[AgencySummary]:
+        """Gets all Agency models joined with their foreign keys."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                a.*,
+                COUNT(al.id) AS num_related
+            FROM public.agencies a
+            LEFT JOIN public.accommodation_logs al ON a.id = al.agency_id
+            GROUP BY a.id
+            ORDER BY a.name ASC;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                property_summaries = [AgencySummary(**record) for record in records]
+                return property_summaries
+
+    async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
+        """Gets all Portfolio models joined with their foreign keys."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                p.*,
+                COUNT(DISTINCT pr.id) as num_related_properties, -- Count unique properties
+                COUNT(DISTINCT al.id) AS num_related -- Count unique logs
+            FROM public.portfolios p
+            LEFT JOIN public.properties pr ON p.id = pr.portfolio_id
+            LEFT JOIN public.accommodation_logs al ON pr.id = al.property_id -- Adjusted to count logs per property
+            GROUP BY p.id
+            ORDER BY p.name ASC;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                property_summaries = [PortfolioSummary(**record) for record in records]
                 return property_summaries
