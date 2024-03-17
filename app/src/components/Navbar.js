@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.1.3';
+    const version = 'v0.1.4';
 
     useEffect(() => {
         // Initialize Sidenav
@@ -41,7 +41,7 @@ const Navbar = ({ title }) => {
                                                 {userDetails.role.toUpperCase()}
                                             </span>
                                             <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
-                                                {version}
+                                                &nbsp;{version}
                                             </span>
                                         </>
                                     )}

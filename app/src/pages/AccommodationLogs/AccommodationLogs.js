@@ -232,8 +232,6 @@ export const Overview = () => {
         });
     }, [apiData,]);
 
-    console.log(filters);
-
     useEffect(() => {
         M.AutoInit();
     }, []);
@@ -375,7 +373,7 @@ export const Overview = () => {
         }, {});
         const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
         // const agencyOptions = [...new Set(newFilteredData.map(item => item.agency_name))].sort().map(name => ({ value: name, label: name }));
-        const uniqueConsultants = apiData.reduce((acc, item) => {
+        const uniqueConsultants = newFilteredData.reduce((acc, item) => {
             if (!acc[item.consultant_id]) {
                 acc[item.consultant_id] = {
                     consultant_id: item.consultant_id,
@@ -407,7 +405,7 @@ export const Overview = () => {
             }));
         const propertyOptions = [...new Set(newFilteredData.map(item => item.property_name))].sort().map(name => ({ value: name, label: name }));
 
-        // TODO: figure out why blank looks weird
+        // TODO: figure out why consultant is not filtering on filtered data
         setFilterOptions({
             core_destination_name: coreDestOptions,
             country_name: countryOptions,

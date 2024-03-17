@@ -558,44 +558,112 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         </div>
                                     </div>
                                 )}
-                                <div className="row" style={{ textAlign: 'left' }}>
-                                    <div className="col s4">
-                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">person</i><span className="text-bold">{item.primary_traveler}</span></div>
-                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">airline_seat_recline_extra</i>{item.num_pax}</div>
+                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                    <div className="col s7">
                                         <div>
-                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_in).format("M/D/YY")}</span>
-                                            <span> to </span>
-                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_out).format("M/D/YY")}</span>
+                                            <i className="material-symbols-outlined tb-teal-text text-bold">person</i>
+                                            <span className="text-bold">{item.primary_traveler} </span>
+                                            <span className="chip tb-teal lighten-3 text-bold">
+                                                <span
+                                                    className="material-symbols-outlined tb-md-black-text"
+                                                    style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}
+                                                >
+                                                    airline_seat_recline_extra
+                                                </span>
+                                                {item.num_pax}
+                                            </span>
                                         </div>
-                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">dark_mode</i><span className="text-bold">{item.bed_nights}</span></div>
-                                    </div>
-
-                                    <div className="col s4">
+                                        {/* <div><i className="material-symbols-outlined tb-teal-text text-bold">airline_seat_recline_extra</i>{item.num_pax}</div> */}
+                                        <div>
+                                            <span className="material-symbols-outlined tb-teal-text text-bold">
+                                                date_range
+                                            </span>
+                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_in).format("M/D/YY")}</span>
+                                            <span>to </span>
+                                            <span className="chip tb-grey lighten-2 text-bold">{moment(item.date_out).format("M/D/YY")} </span>
+                                            <span className="chip tb-teal lighten-3 text-bold">
+                                                <span
+                                                    className="material-symbols-outlined tb-md-black-text text-bold"
+                                                    style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}
+                                                >
+                                                    dark_mode
+                                                </span>
+                                                {item.bed_nights}
+                                            </span>
+                                        </div>
                                         <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i><span>{item.property_name}</span></div>
                                         <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i><span>{item.property_portfolio}</span></div>
-                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
-                                            ? item.country_name
-                                            : <span>n/a</span>}</span></div>
-                                        <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
+
                                     </div>
-                                    <div className="col s4">
+
+                                    <div className="col s5">
+
+                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
+                                            ? <span>{item.country_name} </span>
+                                            : <span>n/a </span>}</span>
+                                            <span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
                                         <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>&nbsp;Consultant:&nbsp;
-                                            <span className="chip tb-grey lighten-2 text-bold">{item.consultant_display_name}</span></div>
-                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">alt_route</i>&nbsp;Booking Channel:&nbsp;
-                                            <span className="chip tb-grey lighten-2 text-bold">{item.booking_channel_name && item.booking_channel_name.trim().toLowerCase() !== "n/a"
-                                                ? item.booking_channel_name
-                                                : <span>n/a</span>}
+                                            <span
+                                                className="chip tb-grey lighten-2 text-bold"
+                                                style={{
+                                                    padding: '0px 12px',
+                                                    whiteSpace: 'nowrap',
+                                                    // overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    minWidth: '60px',
+                                                }}
+                                            >
+                                                {item.consultant_display_name}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <i
+                                                className="material-symbols-outlined tb-teal-text text-bold"
+                                            >alt_route
+                                            </i>
+                                            &nbsp;Booking Channel:&nbsp;
+                                            <span
+                                                className="chip tb-grey lighten-2 text-bold"
+                                                style={{
+                                                    padding: '0px 6px',
+                                                    whiteSpace: 'nowrap',
+                                                    // overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    // minWidth: '60px',
+                                                }}
+                                            >
+                                                {!item.booking_channel_name
+                                                    ?
+                                                    <span className="material-symbols-outlined">
+                                                        live_help
+                                                    </span>
+                                                    : item.booking_channel_name}
                                             </span>
                                         </div>
                                         <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i>&nbsp;Agency:&nbsp;
-                                            <span>
-                                                {item.agency_name === "n/a"
-                                                    ? <span className="chip tb-grey lighten-2 text-bold">item.agency_name</span>
+                                            <span
+                                                className="chip tb-grey lighten-2 text-bold"
+                                                style={{
+                                                    padding: '0px 6px',
+                                                    whiteSpace: 'nowrap',
+                                                    // overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    // minWidth: '60px',
+                                                }}
+                                            >
+                                                {!item.agency_name
+                                                    ?
+                                                    <span className="material-symbols-outlined">
+                                                        live_help
+                                                    </span>
                                                     : item.agency_name}
                                             </span>
 
                                         </div>
                                     </div>
+                                    {/* <div className="col s4">
+                                        
+                                    </div> */}
                                 </div>
                             </div>
                             <div className="card-footer">

@@ -45,7 +45,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
         } else if (isOpen && isEditMode && editLogData) {
-            console.log([editLogData]);
             setAccommodationLogs([editLogData]);
             setPrimaryTraveler(editLogData.primary_traveler);
             setNumPax(editLogData.num_pax);
@@ -982,7 +981,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                         )}
                         <div className="row" style={{ marginBottom: '60px' }}>
                             {/* Primary Traveler Name Field */}
-                            <div className="col s3">
+                            <div className="col s12 l3">
                                 <input
                                     type="text"
                                     id="primary_traveler"
@@ -1002,7 +1001,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 </label>
                             </div>
 
-                            <div className="col s1" style={{ textAlign: 'center' }}>
+                            <div className="col s4 l1" style={{ textAlign: 'center' }}>
                                 {/* Number of Pax Numeric Selection */}
                                 < input
                                     type="number"
@@ -1021,7 +1020,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 </label>
                             </div>
 
-                            <div className="col s4">
+                            <div className="col s8 l4">
 
                                 {userDetails.role === 'admin' ? (
                                     <>
@@ -1154,7 +1153,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 )}
                             </div>
 
-                            <div className="col s4">
+                            <div className="col s12 l4">
                                 <Select
                                     placeholder="Select Consultant"
                                     inputId="consultant_select"
@@ -1691,7 +1690,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
 
                                 <div className="row">
-                                    <div className="col s3">
+                                    <div className="col s6 l3">
 
                                         {/* Date In Selector */}
                                         <div>
@@ -1717,7 +1716,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             Check-In Date
                                         </label>
                                     </div>
-                                    <div className="col s3">
+                                    <div className="col s6 l3">
 
                                         {/* Date Out Selector */}
                                         <div>
@@ -1743,7 +1742,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             Check-Out Date
                                         </label>
                                     </div>
-                                    <div className="col s6">
+                                    <div className="col s12 l6">
                                         {userDetails.role === 'admin' ? (
                                             <>
                                                 {!log.is_new_booking_channel ? (
