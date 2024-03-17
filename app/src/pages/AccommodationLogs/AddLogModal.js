@@ -1601,7 +1601,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             <label>
                                                                                 <input
                                                                                     type="checkbox"
-                                                                                    class="filled-in"
+                                                                                    className="filled-in"
                                                                                     checked={log.new_property_core_destination_name === "Ship"}
                                                                                     onChange={(e) => {
                                                                                         handleLogChange(index, 'new_property_core_destination_name', 'Ship');
@@ -1609,7 +1609,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                                     }}
                                                                                 />
                                                                                 <span className="text-bold">
-                                                                                    <span class="material-symbols-outlined">
+                                                                                    <span className="material-symbols-outlined">
                                                                                         directions_boat
                                                                                     </span>
                                                                                     Ship
@@ -1620,7 +1620,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                             <label>
                                                                                 <input
                                                                                     type="checkbox"
-                                                                                    class="filled-in tb-teal"
+                                                                                    className="filled-in tb-teal"
                                                                                     checked={log.new_property_core_destination_name === "Rail"}
                                                                                     onChange={(e) => {
                                                                                         handleLogChange(index, 'new_property_core_destination_name', 'Rail');
@@ -1628,7 +1628,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                                     }}
                                                                                 />
                                                                                 <span className="text-bold">
-                                                                                    <span class="material-symbols-outlined">
+                                                                                    <span className="material-symbols-outlined">
                                                                                         train
                                                                                     </span>
                                                                                     Rail

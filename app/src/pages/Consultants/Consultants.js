@@ -306,35 +306,33 @@ export const Consultants = () => {
                                         {isMobileView && (
                                             <div className="mobile-friendly-table">
                                                 {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
-                                                    <>
-                                                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
-                                                            <div className="card-content">
-                                                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
-                                                                    <div className="col s10">
-                                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>
-                                                                            <span className="text-bold">{item.display_name}</span>
-                                                                            {!item.is_active &&
-                                                                                <span>&nbsp;<span className="chip tb-grey lighten-3">INACTIVE</span></span>
-                                                                            }
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="col s2">
-                                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                                        </button>
+                                                    <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                                                        <div className="card-content">
+                                                            <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                                                <div className="col s10">
+                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>
+                                                                        <span className="text-bold">{item.display_name}</span>
+                                                                        {!item.is_active &&
+                                                                            <span>&nbsp;<span className="chip tb-grey lighten-3">INACTIVE</span></span>
+                                                                        }
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="card-footer">
-                                                                <div className="row">
-                                                                    <div className="col s12" style={{ textAlign: 'right' }}>
-                                                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
-                                                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
-                                                                    </div>
+                                                                <div className="col s2">
+                                                                    <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                                        <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                                    </button>
                                                                 </div>
                                                             </div>
-                                                        </div >
-                                                    </>
+                                                        </div>
+                                                        <div className="card-footer">
+                                                            <div className="row">
+                                                                <div className="col s12" style={{ textAlign: 'right' }}>
+                                                                    <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                                                    <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div >
                                                 ))}
                                             </div >
                                         )}

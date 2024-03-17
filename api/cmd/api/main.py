@@ -40,11 +40,8 @@ from api.services.summaries.models import (
 )
 from api.services.summaries.service import SummaryService
 from api.services.travel.models import (
-    BookingChannel,
-    Agency,
     Consultant,
     CoreDestination,
-    Portfolio,
     PatchAccommodationLogRequest,
     PatchAgencyRequest,
     PatchBookingChannelRequest,

@@ -171,13 +171,10 @@ const AddEditCountryModal = ({ isOpen, onClose, onRefresh, editCountryData = nul
         })
             .then(res => res.json())
             .then((data) => {
-                console.log("core destinations queried");
-                console.log(data);
                 const formattedCoreDestinations = data.map((dest) => ({
                     value: dest.id,
                     label: dest.name
                 }));
-                console.log(formattedCoreDestinations);
                 setCoreDestinations(formattedCoreDestinations);
             })
             .catch((err) => console.error(err));
@@ -353,7 +350,7 @@ const AddEditCountryModal = ({ isOpen, onClose, onRefresh, editCountryData = nul
                                 <input
                                     type="text"
                                     id="name"
-                                    value={name}
+                                    value={name || ''}
                                     onChange={handleNameChange}
                                     onBlur={handleNameBlur}
                                     placeholder="Country name"

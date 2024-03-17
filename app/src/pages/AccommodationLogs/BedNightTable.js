@@ -471,7 +471,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         <p>
                                             {!item.booking_channel_name
                                                 ? <span className="chip tb-grey lighten-2 text-bold">
-                                                    <span class="material-symbols-outlined">
+                                                    <span className="material-symbols-outlined">
                                                         live_help
                                                     </span>
                                                 </span>
@@ -482,7 +482,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         <p>
                                             {!item.agency_name
                                                 ? <span className="chip tb-grey lighten-2 text-bold">
-                                                    <span class="material-symbols-outlined">
+                                                    <span className="material-symbols-outlined">
                                                         live_help
                                                     </span>
                                                 </span>
@@ -538,7 +538,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                         ))
                     ) : (
                         <tr>
-                            <td colSpan="10" style={{ textAlign: 'center' }}>No results.</td>
+                            <td colSpan="9" style={{ textAlign: 'center' }}>No results.</td>
                         </tr>
                     )}
                 </tbody>

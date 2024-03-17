@@ -48,7 +48,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                                 menu_book
                             </span>
                             Use the following guidelines to determine bed night entry:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>In general, build the primary travelers/service providers like the Res Cards in CB+.</li>
                                 <li>The person paying for the accommodation is the primary traveler.</li>
                                 <li>There should only be one traveler name on each entry.</li>
@@ -77,7 +77,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                             </span>
                         </div>
                         <div>
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>If the client cancels AFTER FULL PAYMENT has been made, the bed nights stay in R&R.</li>
                                 <li>If the client cancels AFTER DEPOSIT but BEFORE FULL PAYMENT, remove the bed nights from R&R.</li>
                             </ul>
@@ -103,7 +103,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                                 menu_book
                             </span>
                             All service providers for all CORE destinations and the following non-core destinations:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>
                                     Australia, including all states and islands
                                 </li>
@@ -143,7 +143,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                             </ul>
 
                             Other notes about destinations:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>
                                     Only enter overnight stays (no day rooms)
                                 </li>
@@ -177,7 +177,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                                 menu_book
                             </span>
                             All ships for all destinations:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>
                                     <span className="text-bold tb-teal-text">Expedition Ships: </span>
                                     <ul>
@@ -210,7 +210,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                                 </li>
                             </ul>
                             Other notes about ships:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>
                                     Only enter overnight stays (no day trips)
                                 </li>
@@ -243,7 +243,7 @@ const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditM
                                 menu_book
                             </span>
                             All rail journeys for all destinations:
-                            <ul class="custom-icons">
+                            <ul className="custom-icons">
                                 <li>
                                     Blue Train & Rovos Rail (Africa)
                                 </li>
