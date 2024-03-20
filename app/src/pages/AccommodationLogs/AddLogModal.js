@@ -891,11 +891,23 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "cheli & peacock")?.value;
         const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "elewana collection")?.value;
 
+        // Special case handling for "Elewana" portfolio and "Cheli & Peacock" booking channel
+        const galapagosChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "galapagos network/ecoventura")?.value;
+        const ecoventuraPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "ecoventura")?.value;
+
         // First check for the special case
         if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to 'Direct' for Elewana Collection",
+                displayLength: 4000,
+                classes: 'success-green',
+            });
+            handleLogChange(index, 'booking_channel_id', directChannelId);
+        } else if (log.portfolio_id === ecoventuraPortfolioId && log.booking_channel_id === galapagosChannelId) {
+            // Automatically change booking channel to Direct if conditions are met
+            M.toast({
+                html: "Booking channel automatically changed to 'Direct' for Ecoventura",
                 displayLength: 4000,
                 classes: 'success-green',
             });
