@@ -4,17 +4,27 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
+import moment from 'moment';
 
 export const Overlaps = () => {
     const [apiData, setApiData] = useState({});
     // const [filteredData, setFilteredData] = useState([]);
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
+    const [startDate, setStartDate] = useState(moment().startOf('week'));
+    const [endDate, setEndDate] = useState(moment().endOf('week'));
+
+    useEffect(() => {
+        // This effect runs when startDate changes
+        setEndDate(moment(startDate).endOf('week'));
+    }, [startDate]);
 
     useEffect(() => {
         M.AutoInit();
         setLoaded(false);
-        fetch(`${process.env.REACT_APP_API}/v1/overlaps`, {
+        const startDateFormat = startDate.format('YYYY-MM-DD');
+        const endDateFormat = endDate.format('YYYY-MM-DD');
+        fetch(`${process.env.REACT_APP_API}/v1/overlaps?start_date=${startDateFormat}&end_date=${endDateFormat}`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
             }

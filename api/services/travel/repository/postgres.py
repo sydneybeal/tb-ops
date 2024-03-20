@@ -26,6 +26,7 @@ from api.services.travel.repository import TravelRepository
 from api.services.travel.models import (
     AccommodationLog,
     Property,
+    PropertyDetail,
     CoreDestination,
     Country,
     Consultant,
@@ -542,6 +543,111 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 records = await con.fetch(query)
                 properties = [Property(**record) for record in records]
                 return properties
+
+    # PropertyDetail
+    async def get_property_detail_by_id(
+        self,
+        property_id: UUID,
+    ) -> PropertyDetail:
+        """Returns a single PropertyDetail model in the repository by id."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.property_details
+            WHERE property_id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, property_id)
+                if res:
+                    return PropertyDetail(**res)
+
+    async def upsert_property_detail(
+        self, property_data: PropertyDetail
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a property's detail into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.property_details (
+                property_id,
+                property_type,
+                price_range,
+                num_tents,
+                has_trackers,
+                has_wifi_in_room,
+                has_wifi_in_common_areas,
+                has_hairdryers, -- Correct the typo if it exists in your DB schema
+                has_pool,
+                has_heated_pool,
+                is_handicap_accessible,
+                created_at,
+                updated_at,
+                updated_by
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+            )
+            ON CONFLICT (property_id) DO UPDATE SET
+                property_type = EXCLUDED.property_type,
+                price_range = EXCLUDED.price_range,
+                num_tents = EXCLUDED.num_tents,
+                has_trackers = EXCLUDED.has_trackers,
+                has_wifi_in_room = EXCLUDED.has_wifi_in_room,
+                has_wifi_in_common_areas = EXCLUDED.has_wifi_in_common_areas,
+                has_hairdryers = EXCLUDED.has_hairdryers, -- Correct the typo if it exists in your DB schema
+                has_pool = EXCLUDED.has_pool,
+                has_heated_pool = EXCLUDED.has_heated_pool,
+                is_handicap_accessible = EXCLUDED.is_handicap_accessible,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING property_id, (xmax = 0) AS was_inserted;
+            """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    property_data.property_id,
+                    property_data.property_type,
+                    property_data.price_range,
+                    property_data.num_tents,
+                    property_data.has_trackers,
+                    property_data.has_wifi_in_room,
+                    property_data.has_wifi_in_common_areas,
+                    property_data.has_hairdryers,  # Ensure the name matches with your DB schema
+                    property_data.has_pool,
+                    property_data.has_heated_pool,
+                    property_data.is_handicap_accessible,
+                    property_data.created_at,
+                    property_data.updated_at,
+                    property_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["property_id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new property detail(s).")
+        print(f"Updated {updated_count} existing property detail(s).")
+        return results
 
     # Consultant
     async def add_consultant(self, consultants: Sequence[Consultant]) -> None:

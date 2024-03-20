@@ -24,6 +24,7 @@ from api.services.summaries.models import (
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
+    PropertyDetailSummary,
     PropertySummary,
 )
 
@@ -76,6 +77,17 @@ class SummaryRepository(ABC):
     @abstractmethod
     async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all Property models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
+
+    # PropertyDetailSummary
+    @abstractmethod
+    async def get_property_details(self) -> Sequence[PropertyDetailSummary]:
+        """Gets all PropertyDetail models in the repository, joined with their foreign keys."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_property_details_by_id(self) -> PropertyDetailSummary:
+        """Gets a PropertyDetail models in the repository by ID, joined with foreign keys."""
         raise NotImplementedError
 
     @abstractmethod

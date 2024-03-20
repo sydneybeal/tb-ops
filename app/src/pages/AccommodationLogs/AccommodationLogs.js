@@ -749,7 +749,7 @@ export const Overview = () => {
                                         search
                                     </span>
                                 </div>
-                                <div className="col s12 l3">
+                                <div className="col s6 l3">
                                     <div>
                                         <ReactDatePicker
                                             id="date-in"
@@ -772,7 +772,7 @@ export const Overview = () => {
                                         Start Date
                                     </span>
                                 </div>
-                                <div className="col s12 l3">
+                                <div className="col s6 l3">
                                     <div>
                                         <ReactDatePicker
                                             id="date-out"

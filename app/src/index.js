@@ -12,8 +12,10 @@ import BookingChannels from './pages/BookingChannels/BookingChannels';
 import Portfolios from './pages/Portfolios/Portfolios';
 import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
+import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
 import Countries from './pages/Countries/Countries';
-import Overlaps from './pages/Overlaps/Overlaps';
+// import Overlaps from './pages/Overlaps/Overlaps';
+import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLogs from './pages/AuditLogs/AuditLogs';
 import FaqPage from './pages/FAQ/FAQ';
@@ -65,6 +67,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/property_details/',
+    element: (
+      <ProtectedRoute>
+        <PropertyDetails />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/consultants/',
     element: (
       <ProtectedRoute>
@@ -108,7 +118,7 @@ const router = createBrowserRouter([
     path: '/overlaps/',
     element: (
       <ProtectedRoute>
-        <Overlaps />
+        <OverlapsV2 />
       </ProtectedRoute>
     ),
   },

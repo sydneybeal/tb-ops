@@ -27,6 +27,7 @@ from api.services.summaries.models import (
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
+    PropertyDetailSummary,
     PropertySummary,
     Overlap,
 )
@@ -287,9 +288,12 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             p.id AS property_id,
             p.name AS property_name,
             c.name AS country_name,
-            cons.first_name AS consultant_first_name,
-            cons.last_name AS consultant_last_name,
-            cons.is_active AS consultant_is_active,
+            cons1.first_name AS consultant_first_name_traveler1,
+            cons1.last_name AS consultant_last_name_traveler1,
+            cons2.first_name AS consultant_first_name_traveler2,
+            cons2.last_name AS consultant_last_name_traveler2,
+            cons1.is_active AS consultant_is_active_traveler1,
+            cons2.is_active AS consultant_is_active_traveler2,
             cd.name AS core_destination_name,
             -- Calculate the overlap in days
             GREATEST(0, LEAST(a1.date_out, a2.date_out) - GREATEST(a1.date_in, a2.date_in)) AS overlap_days
@@ -300,7 +304,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             AND a2.date_out > a1.date_in
         JOIN public.properties p ON a1.property_id = p.id
         LEFT JOIN public.countries c ON p.country_id = c.id
-        JOIN public.consultants cons ON a1.consultant_id = cons.id
+        JOIN public.consultants cons1 ON a1.consultant_id = cons1.id
+        JOIN public.consultants cons2 ON a2.consultant_id = cons2.id
         JOIN public.core_destinations cd ON p.core_destination_id = cd.id
         WHERE (a1.date_in BETWEEN $1 AND $2 OR a1.date_out BETWEEN $1 AND $2)
             AND (a2.date_in BETWEEN $1 AND $2 OR a2.date_out BETWEEN $1 AND $2)
@@ -363,6 +368,77 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 )  # Use fetch to retrieve all matching rows
                 property_summaries = [PropertySummary(**record) for record in records]
                 return property_summaries
+
+    async def get_property_details(
+        self, entered_only: bool = True, by_id: UUID = None
+    ) -> Sequence[PropertyDetailSummary]:
+        """Gets all PropertyDetail models in the repository, joined with their foreign keys."""
+        pool = await self._get_pool()
+        base_query = dedent(
+            """
+            SELECT
+                p.id AS property_id,
+                p.name,
+                cd.name AS core_destination_name,
+                c.name AS country_name,
+                pf.name AS portfolio_name,
+                p.portfolio_id,
+                cd.id AS core_destination_id,
+                c.id AS country_id,
+                pd.property_type,
+                pd.price_range,
+                pd.num_tents,
+                pd.has_trackers,
+                pd.has_wifi_in_room,
+                pd.has_wifi_in_common_areas,
+                pd.has_hairdryers,
+                pd.has_pool,
+                pd.has_heated_pool,
+                pd.is_handicap_accessible,
+                p.created_at,
+                pd.updated_at,
+                pd.updated_by
+            FROM public.properties p
+            JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            LEFT JOIN public.countries c ON p.country_id = c.id
+            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            LEFT JOIN public.property_details pd ON pd.property_id = p.id
+            """
+        )
+
+        conditions = []
+        if entered_only:
+            conditions.append("pd.updated_by IS NOT NULL")
+        if by_id:
+            # Properly format the UUID and append it to the conditions
+            conditions.append(f"p.id = '{by_id}'")
+
+        if conditions:
+            filter_clause = "WHERE " + " AND ".join(conditions)
+        else:
+            filter_clause = ""
+
+        order_by_clause = "ORDER BY p.name ASC"
+
+        query = f"{base_query} {filter_clause} {order_by_clause}"
+
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(
+                    query
+                )  # Use fetch to retrieve all matching rows
+                property_detail_summaries = [
+                    PropertyDetailSummary(**record) for record in records
+                ]
+                return property_detail_summaries
+        # raise NotImplementedError
+
+    async def get_property_details_by_id(self) -> PropertyDetailSummary:
+        """Gets a PropertyDetail models in the repository by ID, joined with foreign keys."""
+        raise NotImplementedError
 
     async def get_all_countries(self) -> Sequence[CountrySummary]:
         """Gets all Country models."""

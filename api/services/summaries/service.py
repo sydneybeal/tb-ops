@@ -15,7 +15,7 @@
 """Services for interacting with travel entries."""
 from collections import Counter
 from datetime import date
-from typing import Sequence, List
+from typing import Sequence, List, Optional
 from uuid import UUID
 from api.services.summaries.models import (
     AccommodationLogSummary,
@@ -25,6 +25,7 @@ from api.services.summaries.models import (
     BreakdownItem,
     CountrySummary,
     PortfolioSummary,
+    PropertyDetailSummary,
     PropertySummary,
     ReportAggregations,
     ReportInput,
@@ -158,6 +159,23 @@ class SummaryService:
     async def get_all_properties(self) -> Sequence[PropertySummary]:
         """Gets all PropertySummary models."""
         return await self._repo.get_all_properties()
+
+    # Property
+    async def get_all_property_details(self) -> Sequence[PropertyDetailSummary]:
+        """Gets all PropertyDetailSummary models."""
+        return await self._repo.get_property_details()
+
+    async def get_property_details_by_id(
+        self, property_id: UUID
+    ) -> Optional[PropertyDetailSummary]:
+        """Gets PropertyDetailSummary model by ID."""
+        res = await self._repo.get_property_details(
+            entered_only=False, by_id=property_id
+        )
+        if res:
+            return res[0]
+        else:
+            return None
 
     # Country
     async def get_all_countries(self) -> Sequence[CountrySummary]:

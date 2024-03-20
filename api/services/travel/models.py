@@ -103,6 +103,25 @@ class Property(BaseModel):
     updated_by: str
 
 
+class PropertyDetail(BaseModel):
+    """Record for a property's detail."""
+
+    property_id: UUID
+    property_type: Optional[str] = None
+    price_range: Optional[str] = None
+    num_tents: Optional[int] = None
+    has_trackers: Optional[bool] = None
+    has_wifi_in_room: Optional[bool] = None
+    has_wifi_in_common_areas: Optional[bool] = None
+    has_hairdryers: Optional[bool] = None
+    has_pool: Optional[bool] = None
+    has_heated_pool: Optional[bool] = None
+    is_handicap_accessible: Optional[bool] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+
+
 class AccommodationLog(BaseModel):
     """Record for an accommodation."""
 
@@ -221,4 +240,21 @@ class PatchCountryRequest(BaseModel):
     country_id: Optional[UUID] = None
     name: str
     core_destination_id: Optional[UUID] = None
+    updated_by: str
+
+
+class PatchPropertyDetailRequest(BaseModel):
+    """A request object model that contains Property detail information."""
+
+    property_id: UUID
+    property_type: Optional[str] = None
+    price_range: Optional[str] = None
+    num_tents: Optional[int] = None
+    has_trackers: Optional[bool] = None
+    has_wifi_in_room: Optional[bool] = None
+    has_wifi_in_common_areas: Optional[bool] = None
+    has_hairdryers: Optional[bool] = None
+    has_pool: Optional[bool] = None
+    has_heated_pool: Optional[bool] = None
+    is_handicap_accessible: Optional[bool] = None
     updated_by: str

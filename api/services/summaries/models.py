@@ -95,6 +95,33 @@ class PropertySummary(BaseModel):
     updated_by: str
 
 
+class PropertyDetailSummary(BaseModel):
+    """Record for a property's detail combined with its base attributes."""
+
+    property_id: UUID
+    name: str
+    core_destination_name: str
+    country_name: Optional[str] = None
+    num_related: Optional[int] = None
+    portfolio_name: str
+    portfolio_id: UUID
+    core_destination_id: UUID
+    country_id: Optional[UUID] = None
+    property_type: Optional[str] = None
+    price_range: Optional[str] = None
+    num_tents: Optional[int] = None
+    has_trackers: Optional[bool] = None
+    has_wifi_in_room: Optional[bool] = None
+    has_wifi_in_common_areas: Optional[bool] = None
+    has_hairdryers: Optional[bool] = None
+    has_pool: Optional[bool] = None
+    has_heated_pool: Optional[bool] = None
+    is_handicap_accessible: Optional[bool] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    updated_by: Optional[str] = None
+
+
 class CountrySummary(BaseModel):
     """Record for a country with its core destination name."""
 
@@ -199,8 +226,12 @@ class Overlap(BaseModel):
     property_name: str
     country_name: Optional[str] = None
     core_destination_name: str
-    consultant_first_name: str
-    consultant_last_name: str
+    consultant_first_name_traveler1: str
+    consultant_last_name_traveler1: str
+    consultant_first_name_traveler2: str
+    consultant_last_name_traveler2: str
+    consultant_is_active_traveler1: bool
+    consultant_is_active_traveler2: bool
 
     def to_json(self, **kwargs):
         """Convert the model to a dict, then serialize the dict using the custom encoder."""

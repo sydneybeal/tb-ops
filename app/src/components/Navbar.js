@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.1.4';
+    const version = 'v0.1.7';
 
     useEffect(() => {
         // Initialize Sidenav
@@ -195,6 +195,13 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/overlaps'} className="text-bold">
                                     Client Overlaps
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/property_details'} className="text-bold">
+                                    Property Details
                                 </Link>
                             </li>
                         </div>

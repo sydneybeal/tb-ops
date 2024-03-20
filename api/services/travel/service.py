@@ -36,6 +36,8 @@ from api.services.travel.models import (
     PatchPortfolioRequest,
     Property,
     PatchPropertyRequest,
+    PropertyDetail,
+    PatchPropertyDetailRequest,
 )
 from api.services.travel.repository.postgres import PostgresTravelRepository
 
@@ -911,6 +913,107 @@ class TravelService:
         )
         await self.process_audit_logs(audit_log)
         return deleted
+
+    # PropertyDetail
+    async def get_property_detail_by_id(self, property_id: UUID) -> PropertyDetail:
+        """Gets a single PropertyDetail model by id."""
+        return await self._repo.get_property_detail_by_id(property_id)
+
+    async def process_property_detail_request(
+        self, property_detail_request: PatchPropertyDetailRequest
+    ) -> dict:
+        """Adds or edits property detail models in the repository."""
+        prepared_data_or_error = await self.prepare_property_detail_data(
+            property_detail_request
+        )
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a conflict or issue
+            return {"error": prepared_data_or_error["error"]}
+
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            property_data, audit_logs = prepared_data_or_error
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_property_detail(property_data)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid property detail data provided for processing."}
+
+    async def prepare_property_detail_data(
+        self, property_detail_request: PatchPropertyDetailRequest
+    ) -> Union[Dict[str, str], Tuple[PropertyDetail, AuditLog]]:
+        """Resolves and prepares a property detail patch for insertion or update."""
+        existing_property_detail_by_id = None
+        if property_detail_request.property_id:
+            existing_property_detail_by_id = await self.get_property_detail_by_id(
+                property_detail_request.property_id
+            )
+
+        if existing_property_detail_by_id:
+            existing_data_dict = existing_property_detail_by_id.dict()
+            request_data_dict = property_detail_request.dict(exclude_unset=True)
+
+            # Find differences between existing data and new request, excluding 'property_id'
+            differences = {
+                k: v
+                for k, v in request_data_dict.items()
+                if existing_data_dict.get(k) != v and k != "property_id"
+            }
+
+            if not differences:
+                return {"error": "No changes were detected."}
+
+            # Update the existing record with differences
+            for field, value in differences.items():
+                setattr(existing_property_detail_by_id, field, value)
+
+            updated_property_detail = (
+                existing_property_detail_by_id  # Assuming this is the updated record
+            )
+
+            # Log changes
+            audit_log = AuditLog(
+                table_name="property_details",
+                record_id=existing_property_detail_by_id.property_id,
+                user_name=updated_property_detail.updated_by,
+                before_value=existing_data_dict,
+                after_value=updated_property_detail.dict(),
+                action="update",
+            )
+
+            return updated_property_detail, audit_log
+
+        else:
+            # Exclude 'property_id' as it's used for lookup and shouldn't be part of the insert dict
+            new_property_detail_data = property_detail_request.dict()
+            new_property_detail = PropertyDetail(**new_property_detail_data)
+
+            audit_log = AuditLog(
+                table_name="property_details",
+                record_id=new_property_detail.property_id,
+                user_name=new_property_detail.updated_by,
+                before_value={},
+                after_value=new_property_detail.dict(),
+                action="insert",
+            )
+
+            return new_property_detail, audit_log
 
     # Agency
     async def add_agency(self, models: Sequence[Agency]) -> None:

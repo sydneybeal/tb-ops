@@ -3,6 +3,7 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import Navbar from '../../components/Navbar';
+import CircularPreloader from '../../components/CircularPreloader';
 import moment from 'moment';
 
 export const AuditLogs = () => {
@@ -10,14 +11,6 @@ export const AuditLogs = () => {
     const [loaded, setLoaded] = useState(false);
     const { userDetails, logout } = useAuth();
     const [expandedRows, setExpandedRows] = useState(new Set());
-
-    // const { userDetails } = useAuth();
-    // const [displayData, setDisplayData] = useState([]);
-    // const [sorting, setSorting] = useState({ field: 'name', ascending: true });
-    // const [refreshData, setRefreshData] = useState(false);
-    // const [isModalOpen, setIsModalOpen] = useState(false);
-    // const [currentEditBc, setCurrentEditBc] = useState(null);
-    // const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
         const elems = document.querySelectorAll('.sidenav, .sidenav-overlay');
@@ -165,87 +158,93 @@ export const AuditLogs = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="container center" style={{ width: '60%' }}>
-                                {Array.isArray(apiData) && apiData.length > 0 ? (
-                                    <>
-                                        <table>
-                                            <tbody>
-                                                {apiData.map((item, index) => {
-                                                    // Assuming displayName is a variable you have defined elsewhere that determines the number of records
-                                                    // Adjust this logic based on what you actually need
-                                                    const category = item.table_name;
-                                                    const action = item.action;
+                            {loaded ? (
+                                <div className="container center" style={{ width: '60%' }}>
+                                    {Array.isArray(apiData) && apiData.length > 0 ? (
+                                        <>
+                                            <table>
+                                                <tbody>
+                                                    {apiData.map((item, index) => {
+                                                        // Assuming displayName is a variable you have defined elsewhere that determines the number of records
+                                                        // Adjust this logic based on what you actually need
+                                                        const category = item.table_name;
+                                                        const action = item.action;
 
-                                                    // const categoryColor = getCategoryColor(category);
-                                                    const actionColor = getActionColor(action);
+                                                        // const categoryColor = getCategoryColor(category);
+                                                        const actionColor = getActionColor(action);
 
-                                                    const actionSymbol = getActionSymbol(action);
-                                                    const categoryName = actionEntityNames[category] ||
-                                                        category.charAt(0).toUpperCase() + category.slice(1);
-                                                    // const actionName = actionNames[action] ||
-                                                    //     action.charAt(0).toUpperCase() + action.slice(1);
+                                                        const actionSymbol = getActionSymbol(action);
+                                                        const categoryName = actionEntityNames[category] ||
+                                                            category.charAt(0).toUpperCase() + category.slice(1);
+                                                        // const actionName = actionNames[action] ||
+                                                        //     action.charAt(0).toUpperCase() + action.slice(1);
 
-                                                    return (
-                                                        <React.Fragment key={index}>
-                                                            <tr key={index}>
-                                                                <td onClick={() => toggleRowExpansion(index)}>
-                                                                    <span className="material-symbols-outlined text-bold">expand_more</span>
-                                                                </td>
-                                                                <td onClick={() => toggleRowExpansion(index)}>
-                                                                    <div className="chip tb-teal lighten-3">
+                                                        return (
+                                                            <React.Fragment key={index}>
+                                                                <tr key={index}>
+                                                                    <td onClick={() => toggleRowExpansion(index)}>
+                                                                        <span className="material-symbols-outlined text-bold">expand_more</span>
+                                                                    </td>
+                                                                    <td onClick={() => toggleRowExpansion(index)}>
+                                                                        <div className="chip tb-teal lighten-3">
+                                                                            <span className="material-symbols-outlined">
+                                                                                schedule
+                                                                            </span>
+                                                                            {moment.utc(item.action_timestamp).local().format('ddd MMM D, h:mma')}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td onClick={() => toggleRowExpansion(index)}>
+                                                                        <div className={`chip ${actionColor} text-bold tb-md-black-text`}>
+                                                                            <span className="material-symbols-outlined">
+                                                                                {actionSymbol}
+                                                                            </span>
+                                                                            {categoryName}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td onClick={() => toggleRowExpansion(index)}>
                                                                         <span className="material-symbols-outlined">
-                                                                            schedule
+                                                                            person
                                                                         </span>
-                                                                        {moment.utc(item.action_timestamp).local().format('ddd MMM D, h:mma')}
-                                                                    </div>
-                                                                </td>
-                                                                <td onClick={() => toggleRowExpansion(index)}>
-                                                                    <div className={`chip ${actionColor} text-bold tb-md-black-text`}>
-                                                                        <span className="material-symbols-outlined">
-                                                                            {actionSymbol}
-                                                                        </span>
-                                                                        {categoryName}
-                                                                    </div>
-                                                                </td>
-                                                                <td onClick={() => toggleRowExpansion(index)}>
-                                                                    <span className="material-symbols-outlined">
-                                                                        person
-                                                                    </span>
-                                                                    <span className="text-bold grey-text text-darken-2">{item.user_name.split('@')[0]} </span>
-                                                                </td>
-                                                            </tr>
-                                                            {
-                                                                expandedRows.has(index) && (
-                                                                    <tr>
-                                                                        <td colSpan="4" style={{ padding: '0px' }}> {/* Adjust colspan as needed */}
-                                                                            <div className="tb-grey lighten-4" style={{ padding: '10px' }}>
-                                                                                {Object.entries(calculateDifferences(item.before_value, item.after_value)).map(([key, { before, after }]) => (
-                                                                                    <div key={key}>
-                                                                                        <span>{key}: </span>
-                                                                                        <span style={{ color: 'grey' }}>{before}</span>
-                                                                                        <span> ➔ </span>
-                                                                                        <span style={{ color: 'teal', fontWeight: 'bold' }}>{after}</span>
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                )
-                                                            }
-                                                        </React.Fragment>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </>
+                                                                        <span className="text-bold grey-text text-darken-2">{item.user_name.split('@')[0]} </span>
+                                                                    </td>
+                                                                </tr>
+                                                                {
+                                                                    expandedRows.has(index) && (
+                                                                        <tr>
+                                                                            <td colSpan="4" style={{ padding: '0px' }}> {/* Adjust colspan as needed */}
+                                                                                <div className="tb-grey lighten-4" style={{ padding: '10px' }}>
+                                                                                    {Object.entries(calculateDifferences(item.before_value, item.after_value)).map(([key, { before, after }]) => (
+                                                                                        <div key={key}>
+                                                                                            <span>{key}: </span>
+                                                                                            <span style={{ color: 'grey' }}>{before}</span>
+                                                                                            <span> ➔ </span>
+                                                                                            <span style={{ color: 'teal', fontWeight: 'bold' }}>{after}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    )
+                                                                }
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </>
 
 
-                                ) : (
-                                    <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
-                                        <em className="grey-text text-lighten-1">No audit logs found.</em>
-                                    </div>
-                                )}
-                            </div>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', paddingBottom: '20px' }}>
+                                            <em className="grey-text text-lighten-1">No audit logs found.</em>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    <CircularPreloader show={true} />
+                                </div>
+                            )}
                         </>
                     )}
                 </div>

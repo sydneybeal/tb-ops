@@ -36,6 +36,7 @@ from api.services.summaries.models import (
     CountrySummary,
     PortfolioSummary,
     PropertySummary,
+    PropertyDetailSummary,
     BedNightReport,
 )
 from api.services.summaries.service import SummaryService
@@ -49,6 +50,7 @@ from api.services.travel.models import (
     PatchCountryRequest,
     PatchPortfolioRequest,
     PatchPropertyRequest,
+    PatchPropertyDetailRequest,
 )
 from api.services.travel.service import TravelService
 
@@ -264,6 +266,45 @@ def make_app(
         # If the deletion failed (property not found)
         else:
             raise HTTPException(status_code=404, detail="Property not found")
+
+    @app.get(
+        "/v1/property_details",
+        operation_id="get_property_details",
+        response_model=list[PropertyDetailSummary],
+        tags=["properties"],
+    )
+    async def get_all_property_details(
+        current_user: User = Depends(get_current_user),
+    ) -> list[PropertyDetailSummary] | JSONResponse:
+        """Get all PropertyDetail summaries."""
+        return await summary_svc.get_all_property_details()
+
+    @app.get(
+        "/v1/property_details/{property_id}",
+        operation_id="get_property_details_by_id",
+        response_model=PropertyDetailSummary,
+        tags=["properties"],
+    )
+    async def get_property_details_by_id(
+        property_id: UUID,
+        current_user: User = Depends(get_current_user),
+    ) -> PropertyDetailSummary | JSONResponse:
+        """Get all PropertyDetail summaries."""
+        return await summary_svc.get_property_details_by_id(property_id)
+
+    @app.patch(
+        "/v1/property_details",
+        operation_id="post_property",
+        tags=["properties"],
+    )
+    async def post_property(
+        property_detail_data: PatchPropertyDetailRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        print(property_detail_data)
+        results = await travel_svc.process_property_detail_request(property_detail_data)
+        return JSONResponse(content=results)
 
     @app.get(
         "/v1/countries",

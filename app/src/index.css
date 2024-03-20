@@ -373,6 +373,45 @@ main {
   }
 }
 
+.date-input-week-selector {
+  text-align: center;
+  font-weight: bold;
+  color: #363839;
+}
+
+.switch.property-switch label .lever {
+  margin: 0 10px;
+  width: 52px; 
+  height: 22px;
+  background-color: #e8e5e1;
+}
+
+.switch.property-switch label input[type=checkbox]:checked+.lever:after {
+  left: 24px;
+  background-color: #2eabba;
+  font-family: 'Material Icons';
+  color: #37474f;
+  font-size: 1.3rem;
+}
+
+.switch.property-switch label input[type=checkbox]:checked+.lever {
+  background-color: #d1cdc9;
+}
+
+.switch.property-switch label .lever:before {
+  height: 28px;
+  width: 28px;
+}
+
+.switch.property-switch label .lever:after {
+  background-color: #f2f0e7;
+  font-family: 'Material Icons';
+  color: #37474f;
+  font-size: 1.3rem;
+  height: 28px;
+  width: 28px;
+}
+
 #toast-container {
   bottom: auto !important;
   left: auto !important;
@@ -428,6 +467,14 @@ input {
 
 .apexcharts-legend-text {
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Noto Sans', sans-serif !important;
+}
+
+.property-details-table td:nth-child(1) {
+  width: 50%;
+}
+
+.property-details-table td:nth-child(2) {
+  width: 50%;
 }
 
 
@@ -497,6 +544,17 @@ ul.sidenav.sidenav-fixed li.logo {
 }
 
 .modal.add-edit-modal .modal-content {
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.modal.property-detail-modal {
+  border-radius: 10px;
+  width: 60%;
+  min-height: 85%;
+}
+
+.modal.property-detail-modal .modal-content {
   border-radius: 10px;
   overflow-y: auto;
 }

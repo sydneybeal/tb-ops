@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../components/AuthContext';
+import React, { useEffect } from 'react';
+// import React, { useEffect, useState } from 'react';
+// import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 import Navbar from '../../components/Navbar';
 // import ReactDatePicker from 'react-datepicker';
 // import 'react-datepicker/dist/react-datepicker.css';
 // import moment from 'moment';
 
-const FaqPage = ({ isOpen, onClose, onRefresh, editPortfolioData = null, isEditMode = false }) => {
-    const { userDetails } = useAuth();
-    const [apiData, setApiData] = useState([]);
-    const [loaded, setLoaded] = useState(false);
+const FaqPage = () => {
+    // const { userDetails } = useAuth();
+    // const [apiData, setApiData] = useState([]);
+    // const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         const elems = document.querySelectorAll('.sidenav, .sidenav-overlay');

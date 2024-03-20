@@ -20,6 +20,7 @@ from typing import Sequence, Callable, Tuple
 from api.services.travel.models import (
     AccommodationLog,
     Property,
+    PropertyDetail,
     CoreDestination,
     Country,
     Consultant,
@@ -123,6 +124,22 @@ class TravelRepository(ABC):
     @abstractmethod
     async def get_all_properties(self) -> Sequence[Property]:
         """Gets all Property models."""
+        raise NotImplementedError
+
+    # PropertyDetail
+    @abstractmethod
+    async def get_property_detail_by_id(
+        self,
+        property_id: UUID,
+    ) -> PropertyDetail:
+        """Returns a single PropertyDetail model in the repository by id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def upsert_property_detail(
+        self, property_data: PropertyDetail
+    ) -> list[Tuple[UUID, bool]]:
+        """Updates or inserts a property's detail into the repository."""
         raise NotImplementedError
 
     # Consultant

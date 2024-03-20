@@ -21,4 +21,4 @@ CREATE INDEX IF NOT EXISTS idx_properties_country_id ON public.properties(countr
 CREATE INDEX IF NOT EXISTS idx_accommodation_logs_date_in ON public.accommodation_logs(date_in);
 CREATE INDEX IF NOT EXISTS dx_accommodation_logs_date_out ON public.accommodation_logs(date_out);
 CREATE INDEX IF NOT EXISTS idx_accommodation_logs_property_date ON public.accommodation_logs(property_id, date_in, date_out);
-
+CREATE INDEX IF NOT EXISTS idx_accommodation_logs_updated_at ON public.accommodation_logs(updated_at);

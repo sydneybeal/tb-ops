@@ -237,7 +237,7 @@ const ReportDashboard = ({ reportData }) => {
                                 <tbody>
                                     {calculations.by_property
                                         .sort((a, b) => b.bed_nights - a.bed_nights)
-                                        .slice(0, 5)
+                                        .slice(0, 10)
                                         .map((item, index) => (
                                             <tr key={index}>
                                                 <td className="text-bold">{item.name}</td>
