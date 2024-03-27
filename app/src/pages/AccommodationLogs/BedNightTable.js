@@ -215,7 +215,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             onClick={() =>
                                 applySorting('property_name')
                             }
-                            style={{ width: '140px' }}
+                            style={{ maxWidth: '120px' }}
                         >
                             {/* <span className="material-symbols-outlined">
                                                 hotel
@@ -302,7 +302,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             onClick={() =>
                                 applySorting('bed_nights')
                             }
-                            style={{ maxWidth: '60px' }}
+                            style={{ width: '40px' }}
                             className="center"
                         >
                             <span
@@ -323,6 +323,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             onClick={() =>
                                 applySorting('consultant_display_name')
                             }
+                            className="center"
                         >
                             {/* Consultant */}
                             <span
@@ -427,7 +428,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                         displayData.map((item, index) => (
                             <React.Fragment key={item.id}>
                                 <tr>
-                                    <td style={{ verticalAlign: 'top', width: '140px' }}>
+                                    <td style={{ verticalAlign: 'top', maxWidth: '120px' }}>
                                         <p className="text-bold">{item.property_name}</p>
                                         <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'left', marginTop: '8px' }}>
                                             {item.property_portfolio}
@@ -456,18 +457,20 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                     </td>
                                     <td
                                         className="center"
-                                        style={{ maxWidth: '60px' }}
+                                        style={{ width: '40px' }}
                                     >
                                         {/* <span className="chip blue lighten-3"> */}
                                         {item.bed_nights}
                                         {/* </span> */}
                                     </td>
-                                    <td>
+                                    <td
+                                        style={{ padding: '10px 0px 10px 0px', maxWidth: '100%', whiteSpace: 'nowrap', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    >
                                         <div>
                                             {item.consultant_display_name}
                                         </div>
                                     </td>
-                                    <td style={{ verticalAlign: 'top' }}>
+                                    <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'top' }}>
                                         <p>
                                             {!item.booking_channel_name
                                                 ? <span className="chip tb-grey lighten-2 text-bold">
@@ -502,8 +505,8 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         </span>
                                         <br />
                                     </td>
-                                    <td>
-                                        <div style={{ width: '100px', textAlign: 'right', padding: '0px' }}>
+                                    <td style={{ width: '90px', marginRight: '1px', marginLeft: '1px' }}>
+                                        <div style={{ width: '90px', textAlign: 'right', padding: '0px', marginRight: '1px', marginLeft: '1px' }}>
                                             <span
                                                 className={`tooltipped`}
                                                 data-position="left"

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.1.7';
+    const version = 'v0.1.8';
 
     useEffect(() => {
         // Initialize Sidenav
@@ -138,42 +138,42 @@ const Navbar = ({ title }) => {
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/properties'} className="text-bold">
-                                    Manage Properties
+                                    Properties
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/consultants'} className="text-bold">
-                                    Manage Consultants
+                                    Consultants
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/agencies'} className="text-bold">
-                                    Manage Agencies
+                                    Agencies
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/booking_channels'} className="text-bold">
-                                    Manage Booking Channels
+                                    Booking Channels
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/portfolios'} className="text-bold">
-                                    Manage Portfolios
+                                    Portfolios
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/countries'} className="text-bold">
-                                    Manage Countries
+                                    Countries
                                 </Link>
                             </li>
                         </div>
