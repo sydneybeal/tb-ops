@@ -112,7 +112,7 @@ export const Properties = () => {
     }, [filters, filterOptions]);
 
     useEffect(() => {
-        const countryMap = apiData.reduce((acc, item) => {
+        const countryMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
             const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
             const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
 
@@ -123,8 +123,8 @@ export const Properties = () => {
                 };
             }
             return acc;
-        }, {});
-        const coreDestMap = apiData.reduce((acc, item) => {
+        }, {}) : [];
+        const coreDestMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
             if (!acc[item.core_destination_id]) {
                 acc[item.core_destination_id] = {
                     value: item.core_destination_id || '',
@@ -132,8 +132,8 @@ export const Properties = () => {
                 };
             }
             return acc;
-        }, {});
-        const portfolioMap = apiData.reduce((acc, item) => {
+        }, {}) : [];
+        const portfolioMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
             if (!acc[item.portfolio_name]) {
                 acc[item.portfolio_name] = {
                     value: item.portfolio_name || '',
@@ -141,7 +141,7 @@ export const Properties = () => {
                 };
             }
             return acc;
-        }, {});
+        }, {}) : [];
 
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const coreDestinationOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
@@ -197,7 +197,7 @@ export const Properties = () => {
 
     useEffect(() => {
         // Perform sorting on filteredData
-        let sortedAndFilteredData = [...filteredData].sort((a, b) => {
+        let sortedAndFilteredData = Array.isArray(apiData) ? [...filteredData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
             let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
 
@@ -211,7 +211,7 @@ export const Properties = () => {
             aValue = String(aValue);
             bValue = String(bValue);
             return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-        });
+        }) : [];
 
         setSortedData(sortedAndFilteredData); // Update sortedData with sorted and filtered results
 
@@ -687,7 +687,7 @@ export const Properties = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="5" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="6" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

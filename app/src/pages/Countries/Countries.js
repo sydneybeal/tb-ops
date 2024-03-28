@@ -61,7 +61,7 @@ export const Countries = () => {
 
     useEffect(() => {
         // Perform sorting on filteredData
-        let sortedData = [...apiData].sort((a, b) => {
+        let sortedData = Array.isArray(apiData) ? [...apiData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
             let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
 
@@ -75,7 +75,7 @@ export const Countries = () => {
             aValue = String(aValue);
             bValue = String(bValue);
             return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-        });
+        }) : [];
         setDisplayData(sortedData);
 
     }, [sorting, apiData]);
@@ -296,7 +296,7 @@ export const Countries = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="3" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

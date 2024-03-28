@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import M from 'materialize-css';
 import moment from 'moment';
 
-const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100 }) => {
+const BedNightTable = ({ filteredData, openEditModal, handleSelectionChange, bulkSelectedEntries, isEditable, pageSize = 100 }) => {
     const [displayData, setDisplayData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'updated_at', ascending: false });
     const [sortedData, setSortedData] = useState([]);
@@ -13,6 +13,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1100);
 
     useEffect(() => {
+        M.AutoInit();
         const handleResize = () => {
             setIsMobileView(window.innerWidth <= 1100);
         };
@@ -160,9 +161,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
         return range;
     }
 
-
-
-
     return (
         <>
             <div className="row center">
@@ -193,19 +191,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                         </a>
                     </li>
                 </ul>
-
-                {/* {Array.from({ length: totalPages }, (_, idx) => (
-                        <li
-                            className={
-                                `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
-                                }`
-                            }
-                            key={idx}
-                            onClick={() => changePage(idx)}
-                        >
-                            <a className="tb-grey-text text-darken-1" onClick={(e) => e.preventDefault()} href="#!">{idx + 1}</a>
-                        </li>
-                    ))} */}
             </div>
 
             <table className="accommodation-logs-table">
@@ -217,10 +202,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             }
                             style={{ maxWidth: '120px' }}
                         >
-                            {/* <span className="material-symbols-outlined">
-                                                hotel
-                                            </span> */}
-                            {/* Property */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -255,35 +236,13 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                 </span>
                             </span>
                         </th>
-                        {/* <th
-                            onClick={() =>
-                                applySorting('num_pax')
-                            }
-                            style={{ width: '60px' }}
-                        >
-                            <span
-                                className={`tooltipped`}
-                                data-position="bottom"
-                                data-tooltip="Number of Passengers"
-                                data-tooltip-class="tooltip-light"
-                            >
-                                <span className="material-symbols-outlined tb-md-black-text text-bold">
-                                    airline_seat_recline_extra
-                                </span>
-                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                    {sorting.field === 'num_pax' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                </span>
-                            </span>
-                        </th> */}
                         <th
                             onClick={() =>
                                 applySorting('date_in')
                             }
                             style={{ width: '100px' }}
                             className="center"
-                        // style={{ width: '200px' }}
                         >
-                            {/* Dates */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -325,7 +284,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             }
                             className="center"
                         >
-                            {/* Consultant */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -345,7 +303,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                 applySorting('booking_channel_name')
                             }
                         >
-                            {/* Booking Channel */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -365,7 +322,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                 applySorting('agency_name')
                             }
                         >
-                            {/* Agency Name */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -386,7 +342,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                             }
                             className="center"
                         >
-                            {/* Country */}
                             <span
                                 className={`tooltipped`}
                                 data-position="bottom"
@@ -459,9 +414,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         className="center"
                                         style={{ width: '40px' }}
                                     >
-                                        {/* <span className="chip blue lighten-3"> */}
                                         {item.bed_nights}
-                                        {/* </span> */}
                                     </td>
                                     <td
                                         style={{ padding: '10px 0px 10px 0px', maxWidth: '100%', whiteSpace: 'nowrap', display: 'inline-block', overflow: 'hidden', textOverflow: 'ellipsis' }}
@@ -506,7 +459,7 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                         <br />
                                     </td>
                                     <td style={{ width: '90px', marginRight: '1px', marginLeft: '1px' }}>
-                                        <div style={{ width: '90px', textAlign: 'right', padding: '0px', marginRight: '1px', marginLeft: '1px' }}>
+                                        <div style={{ textAlign: 'right', padding: '0px', marginRight: '1px', marginLeft: '1px' }}>
                                             <span
                                                 className={`tooltipped`}
                                                 data-position="left"
@@ -515,14 +468,26 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
                                             >
                                                 {isEditable && (
                                                     <>
-                                                        <button
-                                                            className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
-                                                            onClick={() => openEditModal(item)}
-                                                        >
-                                                            <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                edit_note
-                                                            </span>
-                                                        </button>
+                                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+                                                            <button
+                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                onClick={() => openEditModal(item)}
+                                                            >
+                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                    edit_note
+                                                                </span>
+                                                            </button>
+                                                            <label class="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="tb-checkbox"
+                                                                    checked={!!bulkSelectedEntries?.has(item.id)}
+                                                                    onChange={(e) => handleSelectionChange(
+                                                                        item, e.target.checked)}
+                                                                />
+                                                                <span></span>
+                                                            </label>
+                                                        </div>
                                                         <br />
                                                     </>
                                                 )}
@@ -664,9 +629,6 @@ const BedNightTable = ({ filteredData, openEditModal, isEditable, pageSize = 100
 
                                         </div>
                                     </div>
-                                    {/* <div className="col s4">
-                                        
-                                    </div> */}
                                 </div>
                             </div>
                             <div className="card-footer">

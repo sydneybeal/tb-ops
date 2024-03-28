@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Services for authenticating within the app."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import os
 from typing import Sequence
 
@@ -29,7 +29,7 @@ class AuthService:
 
     SECRET_KEY = os.environ["SECRET_KEY"]
     ALGORITHM = os.environ["ALGORITHM"]
-    ACCESS_TOKEN_EXPIRE_MINUTES = 10080
+    # ACCESS_TOKEN_EXPIRE_MINUTES = 10080
 
     def __init__(self):
         """Initializes with a configured repository."""
@@ -49,10 +49,17 @@ class AuthService:
     def create_access_token(self, data: dict, expires_delta: timedelta = None) -> str:
         """Creates access token."""
         to_encode = data.copy()
-        if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+        now = datetime.utcnow()
+        # Calculate the next occurrence of 8 AM
+        next_8am = datetime.combine(now.date(), time(8, 0))
+        if now.time() >= time(8, 0):  # If it's past today's 8 AM, go to tomorrow's
+            next_8am += timedelta(days=1)
+
+        if expires_delta is not None:
+            expire = now + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
+            expire = next_8am
+
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
         return encoded_jwt

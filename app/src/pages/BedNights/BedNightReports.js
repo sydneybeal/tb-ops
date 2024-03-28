@@ -556,6 +556,7 @@ export const BedNightReports = () => {
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
                                             dateFormat="MM/dd/yyyy"
+                                            openToDate={filters.end_date ? moment(filters.end_date).toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">
@@ -609,6 +610,7 @@ export const BedNightReports = () => {
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
                                             dateFormat="MM/dd/yyyy"
+                                            openToDate={filters.start_date ? moment(filters.start_date).toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">

@@ -584,12 +584,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 has_hairdryers, -- Correct the typo if it exists in your DB schema
                 has_pool,
                 has_heated_pool,
+                has_credit_card_tipping,
+                is_child_friendly,
                 is_handicap_accessible,
                 created_at,
                 updated_at,
                 updated_by
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
             )
             ON CONFLICT (property_id) DO UPDATE SET
                 property_type = EXCLUDED.property_type,
@@ -601,6 +603,8 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 has_hairdryers = EXCLUDED.has_hairdryers, -- Correct the typo if it exists in your DB schema
                 has_pool = EXCLUDED.has_pool,
                 has_heated_pool = EXCLUDED.has_heated_pool,
+                has_credit_card_tipping = EXCLUDED.has_credit_card_tipping,
+                is_child_friendly = EXCLUDED.is_child_friendly,
                 is_handicap_accessible = EXCLUDED.is_handicap_accessible,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
@@ -624,6 +628,8 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     property_data.has_hairdryers,  # Ensure the name matches with your DB schema
                     property_data.has_pool,
                     property_data.has_heated_pool,
+                    property_data.has_credit_card_tipping,
+                    property_data.is_child_friendly,
                     property_data.is_handicap_accessible,
                     property_data.created_at,
                     property_data.updated_at,

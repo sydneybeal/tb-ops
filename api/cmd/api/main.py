@@ -117,20 +117,24 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "feb28v1"}
+        return {"Hello": "World", "Version": "v0.1.5"}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
         user = await auth_svc.authenticate_user(email, password)
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token_expires = timedelta(minutes=auth_svc.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+        # Remove the fixed expiration duration. Let `create_access_token` handle the expiration.
         access_token = auth_svc.create_access_token(
-            data={"sub": user.email}, expires_delta=access_token_expires
+            data={
+                "sub": user.email
+            }  # expires_delta is omitted or set to None explicitly
         )
         return {
             "access token": access_token,
@@ -138,6 +142,24 @@ def make_app(
             "role": user.role,
             "email": user.email,
         }
+
+    # user = await auth_svc.authenticate_user(email, password)
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Incorrect email or password",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+    # access_token_expires = timedelta(minutes=auth_svc.ACCESS_TOKEN_EXPIRE_MINUTES)
+    # access_token = auth_svc.create_access_token(
+    #     data={"sub": user.email}, expires_delta=access_token_expires
+    # )
+    # return {
+    #     "access token": access_token,
+    #     "token_type": "bearer",
+    #     "role": user.role,
+    #     "email": user.email,
+    # }
 
     @app.get(
         "/v1/accommodation_logs",

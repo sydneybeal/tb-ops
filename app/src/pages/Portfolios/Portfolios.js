@@ -78,7 +78,7 @@ export const Portfolios = () => {
 
     useEffect(() => {
         // Perform sorting on filteredData
-        let sortedAndFilteredData = [...filteredData].sort((a, b) => {
+        let sortedAndFilteredData = Array.isArray(filteredData) ? [...filteredData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
             let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
 
@@ -92,7 +92,7 @@ export const Portfolios = () => {
             aValue = String(aValue);
             bValue = String(bValue);
             return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-        });
+        }) : [];
 
         setSortedData(sortedAndFilteredData); // Update sortedData with sorted and filtered results
 
@@ -408,7 +408,7 @@ export const Portfolios = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="2" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

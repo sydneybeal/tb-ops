@@ -264,7 +264,7 @@ main {
 }
 
 .success-green-text {
-  color: #9adbc0 !important;
+  color: #3d9973 !important;
 }
 
 /* success-green-light */
@@ -377,6 +377,55 @@ main {
   text-align: center;
   font-weight: bold;
   color: #363839;
+}
+
+input[type=text]:focus {
+  border-bottom: 1px solid #0e9bac !important;
+  box-shadow: 0 1px 0 0 #0e9bac !important;
+}
+
+input[type=text]:focus + label {
+  color: #0e9bac !important;
+}
+
+.input-field .prefix.active {
+  color: #0e9bac !important;
+}
+
+/* [type="checkbox"]+span:before {
+  border: 2px solid #8c8782 !important;
+} */
+
+/* [type="checkbox"]+span:not(.lever):before {
+  border: 2px solid #8c8782 !important;
+  border-radius: 5px !important;
+  background-color: white;
+} */
+
+[type="checkbox"]:checked+span:not(.lever):before {
+  border-right: 2px solid #0e9bac !important;
+  border-bottom: 2px solid #0e9bac !important;
+}
+
+.prop-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.prop-chip-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip.prop-chip {
+  display: inline-flex;
+  align-items: center;
+  margin: 0px;
+  gap: 4px;
 }
 
 .switch.property-switch label .lever {

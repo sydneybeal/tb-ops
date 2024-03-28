@@ -116,6 +116,8 @@ class PropertyDetail(BaseModel):
     has_hairdryers: Optional[bool] = None
     has_pool: Optional[bool] = None
     has_heated_pool: Optional[bool] = None
+    has_credit_card_tipping: Optional[bool] = None
+    is_child_friendly: Optional[bool] = None
     is_handicap_accessible: Optional[bool] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
@@ -256,5 +258,7 @@ class PatchPropertyDetailRequest(BaseModel):
     has_hairdryers: Optional[bool] = None
     has_pool: Optional[bool] = None
     has_heated_pool: Optional[bool] = None
+    has_credit_card_tipping: Optional[bool] = None
+    is_child_friendly: Optional[bool] = None
     is_handicap_accessible: Optional[bool] = None
     updated_by: str

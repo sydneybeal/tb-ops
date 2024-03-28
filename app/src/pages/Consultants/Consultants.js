@@ -60,7 +60,7 @@ export const Consultants = () => {
     };
 
     useEffect(() => {
-        let sortedData = [...apiData].sort((a, b) => {
+        let sortedData = Array.isArray(apiData) ? [...apiData].sort((a, b) => {
             const isActiveA = a.is_active === true || a.is_active === 'true';
             const isActiveB = b.is_active === true || b.is_active === 'true';
 
@@ -82,7 +82,7 @@ export const Consultants = () => {
                 bValue = String(bValue);
                 return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
             }
-        });
+        }) : [];
         setDisplayData(sortedData);
     }, [sorting, apiData]);
 

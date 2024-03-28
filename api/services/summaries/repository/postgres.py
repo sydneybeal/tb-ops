@@ -394,6 +394,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 pd.has_hairdryers,
                 pd.has_pool,
                 pd.has_heated_pool,
+                pd.has_credit_card_tipping,
+                pd.is_child_friendly,
                 pd.is_handicap_accessible,
                 p.created_at,
                 pd.updated_at,
@@ -448,11 +450,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             SELECT
                 c.*,
                 cd.name AS core_destination_name,
-                COUNT(al.id) AS num_related -- Counting logs for each country based on property
-            FROM public.accommodation_logs al
-            JOIN public.properties p ON al.property_id = p.id -- Joining logs to properties
-            JOIN public.countries c ON p.country_id = c.id -- Joining properties to countries on country_id
-            LEFT JOIN public.core_destinations cd ON c.core_destination_id = cd.id -- Linking countries to core destinations
+                COUNT(al.id) FILTER (WHERE al.property_id IS NOT NULL) AS num_related
+            FROM public.countries c
+            LEFT JOIN public.properties p ON c.id = p.country_id
+            LEFT JOIN public.accommodation_logs al ON p.id = al.property_id
+            LEFT JOIN public.core_destinations cd ON c.core_destination_id = cd.id
             GROUP BY c.id, cd.name
             ORDER BY c.name ASC
             """

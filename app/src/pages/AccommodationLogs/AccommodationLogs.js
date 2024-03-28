@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../components/AuthContext';
 import CircularPreloader from '../../components/CircularPreloader';
 import AddLogModal from './AddLogModal';
+import BulkEditModal from './BulkEditModal';
 import BedNightTable from './BedNightTable';
 import Navbar from '../../components/Navbar';
 import moment from 'moment';
@@ -20,11 +21,10 @@ export const Overview = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentEditLog, setCurrentEditLog] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
+    const [bulkSelectedEntries, setBulkSelectedEntries] = useState(new Map());
+    const [bulkAction, setBulkAction] = useState(null);
     const [filterOptions, setFilterOptions] = useState({
-        // core_dest: [],
-        // country: [],
-        // consultant: [],
-        // property: [],
         core_destination_name: [],
         country_name: [],
         consultant_name: [],
@@ -45,12 +45,6 @@ export const Overview = () => {
         property_portfolio: '',
         booking_channel: '',
         agency: '',
-        // core_dest: '',
-        // country: '',
-        // consultant: '',
-        // property: '',
-        // start_date: '',
-        // end_date: '',
     });
 
     useEffect(() => {
@@ -66,7 +60,7 @@ export const Overview = () => {
                     M.toast({
                         html: 'Your session has timed out, please log in again.',
                         displayLength: 4000,
-                        classes: 'red lighten-2',
+                        classes: 'error-red',
                     });
                     logout();
                     return;
@@ -90,7 +84,7 @@ export const Overview = () => {
             M.toast({
                 html: 'Please log in before adding bed nights.',
                 displayLength: 2000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             return;
         } else {
@@ -109,7 +103,6 @@ export const Overview = () => {
     }, [filters, filterOptions]);
 
     useEffect(() => {
-        // const coreDestOptions = [...new Set(apiData.map((item) => item.core_destination_name))].sort();
         const coreDestMap = apiData.reduce((acc, item) => {
             if (!acc[item.core_destination_id]) {
                 acc[item.core_destination_id] = {
@@ -119,7 +112,6 @@ export const Overview = () => {
             }
             return acc;
         }, {});
-        // const countryOptions = [...new Set(apiData.map((item) => item.country_name))].sort();
         const countryMap = apiData.reduce((acc, item) => {
             const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
             const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
@@ -180,8 +172,6 @@ export const Overview = () => {
         const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
         const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
         const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
-        // const bookingChannelOptions = [...new Set(newFilteredData.map(item => item.booking_channel_name))].sort().map(name => ({ value: name, label: name }));
-        // const agencyOptions = [...new Set(newFilteredData.map(item => item.agency_name))].sort().map(name => ({ value: name, label: name }));
         const uniqueConsultants = apiData.reduce((acc, item) => {
             if (!acc[item.consultant_id]) {
                 acc[item.consultant_id] = {
@@ -213,14 +203,6 @@ export const Overview = () => {
                 apiLabel: item.label
             }));
 
-        // setFilterOptions({
-        //     core_dest: coreDestOptions,
-        //     country: countryOptions,
-        //     consultant: consultantOptions,
-        //     property: propertyOptions,
-        //     property_portfolio: portfolioOptions
-        // });
-        // TODO: figure out why blank looks weird
         setFilterOptions({
             core_destination_name: coreDestOptions,
             country_name: countryOptions,
@@ -235,6 +217,68 @@ export const Overview = () => {
     useEffect(() => {
         M.AutoInit();
     }, []);
+
+    const handleSelectionChange = (entry, isChecked) => {
+        setBulkSelectedEntries((prevSelected) => {
+            const newSelected = new Map(prevSelected); // Clone the previous Map
+            if (isChecked) {
+                // Add the pipeline object with id as the key
+                const entryCopy = { ...entry };
+                newSelected.set(entry.id, entryCopy);
+            } else {
+                newSelected.delete(entry.id);
+            }
+            return newSelected;
+        });
+    };
+
+    const handleOpenBulkEditModal = (action) => {
+        if (action === 'delete') {
+            setBulkAction('delete');
+            setIsBulkEditModalOpen(true);
+        } else {
+            setBulkAction('duplicate');
+            const entriesArray = Array.from(bulkSelectedEntries.values());
+
+            // Check if there's at least one entry selected
+            if (entriesArray.length === 0) {
+                M.toast({
+                    html: 'Please select at least one entry.',
+                    displayLength: 2000,
+                    classes: 'error-red',
+                });
+                return;
+            }
+
+            // Extract the values for comparison
+            const primaryTraveler = entriesArray[0].primary_traveler;
+            const consultantId = entriesArray[0].consultant_id;
+            const agencyId = entriesArray[0].agency_id;
+
+            // Check if all entries have the same primary_traveler, consultant_id, and agency_id
+            const allMatch = entriesArray.every(entry =>
+                entry.primary_traveler === primaryTraveler &&
+                entry.consultant_id === consultantId &&
+                entry.agency_id === agencyId
+            );
+
+            if (allMatch) {
+                setIsBulkEditModalOpen(true);
+            } else {
+                M.toast({
+                    html: 'All selected entries must have the same primary traveler, consultant, and agency.',
+                    displayLength: 4000,
+                    classes: 'error-red',
+                });
+            }
+        }
+    };
+
+    const closeBulkEditModal = () => {
+        setIsBulkEditModalOpen(false);
+        setBulkSelectedEntries(new Map());
+        document.body.style.overflow = '';
+    };
 
     useEffect(() => {
         let newFilteredData = apiData;
@@ -279,7 +323,6 @@ export const Overview = () => {
         }
 
         if (filters.booking_channel) {
-            // newFilteredData = newFilteredData.filter((item) => item.booking_channel_name === filters.booking_channel);
             if (filters.booking_channel === 'No booking channel') {
                 // Filter for records where country_name is null or undefined
                 newFilteredData = newFilteredData.filter(item => !item.booking_channel_name);
@@ -290,7 +333,6 @@ export const Overview = () => {
         }
 
         if (filters.agency) {
-            // newFilteredData = newFilteredData.filter((item) => item.agency_name === filters.agency);
             if (filters.agency === 'No agency') {
                 // Filter for records where country_name is null or undefined
                 newFilteredData = newFilteredData.filter(item => !item.agency_name);
@@ -317,20 +359,6 @@ export const Overview = () => {
 
         // Update filter options based on newFilteredData
         const coreDestOptions = [...new Set(newFilteredData.map(item => item.core_destination_name))].sort().map(name => ({ value: name, label: name }));
-        // const countryMap = apiData.reduce((acc, item) => {
-        //     // Define default values for null or undefined country_id and country_name
-        //     const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
-        //     const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
-
-        //     if (!acc[countryId]) {
-        //         acc[countryId] = {
-        //             value: countryId,
-        //             label: countryName
-        //         };
-        //     }
-        //     return acc;
-        // }, {});
-        // const countryOptions = [...new Set(newFilteredData.map(item => item.country_name))].sort().map(name => ({ value: name, label: name }));
         const countryMap = newFilteredData.reduce((acc, item) => {
             const countryId = item.country_id || 'no-country';
             const countryName = item.country_name || 'No country';
@@ -423,7 +451,7 @@ export const Overview = () => {
             M.toast({
                 html: 'Please enter your name above before adding bed nights.',
                 displayLength: 2000,
-                classes: 'red lighten-2',
+                classes: 'error-red',
             });
             return;
         }
@@ -455,6 +483,13 @@ export const Overview = () => {
                         onRefresh={triggerRefresh}
                         editLogData={currentEditLog}
                         isEditMode={isEditMode}
+                    />
+                    <BulkEditModal
+                        isOpen={isBulkEditModalOpen}
+                        onClose={closeBulkEditModal}
+                        entries={bulkSelectedEntries}
+                        bulkAction={bulkAction}
+                        onRefresh={triggerRefresh}
                     />
 
 
@@ -763,6 +798,7 @@ export const Overview = () => {
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}
+                                            openToDate={filters.end_date ? moment(filters.end_date).toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
@@ -786,6 +822,7 @@ export const Overview = () => {
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}
+                                            openToDate={filters.start_date ? moment(filters.start_date).toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
@@ -821,9 +858,47 @@ export const Overview = () => {
                                     </button>
                                 </div>
                             </div>
+                            {bulkSelectedEntries.size > 0 && (
+                                <div className="row center">
+                                    <div>
+                                        <span className="code">Entries selected:</span>
+                                        <span className="chip warning-yellow" style={{ marginLeft: '5px' }}>
+                                            {bulkSelectedEntries.size}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <button
+                                            className="btn btn-large warning-yellow grey-text text-darken-4"
+                                            style={{ marginRight: '10px' }}
+                                            onClick={() => handleOpenBulkEditModal('duplicate')}
+                                        >
+                                            Duplicate Entries
+                                            &nbsp;
+                                            <span className="material-symbols-outlined">
+                                                difference
+                                            </span>
+                                        </button>
+                                        {userDetails.role === 'admin' &&
+                                            <button
+                                                className="btn btn-large error-red-light grey-text text-darken-4"
+                                                style={{ marginRight: '10px' }}
+                                                onClick={() => handleOpenBulkEditModal('delete')}
+                                            >
+                                                Delete Entries
+                                                &nbsp;
+                                                <span className="material-symbols-outlined">
+                                                    delete_forever
+                                                </span>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            )}
                             <BedNightTable
                                 filteredData={filteredData}
                                 openEditModal={openEditModal}
+                                handleSelectionChange={handleSelectionChange}
+                                bulkSelectedEntries={bulkSelectedEntries}
                                 isEditable={true}
                             />
                         </>

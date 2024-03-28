@@ -672,9 +672,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
     const validateForm = () => {
         let errors = {};
+        const namePattern = /^[^/]+\/[^/]+$/;
 
         if (!(primaryTraveler || '').trim()) {
             errors.primaryTraveler = 'Missing primary traveler';
+        } else if (!namePattern.test(primaryTraveler.trim())) {
+            errors.primaryTraveler = 'Please enter the name in "Last/First" format';
         }
         if (!(selectedConsultantId || '').trim()) {
             errors.consultant = 'Missing consultant';
@@ -1290,7 +1293,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     <div className="col s1" style={{ textAlign: 'right' }}>
                                         {!isEditMode &&
                                             <a
-                                                className="btn-floating btn-small waves-effect waves-light error-red-light"
+                                                className="btn-floating btn-small waves-effect waves-light error-red"
                                                 href="/#"
                                                 onClick={(e) => { e.preventDefault(); handleRemoveClick(index); }}>
                                                 <i className="material-icons">remove</i>
@@ -1710,7 +1713,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 id="form-date-in"
                                                 selected={log.date_in ? moment(log.date_in).toDate() : null}
                                                 onChange={(date) => {
-                                                    handleLogChange(index, 'date_in', date ? moment(date).format('YYYY-MM-DD') : '');
+                                                    const newValue = date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : null;
+                                                    handleLogChange(index, 'date_in', newValue);
                                                 }}
                                                 isClearable
                                                 placeholderText="Select date in"
@@ -1719,6 +1723,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 minDate={new Date('2000-01-01')}
                                                 maxDate={new Date('2100-12-31')}
                                                 autoComplete="off"
+                                                openToDate={log.date_out ? moment(log.date_in).toDate() : new Date()}
                                             />
                                         </div>
                                         <label htmlFor="form-date-in">
@@ -1736,7 +1741,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 <ReactDatePicker
                                                     id="form-date-out"
                                                     selected={log.date_out ? moment(log.date_out).toDate() : null}
-                                                    onChange={(date) => handleLogChange(index, 'date_out', date ? moment(date).format('YYYY-MM-DD') : '')}
+                                                    onChange={(date) => {
+                                                        const newValue = date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : null;
+                                                        handleLogChange(index, 'date_out', newValue);
+                                                    }}
                                                     isClearable
                                                     placeholderText="Select date out"
                                                     className="date-input"
@@ -1744,6 +1752,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     minDate={new Date('2000-01-01')}
                                                     maxDate={new Date('2100-12-31')}
                                                     autoComplete="off"
+                                                    openToDate={log.date_in ? moment(log.date_in).toDate() : new Date()}
                                                 />
                                             </div>
                                         </div>
@@ -1890,7 +1899,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                             // </>
                         ))}
                         {!isEditMode &&
-                            <button type="button" className="btn tb-teal" onClick={addLogEntry}>Add More</button>
+                            <button type="button" className="btn tb-teal" onClick={addLogEntry}>
+                                <span className="material-symbols-outlined">
+                                    add
+                                </span>
+                                Add More
+                            </button>
                         }
                     </form>
                 </div>

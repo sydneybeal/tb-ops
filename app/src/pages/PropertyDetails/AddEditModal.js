@@ -21,6 +21,7 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
         { value: 'camp', label: 'Camp' },
         { value: 'boat', label: 'Boat' },
     ]), []); // Dependencies array is empty, so this only runs once
+    console.log(selectedPropertyType);
 
     const priceRangeOptions = useMemo(() => ([
         { value: '<$500', label: '<$500' },
@@ -37,7 +38,9 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
         has_hairdryers: false,
         has_pool: false,
         has_heated_pool: false,
+        has_credit_card_tipping: false,
         is_handicap_accessible: false,
+        is_child_friendly: false,
         // Add more features as needed
     });
 
@@ -216,7 +219,9 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                 has_hairdryers: editPropertyData.has_hairdryers,
                 has_pool: editPropertyData.has_pool,
                 has_heated_pool: editPropertyData.has_heated_pool,
+                has_credit_card_tipping: editPropertyData.has_credit_card_tipping,
                 is_handicap_accessible: editPropertyData.is_handicap_accessible,
+                is_child_friendly: editPropertyData.is_child_friendly,
             });
         }
     }, [isOpen, isEditMode, editPropertyData, propertyTypeOptions, priceRangeOptions]);
@@ -233,7 +238,9 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
             has_hairdryers: false,
             has_pool: false,
             has_heated_pool: false,
+            has_credit_card_tipping: false,
             is_handicap_accessible: false,
+            is_child_friendly: false,
         });
     };
 
@@ -282,17 +289,8 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                                             options={properties}
                                             isClearable
                                             style={{ flexGrow: '1' }}
-                                            classNamePrefix="select" // Use this for prefixing generated class names
-                                            // className={validationErrors.country ? 'invalid-select' : ''} // This class is for the container
+                                            classNamePrefix="select"
                                             styles={{
-                                                // control: (provided, state) => ({
-                                                //     ...provided,
-                                                //     borderColor: validationErrors.country ? '#d1685d' : provided.borderColor,
-                                                //     '&:hover': {
-                                                //         borderColor: validationErrors.country ? '#d1685d' : provided['&:hover'].borderColor,
-                                                //     },
-                                                //     boxShadow: state.isFocused ? (validationErrors.country ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
-                                                // }),
                                                 option: (provided, state) => ({
                                                     ...provided,
                                                     fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
@@ -434,31 +432,35 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                                 </div>
                                 <br />
                                 <div className="row center">
-                                    <div className="col s4">
+                                    {selectedPropertyType?.value === 'camp' &&
+                                        <div className="col s4">
+                                            <>
+                                                <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
+                                                    <span className="material-symbols-outlined">
+                                                        pets
+                                                    </span>
+                                                    <br />
+                                                    Trackers
+                                                </div>
+                                                <div className="switch property-switch">
+                                                    <label>
+                                                        No
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={features.has_trackers}
+                                                            onChange={() => handleCheckboxChange('has_trackers')}
+                                                        />
+                                                        <span className="lever"></span>
+                                                        Yes
+                                                    </label>
+                                                </div>
+                                            </>
+                                        </div>
+                                    }
+                                    <div className={`col ${selectedPropertyType?.value === 'camp' ? 's4' : 's6'}`}>
                                         <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
                                             <span className="material-symbols-outlined">
-                                                pets
-                                            </span>
-                                            <br />
-                                            Trackers
-                                        </div>
-                                        <div className="switch property-switch">
-                                            <label>
-                                                No
-                                                <input
-                                                    type="checkbox"
-                                                    checked={features.has_trackers}
-                                                    onChange={() => handleCheckboxChange('has_trackers')}
-                                                />
-                                                <span className="lever"></span>
-                                                Yes
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="col s4">
-                                        <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
-                                            <span className="material-symbols-outlined">
-                                                wifi
+                                                wifi_home
                                             </span>
                                             <br />
                                             WiFi (In Room)
@@ -476,7 +478,7 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                                             </label>
                                         </div>
                                     </div>
-                                    <div className="col s4">
+                                    <div className={`col ${selectedPropertyType?.value === 'camp' ? 's4' : 's6'}`}>
                                         <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
                                             <span className="material-symbols-outlined">
                                                 wifi
@@ -524,7 +526,7 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                                     <div className="col s4">
                                         <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
                                             <span className="material-symbols-outlined">
-                                                pool
+                                                local_fire_department
                                             </span>
                                             <br />
                                             Heated Pool
@@ -557,6 +559,72 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
                                                     type="checkbox"
                                                     checked={features.has_hairdryers}
                                                     onChange={() => handleCheckboxChange('has_hairdryers')}
+                                                />
+                                                <span className="lever"></span>
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br />
+                                <div className="row center">
+                                    <div className="col s4">
+                                        <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
+                                            <span className="material-symbols-outlined">
+                                                credit_card_heart
+                                            </span>
+                                            <br />
+                                            Credit Card Tips
+                                        </div>
+                                        <div className="switch property-switch">
+                                            <label>
+                                                No
+                                                <input
+                                                    type="checkbox"
+                                                    checked={features.has_credit_card_tipping}
+                                                    onChange={() => handleCheckboxChange('has_credit_card_tipping')}
+                                                />
+                                                <span className="lever"></span>
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="col s4">
+                                        <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
+                                            <span className="material-symbols-outlined">
+                                                accessible
+                                            </span>
+                                            <br />
+                                            Handicap Accessible
+                                        </div>
+                                        <div className="switch property-switch">
+                                            <label>
+                                                No
+                                                <input
+                                                    type="checkbox"
+                                                    checked={features.is_handicap_accessible}
+                                                    onChange={() => handleCheckboxChange('is_handicap_accessible')}
+                                                />
+                                                <span className="lever"></span>
+                                                Yes
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="col s4">
+                                        <div className="tb-teal-text text-bold" style={{ marginBottom: '10px' }}>
+                                            <span className="material-symbols-outlined">
+                                                crib
+                                            </span>
+                                            <br />
+                                            Child Friendly
+                                        </div>
+                                        <div className="switch property-switch">
+                                            <label>
+                                                No
+                                                <input
+                                                    type="checkbox"
+                                                    checked={features.is_child_friendly}
+                                                    onChange={() => handleCheckboxChange('is_child_friendly')}
                                                 />
                                                 <span className="lever"></span>
                                                 Yes

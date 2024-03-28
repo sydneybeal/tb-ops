@@ -116,6 +116,8 @@ class PropertyDetailSummary(BaseModel):
     has_hairdryers: Optional[bool] = None
     has_pool: Optional[bool] = None
     has_heated_pool: Optional[bool] = None
+    has_credit_card_tipping: Optional[bool] = None
+    is_child_friendly: Optional[bool] = None
     is_handicap_accessible: Optional[bool] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
