@@ -203,6 +203,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"portfolio_id = '{value}'")
             elif key == "country_id":
                 query_conditions.append(f"p.country_id = '{value}'")
+            elif key == "property_names" and isinstance(value, list):
+                property_names_list = ", ".join(
+                    "'" + v.replace("'", "''") + "'" for v in value
+                )
+                query_conditions.append(f"p.name IN ({property_names_list})")
             # Note: consultant_name will be handled below
 
         condition_string = " AND ".join(query_conditions)

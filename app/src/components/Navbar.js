@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.1.9';
+    const version = 'v0.1.10';
 
     useEffect(() => {
         // Initialize Sidenav
@@ -28,8 +28,13 @@ const Navbar = ({ title }) => {
                         </div>
                         {/* Title */}
                         <div className="col s8 m8 l6 header-container" >
-                            <h4 className="header hide-on-large-only center-align" style={{ margin: 0, marginTop: '20px', fontSize: '1.8rem' }}>{title}</h4>
-                            <h4 className="header hide-on-med-and-down left-align" style={{ margin: 0, marginTop: '20px', fontSize: '2.0rem' }}>{title}</h4>
+                            <h4 className="header hide-on-large-only center-align" style={{ margin: 0, marginTop: '20px', fontSize: '1.8rem' }}>
+                                {title}
+                            </h4>
+                            <h4 className="header hide-on-med-and-down left-align" style={{ margin: 0, marginTop: '20px', fontSize: '2.0rem' }}>
+                                {title}
+                            </h4>
+
                             {/* User info for small and medium screens */}
                             {userDetails && (
                                 <div className="hide-on-large-only center-align" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -137,6 +142,13 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
+                                <Link to={'/overlaps'} className="text-bold">
+                                    Client Overlaps
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
                                 <Link to={'/properties'} className="text-bold">
                                     Properties
                                 </Link>
@@ -193,15 +205,15 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/overlaps'} className="text-bold">
-                                    Client Overlaps
+                                <Link to={'/property_details'} className="text-bold">
+                                    Property Details
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/property_details'} className="text-bold">
-                                    Property Details
+                                <Link to={'/looker_reports'} className="text-bold">
+                                    Looker Reports
                                 </Link>
                             </li>
                         </div>

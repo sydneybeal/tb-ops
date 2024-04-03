@@ -41,7 +41,8 @@ export const Overview = () => {
         core_destination_name: '',
         country_name: '',
         consultant_name: '',
-        property_name: '',
+        // property_name: '',
+        property_names: [],
         property_portfolio: '',
         booking_channel: '',
         agency: '',
@@ -281,7 +282,80 @@ export const Overview = () => {
     };
 
     useEffect(() => {
-        let newFilteredData = apiData;
+        // Step 1: Filter apiData based on all filters except property_names
+        let contextFilteredData = apiData.filter(item => {
+            // Assume all conditions return true (include the item) by default
+            let includeItem = true;
+
+            if (filters.core_destination_name && item.core_destination_name !== filters.core_destination_name) {
+                includeItem = false;
+            }
+
+            if (filters.country_name) {
+                if (filters.country_name === 'No country' && item.country_name) {
+                    includeItem = false;
+                } else if (item.country_name !== filters.country_name) {
+                    includeItem = false;
+                }
+            }
+
+            if (filters.consultant_name && item.consultant_display_name !== filters.consultant_name) {
+                includeItem = false;
+            }
+
+            // Additional conditions for other filters as necessary, excluding property_names
+
+            if (filters.property_portfolio && item.property_portfolio !== filters.property_portfolio) {
+                includeItem = false;
+            }
+
+            if (filters.booking_channel) {
+                if (filters.booking_channel === 'No booking channel' && item.booking_channel_name) {
+                    includeItem = false;
+                } else if (item.booking_channel_name !== filters.booking_channel) {
+                    includeItem = false;
+                }
+            }
+
+            if (filters.agency) {
+                if (filters.agency === 'No agency' && item.agency_name) {
+                    includeItem = false;
+                } else if (item.agency_name !== filters.agency) {
+                    includeItem = false;
+                }
+            }
+
+            if (includeItem && (filters.start_date || filters.end_date)) {
+                const startDate = filters.start_date ? new Date(filters.start_date) : new Date('1900-01-01');
+                const endDate = filters.end_date ? new Date(filters.end_date) : new Date('2100-12-31');
+
+                const itemDateIn = new Date(item.date_in);
+                const itemDateOut = item.date_out ? new Date(item.date_out) : itemDateIn;
+
+                // Adjust logic to exclude items outside the specified date range
+                if (filters.start_date && itemDateIn < startDate) {
+                    includeItem = false;
+                }
+                if (filters.end_date && itemDateOut > endDate) {
+                    includeItem = false;
+                }
+            }
+
+            return includeItem;
+        });
+
+        const propertyOptions = [...new Set(contextFilteredData.map(item => item.property_name))]
+            .sort()
+            .map(name => ({ value: name, label: name }));
+
+        // Step 2: Now filter newFilteredData including property_names
+        let newFilteredData = contextFilteredData;
+
+        if (filters.property_names && filters.property_names.length > 0) {
+            newFilteredData = newFilteredData.filter(item =>
+                filters.property_names.includes(item.property_name)
+            );
+        }
 
         if (searchQuery) {
             newFilteredData = newFilteredData.filter((item) =>
@@ -294,65 +368,6 @@ export const Overview = () => {
                 (item.country_name ? item.country_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
                 (item.core_destination_name ? item.core_destination_name.toLowerCase() : '').includes(searchQuery.toLowerCase()),
             );
-        }
-
-        if (filters.core_destination_name) {
-            newFilteredData = newFilteredData.filter((item) => item.core_destination_name === filters.core_destination_name);
-        }
-
-        if (filters.country_name) {
-            if (filters.country_name === 'No country') {
-                // Filter for records where country_name is null or undefined
-                newFilteredData = newFilteredData.filter(item => !item.country_name);
-            } else {
-                // Filter for records matching the selected country name
-                newFilteredData = newFilteredData.filter(item => item.country_name === filters.country_name);
-            }
-        }
-
-        if (filters.consultant_name) {
-            newFilteredData = newFilteredData.filter((item) => item.consultant_display_name === filters.consultant_name);
-        }
-
-        if (filters.property_name) {
-            newFilteredData = newFilteredData.filter((item) => item.property_name === filters.property_name);
-        }
-
-        if (filters.property_portfolio) {
-            newFilteredData = newFilteredData.filter((item) => item.property_portfolio === filters.property_portfolio);
-        }
-
-        if (filters.booking_channel) {
-            if (filters.booking_channel === 'No booking channel') {
-                // Filter for records where country_name is null or undefined
-                newFilteredData = newFilteredData.filter(item => !item.booking_channel_name);
-            } else {
-                // Filter for records matching the selected country name
-                newFilteredData = newFilteredData.filter(item => item.booking_channel_name === filters.booking_channel);
-            }
-        }
-
-        if (filters.agency) {
-            if (filters.agency === 'No agency') {
-                // Filter for records where country_name is null or undefined
-                newFilteredData = newFilteredData.filter(item => !item.agency_name);
-            } else {
-                // Filter for records matching the selected country name
-                newFilteredData = newFilteredData.filter(item => item.agency_name === filters.agency);
-            }
-        }
-
-        // Filter by date range
-        if (filters.start_date || filters.end_date) {
-            const startDate = filters.start_date ? new Date(filters.start_date) : new Date('1900-01-01'); // A default early date if start_date is not set
-            const endDate = filters.end_date ? new Date(filters.end_date) : new Date('2100-12-31'); // A default late date if end_date is not set
-
-            newFilteredData = newFilteredData.filter((item) => {
-                const itemDateIn = new Date(item.date_in);
-                const itemDateOut = new Date(item.date_out);
-                // Adjust logic to handle cases where only one of the dates is provided
-                return (!filters.start_date || itemDateIn >= startDate) && (!filters.end_date || itemDateOut <= endDate);
-            });
         }
 
         setFilteredData(newFilteredData);
@@ -387,7 +402,6 @@ export const Overview = () => {
             return acc;
         }, {});
         const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
-        // const bookingChannelOptions = [...new Set(newFilteredData.map(item => item.booking_channel_name))].sort().map(name => ({ value: name, label: name }));
         const agencyMap = newFilteredData.reduce((acc, item) => {
             const agencyId = item.agency_id || 'no-agency';
             const agencyName = item.agency_name || 'No agency';
@@ -400,7 +414,6 @@ export const Overview = () => {
             return acc;
         }, {});
         const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
-        // const agencyOptions = [...new Set(newFilteredData.map(item => item.agency_name))].sort().map(name => ({ value: name, label: name }));
         const uniqueConsultants = newFilteredData.reduce((acc, item) => {
             if (!acc[item.consultant_id]) {
                 acc[item.consultant_id] = {
@@ -431,9 +444,7 @@ export const Overview = () => {
                 label: `${item.label} ${item.consultant_is_active ? '' : '(inactive)'}`, // Append (inactive) if not active
                 apiLabel: item.label
             }));
-        const propertyOptions = [...new Set(newFilteredData.map(item => item.property_name))].sort().map(name => ({ value: name, label: name }));
 
-        // TODO: figure out why consultant is not filtering on filtered data
         setFilterOptions({
             core_destination_name: coreDestOptions,
             country_name: countryOptions,
@@ -497,7 +508,20 @@ export const Overview = () => {
                         <>
 
                             <div className="row center">
-                                <div className="col s12 m2 offset-m10">
+                                <div className="col s12 l8 offset-l2">
+                                    <input
+                                        type="text"
+                                        id="search-query"
+                                        placeholder="Search..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="search-input" // Apply any styling as needed
+                                    />
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
+                                        search
+                                    </span>
+                                </div>
+                                <div className="col s12 l2">
                                     <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>
                                         <span className="material-symbols-outlined">
                                             add
@@ -506,11 +530,11 @@ export const Overview = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="row center">
+                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
                                 <div>
                                     <div className="col s12 l3">
                                         <Select
-                                            placeholder="Search by Core Destination"
+                                            placeholder="By Core Destination"
                                             value={filterOptions.core_destination_name.find(core_dest => core_dest.label === filters.core_destination_name) ? { value: filters.core_destination_name, label: filters.core_destination_name } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, core_destination_name: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.core_destination_name}
@@ -546,7 +570,7 @@ export const Overview = () => {
                                     </div>
                                     <div className="col s12 l3">
                                         <Select
-                                            placeholder="Search by Country"
+                                            placeholder="By Country"
                                             value={filterOptions.country_name.find(country => country.label === filters.country_name) ? { value: filters.country_name, label: filters.country_name } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, country_name: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.country_name}
@@ -582,7 +606,7 @@ export const Overview = () => {
                                     </div>
                                     <div className="col s12 l3">
                                         <Select
-                                            placeholder="Search by Portfolio"
+                                            placeholder="By Portfolio"
                                             value={filterOptions.property_portfolio.find(option => option.label === filters.property_portfolio) ? { value: filters.property_portfolio, label: filters.property_portfolio } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, property_portfolio: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.property_portfolio}
@@ -618,9 +642,9 @@ export const Overview = () => {
                                     </div>
                                     <div className="col s12 l3">
                                         <Select
-                                            placeholder="Search by Property"
-                                            value={filterOptions.property_name.find(prop => prop.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
-                                            onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
+                                            placeholder="By Property"
+                                            // value={filterOptions.property_name.find(prop => prop.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
+                                            // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.property_name}
                                             styles={{
                                                 control: (provided, state) => ({
@@ -647,6 +671,12 @@ export const Overview = () => {
                                             }}
                                             menuPortalTarget={document.body}
                                             isClearable
+                                            isMulti
+                                            value={filterOptions.property_name.filter(option => filters.property_names.includes(option.label))}
+                                            onChange={(selectedOptions) => setFilters({
+                                                ...filters,
+                                                property_names: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                            })}
                                         />
                                         <span className="material-symbols-outlined grey-text text-darken-1">
                                             hotel
@@ -655,11 +685,10 @@ export const Overview = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="row center">
-
+                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
                                 <div className="col s12 l4">
                                     <Select
-                                        placeholder="Search by Agency"
+                                        placeholder="By Agency"
                                         value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
                                         onChange={(selectedOption) => setFilters({ ...filters, agency: selectedOption ? selectedOption.label : '' })}
                                         options={filterOptions.agency}
@@ -695,7 +724,7 @@ export const Overview = () => {
                                 </div>
                                 <div className="col s12 l4">
                                     <Select
-                                        placeholder="Search by Booking Channel"
+                                        placeholder="By Booking Channel"
                                         value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
                                         onChange={(selectedOption) => setFilters({ ...filters, booking_channel: selectedOption ? selectedOption.label : '' })}
                                         options={filterOptions.booking_channel}
@@ -731,7 +760,7 @@ export const Overview = () => {
                                 </div>
                                 <div className="col s12 l4">
                                     <Select
-                                        placeholder="Search by Consultant"
+                                        placeholder="By Consultant"
                                         value={
                                             filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
                                                 ? filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
@@ -770,21 +799,8 @@ export const Overview = () => {
                                     </span>
                                 </div>
                             </div>
-                            <div className="row center" style={{ marginBottom: '0px' }}>
-                                <div className="col s12 l6">
-                                    <input
-                                        type="text"
-                                        id="search-query"
-                                        placeholder="Search by text..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="search-input" // Apply any styling as needed
-                                    />
-                                    <span className="material-symbols-outlined grey-text text-darken-1">
-                                        search
-                                    </span>
-                                </div>
-                                <div className="col s6 l3">
+                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
+                                <div className="col s6 l3 offset-l3">
                                     <div>
                                         <ReactDatePicker
                                             id="date-in"
@@ -794,7 +810,7 @@ export const Overview = () => {
                                             }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
-                                            className="date-input"
+                                            className="date-input search-input"
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}
@@ -818,7 +834,7 @@ export const Overview = () => {
                                             }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
-                                            className="date-input"
+                                            className="date-input search-input"
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}

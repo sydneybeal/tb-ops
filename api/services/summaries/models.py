@@ -179,7 +179,7 @@ class ReportInput(BaseModel):
     country_name: Optional[str] = None
     consultant_name: Optional[str] = None
     portfolio_name: Optional[str] = None
-    property_name: Optional[str] = None
+    property_names: Optional[List[str]] = None
     core_destination: Optional[str] = None
 
 

@@ -7,6 +7,7 @@ import { AuthProvider } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import BedNightReports from './pages/BedNights/BedNightReports';
+import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
 import BookingChannels from './pages/BookingChannels/BookingChannels';
 import Portfolios from './pages/Portfolios/Portfolios';
@@ -71,6 +72,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <PropertyDetails />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/looker_reports/',
+    element: (
+      <ProtectedRoute>
+        <LookerReports />
       </ProtectedRoute>
     ),
   },

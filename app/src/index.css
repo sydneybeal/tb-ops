@@ -392,9 +392,27 @@ input[type=text]:focus + label {
   color: #0e9bac !important;
 }
 
-/* [type="checkbox"]+span:before {
+[type="checkbox"]+span {
+  padding-top: 0px !important;
+}
+
+[type="checkbox"]+span:before {
   border: 2px solid #8c8782 !important;
-} */
+  background-color: white !important;
+
+}
+
+.report-divider {
+  width: 90%;
+  border: 2px solid #363839;
+  border-radius: 2px;
+  margin-top: 80px;
+  margin-bottom: 50px;
+}
+
+.search-input::placeholder {
+  color: #8c8782;
+}
 
 /* [type="checkbox"]+span:not(.lever):before {
   border: 2px solid #8c8782 !important;
@@ -403,8 +421,11 @@ input[type=text]:focus + label {
 } */
 
 [type="checkbox"]:checked+span:not(.lever):before {
-  border-right: 2px solid #0e9bac !important;
-  border-bottom: 2px solid #0e9bac !important;
+  border-left: none !important;
+  border-top: none !important;
+  border-right: 3px solid #0e9bac !important;
+  border-bottom: 3px solid #0e9bac !important;
+  background-color: transparent !important;
 }
 
 .prop-chips-container {

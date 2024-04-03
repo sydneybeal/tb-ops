@@ -145,6 +145,21 @@ const ReportDashboard = ({ reportData }) => {
         }
     };
 
+    const formatPropertyValue = (propertyNames) => {
+        if (!propertyNames || propertyNames.length === 0) {
+            return 'ALL';
+        } else if (propertyNames.length === 1) {
+            // If there's only one property, return its name
+            return propertyNames[0];
+        } else if (propertyNames.length <= 3) {
+            // If there are two or three properties, return the count (e.g., "2 properties")
+            return `${propertyNames.length} properties`;
+        } else {
+            // If there are more than three properties, return "3+ properties"
+            return '3+ properties';
+        }
+    };
+
     return (
         <div className="container" style={{ width: '90%' }}>
             <div className="row report-toggles">
@@ -174,7 +189,7 @@ const ReportDashboard = ({ reportData }) => {
                         <span className="text-bold">Portfolio:</span> {formatValue(report_inputs.portfolio_name)}
                     </div>
                     <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Property:</span> {formatValue(report_inputs.property_name)}
+                        <span className="text-bold">Property:</span> {formatPropertyValue(report_inputs.property_names)}
                     </div>
                     <br />
                     <br />

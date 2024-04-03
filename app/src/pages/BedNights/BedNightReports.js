@@ -8,6 +8,7 @@ import CircularPreloader from '../../components/CircularPreloader';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
 import ReportDashboard from './ReportDashboard';
+import LookerDashboard from './LookerDashboard';
 import BedNightTable from '../AccommodationLogs/BedNightTable';
 import moment from 'moment';
 
@@ -38,18 +39,26 @@ export const BedNightReports = () => {
         core_destination_name: '',
         country_name: '',
         consultant_name: '',
-        property_name: '',
+        // property_name: '',
+        property_names: [],
         portfolio_name: '',
         booking_channel: '',
         agency: '',
     });
 
-    // Function to construct query string from filters
     const getQueryString = (params) => {
         return Object.keys(params)
-            .filter(key => params[key] !== '' && params[key] != null) // Filter out empty values
-            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-            .join('&');
+            .filter(key => params[key] !== '' && params[key] != null && !(Array.isArray(params[key]) && params[key].length === 0)) // Filter out empty and null values, including empty arrays
+            .map(key => {
+                if (Array.isArray(params[key])) {
+                    // For arrays, join elements with a pipe character or another suitable delimiter
+                    return `${encodeURIComponent(key)}=${encodeURIComponent(params[key].join('|'))}`;
+                } else {
+                    // For non-array values, just encode the key and value as before
+                    return `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`;
+                }
+            })
+            .join('&'); // Join all parameters with & to form the query string
     };
 
     // Function to parse query string into filters object
@@ -209,8 +218,7 @@ export const BedNightReports = () => {
 
     useEffect(() => {
         // Initialize or dynamically update filter options based on `accommodationLogData` and current `filters`
-        const filteredData = accommodationLogData.filter(item => {
-            // Check for "No agency" filter and match against null or "n/a"
+        const contextFilteredData = accommodationLogData.filter(item => {
             const agencyCondition = filters.agency === "No agency"
                 ? (!item.agency_name || item.agency_name === 'n/a')
                 : item.agency_name === filters.agency;
@@ -222,11 +230,27 @@ export const BedNightReports = () => {
             return (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
                 && (!filters.consultant_name || item.consultant_display_name === filters.consultant_name)
                 && (!filters.country_name || item.country_name === filters.country_name)
-                && (!filters.property_name || item.property_name === filters.property_name)
                 && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
                 && (!filters.agency || agencyCondition)
                 && (!filters.booking_channel || bookingChannelCondition);
         });
+
+        // Use `contextFilteredData` to generate options for dropdowns that depend on other filters but not for `property_name`
+        const propertyContext = filters.country_name
+            ? contextFilteredData.filter(item => item.country_name === filters.country_name)
+            : accommodationLogData;
+
+        const propertyOptions = [...new Set(propertyContext.map(item => item.property_name))]
+            .sort()
+            .map(name => ({ value: name, label: name || 'No property' }));
+
+        // Now, apply `property_names` filter along with others to determine the final filtered data set
+        let filteredData = contextFilteredData;
+        if (filters.property_names && filters.property_names.length > 0) {
+            filteredData = filteredData.filter(item =>
+                filters.property_names.includes(item.property_name)
+            );
+        }
 
 
         // Maps for creating filter options from filtered data
@@ -248,7 +272,7 @@ export const BedNightReports = () => {
         const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const consultantOptions = Object.values(consultantMap).sort((a, b) => a.label.localeCompare(b.label));
-        const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
+        // const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
         const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
         // No agency first for agency
         const noAgencyOption = Object.values(agencyMap).find(option => option.label === 'No agency');
@@ -384,8 +408,8 @@ export const BedNightReports = () => {
                             <div className="col s12 l3">
                                 <Select
                                     placeholder="Search by Property"
-                                    value={filterOptions.property_name.find(option => option.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
-                                    onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
+                                    // value={filterOptions.property_name.find(option => option.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
+                                    // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.property_name}
                                     styles={{
                                         control: (provided, state) => ({
@@ -410,6 +434,12 @@ export const BedNightReports = () => {
                                         }),
                                     }}
                                     isClearable
+                                    isMulti
+                                    value={filterOptions.property_name.filter(option => filters.property_names.includes(option.label))}
+                                    onChange={(selectedOptions) => setFilters({
+                                        ...filters,
+                                        property_names: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                    })}
                                 />
                             </div>
                         </div>

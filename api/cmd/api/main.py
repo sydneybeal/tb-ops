@@ -644,6 +644,11 @@ def make_app(
     ) -> BedNightReport | JSONResponse:
         """Get all AccommodationLog summaries."""
         query_params = dict(request.query_params)
+        property_names = query_params.get("property_names", "")
+        if property_names:
+            query_params["property_names"] = property_names.split("|")
+        # Similar parsing for other array-like parameters if necessary
+
         report_data = await summary_svc.get_bed_night_report(query_params)
         if report_data is None:
             raise HTTPException(status_code=404, detail="Report data not found")
