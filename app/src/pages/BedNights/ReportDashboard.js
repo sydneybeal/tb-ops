@@ -3,10 +3,7 @@ import Chart from 'react-apexcharts';
 import M from 'materialize-css';
 import moment from 'moment';
 
-const ReportDashboard = ({ reportData }) => {
-    // States for toggling visibility of charts
-    const [showPieCharts, setShowPieCharts] = useState(true);
-
+const ReportDashboard = ({ id = "reportData", reportData, showPieCharts = true, showMonthly = true, maxProps = 10 }) => {
     useEffect(() => {
         M.AutoInit();
     }, [reportData]);
@@ -16,7 +13,12 @@ const ReportDashboard = ({ reportData }) => {
     }
 
     const { report_inputs, calculations } = reportData;
-    const formatValue = (value) => value || "ALL";
+    const formatValue = (key, value) => {
+        if (key === 'start_date' || key === 'end_date') {
+            return value == null ? "n/a" : value; // Only show "N/A" for null/undefined start_date or end_date
+        }
+        return value || "ALL"; // For all other keys, fallback to "ALL" for falsy values
+    };
 
     const colorPalette = [
         '#00626e',
@@ -160,122 +162,233 @@ const ReportDashboard = ({ reportData }) => {
         }
     };
 
+    const shouldShowCountries = () => {
+        return !report_inputs.country_name || calculations.by_country.length > 1;
+    };
+
+    const shouldShowPortfolios = () => {
+        return !report_inputs.portfolio_name; // Only show if no specific portfolio is selected
+    };
+
+    const shouldShowProperties = () => {
+        // Show if no properties are specified, or if multiple are specified.
+        // If one is specified and it's the only one for the selected country, still show.
+        if (!report_inputs.property_names || report_inputs.property_names.length > 1) {
+            return true;
+        } else if (report_inputs.country_name && calculations.by_country.find(c => c.name === report_inputs.country_name)?.properties?.length === 1) {
+            return true;
+        }
+        return false;
+    };
+
+
+    const showCountries = shouldShowCountries();
+    const showPortfolios = shouldShowPortfolios();
+    const showProperties = shouldShowProperties();
+
+    const sectionsToShow = [
+        showCountries ? 'countries' : null,
+        showPortfolios ? 'portfolios' : null,
+        showProperties ? 'properties' : null,
+    ].filter(Boolean);
+
+    const totalSectionsToShow = 1 + sectionsToShow.length;
+    const needSecondRow = totalSectionsToShow === 4;
+
+    // const totalSectionsToShow = ['by_country', 'by_portfolio', 'by_property'].reduce((acc, key) => {
+    //     return acc + (calculations[key].length > 1 ? 1 : 0);
+    // }, 1);
+
+    let gridClass, totalsGridClass;
+    switch (totalSectionsToShow) {
+        case 2:
+            totalsGridClass = "s12 m6";
+            gridClass = "s12 m6";
+            break;
+        case 3:
+            totalsGridClass = "s12 m4";
+            gridClass = "s12 m4";
+            break;
+        case 4:
+            totalsGridClass = "s12 m6";
+            gridClass = "s12 m6";
+            break;
+        default:
+            totalsGridClass = "s12";
+            gridClass = "s12";
+    }
+
     return (
         <div className="container" style={{ width: '90%' }}>
-            <div className="row report-toggles">
-                <span>
-                    <label>
-                        <input type="checkbox" checked={showPieCharts} onChange={() => setShowPieCharts(!showPieCharts)} />
-                        <span>Show Pie Charts</span>
-                    </label>
-                </span>
-            </div>
-            <div className="card">
+            <div className="card" id={id}>
                 <div className="card-content">
-                    <h4 className="report-title">Bed Night Report</h4>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Start Date:</span> {formatValue(report_inputs.start_date)}
+                    <div style={{ marginTop: '30px', marginBottom: '30px' }}>
+                        <h3 style={{ marginBottom: '30px' }} className="report-title">Bed Night Report</h3>
+                        {/* <img
+                            id="front-page-logo"
+                            src={`${process.env.PUBLIC_URL}/tblogo.png`}
+                            alt="roam & report"
+                            style={{
+                                maxWidth: '20%',
+                                height: 'auto', // Ensures the height scales in proportion to the width
+                                objectFit: 'contain', // Keeps the aspect ratio and fits the content within the bounds of its container
+                                display: 'block',
+                                margin: '20px auto'
+                            }} /> */}
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Start Date:</span> {formatValue('start_date', report_inputs.start_date)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">End Date:</span> {formatValue('end_date', report_inputs.end_date)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Consultant:</span> {formatValue('consultant_name', report_inputs.consultant_name)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Country:</span> {formatValue('country_name', report_inputs.country_name)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Portfolio:</span> {formatValue('portfolio_name', report_inputs.portfolio_name)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Property:</span> {formatPropertyValue(report_inputs.property_names)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Agency:</span> {formatValue('agency', report_inputs.agency)}
+                        </div>
+                        <div className="chip tb-teal tb-grey-text text-lighten-5">
+                            <span className="text-bold">Booking Channel:</span> {formatValue('booking_channel', report_inputs.booking_channel)}
+                        </div>
                     </div>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">End Date:</span> {formatValue(report_inputs.end_date)}
-                    </div>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Consultant:</span> {formatValue(report_inputs.consultant_name)}
-                    </div>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Country:</span> {formatValue(report_inputs.country_name)}
-                    </div>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Portfolio:</span> {formatValue(report_inputs.portfolio_name)}
-                    </div>
-                    <div className="chip tb-teal lighten-3">
-                        <span className="text-bold">Property:</span> {formatPropertyValue(report_inputs.property_names)}
-                    </div>
-                    <br />
-                    <br />
-
-                    <div className="row">
-                        <div className="col s12 m6 vertically-centered">
+                    <div className="row" id="overviewRow">
+                        <div className={`col ${totalsGridClass} vertically-centered`} style={{ marginBottom: '30px' }}>
                             <div className="container vertically-centered">
                                 <h5>Total Bed Nights</h5>
                                 <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.total_bed_nights}</span>
                             </div>
-                            <div className="container vertically-centered">
-                                <h5>Total Countries</h5>
-                                <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_country.length}</span>
+                            {calculations.by_property.length > 1 &&
+                                <div className="container vertically-centered">
+                                    <h5>Total Countries</h5>
+                                    <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_country.length}</span>
+                                </div>
+                            }
+                            {calculations.by_property.length > 1 &&
+                                <div className="container vertically-centered">
+                                    <h5>Total Properties</h5>
+                                    <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_property.length}</span>
+                                </div>
+                            }
+                        </div>
+                        {sectionsToShow.includes('countries') && (
+                            <div className={`col ${gridClass}`} style={{ marginBottom: '30px' }}>
+                                <h5>Top Countries</h5>
+                                <table>
+                                    <tbody>
+                                        {calculations.by_country
+                                            .sort((a, b) => b.bed_nights - a.bed_nights)
+                                            .slice(0, maxProps === "all" ? undefined : Number(maxProps))
+                                            .map((item, index) => (
+                                                <tr key={index}>
+                                                    <td className="text-bold">{item.name}</td>
+                                                    <td className="right-align">{item.bed_nights} nights</td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div className="container vertically-centered">
-                                <h5>Total Properties</h5>
-                                <span className="chip tb-grey lighten-2 large-chip text-bold">{calculations.by_property.length}</span>
+                        )}
+                        {!needSecondRow && sectionsToShow.includes('portfolios') && (
+                            <div className={`col ${gridClass}`} style={{ marginBottom: '30px' }}>
+                                <h5>Top Portfolios</h5>
+                                <table>
+                                    <tbody>
+                                        {calculations.by_portfolio
+                                            .sort((a, b) => b.bed_nights - a.bed_nights)
+                                            .slice(0, maxProps === "all" ? undefined : Number(maxProps))
+                                            .map((item, index) => (
+                                                <tr key={index}>
+                                                    <td className="text-bold">{item.name}</td>
+                                                    <td className="right-align">{item.bed_nights} nights</td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
-                        <div className="col s12 m6">
-                            <h5>Top Countries</h5>
-                            <table>
-                                <tbody>
-                                    {calculations.by_country
-                                        .sort((a, b) => b.bed_nights - a.bed_nights)
-                                        .slice(0, 5)
-                                        .map((item, index) => (
-                                            <tr key={index}>
-                                                <td className="text-bold">{item.name}</td>
-                                                <td className="right-align">{item.bed_nights} nights</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        )}
+                        {!needSecondRow && sectionsToShow.includes('properties') && (
+                            <div className={`col ${gridClass}`} style={{ marginBottom: '30px' }}>
+                                <h5>Top Properties</h5>
+                                <table>
+                                    <tbody>
+                                        {calculations.by_property
+                                            .sort((a, b) => b.bed_nights - a.bed_nights)
+                                            .slice(0, maxProps === "all" ? undefined : Number(maxProps))
+                                            .map((item, index) => (
+                                                <tr key={index}>
+                                                    <td className="text-bold">{item.name}</td>
+                                                    <td className="right-align">{item.bed_nights} nights</td>
+                                                </tr>
+                                            ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
-                    <br />
-                    <br />
+                    {needSecondRow && (
+                        <div className="row">
+                            {sectionsToShow.includes('portfolios') && (
+                                <div className={`col ${gridClass}`} style={{ marginBottom: '30px' }}>
+                                    <h5>Top Portfolios</h5>
+                                    <table>
+                                        <tbody>
+                                            {calculations.by_portfolio
+                                                .sort((a, b) => b.bed_nights - a.bed_nights)
+                                                .slice(0, maxProps === "all" ? undefined : Number(maxProps))
+                                                .map((item, index) => (
+                                                    <tr key={index}>
+                                                        <td className="text-bold">{item.name}</td>
+                                                        <td className="right-align">{item.bed_nights} nights</td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            {sectionsToShow.includes('properties') && (
+                                <div className={`col ${gridClass}`} style={{ marginBottom: '30px' }}>
+                                    <h5>Top Properties</h5>
+                                    <table>
+                                        <tbody>
+                                            {calculations.by_property
+                                                .sort((a, b) => b.bed_nights - a.bed_nights)
+                                                .slice(0, maxProps === "all" ? undefined : Number(maxProps))
+                                                .map((item, index) => (
+                                                    <tr key={index}>
+                                                        <td className="text-bold">{item.name}</td>
+                                                        <td className="right-align">{item.bed_nights} nights</td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                    <div className="row">
-                        <div className="col s12 m6">
-                            <h5>Top Portfolios</h5>
-                            <table>
-                                <tbody>
-                                    {calculations.by_portfolio
-                                        .sort((a, b) => b.bed_nights - a.bed_nights)
-                                        .slice(0, 5)
-                                        .map((item, index) => (
-                                            <tr key={index}>
-                                                <td className="text-bold">{item.name}</td>
-                                                <td className="right-align">{item.bed_nights} nights</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
+                            )}
                         </div>
-                        <div className="col s12 m6">
-                            <h5>Top Properties</h5>
-                            <table>
-                                <tbody>
-                                    {calculations.by_property
-                                        .sort((a, b) => b.bed_nights - a.bed_nights)
-                                        .slice(0, 10)
-                                        .map((item, index) => (
-                                            <tr key={index}>
-                                                <td className="text-bold">{item.name}</td>
-                                                <td className="right-align">{item.bed_nights} nights</td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <br />
-                    <br />
-
-                    <div className="row">
-                        <div className="col s12">
-                            <h5>By Month</h5>
-                            <Chart options={barOptions} series={barSeries} type="bar" height={350} />
-                        </div>
-                    </div>
-                    <br />
-                    <br />
+                    )}
+                    {showMonthly && (
+                        <>
+                            <div className="row" id="monthlyRow">
+                                <div className="col s12">
+                                    <h5>By Month</h5>
+                                    <Chart options={barOptions} series={barSeries} type="bar" height={350} />
+                                </div>
+                            </div>
+                            <br />
+                            <br />
+                        </>
+                    )}
                     {showPieCharts && (
-                        <div className="row center">
+                        <div className="row center" id="pieChartRow">
                             <div className="col s12 m6 center">
                                 <h5>By Country</h5>
                                 <div style={{ display: 'flex', justifyContent: 'center' }}>

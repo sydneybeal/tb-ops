@@ -181,6 +181,8 @@ class ReportInput(BaseModel):
     portfolio_name: Optional[str] = None
     property_names: Optional[List[str]] = None
     core_destination: Optional[str] = None
+    agency: Optional[str] = None
+    booking_channel: Optional[str] = None
 
 
 class BreakdownItem(BaseModel):

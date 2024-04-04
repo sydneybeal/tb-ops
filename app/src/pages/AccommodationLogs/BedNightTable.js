@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import M from 'materialize-css';
 import moment from 'moment';
 
-const BedNightTable = ({ filteredData, openEditModal, handleSelectionChange, bulkSelectedEntries, isEditable, pageSize = 100 }) => {
+const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, handleSelectionChange, bulkSelectedEntries, isEditable, pageSize = 100, forReport = false }) => {
     const [displayData, setDisplayData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'updated_at', ascending: false });
     const [sortedData, setSortedData] = useState([]);
@@ -163,37 +163,39 @@ const BedNightTable = ({ filteredData, openEditModal, handleSelectionChange, bul
 
     return (
         <>
-            <div className="row center">
-                <ul className="pagination">
-                    <li className={currentPage === 0 ? 'disabled' : ''}>
-                        <a
-                            onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
-                            href="#!"
-                        >
-                            <i className="material-icons">chevron_left</i>
-                        </a>
-                    </li>
-                    {generatePageRange(currentPage, totalPages).map((page, index) => (
-                        <li key={index} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
-                            {page === '...' ? (
-                                <span>...</span>
-                            ) : (
-                                <a className="tb-grey-text text-darken-1" onClick={(e) => { e.preventDefault(); changePage(page - 1); }} href="#!">{page}</a>
-                            )}
+            {!forReport &&
+                <div className="row center">
+                    <ul className="pagination">
+                        <li className={currentPage === 0 ? 'disabled' : ''}>
+                            <a
+                                onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                href="#!"
+                            >
+                                <i className="material-icons">chevron_left</i>
+                            </a>
                         </li>
-                    ))}
-                    <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
-                        <a
-                            onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
-                            href="#!"
-                        >
-                            <i className="material-icons">chevron_right</i>
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                        {generatePageRange(currentPage, totalPages).map((page, index) => (
+                            <li key={index} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
+                                {page === '...' ? (
+                                    <span>...</span>
+                                ) : (
+                                    <a className="tb-grey-text text-darken-1" onClick={(e) => { e.preventDefault(); changePage(page - 1); }} href="#!">{page}</a>
+                                )}
+                            </li>
+                        ))}
+                        <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                            <a
+                                onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
+                                href="#!"
+                            >
+                                <i className="material-icons">chevron_right</i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            }
 
-            <table className="accommodation-logs-table">
+            <table className="accommodation-logs-table" id={id}>
                 <thead>
                     <tr>
                         <th
@@ -356,26 +358,28 @@ const BedNightTable = ({ filteredData, openEditModal, handleSelectionChange, bul
                                 </span>
                             </span>
                         </th>
-                        <th
-                            onClick={() =>
-                                applySorting('updated_at')
-                            }
-                            style={{ width: '120px', textAlign: 'right' }}
-                        >
-                            <span
-                                className={`tooltipped`}
-                                data-position="bottom"
-                                data-tooltip="Last updated"
-                                data-tooltip-class="tooltip-light"
+                        {!forReport &&
+                            <th
+                                onClick={() =>
+                                    applySorting('updated_at')
+                                }
+                                style={{ width: '120px', textAlign: 'right' }}
                             >
-                                <span className="material-symbols-outlined tb-md-black-text text-bold">
-                                    update
+                                <span
+                                    className={`tooltipped`}
+                                    data-position="bottom"
+                                    data-tooltip="Last updated"
+                                    data-tooltip-class="tooltip-light"
+                                >
+                                    <span className="material-symbols-outlined tb-md-black-text text-bold">
+                                        update
+                                    </span>
+                                    <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                        {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                    </span>
                                 </span>
-                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                    {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                </span>
-                            </span>
-                        </th>
+                            </th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -458,48 +462,50 @@ const BedNightTable = ({ filteredData, openEditModal, handleSelectionChange, bul
                                         </span>
                                         <br />
                                     </td>
-                                    <td style={{ width: '90px', marginRight: '1px', marginLeft: '1px' }}>
-                                        <div style={{ textAlign: 'right', padding: '0px', marginRight: '1px', marginLeft: '1px' }}>
-                                            <span
-                                                className={`tooltipped`}
-                                                data-position="left"
-                                                data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                                data-tooltip-class="tooltip-updated-by"
-                                            >
-                                                {isEditable && (
-                                                    <>
-                                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
-                                                            <button
-                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
-                                                                onClick={() => openEditModal(item)}
-                                                            >
-                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                    edit_note
-                                                                </span>
-                                                            </button>
-                                                            <label class="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="tb-checkbox"
-                                                                    checked={!!bulkSelectedEntries?.has(item.id)}
-                                                                    onChange={(e) => handleSelectionChange(
-                                                                        item, e.target.checked)}
-                                                                />
-                                                                <span></span>
-                                                            </label>
-                                                        </div>
-                                                        <br />
-                                                    </>
-                                                )}
-                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
-                                                    <span className="material-symbols-outlined">
-                                                        update
-                                                    </span>
-                                                    {moment.utc(item.updated_at).local().fromNow()}
-                                                </em>
-                                            </span>
-                                        </div>
-                                    </td>
+                                    {!forReport &&
+                                        <td style={{ width: '90px', marginRight: '1px', marginLeft: '1px' }}>
+                                            <div style={{ textAlign: 'right', padding: '0px', marginRight: '1px', marginLeft: '1px' }}>
+                                                <span
+                                                    className={`tooltipped`}
+                                                    data-position="left"
+                                                    data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                    data-tooltip-class="tooltip-updated-by"
+                                                >
+                                                    {isEditable && (
+                                                        <>
+                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit_note
+                                                                    </span>
+                                                                </button>
+                                                                <label class="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="tb-checkbox"
+                                                                        checked={!!bulkSelectedEntries?.has(item.id)}
+                                                                        onChange={(e) => handleSelectionChange(
+                                                                            item, e.target.checked)}
+                                                                    />
+                                                                    <span></span>
+                                                                </label>
+                                                            </div>
+                                                            <br />
+                                                        </>
+                                                    )}
+                                                    <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                        <span className="material-symbols-outlined">
+                                                            update
+                                                        </span>
+                                                        {moment.utc(item.updated_at).local().fromNow()}
+                                                    </em>
+                                                </span>
+                                            </div>
+                                        </td>
+                                    }
                                 </tr>
 
                             </React.Fragment>

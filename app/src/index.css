@@ -61,8 +61,9 @@ footer {
 }
 
 main {
-  padding-top: 30px;
+  /* padding-top: 30px; */
   padding-bottom: 30px;
+  overflow-y: auto;
 }
 
 /* .header {
@@ -501,6 +502,9 @@ nav.top-nav {
   box-shadow: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.14);
   background-color: transparent;
+  position: sticky;
+  top: 0px;
+  z-index: 100;
 }
 
 @media only screen and (max-width: 992px) {
@@ -622,6 +626,18 @@ ul.sidenav.sidenav-fixed li.logo {
   overflow-y: auto;
 }
 
+
+.modal.download-report-modal {
+  border-radius: 10px;
+  width: 90%;
+  min-height: 80%;
+}
+
+.modal.download-report-modal .modal-content {
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
 .modal.property-detail-modal {
   border-radius: 10px;
   width: 60%;
@@ -705,9 +721,42 @@ table.accommodation-logs-table {
   table-layout: fixed;
 }
 
-/* .accommodation-logs-table th, .accommodation-logs-table td {
-  width: 120px;
-} */
+table.overlaps-table {
+  /* border-collapse: separate; */
+  border-spacing: 0;
+  width: 100%;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow-y: auto;
+}
+
+table.overlaps-table tr:last-child {
+  border-bottom: none !important;
+}
+
+table.overlaps-table th, td {
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0px;
+}
+
+.overlaps-table thead th {
+  letter-spacing: 0.08em;
+  position: sticky;
+  top: 105px;
+  z-index: 10020;
+}
+
+.sticky-container {
+  position: sticky;
+  top: 0;
+  z-index: 10030;
+  background-color: #fffefd;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
 
 
 .suggestions-list {

@@ -72,6 +72,7 @@ export const OverlapsV2 = () => {
         const renderedTravelers = new Set();
 
         const renderIndividualOverlap = (overlap) => {
+            let renderedRows = 0;
             const daysOfWeek = Array(7).fill(null); // Represents a week
             const weekStart = moment(startDate);
 
@@ -97,7 +98,7 @@ export const OverlapsV2 = () => {
                                 <td key={index} colSpan={endIndex - startIndex + 1} style={{ textAlign: 'center' }}>
                                     <div className="tb-grey lighten-4" style={{ width: '100%', borderRadius: '5px' }}>
                                         <span className="material-symbols-outlined tb-md-black-text">person</span>
-                                        <span className="tb-teal-text text-bold">{traveler}</span><br />
+                                        <span className="tb-teal-text text-darken-1 text-bold">{traveler}</span><br />
                                         <span className="material-symbols-outlined tb-md-black-text">badge</span>
                                         <em>{consultant}</em><br />
                                         <em>{overlapStartDate.format("M/D")}-{overlapEndDate.format("M/D")}</em>
@@ -120,34 +121,57 @@ export const OverlapsV2 = () => {
             const overlapEnd2 = overlap.date_out_traveler2;
 
             const traveler1Row = renderWeekCells(overlap.traveler1, `${overlap.consultant_first_name_traveler1} ${overlap.consultant_last_name_traveler1}`, overlapStart1, overlapEnd1);
+            if (traveler1Row) renderedRows++;
             const traveler2Row = renderWeekCells(overlap.traveler2, `${overlap.consultant_first_name_traveler2} ${overlap.consultant_last_name_traveler2}`, overlapStart2, overlapEnd2);
+            if (traveler2Row) renderedRows++;
 
-            return <><tr>{traveler1Row}</tr><tr>{traveler2Row}</tr></>;
+            return {
+                renderedJsx: (
+                    traveler1Row || traveler2Row ? (
+                        <>
+                            {traveler1Row ? <tr style={{ borderBottom: 'none' }}>{traveler1Row}</tr> : null}
+                            {traveler2Row ? <tr style={{ borderBottom: 'none' }}>{traveler2Row}</tr> : null
+                            }
+                        </>
+                    ) : null
+                ),
+                count: renderedRows
+            };
         };
 
+        let actualRenderedRows = 0; // Initialize counter
+
+        // Assuming `property.overlaps` exists and is an array
+        const overlapContent = property.overlaps.map((overlap, index) => {
+            const { renderedJsx, count } = renderIndividualOverlap(overlap);
+            actualRenderedRows += count;
+            return <React.Fragment key={`overlap-${index}`}>{renderedJsx}</React.Fragment>;
+        });
 
         return (
             <>
-                <tr>
-                    <td colSpan="1" rowSpan={property.overlaps.length * 2 + 1}>
+                <tr style={{ borderBottom: 'none', width: '200px' }}>
+                    <td colSpan="1"
+                        className="tb-grey lighten-4"
+                        rowSpan={actualRenderedRows + 3}
+                        style={{ borderBottom: 'none' }}
+                    >
                         <span className="text-bold">{property.propertyName}</span>
                         <br />
-                        <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                        <span className="material-symbols-outlined tb-md-grey-text text-darken-1">
                             globe
                         </span>
                         {property.propertyCountry}
                         <br />
-                        <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                        <span className="material-symbols-outlined tb-md-grey-text text-darken-1">
                             explore
                         </span>
                         {property.propertyCoreDestination}
                     </td>
                 </tr>
-                {property.overlaps.map((overlap, index) => (
-                    <React.Fragment key={index}>
-                        {renderIndividualOverlap(overlap)}
-                    </React.Fragment>
-                ))}
+                <tr colSpan="1" style={{ height: '20px', borderBottom: 'none', borderTop: 'none' }}></tr>
+                {overlapContent}
+                <tr colSpan="1" style={{ height: '20px', borderBottom: '2px solid #8c8782', borderTop: 'none' }}></tr>
             </>
         );
     };
@@ -159,7 +183,7 @@ export const OverlapsV2 = () => {
             </header>
 
             <main className="tb-grey lighten-6">
-                <div className="container center" style={{ width: '100%' }}>
+                <div className="container center" style={{ width: '100%', marginTop: '30px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
@@ -168,9 +192,8 @@ export const OverlapsV2 = () => {
                         <>
                             {loaded ? (
                                 <>
-
-                                    <div className="container center" style={{ width: '90%' }}>
-                                        <div>
+                                    <div className="container center" style={{ width: '100%' }}>
+                                        <div className="sticky-container">
                                             <WeekSelector onWeekChange={handleWeekChange} initialDate={startDate} />
                                             <div style={{ fontSize: '1.4rem' }}>
                                                 <span>Overlaps from </span>
@@ -184,37 +207,34 @@ export const OverlapsV2 = () => {
                                             </div>
                                             {/* Rest of your component */}
                                         </div>
-                                        <table>
+                                        <table className="overlaps-table">
                                             <thead>
-                                                <tr className="tb-md-black-text text-bold">
-                                                    <th>Property Name</th>
-                                                    <th>Sunday</th>
-                                                    <th>Monday</th>
-                                                    <th>Tuesday</th>
-                                                    <th>Wednesday</th>
-                                                    <th>Thursday</th>
-                                                    <th>Friday</th>
-                                                    <th>Saturday</th>
+                                                <tr className="tb-grey-text text-lighten-5 text-bold" style={{ borderBottom: '2px solid #8c8782', borderTop: 'none' }}>
+                                                    <th className="tb-teal darken-4" style={{ borderRadius: '5px 0px 0px 0px', width: '200px' }}>Property</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>SUN</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>MON</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>TUES</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>WEDS</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>THURS</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>FRI</th>
+                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px 5px 0px 0px' }}>SAT</th>
                                                 </tr>
                                             </thead>
-                                            {/* Scrollable table body */}
-                                            {/* <div style={{ overflowY: 'auto', maxHeight: '800px' }}> */}
                                             <tbody>
-                                                {
-                                                    Object.values(groupedOverlaps).length > 0 ? (
-                                                        Object.values(groupedOverlaps).map((property, propertyIndex) => (
-                                                            <React.Fragment key={propertyIndex}>
-                                                                {renderOverlapItems(property)} {/* Call with the entire property */}
-                                                            </React.Fragment>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan="8" style={{ textAlign: 'center' }}>No overlaps this week.</td>
-                                                        </tr>
-                                                    )
+                                                {loaded && Object.values(groupedOverlaps).length > 0 ? (
+                                                    Object.values(groupedOverlaps).map((property, propertyIndex) => (
+                                                        <React.Fragment key={propertyIndex}>
+                                                            {renderOverlapItems(property)} {/* Call with the entire property */}
+                                                        </React.Fragment>
+                                                    ))
+                                                ) : loaded ? (
+                                                    <tr>
+                                                        <td colSpan="8" style={{ textAlign: 'center' }}>No overlaps this week.</td>
+                                                    </tr>
+                                                ) :
+                                                    null
                                                 }
                                             </tbody>
-                                            {/* </div> */}
                                         </table>
                                     </div>
                                 </>

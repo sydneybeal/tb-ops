@@ -8,7 +8,7 @@ import CircularPreloader from '../../components/CircularPreloader';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
 import ReportDashboard from './ReportDashboard';
-import LookerDashboard from './LookerDashboard';
+import ReportPreviewModal from './ReportPreviewModal';
 import BedNightTable from '../AccommodationLogs/BedNightTable';
 import moment from 'moment';
 
@@ -18,12 +18,16 @@ export const BedNightReports = () => {
     const [filteredData, setFilteredData] = useState([]);
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
-    const minDate = '2000-01-01';
+    const minDate = '2024-01-01';
     const maxDate = '2099-12-31';
     const [temporaryStartDate, setTemporaryStartDate] = useState('');
     const [temporaryEndDate, setTemporaryEndDate] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+    const [showPieCharts, setShowPieCharts] = useState(true);
+    const [showMonthly, setShowMonthly] = useState(true);
+    const [maxProps, setMaxProps] = useState(10);
+    const [showModal, setShowModal] = useState(false);
     const [filterOptions, setFilterOptions] = useState({
         core_destination_name: [],
         country_name: [],
@@ -45,6 +49,15 @@ export const BedNightReports = () => {
         booking_channel: '',
         agency: '',
     });
+
+    const handleOpenModal = () => {
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        document.body.style.overflow = '';
+    };
 
     const getQueryString = (params) => {
         return Object.keys(params)
@@ -210,6 +223,11 @@ export const BedNightReports = () => {
     }, [filters, filterOptions, accommodationLogData, reportData]);
 
     useEffect(() => {
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+    }, [filters, filterOptions, accommodationLogData, reportData]);
+
+    useEffect(() => {
         if (accommodationLogData.length > 0) {
             const elems = document.querySelectorAll('select');
             M.FormSelect.init(elems);
@@ -219,6 +237,14 @@ export const BedNightReports = () => {
     useEffect(() => {
         // Initialize or dynamically update filter options based on `accommodationLogData` and current `filters`
         const contextFilteredData = accommodationLogData.filter(item => {
+
+            const itemDateIn = new Date(item.date_in);
+            const itemDateOut = item.date_out ? new Date(item.date_out) : itemDateIn;
+            const startDate = filters.start_date ? new Date(filters.start_date) : new Date('1900-01-01');
+            const endDate = filters.end_date ? new Date(filters.end_date) : new Date('2100-12-31');
+
+            const dateCondition = (!filters.start_date || itemDateIn >= startDate) && (!filters.end_date || itemDateOut <= endDate);
+
             const agencyCondition = filters.agency === "No agency"
                 ? (!item.agency_name || item.agency_name === 'n/a')
                 : item.agency_name === filters.agency;
@@ -227,7 +253,8 @@ export const BedNightReports = () => {
                 ? (!item.booking_channel_name)
                 : item.booking_channel_name === filters.booking_channel;
 
-            return (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
+            return dateCondition
+                && (!filters.core_destination_name || item.core_destination_name === filters.core_destination_name)
                 && (!filters.consultant_name || item.consultant_display_name === filters.consultant_name)
                 && (!filters.country_name || item.country_name === filters.country_name)
                 && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
@@ -300,16 +327,22 @@ export const BedNightReports = () => {
         });
     }, [accommodationLogData, filters]); // Depends on both the dataset and current filter selections
 
-
-
     return (
         <>
             <header>
                 <Navbar title="Reports" />
             </header>
 
-            <main className="tb-grey lighten-6">
+            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%' }}>
+                    {showModal && (
+                        <ReportPreviewModal
+                            reportData={reportData}
+                            filteredData={filteredData}
+                            onClose={handleCloseModal}
+                            isOpen={showModal}
+                        />
+                    )}
                     <div className="row center">
                         <div>
                             <div className="col s12 l3">
@@ -339,7 +372,9 @@ export const BedNightReports = () => {
                                                 backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                             },
                                         }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                     isClearable
                                 />
                             </div>
@@ -370,7 +405,9 @@ export const BedNightReports = () => {
                                                 backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                             },
                                         }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                     isClearable
                                 />
                             </div>
@@ -401,7 +438,9 @@ export const BedNightReports = () => {
                                                 backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                             },
                                         }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                     isClearable
                                 />
                             </div>
@@ -432,7 +471,9 @@ export const BedNightReports = () => {
                                                 backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                             },
                                         }),
+                                        menuPortal: base => ({ ...base, zIndex: 9999 })
                                     }}
+                                    menuPortalTarget={document.body}
                                     isClearable
                                     isMulti
                                     value={filterOptions.property_name.filter(option => filters.property_names.includes(option.label))}
@@ -472,7 +513,9 @@ export const BedNightReports = () => {
                                             backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                         },
                                     }),
+                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                 }}
+                                menuPortalTarget={document.body}
                                 isClearable
                             />
                         </div>
@@ -503,7 +546,9 @@ export const BedNightReports = () => {
                                             backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                         },
                                     }),
+                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                 }}
+                                menuPortalTarget={document.body}
                                 isClearable
                             />
                         </div>
@@ -534,7 +579,9 @@ export const BedNightReports = () => {
                                             backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                         },
                                     }),
+                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                 }}
+                                menuPortalTarget={document.body}
                                 isClearable
                             />
                         </div>
@@ -663,14 +710,53 @@ export const BedNightReports = () => {
                                     refresh
                                 </span>
                             </button>
+                            <span style={{ marginLeft: '10px' }}>
+                                <button
+                                    onClick={handleOpenModal}
+                                    className="btn-floating waves-effect waves-light tb-teal darken-3"
+                                >
+                                    <span className="material-symbols-outlined">
+                                        file_save
+                                    </span>
+                                </button>
+                            </span>
                         </div>
                     </div>
                     {loaded ? (
                         <>
                             <br />
-                            <ReportDashboard reportData={reportData} />
+                            <div className="row report-toggles">
+                                <span style={{ marginRight: '20px' }}>
+                                    <label>
+                                        <input type="checkbox" checked={showPieCharts} onChange={() => setShowPieCharts(!showPieCharts)} />
+                                        <span className="tb-grey-text text-darken-5">Show Pie Charts</span>
+                                    </label>
+                                </span>
+                                <span style={{ marginLeft: '20px', marginRight: '20px' }}>
+                                    <label>
+                                        <input type="checkbox" checked={showMonthly} onChange={() => setShowMonthly(!showMonthly)} />
+                                        <span className="tb-grey-text text-darken-5">Show Monthly</span>
+                                    </label>
+                                </span>
+                                <span style={{ marginLeft: '20px', display: 'inline-block', width: '100px' }}>
+                                    <label className="tb-grey-text text-darken-5" style={{ marginRight: '10px', paddingBottom: '0px' }}>Max # Results</label>
+                                    <select
+                                        value={maxProps}
+                                        onChange={(e) => setMaxProps(e.target.value)}
+                                        style={{ textAlign: 'center' }}
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value="all">All</option>
+                                    </select>
+                                    {/* </label> */}
+                                </span>
+                            </div>
+                            <ReportDashboard reportData={reportData} showPieCharts={showPieCharts} showMonthly={showMonthly} maxProps={maxProps} />
                             <br />
                             <h5>Matching Bed Nights</h5>
+                            <em><span className="text-bold tb-teal-text">{filteredData.length}</span> total results.</em>
                             <BedNightTable
                                 filteredData={filteredData}
                                 isEditable={false}

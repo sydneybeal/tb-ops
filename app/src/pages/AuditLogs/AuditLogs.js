@@ -150,7 +150,7 @@ export const AuditLogs = () => {
                 <Navbar title="Audit Logs" />
             </header>
 
-            <main className="tb-grey lighten-6">
+            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>

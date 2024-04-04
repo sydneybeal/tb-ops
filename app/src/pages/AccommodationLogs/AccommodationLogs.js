@@ -486,7 +486,7 @@ export const Overview = () => {
                 <Navbar title="Service Providers" />
             </header>
 
-            <main className="tb-grey lighten-6">
+            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%' }}>
                     <AddLogModal
                         isOpen={isModalOpen}
@@ -508,7 +508,10 @@ export const Overview = () => {
                         <>
 
                             <div className="row center">
-                                <div className="col s12 l8 offset-l2">
+                                <div className="input-field col s12 l8 offset-l2">
+                                    <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                        search
+                                    </span>
                                     <input
                                         type="text"
                                         id="search-query"
@@ -517,9 +520,7 @@ export const Overview = () => {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="search-input" // Apply any styling as needed
                                     />
-                                    <span className="material-symbols-outlined grey-text text-darken-1">
-                                        search
-                                    </span>
+
                                 </div>
                                 <div className="col s12 l2">
                                     <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>

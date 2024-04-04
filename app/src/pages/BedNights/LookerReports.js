@@ -17,7 +17,7 @@ export const LookerReports = () => {
                 <Navbar title="Looker Reports" />
             </header>
 
-            <main className="tb-grey lighten-6">
+            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container" style={{ width: '90%' }}>
                     <div className="row">
                         <h3 style={{ fontFamily: 'Bodoni, sans-serif', marginBottom: '20px' }}>By Country</h3>

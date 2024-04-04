@@ -27,7 +27,7 @@ const FaqPage = () => {
                 <Navbar title="FAQ" />
             </header>
 
-            <main className="tb-grey lighten-6">
+            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container" style={{ width: '90%' }}>
                     <div style={{ marginBottom: '40px' }}>
                         <div style={{ marginBottom: '10px' }}>
