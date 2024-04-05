@@ -182,6 +182,12 @@ class SummaryService:
         """Gets all CountrySummary models."""
         return await self._repo.get_all_countries()
 
+    async def get_country_details_by_id(
+        self, country_id: UUID
+    ) -> Optional[CountrySummary]:
+        """Gets CountrySummary model by ID."""
+        return await self._repo.get_country_by_id(country_id)
+
     # Agency
     async def get_all_agencies(self) -> Sequence[AgencySummary]:
         """Gets all AgencySummary models."""

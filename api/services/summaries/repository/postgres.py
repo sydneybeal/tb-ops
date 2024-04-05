@@ -470,8 +470,37 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             )
             async with con.transaction():
                 records = await con.fetch(query)
-                property_summaries = [CountrySummary(**record) for record in records]
-                return property_summaries
+                country_summaries = [CountrySummary(**record) for record in records]
+                return country_summaries
+
+    async def get_country_by_id(
+        self, country_id: UUID = None
+    ) -> Sequence[CountrySummary]:
+        """Gets a CountrySummary model by ID, joined with its foreign keys."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                c.*,
+                cd.name AS core_destination_name,
+                COUNT(al.id) FILTER (WHERE al.property_id IS NOT NULL) AS num_related
+            FROM public.countries c
+            LEFT JOIN public.properties p ON c.id = p.country_id
+            LEFT JOIN public.accommodation_logs al ON p.id = al.property_id
+            LEFT JOIN public.core_destinations cd ON c.core_destination_id = cd.id
+            WHERE c.id = $1
+            GROUP BY c.id, cd.name
+            """
+        )
+
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, country_id)
+                if res:
+                    return CountrySummary(**res)
 
     async def get_all_booking_channels(self) -> Sequence[BookingChannelSummary]:
         """Gets all BookingChannel models in the repository, joined with their foreign keys."""

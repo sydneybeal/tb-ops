@@ -4,14 +4,15 @@ FROM --platform=linux/amd64 python:3.11-bullseye
 # Set up a working directory in the container for your application
 WORKDIR /app
 
+# Include the requirements layer first to speed up builds
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy the backend code into the container
 COPY . /app
 
 # Set the PYTHONPATH environment variable to include the project root
 ENV PYTHONPATH=/app
-
-# Install any Python dependencies listed in 'requirements.txt'
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Arguments for Postgres
 ARG POSTGRES_USER

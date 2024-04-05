@@ -98,12 +98,38 @@ class TravelService:
 
     async def delete_accommodation_log(self, log_id: UUID, user_email: str):
         """Deletes an AccommodationLog."""
+        filters = {
+            "id": log_id
+        }  # Adjust the filters as necessary to match your query requirements
+        accommodation_log_summary = (
+            await self._summary_svc.get_accommodation_logs_by_filters(filters)
+        )
+        first_row = accommodation_log_summary[0] if accommodation_log_summary else None
+        detail_before_deletion = {
+            "id": first_row.id,
+            "primary_traveler": first_row.primary_traveler,
+            "num_pax": first_row.num_pax,
+            "date_in": first_row.date_in,
+            "date_out": first_row.date_out,
+            "bed_nights": first_row.bed_nights,
+            "property_name": first_row.property_name,
+            "property_portfolio": first_row.property_portfolio,
+            "core_destination_name": first_row.core_destination_name,
+            "country_name": first_row.country_name,
+            "booking_channel_name": first_row.booking_channel_name,
+            "agency_name": first_row.agency_name,
+            "consultant_display_name": first_row.consultant_display_name,
+            "updated_at": first_row.updated_at,
+            "updated_by": first_row.updated_by,
+        }
         deleted = await self._repo.delete_accommodation_log(log_id)
+        if not deleted:
+            return False
         audit_log = AuditLog(
             table_name="accommodation_logs",
             record_id=log_id,
             user_name=user_email,
-            before_value={"id": log_id},
+            before_value=detail_before_deletion,
             after_value={},
             action="delete",
         )
@@ -635,12 +661,22 @@ class TravelService:
                 "error": "Cannot delete country due to related records.",
                 "details": affected_logs,
             }
+        country_summary = await self._summary_svc.get_country_details_by_id(country_id)
+        detail_before_deletion = {
+            "id": country_summary.id,
+            "name": country_summary.name,
+            "core_destination_name": country_summary.core_destination_name,
+            "updated_at": country_summary.updated_at,
+            "updated_by": country_summary.updated_by,
+        }
         deleted = await self._repo.delete_country(country_id)
+        if not deleted:
+            return False
         audit_log = AuditLog(
             table_name="countries",
             record_id=country_id,
             user_name=user_email,
-            before_value={"id": country_id},
+            before_value=detail_before_deletion,
             after_value={},
             action="delete",
         )
@@ -902,12 +938,25 @@ class TravelService:
                 "error": "Cannot delete property due to related records.",
                 "details": affected_logs,
             }
+        property_summary = await self._summary_svc.get_property_details_by_id(
+            property_id
+        )
+        detail_before_deletion = {
+            "id": property_summary.property_id,
+            "name": property_summary.name,
+            "core_destination_name": property_summary.core_destination_name,
+            "country_name": property_summary.country_name,
+            "updated_at": property_summary.updated_at,
+            "updated_by": property_summary.updated_by,
+        }
         deleted = await self._repo.delete_property(property_id)  # returns bool
+        if not deleted:
+            return False
         audit_log = AuditLog(
             table_name="properties",
             record_id=property_id,
             user_name=user_email,
-            before_value={"id": property_id},
+            before_value=detail_before_deletion,
             after_value={},
             action="delete",
         )
@@ -1154,16 +1203,19 @@ class TravelService:
                 "details": affected_logs,
             }
         deleted = await self._repo.delete_agency(agency_id)
+        if not deleted:
+            # Handle as needed if no record was found or deleted
+            return False
         audit_log = AuditLog(
             table_name="agencies",
             record_id=agency_id,
             user_name=user_email,
-            before_value={"id": agency_id},
+            before_value=deleted,
             after_value={},
             action="delete",
         )
         await self.process_audit_logs(audit_log)
-        return deleted
+        return True
 
     # BookingChannel
     async def add_booking_channel(self, models: Sequence[BookingChannel]) -> None:
@@ -1312,16 +1364,18 @@ class TravelService:
                 "details": affected_logs,
             }
         deleted = await self._repo.delete_booking_channel(booking_channel_id)
+        if not deleted:
+            return False
         audit_log = AuditLog(
             table_name="booking_channels",
             record_id=booking_channel_id,
             user_name=user_email,
-            before_value={"id": booking_channel_id},
+            before_value=deleted,
             after_value={},
             action="delete",
         )
         await self.process_audit_logs(audit_log)
-        return deleted
+        return True
 
     # Portfolio
     async def add_portfolio(self, models: Sequence[Portfolio]) -> None:
@@ -1467,16 +1521,18 @@ class TravelService:
                 "details": affected_logs,
             }
         deleted = await self._repo.delete_portfolio(portfolio_id)
+        if not deleted:
+            return False
         audit_log = AuditLog(
-            table_name="booking_channels",
+            table_name="portfolios",
             record_id=portfolio_id,
             user_name=user_email,
-            before_value={"id": portfolio_id},
+            before_value=deleted,
             after_value={},
             action="delete",
         )
         await self.process_audit_logs(audit_log)
-        return deleted
+        return True
 
     # Consultant
     async def add_consultant(self, models: Sequence[Consultant]) -> None:
@@ -1648,14 +1704,17 @@ class TravelService:
                 "details": affected_logs,
             }
         deleted = await self._repo.delete_consultant(consultant_id)
+        if not deleted:
+            # Handle as needed if no record was found or deleted
+            return False
         audit_log = AuditLog(
             table_name="consultants",
             record_id=consultant_id,
             user_name=user_email,
-            before_value={"id": consultant_id},
+            before_value=deleted,
             after_value={},
             action="delete",
         )
 
         await self.process_audit_logs(audit_log)
-        return deleted
+        return True

@@ -820,13 +820,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 if res:
                     return Consultant(**res)
 
-    async def delete_consultant(self, consultant_id: UUID) -> bool:
+    async def delete_consultant(self, consultant_id: UUID) -> Optional[dict]:
         """Deletes a sequence of Consultant models from the repository."""
         pool = await self._get_pool()
         query = dedent(
             """
             DELETE FROM public.consultants
-            WHERE id = $1;
+            WHERE id = $1
+            RETURNING *;
             """
         )
         async with pool.acquire() as con:
@@ -835,15 +836,22 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 # Execute the delete query
-                result = await con.execute(query, consultant_id)
-                deleted_rows = int(result.split()[1])
-                if deleted_rows == 0:
+                deleted_record = await con.fetchrow(query, consultant_id)
+                if deleted_record is None:
                     print(
                         f"No consultant found with ID: {consultant_id}, nothing was deleted."
                     )
                     return False
+                deleted_data = {
+                    "id": deleted_record["id"],
+                    "first_name": deleted_record["first_name"],
+                    "last_name": deleted_record["last_name"],
+                    "is_active": deleted_record["is_active"],
+                    "updated_at": deleted_record["updated_at"],
+                    "updated_by": deleted_record["updated_by"],
+                }
                 print(f"Successfully deleted consultant with ID: {consultant_id}.")
-                return True
+                return deleted_data
 
     # CoreDestination
     async def add_core_destination(
@@ -1355,13 +1363,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Updates a sequence of Agency models in the repository."""
         raise NotImplementedError
 
-    async def delete_agency(self, agency_id: UUID) -> bool:
+    async def delete_agency(self, agency_id: UUID) -> Optional[dict]:
         """Deletes an Agency model from the repository."""
         pool = await self._get_pool()
         query = dedent(
             """
             DELETE FROM public.agencies
-            WHERE id = $1;
+            WHERE id = $1
+            RETURNING *;
             """
         )
         async with pool.acquire() as con:
@@ -1370,13 +1379,18 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 # Execute the delete query
-                result = await con.execute(query, agency_id)
-                deleted_rows = int(result.split()[1])
-                if deleted_rows == 0:
+                deleted_record = await con.fetchrow(query, agency_id)
+                if deleted_record is None:
                     print(f"No agency found with ID: {agency_id}, nothing was deleted.")
                     return False
+                deleted_data = {
+                    "id": deleted_record["id"],
+                    "name": deleted_record["name"],
+                    "updated_at": deleted_record["updated_at"],
+                    "updated_by": deleted_record["updated_by"],
+                }
                 print(f"Successfully deleted agency with ID: {agency_id}.")
-                return True
+                return deleted_data
 
     # BookingChannel
     async def add_booking_channel(
@@ -1542,13 +1556,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         """Updates a sequence of BookingChannel models in the repository."""
         raise NotImplementedError
 
-    async def delete_booking_channel(self, booking_channel_id: UUID) -> bool:
+    async def delete_booking_channel(self, booking_channel_id: UUID) -> Optional[dict]:
         """Deletes a sequence of BookingChannel models from the repository."""
         pool = await self._get_pool()
         query = dedent(
             """
             DELETE FROM public.booking_channels
-            WHERE id = $1;
+            WHERE id = $1
+            RETURNING *;
             """
         )
         async with pool.acquire() as con:
@@ -1557,17 +1572,22 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 # Execute the delete query
-                result = await con.execute(query, booking_channel_id)
-                deleted_rows = int(result.split()[1])
-                if deleted_rows == 0:
+                deleted_record = await con.fetchrow(query, booking_channel_id)
+                if deleted_record is None:
                     print(
                         f"No booking channel found with ID: {booking_channel_id}, nothing was deleted."
                     )
                     return False
+                deleted_data = {
+                    "id": deleted_record["id"],
+                    "name": deleted_record["name"],
+                    "updated_at": deleted_record["updated_at"],
+                    "updated_by": deleted_record["updated_by"],
+                }
                 print(
                     f"Successfully deleted booking channel with ID: {booking_channel_id}."
                 )
-                return True
+                return deleted_data
 
     async def add_portfolio(self, portfolios: Sequence[Portfolio]) -> None:
         """Adds a sequence of Portfolio models to the repository."""
@@ -1681,13 +1701,14 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 if res:
                     return BookingChannel(**res)
 
-    async def delete_portfolio(self, portfolio_id: UUID) -> bool:
+    async def delete_portfolio(self, portfolio_id: UUID) -> Optional[UUID]:
         """Deletes a sequence of Portfolio models from the repository."""
         pool = await self._get_pool()
         query = dedent(
             """
             DELETE FROM public.portfolios
-            WHERE id = $1;
+            WHERE id = $1
+            RETURNING *;
             """
         )
         async with pool.acquire() as con:
@@ -1696,15 +1717,20 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             )
             async with con.transaction():
                 # Execute the delete query
-                result = await con.execute(query, portfolio_id)
-                deleted_rows = int(result.split()[1])
-                if deleted_rows == 0:
+                deleted_record = await con.fetchrow(query, portfolio_id)
+                if deleted_record is None:
                     print(
                         f"No portfolio found with ID: {portfolio_id}, nothing was deleted."
                     )
                     return False
+                deleted_data = {
+                    "id": deleted_record["id"],
+                    "name": deleted_record["name"],
+                    "updated_at": deleted_record["updated_at"],
+                    "updated_by": deleted_record["updated_by"],
+                }
                 print(f"Successfully deleted portfolio with ID: {portfolio_id}.")
-                return True
+                return deleted_data
 
     async def get_portfolio_by_name(self, name: str) -> Portfolio:
         """Gets a single Portfolio model based on name."""
