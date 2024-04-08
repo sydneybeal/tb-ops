@@ -161,7 +161,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 return accommodation_log_summaries
 
     async def get_accommodation_logs_by_filter(
-        self, filters: dict
+        self, filters: dict, exclude_fam: bool = False
     ) -> Sequence[AccommodationLogSummary]:
         """Gets a set of AccommodationLogSummary models by filter."""
         pool = await self._get_pool()
@@ -209,10 +209,12 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 )
                 query_conditions.append(f"p.name IN ({property_names_list})")
             # Note: consultant_name will be handled below
-
+        if exclude_fam:
+            query_conditions.append("bc.name IS NULL OR bc.name != 'FAM/TB Travel'")
         condition_string = " AND ".join(query_conditions)
         if condition_string:
             condition_string = "WHERE " + condition_string
+
         query = dedent(
             f"""
             SELECT
@@ -287,9 +289,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             a1.primary_traveler AS traveler1,
             a1.date_in AS date_in_traveler1,
             a1.date_out AS date_out_traveler1,
+            bc1.name AS booking_channel_traveler1,
             a2.primary_traveler AS traveler2,
             a2.date_in AS date_in_traveler2,
             a2.date_out AS date_out_traveler2,
+            bc2.name AS booking_channel_traveler2,
             p.id AS property_id,
             p.name AS property_name,
             c.name AS country_name,
@@ -309,6 +313,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             AND a2.date_out > a1.date_in
         JOIN public.properties p ON a1.property_id = p.id
         LEFT JOIN public.countries c ON p.country_id = c.id
+        LEFT JOIN public.booking_channels bc1 on a1.booking_channel_id = bc1.id
+        LEFT JOIN public.booking_channels bc2 on a2.booking_channel_id = bc2.id
         JOIN public.consultants cons1 ON a1.consultant_id = cons1.id
         JOIN public.consultants cons2 ON a2.consultant_id = cons2.id
         JOIN public.core_destinations cd ON p.core_destination_id = cd.id

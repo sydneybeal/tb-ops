@@ -44,7 +44,9 @@ class SummaryService:
     # BedNightReport
     async def get_bed_night_report(self, labels: dict) -> Sequence[BedNightReport]:
         """Generates a BedNightReport based on input criteria."""
-        accommodation_logs = await self._repo.get_accommodation_logs_by_filter(labels)
+        accommodation_logs = await self._repo.get_accommodation_logs_by_filter(
+            labels, exclude_fam=True
+        )
         report = self.generate_report(accommodation_logs, labels)
         return report
 

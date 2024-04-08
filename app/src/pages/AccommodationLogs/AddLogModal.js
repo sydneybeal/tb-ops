@@ -894,7 +894,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         const cheliAndPeacockChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "cheli & peacock")?.value;
         const elewanaPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "elewana collection")?.value;
 
-        // Special case handling for "Elewana" portfolio and "Cheli & Peacock" booking channel
+        // Special case handling for "Ecoventura" portfolio and "Galapagos Network/Ecoventura" booking channel
         const galapagosChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "galapagos network/ecoventura")?.value;
         const ecoventuraPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "ecoventura")?.value;
 
@@ -1720,7 +1720,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 placeholderText="Select date in"
                                                 className="date-input"
                                                 dateFormat="MM/dd/yyyy"
-                                                minDate={new Date('2000-01-01')}
+                                                minDate={new Date('2017-01-01')}
                                                 maxDate={new Date('2100-12-31')}
                                                 autoComplete="off"
                                                 openToDate={log.date_out ? moment(log.date_in).toDate() : new Date()}
@@ -1749,7 +1749,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     placeholderText="Select date out"
                                                     className="date-input"
                                                     dateFormat="MM/dd/yyyy"
-                                                    minDate={new Date('2000-01-01')}
+                                                    minDate={new Date('2017-01-01')}
                                                     maxDate={new Date('2100-12-31')}
                                                     autoComplete="off"
                                                     openToDate={log.date_in ? moment(log.date_in).toDate() : new Date()}

@@ -64,6 +64,8 @@ export const OverlapsV2 = () => {
         }, {});
     }, [apiData]);
 
+    console.log(groupedOverlaps);
+
     const renderOverlapItems = (property) => {
         if (!property || !Array.isArray(property.overlaps)) {
             return null;
@@ -76,7 +78,7 @@ export const OverlapsV2 = () => {
             const daysOfWeek = Array(7).fill(null); // Represents a week
             const weekStart = moment(startDate);
 
-            const renderWeekCells = (traveler, consultant, overlapStartDate, overlapEndDate) => {
+            const renderWeekCells = (traveler, bookingChannel, consultant, overlapStartDate, overlapEndDate) => {
                 const uniqueKey = `${traveler}-${property.propertyName}-${overlapStartDate}-${overlapEndDate}`;
                 if (renderedTravelers.has(uniqueKey)) {
                     // This traveler has been rendered for this property and date range, skip rendering
@@ -96,9 +98,26 @@ export const OverlapsV2 = () => {
                         if (index === startIndex) {
                             return (
                                 <td key={index} colSpan={endIndex - startIndex + 1} style={{ textAlign: 'center' }}>
-                                    <div className="tb-grey lighten-4" style={{ width: '100%', borderRadius: '5px' }}>
-                                        <span className="material-symbols-outlined tb-md-black-text">person</span>
-                                        <span className="tb-teal-text text-darken-1 text-bold">{traveler}</span><br />
+                                    <div
+                                        className="tb-grey lighten-4"
+                                        style={{
+                                            border: bookingChannel === "FAM/TB Travel" ? '3px solid #057e8c' : 'none' // Apply conditional border
+                                        }}
+                                    >
+
+                                        {bookingChannel === "FAM/TB Travel" ? (
+                                            <div style={{ marginTop: '10px' }}>
+                                                <span className="material-symbols-outlined tb-md-black-text">person</span>
+                                                <span className="tb-teal-text text-darken-1 text-bold">{traveler}</span>
+                                                <span style={{ marginLeft: '8px', height: '30px' }} className="chip tb-grey darken-1 tb-off-white-text text-bold">FAM/TB</span>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <span className="material-symbols-outlined tb-md-black-text">person</span>
+                                                <span className="tb-teal-text text-darken-1 text-bold">{traveler}</span>
+                                            </div>
+                                        )
+                                        }
                                         <span className="material-symbols-outlined tb-md-black-text">badge</span>
                                         <em>{consultant}</em><br />
                                         <em>{overlapStartDate.format("M/D")}-{overlapEndDate.format("M/D")}</em>
@@ -120,9 +139,9 @@ export const OverlapsV2 = () => {
             const overlapStart2 = overlap.date_in_traveler2;
             const overlapEnd2 = overlap.date_out_traveler2;
 
-            const traveler1Row = renderWeekCells(overlap.traveler1, `${overlap.consultant_first_name_traveler1} ${overlap.consultant_last_name_traveler1}`, overlapStart1, overlapEnd1);
+            const traveler1Row = renderWeekCells(overlap.traveler1, overlap.booking_channel_traveler1, `${overlap.consultant_first_name_traveler1} ${overlap.consultant_last_name_traveler1}`, overlapStart1, overlapEnd1);
             if (traveler1Row) renderedRows++;
-            const traveler2Row = renderWeekCells(overlap.traveler2, `${overlap.consultant_first_name_traveler2} ${overlap.consultant_last_name_traveler2}`, overlapStart2, overlapEnd2);
+            const traveler2Row = renderWeekCells(overlap.traveler2, overlap.booking_channel_traveler2, `${overlap.consultant_first_name_traveler2} ${overlap.consultant_last_name_traveler2}`, overlapStart2, overlapEnd2);
             if (traveler2Row) renderedRows++;
 
             return {
@@ -182,8 +201,15 @@ export const OverlapsV2 = () => {
                 <Navbar title="Client Overlaps" />
             </header>
 
-            <main className="tb-grey lighten-6">
-                <div className="container center" style={{ width: '100%', marginTop: '30px' }}>
+            <main className="tb-grey lighten-6" style={{
+                position: 'absolute',
+                top: '80px',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                overflowY: 'auto',
+            }}>
+                <div className="container center" style={{ width: '100%', paddingBottom: '500px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.

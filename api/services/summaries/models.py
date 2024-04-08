@@ -222,9 +222,11 @@ class Overlap(BaseModel):
     traveler1: str
     date_in_traveler1: date
     date_out_traveler1: date
+    booking_channel_traveler1: Optional[str] = None
     traveler2: str
     date_in_traveler2: date
     date_out_traveler2: date
+    booking_channel_traveler2: Optional[str] = None
     overlap_days: int
     property_id: UUID
     property_name: str

@@ -101,7 +101,7 @@ export const Overview = () => {
         return () => {
             instances.forEach(instance => instance.destroy());
         };
-    }, [filters, filterOptions]);
+    }, [filters, filterOptions, bulkSelectedEntries]);
 
     useEffect(() => {
         const coreDestMap = apiData.reduce((acc, item) => {

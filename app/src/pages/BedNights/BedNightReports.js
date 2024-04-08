@@ -18,7 +18,7 @@ export const BedNightReports = () => {
     const [filteredData, setFilteredData] = useState([]);
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
-    const minDate = '2024-01-01';
+    const minDate = '2017-01-01';
     const maxDate = '2099-12-31';
     const [temporaryStartDate, setTemporaryStartDate] = useState('');
     const [temporaryEndDate, setTemporaryEndDate] = useState('');
@@ -259,7 +259,8 @@ export const BedNightReports = () => {
                 && (!filters.country_name || item.country_name === filters.country_name)
                 && (!filters.portfolio_name || item.property_portfolio === filters.portfolio_name)
                 && (!filters.agency || agencyCondition)
-                && (!filters.booking_channel || bookingChannelCondition);
+                && (!filters.booking_channel || bookingChannelCondition)
+                && (item.booking_channel_name !== "FAM/TB Travel");
         });
 
         // Use `contextFilteredData` to generate options for dropdowns that depend on other filters but not for `property_name`

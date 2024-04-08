@@ -20,22 +20,9 @@
   src: url("../public/BrandonGrotesque-Bold.otf") format("opentype");
 }
 
-html, body, #root {
-  height: 100%;
-  margin: 0;
-}
-
-body > #root {
-  display: flex;
-  flex-direction: column;
-  color: #363839;
-}
-
-#root > main {
-  flex: 1;
-}
-
 body {
+  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', sans-serif !important;
+  font-size: 1.1rem;
   margin: 0;
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -44,14 +31,28 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', sans-serif !important;
-  font-size: 1.1rem;
+html, body {
+  height: 100%;
+  margin: 0;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+body > #root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: #363839;
+}
+
+#root > main {
+  flex: 1;
+  overflow-y: auto !important;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: white;
 }
 
 header,
@@ -60,16 +61,30 @@ footer {
   padding-left: 250px;
 }
 
-main {
-  /* padding-top: 30px; */
-  padding-bottom: 30px;
-  overflow-y: auto;
+nav.top-nav {
+  height: 100px;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+  background-color: transparent;
+  position: sticky;
+  top: 0px;
+  z-index: 100;
 }
 
-/* .header {
-  font-family: 'Bodoni', sans-serif;
-  color: #47443e; dark grey
-} */
+.sticky-container {
+  position: sticky;
+  top: 0;
+  z-index: 10030;
+  background-color: #fffefd;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
 
 .text-bold {
   font-weight: 700 !important;
@@ -163,7 +178,7 @@ main {
 }
 
 .tb-teal-text.text-darken-2 {
-  color: #057e8c !important;
+  color: rgb(5, 126, 140) !important;
 }
 
 .tb-teal-text.text-darken-3 {
@@ -496,17 +511,6 @@ input[type=text]:focus + label {
   font-weight: bold !important;
 }
 
-nav.top-nav {
-  height: 100px;
-  -webkit-box-shadow: none;
-  box-shadow: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-  background-color: transparent;
-  position: sticky;
-  top: 0px;
-  z-index: 100;
-}
-
 @media only screen and (max-width: 992px) {
   header, main, footer {
     padding-left: 0;
@@ -742,20 +746,18 @@ table.overlaps-table th, td {
   border-radius: 0px;
 }
 
+table.overlaps-table td>div {
+  width: 100%;
+  border-radius: 6px;
+  /* box-shadow: rgba(186, 181, 177, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px; */
+  box-shadow: rgba(186, 181, 177, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+
 .overlaps-table thead th {
   letter-spacing: 0.08em;
   position: sticky;
   top: 105px;
   z-index: 10020;
-}
-
-.sticky-container {
-  position: sticky;
-  top: 0;
-  z-index: 10030;
-  background-color: #fffefd;
-  padding: 10px 0;
-  margin-bottom: 10px;
 }
 
 

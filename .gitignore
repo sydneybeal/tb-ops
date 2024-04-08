@@ -1,5 +1,8 @@
 seed/*
 *seed_users.py
+*seed_local.py
+*seed_from_prod.py
+*manual_updates.sql
 *cloudbuild*
 *.editorconfig
 
