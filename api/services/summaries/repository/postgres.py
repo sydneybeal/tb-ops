@@ -210,7 +210,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"p.name IN ({property_names_list})")
             # Note: consultant_name will be handled below
         if exclude_fam:
-            query_conditions.append("bc.name IS NULL OR bc.name != 'FAM/TB Travel'")
+            query_conditions.append("(bc.name IS NULL OR bc.name != 'FAM/TB Travel')")
         condition_string = " AND ".join(query_conditions)
         if condition_string:
             condition_string = "WHERE " + condition_string

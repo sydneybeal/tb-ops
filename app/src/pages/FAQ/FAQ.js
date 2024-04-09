@@ -54,14 +54,36 @@ const FaqPage = () => {
                                 <li>The person paying for the accommodation is the primary traveler.</li>
                                 <li>There should only be one traveler name on each entry.</li>
                                 <li>
-                                    Do NOT enter bed nights for FAM trips, charity trips, personal TB trips,
-                                    or any other discounted travel.
-                                </li>
-                                <li>
                                     When in doubt: Do what makes sense. Keep in mind the purpose of R&R
                                     is to have an accurate reflection of bed nights per location.
                                     How can you best represent that?
                                 </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '40px' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                live_help
+                            </span>
+                            <span className="text-bold">
+                                How do I enter TB FAMs, personal travel, and hosted FAMs into R&R?
+                            </span>
+                        </div>
+                        <div>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                menu_book
+                            </span>
+                            Enter service providers as normal, but select <span className="text-bold tb-teal-text">FAM/TB Travel</span> as the <span className="text-bold">booking channel</span>. This will exclude the entry from Bed Night Reports.
+                            <ul className="custom-icons">
+                                <li>TB FAMs and personal travel, select <span className="text-bold tb-teal-text">n/a</span> for the <span className="text-bold">agency</span>.</li>
+                                <li>Hosted FAMs, select the appropriate agency.</li>
                             </ul>
                         </div>
                     </div>

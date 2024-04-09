@@ -155,15 +155,21 @@ export const Properties = () => {
         });
     }, [apiData,]);
 
+    const normalizeString = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
     useEffect(() => {
         let newFilteredData = apiData;
 
         if (searchQuery) {
+            const normalizedSearchQuery = normalizeString(searchQuery);
+
             newFilteredData = newFilteredData.filter((item) =>
-                (item.name ? item.name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.portfolio_name ? item.portfolio_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.country_name ? item.country_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.core_destination_name ? item.core_destination_name.toLowerCase() : '').includes(searchQuery.toLowerCase()),
+                (item.name ? normalizeString(item.name) : '').includes(normalizedSearchQuery) ||
+                (item.portfolio_name ? normalizeString(item.portfolio_name) : '').includes(normalizedSearchQuery) ||
+                (item.country_name ? normalizeString(item.country_name) : '').includes(normalizedSearchQuery) ||
+                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery),
             );
         }
 

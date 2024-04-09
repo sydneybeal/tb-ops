@@ -897,12 +897,29 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         // Special case handling for "Ecoventura" portfolio and "Galapagos Network/Ecoventura" booking channel
         const galapagosChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "galapagos network/ecoventura")?.value;
         const ecoventuraPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "ecoventura")?.value;
+        // Special case handling for properties Magashi, Sabyinyo, Bisate and "Thousand Hills Rwanda" booking channel
+        const magashiPropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "wilderness magashi")?.value;
+        const bisatePropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "wilderness bisate")?.value;
+        const sabyinyoPropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "wilderness sabyinyo")?.value;
+        const thousandHillsChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "thousand hills rwanda")?.value;
 
         // First check for the special case
         if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to 'Direct' for Elewana Collection",
+                displayLength: 4000,
+                classes: 'success-green',
+            });
+            handleLogChange(index, 'booking_channel_id', directChannelId);
+        } else if (
+            (log.property_id === magashiPropertyId
+                || log.property_id === bisatePropertyId
+                || log.property_id === sabyinyoPropertyId)
+            && log.booking_channel_id === thousandHillsChannelId) {
+            // Automatically change booking channel to Direct if conditions are met
+            M.toast({
+                html: "Booking channel automatically changed to 'Direct' for Thousand Hills Rwanda",
                 displayLength: 4000,
                 classes: 'success-green',
             });

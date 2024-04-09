@@ -25,7 +25,9 @@ async def main() -> int:
     log = logging.getLogger()
     logging.basicConfig()
     log.setLevel(logging.INFO)
-    log.info("Attempting connection to postgres")
+    log.info(
+        "Attempting connection to postgres: %s", os.getenv("POSTGRES_HOST", "localhost")
+    )
     conn = await make_conn(
         PostgresConfig(
             os.getenv("POSTGRES_HOST", "localhost"),

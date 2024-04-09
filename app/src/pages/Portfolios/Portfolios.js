@@ -109,12 +109,17 @@ export const Portfolios = () => {
 
     }, [sorting, apiData, currentPage, filteredData]);
 
+    const normalizeString = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
     useEffect(() => {
         let newFilteredData = apiData;
 
         if (searchQuery) {
+            const normalizedSearchQuery = normalizeString(searchQuery);
             newFilteredData = newFilteredData.filter((item) =>
-                (item.name ? item.name.toLowerCase() : '').includes(searchQuery.toLowerCase())
+                (item.name ? normalizeString(item.name) : '').includes(normalizedSearchQuery)
             );
         }
 

@@ -281,6 +281,10 @@ export const Overview = () => {
         document.body.style.overflow = '';
     };
 
+    const normalizeString = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
     useEffect(() => {
         // Step 1: Filter apiData based on all filters except property_names
         let contextFilteredData = apiData.filter(item => {
@@ -358,15 +362,16 @@ export const Overview = () => {
         }
 
         if (searchQuery) {
+            const normalizedSearchQuery = normalizeString(searchQuery);
             newFilteredData = newFilteredData.filter((item) =>
-                (item.primary_traveler ? item.primary_traveler.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.property_name ? item.property_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.property_portfolio ? item.property_portfolio.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.consultant_display_name ? item.consultant_display_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.agency_name ? item.agency_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.booking_channel_name ? item.booking_channel_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.country_name ? item.country_name.toLowerCase() : '').includes(searchQuery.toLowerCase()) ||
-                (item.core_destination_name ? item.core_destination_name.toLowerCase() : '').includes(searchQuery.toLowerCase()),
+                (item.primary_traveler ? normalizeString(item.primary_traveler) : '').includes(normalizedSearchQuery) ||
+                (item.property_name ? normalizeString(item.property_name) : '').includes(normalizedSearchQuery) ||
+                (item.property_portfolio ? normalizeString(item.property_portfolio) : '').includes(normalizedSearchQuery) ||
+                (item.consultant_display_name ? normalizeString(item.consultant_display_name) : '').includes(normalizedSearchQuery) ||
+                (item.agency_name ? normalizeString(item.agency_name) : '').includes(normalizedSearchQuery) ||
+                (item.booking_channel_name ? normalizeString(item.booking_channel_name) : '').includes(normalizedSearchQuery) ||
+                (item.country_name ? normalizeString(item.country_name) : '').includes(normalizedSearchQuery) ||
+                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery),
             );
         }
 
