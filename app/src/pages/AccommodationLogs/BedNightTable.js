@@ -427,7 +427,8 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                             {item.consultant_display_name}
                                         </div>
                                     </td>
-                                    <td style={{ overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'top' }}>
+                                    {/* <td style={{ margin: '10px 0px 10px 0px', maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'top' }}> */}
+                                    <td style={{ verticalAlign: 'top' }}>
                                         <p>
                                             {!item.booking_channel_name
                                                 ? <span className="chip tb-grey lighten-2 text-bold">
@@ -475,14 +476,14 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                                         <>
                                                             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', width: '100%' }}>
                                                                 <button
-                                                                    className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
                                                                     onClick={() => openEditModal(item)}
                                                                 >
-                                                                    <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                        edit_note
+                                                                    <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit
                                                                     </span>
                                                                 </button>
-                                                                <label class="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
+                                                                <label className="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
                                                                     <input
                                                                         type="checkbox"
                                                                         className="tb-checkbox"
@@ -516,7 +517,7 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                         </tr>
                     )}
                 </tbody>
-            </table>
+            </table >
             {isMobileView && (
                 <div className="mobile-friendly-table">
                     {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
@@ -648,7 +649,8 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                         </div >
                     ))}
                 </div >
-            )}
+            )
+            }
         </>
     );
 };

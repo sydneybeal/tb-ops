@@ -335,7 +335,7 @@ export const BedNightReports = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center bed-night-reports" style={{ width: '90%', paddingBottom: '100px' }}>
                     {showModal && (
                         <ReportPreviewModal
                             reportData={reportData}
@@ -348,10 +348,12 @@ export const BedNightReports = () => {
                         <div>
                             <div className="col s12 l3">
                                 <Select
-                                    placeholder="Search by Core Destination"
+                                    placeholder="Core Destination"
                                     value={filterOptions.core_destination_name.find(option => option.label === filters.core_destination_name) ? { value: filters.core_destination_name, label: filters.core_destination_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, core_destination_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.core_destination_name}
+                                    className={`select ${filters.core_destination_name ? 'select--has-value' : ''}`}
+                                    classNamePrefix="select"
                                     styles={{
                                         control: (provided, state) => ({
                                             ...provided,
@@ -381,10 +383,12 @@ export const BedNightReports = () => {
                             </div>
                             <div className="col s12 l3">
                                 <Select
-                                    placeholder="Search by Country"
+                                    placeholder="Country"
                                     value={filterOptions.country_name.find(option => option.label === filters.country_name) ? { value: filters.country_name, label: filters.country_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, country_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.country_name}
+                                    className={`select ${filters.country_name ? 'select--has-value' : ''}`}
+                                    classNamePrefix="select"
                                     styles={{
                                         control: (provided, state) => ({
                                             ...provided,
@@ -414,10 +418,12 @@ export const BedNightReports = () => {
                             </div>
                             <div className="col s12 l3">
                                 <Select
-                                    placeholder="Search by Portfolio"
+                                    placeholder="Portfolio"
                                     value={filterOptions.portfolio_name.find(option => option.label === filters.portfolio_name) ? { value: filters.portfolio_name, label: filters.portfolio_name } : null}
                                     onChange={(selectedOption) => setFilters({ ...filters, portfolio_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.portfolio_name}
+                                    className={`select ${filters.portfolio_name ? 'select--has-value' : ''}`}
+                                    classNamePrefix="select"
                                     styles={{
                                         control: (provided, state) => ({
                                             ...provided,
@@ -447,10 +453,12 @@ export const BedNightReports = () => {
                             </div>
                             <div className="col s12 l3">
                                 <Select
-                                    placeholder="Search by Property"
+                                    placeholder="Properties"
                                     // value={filterOptions.property_name.find(option => option.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
                                     // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
                                     options={filterOptions.property_name}
+                                    className={`select ${filters.property_names?.length > 0 ? 'select--has-value' : ''}`}
+                                    classNamePrefix="select"
                                     styles={{
                                         control: (provided, state) => ({
                                             ...provided,
@@ -489,10 +497,12 @@ export const BedNightReports = () => {
                     <div className="row center">
                         <div className="col s12 l4">
                             <Select
-                                placeholder="Search by Agency"
+                                placeholder="Agency"
                                 value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, agency: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.agency}
+                                className={`select ${filters.agency ? 'select--has-value' : ''}`}
+                                classNamePrefix="select"
                                 styles={{
                                     control: (provided, state) => ({
                                         ...provided,
@@ -522,10 +532,12 @@ export const BedNightReports = () => {
                         </div>
                         <div className="col s12 l4">
                             <Select
-                                placeholder="Search by Booking Channel"
+                                placeholder="Booking Channel"
                                 value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, booking_channel: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.booking_channel}
+                                className={`select ${filters.booking_channel ? 'select--has-value' : ''}`}
+                                classNamePrefix="select"
                                 styles={{
                                     control: (provided, state) => ({
                                         ...provided,
@@ -555,10 +567,12 @@ export const BedNightReports = () => {
                         </div>
                         <div className="col s12 l4">
                             <Select
-                                placeholder="Search by Consultant"
+                                placeholder="Consultant"
                                 value={filterOptions.consultant_name.find(option => option.label === filters.consultant_name) ? { value: filters.consultant_name, label: filters.consultant_name } : null}
                                 onChange={(selectedOption) => setFilters({ ...filters, consultant_name: selectedOption ? selectedOption.label : '' })}
                                 options={filterOptions.consultant_name}
+                                className={`select ${filters.consultant_name ? 'select--has-value' : ''}`}
+                                classNamePrefix="select"
                                 styles={{
                                     control: (provided, state) => ({
                                         ...provided,
@@ -634,7 +648,8 @@ export const BedNightReports = () => {
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
                                             dateFormat="MM/dd/yyyy"
-                                            openToDate={filters.end_date ? moment(filters.end_date).toDate() : new Date()}
+                                            autoComplete="off"
+                                            openToDate={filters.end_date ? moment(filters.end_date).subtract(1, 'days').toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">
@@ -688,7 +703,8 @@ export const BedNightReports = () => {
                                             placeholderText="mm/dd/yyyy"
                                             className="date-input"
                                             dateFormat="MM/dd/yyyy"
-                                            openToDate={filters.start_date ? moment(filters.start_date).toDate() : new Date()}
+                                            autoComplete="off"
+                                            openToDate={filters.start_date ? moment(filters.start_date).add(1, 'days').toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="tb-grey-text text-darken-1">

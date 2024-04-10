@@ -15,12 +15,22 @@ export const OverlapsV2 = () => {
     const [startDate, setStartDate] = useState(moment().startOf('week'));
     // const [endDate, setEndDate] = useState(moment().endOf('week'));
 
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1100);
+
     const handleWeekChange = (newStart) => {
         if (!newStart.isSame(startDate, 'day')) {
             setStartDate(newStart);
         }
     };
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobileView(window.innerWidth <= 1100);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         M.AutoInit();
@@ -203,13 +213,13 @@ export const OverlapsV2 = () => {
 
             <main className="tb-grey lighten-6" style={{
                 position: 'absolute',
-                top: '80px',
+                top: isMobileView ? '100px' : '80px',
                 left: 0,
                 right: 0,
                 bottom: 0,
                 overflowY: 'auto',
             }}>
-                <div className="container center" style={{ width: '100%', paddingBottom: '500px' }}>
+                <div className="container center" style={{ width: '90%', paddingBottom: '800px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.

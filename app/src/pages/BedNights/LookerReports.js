@@ -18,7 +18,7 @@ export const LookerReports = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container" style={{ width: '90%' }}>
+                <div className="container" style={{ width: '90%', paddingBottom: '100px' }}>
                     <div className="row">
                         <h3 style={{ fontFamily: 'Bodoni, sans-serif', marginBottom: '20px' }}>By Country</h3>
                         <LookerDashboard by="Bed Nights By Country" url={reports["country"]} />

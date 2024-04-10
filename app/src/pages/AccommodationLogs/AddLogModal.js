@@ -1011,7 +1011,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 )}
                             </div>
                         )}
-                        <div className="row" style={{ marginBottom: '60px' }}>
+                        <div className="row" style={{ marginBottom: '30px' }}>
                             {/* Primary Traveler Name Field */}
                             <div className="col s12 l3">
                                 <input
@@ -1022,7 +1022,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     onBlur={handlePrimaryTravelerBlur}
                                     placeholder="Name"
                                     style={{ marginRight: '10px', flexGrow: '1' }}
-                                    className={validationErrors.primaryTraveler ? 'invalid' : ''}
+                                    className={`${validationErrors.primaryTraveler ? 'invalid' : ''} input-placeholder-dark`}
                                 />
                                 <label htmlFor="primary_traveler">
                                     <span className="material-symbols-outlined">
@@ -1112,7 +1112,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         </label>
                                         {(!selectedAgencyId && !newAgencyName) && (
                                             <div>
-                                                <em className="tb-grey-text text-lighten-1">
+                                                <em className="tb-grey-text">
                                                     <a
                                                         className="text-bold new-existing-prop tb-teal-text text-darken-1"
                                                         href="/#"
@@ -1334,7 +1334,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                         {(!log.property_id && !(log.new_property_name && log.new_property_country_id && log.new_property_portfolio_id)) && (
                                             <div className="row">
                                                 <div>
-                                                    <em className="tb-grey-text text-lighten-1">
+                                                    <em className="tb-grey-text">
                                                         Please select an&nbsp;
                                                         <a
                                                             className="text-bold new-existing-prop tb-teal-text text-darken-1"
@@ -1383,12 +1383,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                             {!log.is_new_property ? (
                                                 <div className="col s12">
                                                     <Select
-                                                        placeholder="Search for a property"
+                                                        placeholder="Select property"
                                                         inputId="property_select"
                                                         value={properties.find(prop => prop.value === log.property_id) || ''}
                                                         onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                                         options={properties}
                                                         // styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
+                                                        classNamePrefix="select"
                                                         styles={{
                                                             control: (provided, state) => ({
                                                                 ...provided,
@@ -1679,11 +1680,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 ) : (
                                     <div className="col s12">
                                         <Select
-                                            placeholder="Search for a property"
+                                            placeholder="Select property"
                                             inputId="property_select"
                                             value={properties.find(prop => prop.value === log.property_id) || ''}
                                             onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
                                             options={properties}
+                                            classNamePrefix="select"
                                             styles={{
                                                 control: (provided, state) => ({
                                                     ...provided,
@@ -1734,13 +1736,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     handleLogChange(index, 'date_in', newValue);
                                                 }}
                                                 isClearable
-                                                placeholderText="Select date in"
-                                                className="date-input"
+                                                placeholderText="Date in"
+                                                className="date-input-modal"
                                                 dateFormat="MM/dd/yyyy"
                                                 minDate={new Date('2017-01-01')}
                                                 maxDate={new Date('2100-12-31')}
                                                 autoComplete="off"
-                                                openToDate={log.date_out ? moment(log.date_in).toDate() : new Date()}
+                                                openToDate={log.date_out ? moment(log.date_out).subtract(1, 'days').toDate() : new Date()}
                                             />
                                         </div>
                                         <label htmlFor="form-date-in">
@@ -1763,13 +1765,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                         handleLogChange(index, 'date_out', newValue);
                                                     }}
                                                     isClearable
-                                                    placeholderText="Select date out"
-                                                    className="date-input"
+                                                    placeholderText="Date out"
+                                                    className="date-input-modal"
                                                     dateFormat="MM/dd/yyyy"
                                                     minDate={new Date('2017-01-01')}
                                                     maxDate={new Date('2100-12-31')}
                                                     autoComplete="off"
-                                                    openToDate={log.date_in ? moment(log.date_in).toDate() : new Date()}
+                                                    openToDate={log.date_in ? moment(log.date_in).add(1, 'days').toDate() : new Date()}
                                                 />
                                             </div>
                                         </div>
@@ -1786,12 +1788,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 {!log.is_new_booking_channel ? (
                                                     <Select
                                                         inputId="booking_channel_select"
-                                                        placeholder="Search for a booking channel"
+                                                        placeholder="Select booking channel"
                                                         value={bookingChannels.find(prop => prop.value === log.booking_channel_id) || ''}
                                                         onChange={(selectedOption) => handleBookingChannelChange(index, selectedOption)}
                                                         options={bookingChannels}
                                                         isClearable
                                                         style={{ flexGrow: '1' }}
+                                                        classNamePrefix="select"
                                                         styles={{
                                                             control: (provided, state) => ({
                                                                 ...provided,
@@ -1839,8 +1842,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 </label>
                                                 {(!log.booking_channel_id && !(log.new_booking_channel_name)) && (
                                                     <div>
-                                                        <em className="tb-grey-text text-lighten-1">
-                                                            Please seelect an&nbsp;
+                                                        <em className="tb-grey-text">
+                                                            Please select an&nbsp;
                                                             <a
                                                                 className="text-bold new-existing-prop tb-teal-text text-darken-1"
                                                                 href="/#"
@@ -1879,6 +1882,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                     options={bookingChannels}
                                                     isClearable
                                                     style={{ flexGrow: '1' }}
+                                                    classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
                                                             ...provided,
@@ -1920,7 +1924,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 <span className="material-symbols-outlined">
                                     add
                                 </span>
-                                Add More
+                                Add Property
                             </button>
                         }
                     </form>

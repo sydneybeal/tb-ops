@@ -84,7 +84,7 @@ export const PropertyDetails = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
                     <>
                         <AddEditPropertyDetailModal
                             isOpen={isModalOpen}

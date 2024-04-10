@@ -204,7 +204,7 @@ export const Portfolios = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
@@ -222,7 +222,7 @@ export const Portfolios = () => {
                                     />
 
                                     <div className="row center">
-                                        <div className="col s10">
+                                        <div className="col s8 offset-s2">
                                             <ul className="pagination">
                                                 <li className={currentPage === 0 ? 'disabled' : ''}>
                                                     <a
@@ -268,17 +268,17 @@ export const Portfolios = () => {
                                         </div>
                                     </div>
                                     <div className="row center">
-                                        <div className="col s12 m6 offset-m3">
+                                        <div className="input-field col s12 m6 offset-m3">
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                search
+                                            </span>
                                             <input
                                                 type="text"
-                                                placeholder="Search by text..."
+                                                placeholder="Search..."
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 className="search-input" // Apply any styling as needed
                                             />
-                                            <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                search
-                                            </span>
                                         </div>
                                     </div>
                                     <div className="row center">
@@ -292,6 +292,11 @@ export const Portfolios = () => {
                                                 </span>
                                             </button>
                                         </div>
+                                    </div>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <em className="tb-grey-text">
+                                            <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> portfolios
+                                        </em>
                                     </div>
                                     <div className="container center">
                                         <table className="accommodation-logs-table center">
@@ -391,11 +396,11 @@ export const Portfolios = () => {
                                                                             data-tooltip-class="tooltip-updated-by"
                                                                         >
                                                                             <button
-                                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
                                                                                 onClick={() => openEditModal(item)}
                                                                             >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit_note
+                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.4rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                                    edit
                                                                                 </span>
                                                                             </button>
                                                                             <br />

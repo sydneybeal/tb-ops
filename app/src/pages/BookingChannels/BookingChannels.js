@@ -157,7 +157,7 @@ export const BookingChannels = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
@@ -187,6 +187,11 @@ export const BookingChannels = () => {
                                                     Add New
                                                 </button>
                                             </div>
+                                        </div>
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <em className="tb-grey-text">
+                                                <span className="text-bold tb-teal-text">{displayData?.length?.toLocaleString()}</span> booking channels
+                                            </em>
                                         </div>
                                         <table className="accommodation-logs-table center">
                                             <thead>
@@ -261,11 +266,11 @@ export const BookingChannels = () => {
                                                                             data-tooltip-class="tooltip-updated-by"
                                                                         >
                                                                             <button
-                                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
                                                                                 onClick={() => openEditModal(item)}
                                                                             >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit_note
+                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                                    edit
                                                                                 </span>
                                                                             </button>
                                                                             <br />

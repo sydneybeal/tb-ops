@@ -492,7 +492,7 @@ export const Overview = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center accommodation-logs" style={{ width: '90%', paddingBottom: '100px' }}>
                     <AddLogModal
                         isOpen={isModalOpen}
                         onClose={closeModal}
@@ -511,7 +511,6 @@ export const Overview = () => {
 
                     {loaded ? (
                         <>
-
                             <div className="row center">
                                 <div className="input-field col s12 l8 offset-l2">
                                     <span className="material-symbols-outlined grey-text text-darken-1 prefix">
@@ -538,12 +537,14 @@ export const Overview = () => {
                             </div>
                             <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
                                 <div>
-                                    <div className="col s12 l3">
+                                    <div className="col s12 l2">
                                         <Select
-                                            placeholder="By Core Destination"
+                                            placeholder="Core Destination"
                                             value={filterOptions.core_destination_name.find(core_dest => core_dest.label === filters.core_destination_name) ? { value: filters.core_destination_name, label: filters.core_destination_name } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, core_destination_name: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.core_destination_name}
+                                            className={`select-sm-placeholder ${filters.core_destination_name ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
                                             styles={{
                                                 control: (provided, state) => ({
                                                     ...provided,
@@ -574,12 +575,14 @@ export const Overview = () => {
                                             explore
                                         </span>
                                     </div>
-                                    <div className="col s12 l3">
+                                    <div className="col s12 l2">
                                         <Select
-                                            placeholder="By Country"
+                                            placeholder="Country"
                                             value={filterOptions.country_name.find(country => country.label === filters.country_name) ? { value: filters.country_name, label: filters.country_name } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, country_name: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.country_name}
+                                            className={`select ${filters.country_name ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
                                             styles={{
                                                 control: (provided, state) => ({
                                                     ...provided,
@@ -610,12 +613,14 @@ export const Overview = () => {
                                             globe
                                         </span>
                                     </div>
-                                    <div className="col s12 l3">
+                                    <div className="col s12 l2">
                                         <Select
-                                            placeholder="By Portfolio"
+                                            placeholder="Portfolio"
                                             value={filterOptions.property_portfolio.find(option => option.label === filters.property_portfolio) ? { value: filters.property_portfolio, label: filters.property_portfolio } : null}
                                             onChange={(selectedOption) => setFilters({ ...filters, property_portfolio: selectedOption ? selectedOption.label : '' })}
                                             options={filterOptions.property_portfolio}
+                                            className={`select ${filters.property_portfolio ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
                                             styles={{
                                                 control: (provided, state) => ({
                                                     ...provided,
@@ -646,12 +651,14 @@ export const Overview = () => {
                                             store
                                         </span>
                                     </div>
-                                    <div className="col s12 l3">
+                                    <div className="col s12 l2">
                                         <Select
-                                            placeholder="By Property"
-                                            // value={filterOptions.property_name.find(prop => prop.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
-                                            // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
-                                            options={filterOptions.property_name}
+                                            placeholder="Agency"
+                                            value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
+                                            onChange={(selectedOption) => setFilters({ ...filters, agency: selectedOption ? selectedOption.label : '' })}
+                                            options={filterOptions.agency}
+                                            className={`select ${filters.agency ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
                                             styles={{
                                                 control: (provided, state) => ({
                                                     ...provided,
@@ -677,27 +684,103 @@ export const Overview = () => {
                                             }}
                                             menuPortalTarget={document.body}
                                             isClearable
-                                            isMulti
-                                            value={filterOptions.property_name.filter(option => filters.property_names.includes(option.label))}
-                                            onChange={(selectedOptions) => setFilters({
-                                                ...filters,
-                                                property_names: selectedOptions ? selectedOptions.map(option => option.label) : []
-                                            })}
                                         />
                                         <span className="material-symbols-outlined grey-text text-darken-1">
-                                            hotel
+                                            contact_mail
                                         </span>
-                                        {/*  */}
                                     </div>
+                                    <div className="col s12 l2">
+                                        <Select
+                                            placeholder="Booking Channel"
+                                            value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
+                                            onChange={(selectedOption) => setFilters({ ...filters, booking_channel: selectedOption ? selectedOption.label : '' })}
+                                            options={filterOptions.booking_channel}
+                                            className={`select select-sm-placeholder ${filters.booking_channel ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
+                                            styles={{
+                                                control: (provided, state) => ({
+                                                    ...provided,
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                    '&:hover': {
+                                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                    },
+                                                    boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                                }),
+                                                option: (provided, state) => ({
+                                                    ...provided,
+                                                    fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                    backgroundColor: state.isSelected
+                                                        ? '#0e9bac'
+                                                        : state.isFocused
+                                                            ? '#e8e5e1'
+                                                            : '#ffffff',
+                                                    ':active': {
+                                                        backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                    },
+                                                }),
+                                                menuPortal: base => ({ ...base, zIndex: 9999 })
+                                            }}
+                                            menuPortalTarget={document.body}
+                                            isClearable
+                                        />
+                                        <span className="material-symbols-outlined grey-text text-darken-1">
+                                            alt_route
+                                        </span>
+                                    </div>
+                                    <div className="col s12 l2">
+                                        <Select
+                                            placeholder="Consultant"
+                                            value={
+                                                filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
+                                                    ? filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
+                                                    : null
+                                            }
+                                            onChange={(selectedOption) => setFilters({ ...filters, consultant_name: selectedOption ? selectedOption.apiLabel : '' })}
+                                            options={filterOptions.consultant_name}
+                                            className={`select ${filters.consultant_name ? 'select--has-value' : ''}`}
+                                            classNamePrefix="select"
+                                            styles={{
+                                                control: (provided, state) => ({
+                                                    ...provided,
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                    '&:hover': {
+                                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                    },
+                                                    boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                                }),
+                                                option: (provided, state) => ({
+                                                    ...provided,
+                                                    fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                    backgroundColor: state.isSelected
+                                                        ? '#0e9bac'
+                                                        : state.isFocused
+                                                            ? '#e8e5e1'
+                                                            : '#ffffff',
+                                                    ':active': {
+                                                        backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                    },
+                                                }),
+                                                menuPortal: base => ({ ...base, zIndex: 9999 })
+                                            }}
+                                            menuPortalTarget={document.body}
+                                            isClearable
+                                        />
+                                        <span className="material-symbols-outlined grey-text text-darken-1">
+                                            badge
+                                        </span>
+                                    </div>
+
                                 </div>
                             </div>
                             <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
-                                <div className="col s12 l4">
+                                <div className="col s12 l6">
                                     <Select
-                                        placeholder="By Agency"
-                                        value={filterOptions.agency.find(option => option.label === filters.agency) ? { value: filters.agency, label: filters.agency } : null}
-                                        onChange={(selectedOption) => setFilters({ ...filters, agency: selectedOption ? selectedOption.label : '' })}
-                                        options={filterOptions.agency}
+                                        placeholder="Properties"
+                                        // value={filterOptions.property_name.find(prop => prop.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
+                                        // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
+                                        options={filterOptions.property_name}
+                                        className={`select ${filters.property_names?.length > 0 ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
                                         styles={{
                                             control: (provided, state) => ({
                                                 ...provided,
@@ -723,90 +806,19 @@ export const Overview = () => {
                                         }}
                                         menuPortalTarget={document.body}
                                         isClearable
+                                        isMulti
+                                        value={filterOptions.property_name.filter(option => filters.property_names.includes(option.label))}
+                                        onChange={(selectedOptions) => setFilters({
+                                            ...filters,
+                                            property_names: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                        })}
                                     />
                                     <span className="material-symbols-outlined grey-text text-darken-1">
-                                        contact_mail
+                                        hotel
                                     </span>
+                                    {/*  */}
                                 </div>
-                                <div className="col s12 l4">
-                                    <Select
-                                        placeholder="By Booking Channel"
-                                        value={filterOptions.booking_channel.find(option => option.label === filters.booking_channel) ? { value: filters.booking_channel, label: filters.booking_channel } : null}
-                                        onChange={(selectedOption) => setFilters({ ...filters, booking_channel: selectedOption ? selectedOption.label : '' })}
-                                        options={filterOptions.booking_channel}
-                                        styles={{
-                                            control: (provided, state) => ({
-                                                ...provided,
-                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                '&:hover': {
-                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                },
-                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
-                                            }),
-                                            option: (provided, state) => ({
-                                                ...provided,
-                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                backgroundColor: state.isSelected
-                                                    ? '#0e9bac'
-                                                    : state.isFocused
-                                                        ? '#e8e5e1'
-                                                        : '#ffffff',
-                                                ':active': {
-                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                },
-                                            }),
-                                            menuPortal: base => ({ ...base, zIndex: 9999 })
-                                        }}
-                                        menuPortalTarget={document.body}
-                                        isClearable
-                                    />
-                                    <span className="material-symbols-outlined grey-text text-darken-1">
-                                        alt_route
-                                    </span>
-                                </div>
-                                <div className="col s12 l4">
-                                    <Select
-                                        placeholder="By Consultant"
-                                        value={
-                                            filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
-                                                ? filterOptions.consultant_name.find(consultant => consultant.apiLabel === filters.consultant_name)
-                                                : null
-                                        }
-                                        onChange={(selectedOption) => setFilters({ ...filters, consultant_name: selectedOption ? selectedOption.apiLabel : '' })}
-                                        options={filterOptions.consultant_name}
-                                        styles={{
-                                            control: (provided, state) => ({
-                                                ...provided,
-                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                '&:hover': {
-                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                },
-                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
-                                            }),
-                                            option: (provided, state) => ({
-                                                ...provided,
-                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                backgroundColor: state.isSelected
-                                                    ? '#0e9bac'
-                                                    : state.isFocused
-                                                        ? '#e8e5e1'
-                                                        : '#ffffff',
-                                                ':active': {
-                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                },
-                                            }),
-                                            menuPortal: base => ({ ...base, zIndex: 9999 })
-                                        }}
-                                        menuPortalTarget={document.body}
-                                        isClearable
-                                    />
-                                    <span className="material-symbols-outlined grey-text text-darken-1">
-                                        badge
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
-                                <div className="col s6 l3 offset-l3">
+                                <div className="col s6 l3">
                                     <div>
                                         <ReactDatePicker
                                             id="date-in"
@@ -816,11 +828,12 @@ export const Overview = () => {
                                             }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
-                                            className="date-input search-input"
+                                            className="date-input"
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}
-                                            openToDate={filters.end_date ? moment(filters.end_date).toDate() : new Date()}
+                                            autoComplete="off"
+                                            openToDate={filters.end_date ? moment(filters.end_date).subtract(1, 'days').toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
@@ -840,11 +853,12 @@ export const Overview = () => {
                                             }
                                             isClearable
                                             placeholderText="mm/dd/yyyy"
-                                            className="date-input search-input"
+                                            className="date-input"
                                             dateFormat="MM/dd/yyyy"
                                             minDate={new Date('2000-01-01')}
                                             maxDate={new Date('2100-12-31')}
-                                            openToDate={filters.start_date ? moment(filters.start_date).toDate() : new Date()}
+                                            autoComplete="off"
+                                            openToDate={filters.start_date ? moment(filters.start_date).add(1, 'days').toDate() : new Date()}
                                         />
                                     </div>
                                     <span style={{ fontSize: '0.8rem' }} className="grey-text text-darken-1">
@@ -854,6 +868,10 @@ export const Overview = () => {
                                         End Date
                                     </span>
                                 </div>
+
+                            </div>
+                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
+
                             </div>
                             <div className="row center">
                                 <div>
@@ -916,6 +934,11 @@ export const Overview = () => {
                                     </div>
                                 </div>
                             )}
+                            <div style={{ marginBottom: '20px' }}>
+                                <em className="tb-grey-text">
+                                    <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> entries
+                                </em>
+                            </div>
                             <BedNightTable
                                 filteredData={filteredData}
                                 openEditModal={openEditModal}

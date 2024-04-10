@@ -232,7 +232,7 @@ export const Properties = () => {
         const displayEndIndex = displayStartIndex + itemsPerPage;
         setDisplayData(sortedAndFilteredData.slice(displayStartIndex, displayEndIndex));
 
-    }, [filteredData, sorting, currentPage, itemsPerPage]);
+    }, [filteredData, sorting, currentPage, itemsPerPage, apiData]);
 
     useEffect(() => {
         // Initialize tooltips
@@ -328,7 +328,7 @@ export const Properties = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center properties" style={{ width: '90%', paddingBottom: '100px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
@@ -398,6 +398,8 @@ export const Properties = () => {
                                                     value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.core_destination}
+                                                    className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
                                                             ...provided,
@@ -433,6 +435,8 @@ export const Properties = () => {
                                                     value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.country}
+                                                    className={`select ${filters.country ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
                                                             ...provided,
@@ -467,6 +471,8 @@ export const Properties = () => {
                                                     value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.portfolio}
+                                                    className={`select ${filters.portfolio ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
                                                             ...provided,
@@ -498,17 +504,17 @@ export const Properties = () => {
                                         </div>
                                     </div>
                                     <div className="row center">
-                                        <div className="col s12 l6 offset-l3">
+                                        <div className="input-field col s12 l6 offset-l3">
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                search
+                                            </span>
                                             <input
                                                 type="text"
-                                                placeholder="Search by text..."
+                                                placeholder="Search..."
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 className="search-input" // Apply any styling as needed
                                             />
-                                            <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                search
-                                            </span>
                                         </div>
                                     </div>
                                     <div className="row center">
@@ -523,6 +529,11 @@ export const Properties = () => {
                                                 </span>
                                             </button>
                                         </div>
+                                    </div>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <em className="tb-grey-text">
+                                            <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> properties
+                                        </em>
                                     </div>
                                     <div className="container center">
                                         <table className="accommodation-logs-table">
@@ -671,11 +682,11 @@ export const Properties = () => {
                                                                             data-tooltip-class="tooltip-updated-by"
                                                                         >
                                                                             <button
-                                                                                className="btn-floating btn-small waves-effect waves-light warning-yellow-light"
+                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
                                                                                 onClick={() => openEditModal(item)}
                                                                             >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-3" style={{ marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit_note
+                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                                    edit
                                                                                 </span>
                                                                             </button>
                                                                             <br />

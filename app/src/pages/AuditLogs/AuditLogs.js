@@ -64,9 +64,10 @@ export const AuditLogs = () => {
         });
     };
 
-    const calculateDifferences = (before, after) => {
+    const calculateDifferences = (action, categoryName, before, after) => {
         const differences = {};
         const ignoreKeys = ['created_at', 'representative', 'id']; // Keys to ignore
+        const identifierKeys = getIdentifierKeys(categoryName);
 
         Object.keys({ ...before, ...after }).forEach(key => {
             // Skip the keys that should be ignored
@@ -75,34 +76,52 @@ export const AuditLogs = () => {
             }
 
             if (before[key] !== after[key]) {
-                // Handle formatting for updated_at differently
+                // Handle formatting for 'updated_at' differently
                 if (key === 'updated_at') {
                     const beforeFormatted = before[key] ? moment.utc(before[key]).format('LLLL') : '';
                     const afterFormatted = after[key] ? moment.utc(after[key]).format('LLLL') : '';
                     differences[key] = { before: beforeFormatted, after: afterFormatted };
                 } else {
-                    differences[key] = { before: before[key], after: after[key] };
+                    // Convert all other values to strings, including boolean values
+                    differences[key] = {
+                        before: before[key] === undefined ? '' : String(before[key]),
+                        after: after[key] === undefined ? '' : String(after[key])
+                    };
                 }
+            } else if (identifierKeys.includes(key)) {
+                // For identifier keys, if there is no change, still show the before value and indicate no change
+                differences[key] = {
+                    before: before[key] === undefined ? '' : String(before[key]),
+                    after: '(no change)'
+                };
             }
         });
 
         return differences;
     };
 
-    // const getCategoryColor = (category) => {
-    //     switch (category) {
-    //         case 'accommodation_logs':
-    //             return "teal";
-    //         case 'booking_channels':
-    //             return "indigo";
-    //         case 'agencies':
-    //             return "amber";
-    //         case 'properties':
-    //             return "pink";
-    //         default:
-    //             return "grey"; // Default color if category does not match
-    //     }
-    // };
+    const getIdentifierKeys = (category) => {
+        switch (category) {
+            case 'accommodation_logs':
+                return ['primary_traveler', 'date_in', 'date_out'];
+            case 'properties':
+                return ['name', 'portfolio', 'country'];
+            case 'consultants':
+                return ['first_name', 'last_name'];
+            case 'agencies':
+                return ['name'];
+            case 'portfolios':
+                return ['name'];
+            case 'booking_channels':
+                return ['name'];
+            case 'countries':
+                return ['name'];
+            case 'property_details':
+                return ['property_id'];
+            default:
+                return [];
+        }
+    };
 
     const getActionColor = (action) => {
         switch (action) {
@@ -136,7 +155,10 @@ export const AuditLogs = () => {
         booking_channels: "booking channel",
         agencies: "agency",
         properties: "property",
-        consultants: "consultant"
+        consultants: "consultant",
+        portfolios: "portfolio",
+        countries: "country",
+        property_details: "property detail"
     };
     // const actionNames = {
     //     update: "updated",
@@ -151,7 +173,7 @@ export const AuditLogs = () => {
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
                     {(userDetails.role !== 'admin') ? (
                         <div>
                             You do not have permission to view this page.
@@ -159,7 +181,13 @@ export const AuditLogs = () => {
                     ) : (
                         <>
                             {loaded ? (
+
                                 <div className="container center" style={{ width: '60%' }}>
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <em className="tb-grey-text">
+                                            Displaying <span className="text-bold tb-teal-text">{apiData?.length?.toLocaleString()}</span> total audit logs from the past <span className="text-bold tb-teal-text">7</span> days.
+                                        </em>
+                                    </div>
                                     {Array.isArray(apiData) && apiData.length > 0 ? (
                                         <>
                                             <table>
@@ -213,7 +241,7 @@ export const AuditLogs = () => {
                                                                         <tr>
                                                                             <td colSpan="4" style={{ padding: '0px' }}> {/* Adjust colspan as needed */}
                                                                                 <div className="tb-grey lighten-4" style={{ padding: '10px' }}>
-                                                                                    {Object.entries(calculateDifferences(item.before_value, item.after_value)).map(([key, { before, after }]) => (
+                                                                                    {Object.entries(calculateDifferences(action, category, item.before_value, item.after_value)).map(([key, { before, after }]) => (
                                                                                         <div key={key}>
                                                                                             <span>{key}: </span>
                                                                                             <span style={{ color: 'grey' }}>{before}</span>
