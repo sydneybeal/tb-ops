@@ -883,7 +883,7 @@ export const Overview = () => {
                                                 core_destination_name: '',
                                                 country_name: '',
                                                 consultant_name: '',
-                                                property_name: '',
+                                                property_names: [],
                                                 property_portfolio: '',
                                                 booking_channel: '',
                                                 agency: '',

@@ -721,7 +721,7 @@ export const BedNightReports = () => {
                     <div className="row center" style={{ marginBottom: '0px' }}>
                         <div>
                             <button className="btn tb-grey lighten-2" onClick={() => setFilters(
-                                { core_destination_name: '', portfolio_name: '', country_name: '', consultant_name: '', start_date: '', end_date: '' })}>
+                                { core_destination_name: '', property_names: [], portfolio_name: '', country_name: '', consultant_name: '', start_date: '', end_date: '' })}>
                                 Reset Filters
                                 <span className="material-symbols-outlined">
                                     refresh
