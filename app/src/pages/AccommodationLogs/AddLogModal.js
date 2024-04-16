@@ -553,6 +553,11 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         if (!log.date_in) logError.date_in = 'Missing check-in date';
         if (!log.date_out) logError.date_out = 'Missing check-out date';
 
+        let dateRangeErrors = validateDateRange(log.date_in, log.date_out);
+        if (dateRangeErrors) {
+            logError.date_range = dateRangeErrors;
+        }
+
         // Validate property
         if (!log.property_id) { // This check is sufficient to cover both cases where new property might be involved
             if (!((log.new_property_name || '').trim())) logError.new_property_name = 'Missing new property name';

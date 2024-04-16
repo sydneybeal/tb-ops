@@ -64,22 +64,23 @@ async def main() -> int:
     log = logging.getLogger()
     logging.basicConfig()
     log.setLevel(logging.INFO)
-    log.info("Attempting connection to postgres")
+    log.info("Attempting connection to postgres prod")
     conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST", "localhost"),
-            os.getenv("POSTGRES_USER", "postgres"),
-            os.getenv("POSTGRES_PASSWORD", "postgres"),
-            "ops",
+            os.getenv("POSTGRES_HOST_PROD", "localhost"),
+            os.getenv("POSTGRES_USER_PROD", "postgres"),
+            os.getenv("POSTGRES_PASSWORD_PROD", "postgres"),
+            os.getenv("POSTGRES_DB_PROD", "postgres"),
             int(os.getenv("POSTGRES_PORT", "5432")),
         )
     )
+    log.info("Attempting connection to postgres local")
     uat_conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST", "localhost"),
-            os.getenv("POSTGRES_USER", "postgres"),
-            os.getenv("POSTGRES_PASSWORD", "postgres"),
-            "ops-uat",
+            os.getenv("POSTGRES_HOST_LOCAL", "localhost"),
+            os.getenv("POSTGRES_USER_LOCAL", "postgres"),
+            os.getenv("POSTGRES_PASSWORD_LOCAL", "postgres"),
+            os.getenv("POSTGRES_DB_LOCAL", "postgres"),
             int(os.getenv("POSTGRES_PORT", "5432")),
         )
     )
@@ -96,13 +97,14 @@ async def main() -> int:
         "public.consultants",
         "public.properties",
         "public.accommodation_logs",
-        # "public.property_details",
+        "public.property_details",
+        "public.users",
     ]
 
     for table in tables:
         if table == "public.accommodation_logs":
-            prod_count = await count_rows(conn, table, "date_in > '2024-03-01'")
-            uat_count = await count_rows(conn, table, "date_in > '2024-03-01'")
+            prod_count = await count_rows(conn, table, "date_in > '2023-10-01'")
+            uat_count = await count_rows(uat_conn, table, "date_in > '2023-10-01'")
         else:
             prod_count = await count_rows(conn, table)
             uat_count = await count_rows(uat_conn, table)
@@ -110,7 +112,7 @@ async def main() -> int:
 
     for table in tables:
         condition = (
-            "date_in > '2024-03-01'" if table == "public.accommodation_logs" else None
+            "date_in > '2023-10-01'" if table == "public.accommodation_logs" else None
         )
         data = await fetch_data(conn, table, condition)
         await insert_data(uat_conn, table, data)
