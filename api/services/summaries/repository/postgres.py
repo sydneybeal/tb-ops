@@ -106,7 +106,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
         """Gets a single AccommodationLog model in the repository by name."""
         raise NotImplementedError
 
-    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLog]:
+    async def get_all_accommodation_logs(self) -> Sequence[AccommodationLogSummary]:
         """Gets all AccommodationLog models in the repository, joined with their foreign keys."""
         pool = await self._get_pool()
         query = dedent(

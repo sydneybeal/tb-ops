@@ -95,10 +95,11 @@ nav.top-nav {
   margin-bottom: 10px;
 }
 
-code {
+.code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
 
 .text-bold {
   font-weight: 700 !important;
@@ -436,6 +437,41 @@ input[type=text]:focus + label {
 .tb-checkbox-label [type="checkbox"]+span:not(.lever) {
   padding-left: 20px;
 }
+
+.modal.download-report-modal .modal-content .report-checkbox-columns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start; /* Ensures items start from the left */
+}
+
+.modal.download-report-modal .modal-content .report-checkbox-column {
+  flex: 1 1 50%; /* Each column takes up half of the container width */
+  min-width: 250px; /* Prevents columns from being too narrow */
+  text-align: left; /* Ensures text within each column is left-aligned */
+}
+
+.modal.download-report-modal .modal-content .report-checkbox-column p {
+  margin: 0; /* Removes default paragraph margin */
+  text-align: left; /* Ensures text within the paragraph is left-aligned */
+}
+
+.report-checkbox-column input[type="checkbox"].filled-in:disabled+span:not(.lever) {
+  cursor: not-allowed !important; /* or 'default' based on your preference */
+}
+
+/* .report-checkbox-column label {
+  cursor: inherit;
+} */
+
+.report-checkbox-column input[type="checkbox"].filled-in:disabled,
+.report-checkbox-column label.disabled-label {
+  cursor: default !important; /* Using !important to override any other cursor styles */
+}
+
+.report-checkbox-column input[type="checkbox"].filled-in:disabled:checked+span:not(.lever):after {
+  background-color: #bab5b1 !important; /* Using !important to override any other cursor styles */
+}
+
 
 .report-divider {
   width: 90%;

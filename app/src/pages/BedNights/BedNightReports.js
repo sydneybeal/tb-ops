@@ -24,6 +24,7 @@ export const BedNightReports = () => {
     const [temporaryEndDate, setTemporaryEndDate] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
+    const downloadQueryString = location.search;
     const [showPieCharts, setShowPieCharts] = useState(true);
     const [showMonthly, setShowMonthly] = useState(true);
     const [maxProps, setMaxProps] = useState(10);
@@ -338,6 +339,7 @@ export const BedNightReports = () => {
                 <div className="container center bed-night-reports" style={{ width: '90%', paddingBottom: '100px' }}>
                     {showModal && (
                         <ReportPreviewModal
+                            queryString={downloadQueryString}
                             reportData={reportData}
                             filteredData={filteredData}
                             onClose={handleCloseModal}

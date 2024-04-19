@@ -15,8 +15,12 @@
 """Services for interacting with travel entries."""
 from collections import Counter
 from datetime import date
-from typing import Sequence, List, Optional
+from typing import Sequence, List, Optional, Set
 from uuid import UUID
+from io import BytesIO
+import pandas as pd
+from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -42,7 +46,7 @@ class SummaryService:
         self._repo = PostgresSummaryRepository()
 
     # BedNightReport
-    async def get_bed_night_report(self, labels: dict) -> Sequence[BedNightReport]:
+    async def get_bed_night_report(self, labels: dict) -> BedNightReport:
         """Generates a BedNightReport based on input criteria."""
         accommodation_logs = await self._repo.get_accommodation_logs_by_filter(
             labels, exclude_fam=True
@@ -66,7 +70,12 @@ class SummaryService:
         consultant_breakdown_counter = Counter()
         core_destination_breakdown_counter = Counter()
 
-        largest_booking = {"bed_nights": 0}
+        largest_booking = {
+            "bed_nights": 0,
+            "num_nights": 0,
+            "num_pax": 0,
+            "property_name": "",
+        }
 
         # Aggregate data
         for log in accommodation_logs:
@@ -127,6 +136,149 @@ class SummaryService:
             report_inputs=report_input, calculations=report_aggregations
         )
 
+    async def generate_excel_file(
+        self, labels: dict, exclude_columns: Optional[List[str]] = None
+    ) -> BytesIO:
+        accommodation_logs = await self._repo.get_accommodation_logs_by_filter(
+            labels, exclude_fam=True
+        )
+        if not accommodation_logs:
+            raise ValueError("No data available for the given filters.")
+
+        # Default set of all columns that might be included from AccommodationLogSummary
+        default_columns = [
+            "primary_traveler",
+            "date_in",
+            "date_out",
+            "num_pax",
+            "bed_nights",
+            "property_name",
+            "property_portfolio",
+            "core_destination_name",
+            "country_name",
+            "agency_name",
+            "booking_channel_name",
+            "consultant_name",
+        ]
+
+        column_name_mapping = {
+            "primary_traveler": "Primary Traveler",
+            "date_in": "Date In",
+            "date_out": "Date Out",
+            "num_pax": "# Pax",
+            "bed_nights": "Bed Nights",
+            "property_name": "Property",
+            "property_portfolio": "Property Portfolio",
+            "core_destination_name": "Core Destination Name",
+            "country_name": "Country",
+            "agency_name": "Agency",
+            "booking_channel_name": "Booking Channel",
+            "consultant_name": "Consultant",
+        }
+
+        # Remove the columns specified in exclude_columns from default_columns
+        if exclude_columns:
+            columns_to_include = [
+                col for col in default_columns if col not in exclude_columns
+            ]
+        else:
+            columns_to_include = default_columns
+
+        print(columns_to_include)
+
+        # Generate data for DataFrame
+        data = [log.dict() for log in accommodation_logs]
+        # print(data)
+
+        for log in data:
+            log["consultant_name"] = (
+                f"{log['consultant_last_name']}/{log['consultant_first_name']}"
+            )
+
+        df = pd.DataFrame(data, columns=columns_to_include)
+        df.rename(columns=column_name_mapping, inplace=True)
+
+        excel_stream = BytesIO()
+        with pd.ExcelWriter(excel_stream, engine="openpyxl") as writer:
+            df.to_excel(
+                writer, index=False, startrow=1
+            )  # startrow=1 to leave space for the title
+
+            # Set the title in the Excel sheet
+            sheet = writer.sheets["Sheet1"]
+            title = "Bed Night Report"
+            title_row = 1
+            title_column_start = 1
+            title_column_end = len(
+                df.columns
+            )  # This assumes that you want to span across all columns used in the df
+
+            # Write title to the first cell
+            sheet.cell(row=title_row, column=title_column_start, value=title)
+
+            # Set column widths
+            for col in sheet.columns:
+                max_length = 0
+                column = col[0].column_letter  # Get the column letters
+
+                for cell in col:
+                    try:
+                        # Adjust the length if necessary; adding a little extra space
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(str(cell.value))
+                    except:
+                        pass
+                adjusted_width = max_length + 1
+                sheet.column_dimensions[column].width = adjusted_width
+
+            # Append footer after DataFrame ends
+            footer_row = len(df) + 3  # Assuming 2 extra rows after the DataFrame ends
+            sheet.cell(row=footer_row, column=1, value="Travel Beyond Confidential")
+
+            # Merge cells for the title row across the width of DataFrame columns
+            sheet.merge_cells(
+                start_row=title_row,
+                start_column=title_column_start,
+                end_row=title_row,
+                end_column=title_column_end,
+            )
+            sheet.merge_cells(
+                start_row=footer_row,
+                start_column=title_column_start,
+                end_row=footer_row,
+                end_column=title_column_end,
+            )
+
+            # Define font, fill, and border styles for title and footer
+            title_font = Font(bold=True, size=18, color="F2F0E7")
+            footer_font = Font(bold=True, size=14, color="F2F0E7")
+            fill_color = PatternFill(
+                start_color="0E9BAC", end_color="0E9BAC", fill_type="solid"
+            )
+            border_style = Border(
+                left=Side(style="thin", color="000000"),
+                right=Side(style="thin", color="000000"),
+                top=Side(style="thin", color="000000"),
+                bottom=Side(style="thin", color="000000"),
+            )
+
+            # Apply formatting for title
+            footer_cell = sheet.cell(row=footer_row, column=1)
+            footer_cell.alignment = Alignment(horizontal="center", vertical="center")
+            footer_cell.font = footer_font
+            footer_cell.fill = fill_color
+            footer_cell.border = border_style
+
+            # Apply formatting for footer
+            title_cell = sheet.cell(row=1, column=1)
+            title_cell.alignment = Alignment(horizontal="center", vertical="center")
+            title_cell.font = title_font
+            title_cell.fill = fill_color
+            title_cell.border = border_style
+
+        excel_stream.seek(0)  # Rewind the buffer to the beginning after writing
+        return excel_stream
+
     # AccommodationLog
     async def get_all_accommodation_logs(self) -> Sequence[AccommodationLogSummary]:
         """Gets all AccommodationLogSummary models."""
@@ -140,7 +292,7 @@ class SummaryService:
 
     async def get_related_records_summary(
         self, identifier: UUID, identifier_type: str
-    ) -> Sequence[AccommodationLogSummary]:
+    ) -> Sequence[AccommodationLogSummary] | dict:
         """Checks the impact of a modification on related records."""
         filters = {identifier_type: identifier}
         accommodation_logs = await self.get_accommodation_logs_by_filters(filters)
@@ -151,7 +303,7 @@ class SummaryService:
         accommodation_logs_summary = [log.to_json() for log in accommodation_logs]
         return {"can_modify": False, "affected_logs": accommodation_logs_summary}
 
-    async def get_overlaps(self, start_date: date, end_date: date) -> Sequence[Overlap]:
+    async def get_overlaps(self, start_date: date, end_date: date) -> list[str]:
         """Gets records where clients will be overlapping."""
         overlap_data = await self._repo.get_overlaps(start_date, end_date)
         overlaps = [overlap.to_json() for overlap in overlap_data]
@@ -186,7 +338,7 @@ class SummaryService:
 
     async def get_country_details_by_id(
         self, country_id: UUID
-    ) -> Optional[CountrySummary]:
+    ) -> Sequence[CountrySummary]:
         """Gets CountrySummary model by ID."""
         return await self._repo.get_country_by_id(country_id)
 

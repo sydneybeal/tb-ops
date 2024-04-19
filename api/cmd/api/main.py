@@ -15,12 +15,13 @@
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
 from datetime import timedelta, datetime, date
+from typing import Sequence, Iterable, Optional, List
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status
 
 # from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.param_functions import Form
 
@@ -117,7 +118,7 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "v0.1.10"}
+        return {"Hello": "World", "Version": "v0.1.11"}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
@@ -164,12 +165,12 @@ def make_app(
     @app.get(
         "/v1/accommodation_logs",
         operation_id="get_accommodation_logs",
-        response_model=list[AccommodationLogSummary],
+        response_model=Sequence[AccommodationLogSummary],
         tags=["accommodation_logs"],
     )
     async def get_all_accommodation_logs(
         current_user: User = Depends(get_current_user),
-    ) -> list[AccommodationLogSummary] | JSONResponse:
+    ) -> Sequence[AccommodationLogSummary] | JSONResponse:
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_accommodation_logs()
 
@@ -234,12 +235,12 @@ def make_app(
     @app.get(
         "/v1/properties",
         operation_id="get_properties",
-        response_model=list[PropertySummary],
+        response_model=Sequence[PropertySummary],
         tags=["properties"],
     )
     async def get_all_properties(
         current_user: User = Depends(get_current_user),
-    ) -> list[PropertySummary] | JSONResponse:
+    ) -> Sequence[PropertySummary] | JSONResponse:
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_properties()
 
@@ -292,12 +293,12 @@ def make_app(
     @app.get(
         "/v1/property_details",
         operation_id="get_property_details",
-        response_model=list[PropertyDetailSummary],
+        response_model=Sequence[PropertyDetailSummary],
         tags=["properties"],
     )
     async def get_all_property_details(
         current_user: User = Depends(get_current_user),
-    ) -> list[PropertyDetailSummary] | JSONResponse:
+    ) -> Sequence[PropertyDetailSummary] | JSONResponse:
         """Get all PropertyDetail summaries."""
         return await summary_svc.get_all_property_details()
 
@@ -310,7 +311,7 @@ def make_app(
     async def get_property_details_by_id(
         property_id: UUID,
         current_user: User = Depends(get_current_user),
-    ) -> PropertyDetailSummary | JSONResponse:
+    ) -> PropertyDetailSummary | None:
         """Get all PropertyDetail summaries."""
         return await summary_svc.get_property_details_by_id(property_id)
 
@@ -331,12 +332,12 @@ def make_app(
     @app.get(
         "/v1/countries",
         operation_id="get_countries",
-        response_model=list[CountrySummary],
+        response_model=Sequence[CountrySummary],
         tags=["countries"],
     )
     async def get_all_countries(
         current_user: User = Depends(get_current_user),
-    ) -> list[CountrySummary] | JSONResponse:
+    ) -> Sequence[CountrySummary] | JSONResponse:
         """Get all Country models."""
         return await summary_svc.get_all_countries()
 
@@ -389,24 +390,24 @@ def make_app(
     @app.get(
         "/v1/core_destinations",
         operation_id="get_core_destinations",
-        response_model=list[CoreDestination],
+        response_model=Sequence[CoreDestination],
         tags=["core_destinations"],
     )
     async def get_core_destinations(
         current_user: User = Depends(get_current_user),
-    ) -> list[CoreDestination] | JSONResponse:
+    ) -> Sequence[CoreDestination] | JSONResponse:
         """Get all CoreDestination models."""
         return await travel_svc.get_all_core_destinations()
 
     @app.get(
         "/v1/consultants",
         operation_id="get_consultants",
-        response_model=list[Consultant],
+        response_model=Sequence[Consultant],
         tags=["consultants"],
     )
     async def get_all_consultants(
         current_user: User = Depends(get_current_user),
-    ) -> list[Consultant] | JSONResponse:
+    ) -> Sequence[Consultant] | JSONResponse:
         """Get all Country models."""
         return await travel_svc.get_all_consultants()
 
@@ -459,12 +460,12 @@ def make_app(
     @app.get(
         "/v1/booking_channels",
         operation_id="get_booking_channels",
-        response_model=list[BookingChannelSummary],
+        response_model=Sequence[BookingChannelSummary],
         tags=["booking_channels"],
     )
     async def get_all_booking_channels(
         current_user: User = Depends(get_current_user),
-    ) -> list[BookingChannelSummary] | JSONResponse:
+    ) -> Sequence[BookingChannelSummary] | JSONResponse:
         """Get all BookingChannel models."""
         return await summary_svc.get_all_booking_channels()
 
@@ -519,12 +520,12 @@ def make_app(
     @app.get(
         "/v1/agencies",
         operation_id="get_agencies",
-        response_model=list[AgencySummary],
+        response_model=Sequence[AgencySummary],
         tags=["agencies"],
     )
     async def get_all_agencies(
         current_user: User = Depends(get_current_user),
-    ) -> list[AgencySummary] | JSONResponse:
+    ) -> Sequence[AgencySummary] | JSONResponse:
         """Get all Agency models."""
         return await summary_svc.get_all_agencies()
 
@@ -577,12 +578,12 @@ def make_app(
     @app.get(
         "/v1/portfolios",
         operation_id="get_portfolios",
-        response_model=list[PortfolioSummary],
+        response_model=Sequence[PortfolioSummary],
         tags=["portfolios"],
     )
     async def get_all_portfolios(
         current_user: User = Depends(get_current_user),
-    ) -> list[PortfolioSummary] | JSONResponse:
+    ) -> Sequence[PortfolioSummary] | JSONResponse:
         """Get all Portfolio models."""
         return await summary_svc.get_all_portfolios()
 
@@ -644,6 +645,9 @@ def make_app(
     ) -> BedNightReport | JSONResponse:
         """Get all AccommodationLog summaries."""
         query_params = dict(request.query_params)
+        print("Query Params in API call:")
+        print(query_params)
+
         property_names = query_params.get("property_names", "")
         if property_names:
             query_params["property_names"] = property_names.split("|")
@@ -654,15 +658,66 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
+    # responses={
+    #             200: {
+    #                 "content": {
+    #                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
+    #                 },
+    #                 "description": "Returns an Excel file of the accommodation logs.",
+    #             },
+    #             404: {"description": "No data found for the given filters."},
+    #         },
+
+    @app.get(
+        "/v1/export_bed_night_report",
+        operation_id="export_bed_night_report",
+        response_class=StreamingResponse,  # Specify the type of response you expect to send
+        response_model=None,
+        tags=["bed_night_report"],
+    )
+    async def export_bed_night_report(
+        request: Request,
+        current_user: User = Depends(get_current_user),
+    ) -> StreamingResponse | HTTPException:
+        """Exports an excel file of a bed night report."""
+        query_params = dict(request.query_params)
+        print("Query Params in API call:")
+        print(query_params)
+
+        # Handling exclusion columns; expects a comma-separated string of column names
+        exclude_columns_string = query_params.pop("exclude_columns", None)
+        exclude_columns = (
+            exclude_columns_string.split(",") if exclude_columns_string else None
+        )
+
+        property_names = query_params.get("property_names", "")
+        if property_names:
+            query_params["property_names"] = property_names.split("|")
+
+        try:
+            excel_stream = await summary_svc.generate_excel_file(
+                labels=query_params, exclude_columns=exclude_columns
+            )
+            headers = {
+                "Content-Disposition": 'attachment; filename="accommodation_logs_report.xlsx"'
+            }
+            return StreamingResponse(
+                excel_stream,
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers=headers,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
     @app.get(
         "/v1/audit_logs",
         operation_id="get_audit_logs",
-        response_model=list[AuditLog],
+        response_model=Iterable[AuditLog],
         tags=["audit_logs"],
     )
     async def get_audit_logs(
         current_user: User = Depends(get_current_user),
-    ) -> list[AuditLog] | JSONResponse:
+    ) -> Iterable[AuditLog] | JSONResponse:
         """Get all AccommodationLog summaries."""
         time_filter = datetime.now() - timedelta(days=7)
         return await audit_svc.get_audit_logs(time_filter)

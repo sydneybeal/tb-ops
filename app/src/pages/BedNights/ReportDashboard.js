@@ -8,8 +8,6 @@ const ReportDashboard = ({ id = "reportData", reportData, showPieCharts = true, 
         M.AutoInit();
     }, [reportData]);
 
-    console.log(reportData);
-
     if (!reportData || Object.keys(reportData).length === 0 || reportData?.calculations?.total_bed_nights === 0) {
         return (
             <div style={{ padding: '40px' }}>
