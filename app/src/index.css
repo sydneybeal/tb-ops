@@ -105,6 +105,10 @@ nav.top-nav {
   font-weight: 700 !important;
 }
 
+.text-small {
+  font-size: 0.95rem;
+}
+
 /* tb-md-black */
 .tb-md-black {
   background-color: #363839 !important;
@@ -193,7 +197,7 @@ nav.top-nav {
 }
 
 .tb-teal-text.text-darken-2 {
-  color: rgb(5, 126, 140) !important;
+  color: #057e8c !important;
 }
 
 .tb-teal-text.text-darken-3 {
@@ -613,6 +617,19 @@ input[type=text]:focus + label {
   }
 }
 
+.dropdown-content li>span {
+  color: #057e8c !important;
+}
+
+[type="radio"]:checked+span:after {
+  background-color: #057e8c !important;
+  border: 2px solid #057e8c !important;
+}
+
+.report-radio-columns label {
+  color: #47443e !important;
+}
+
 
 input {
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
@@ -889,6 +906,42 @@ table.accommodation-logs-table {
   border-collapse: collapse;
   z-index: 0;
   table-layout: fixed;
+}
+
+table.sample-report-table {
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+table.sample-report-table thead {
+  height: 10px;
+}
+
+table.sample-report-table th {
+  font-size: 1.3rem;
+  text-align: center;
+  font-weight: 600;
+  padding: 5px;
+  border-radius: 3px 3px 0px 0px;
+  /* border-top: 1px solid #8c8782;
+  border-right: 1px solid #8c8782;
+  border-left: 1px solid #8c8782; */
+}
+
+table.sample-report-table tr {
+  background-color: #fffefd;
+}
+
+table.sample-report-table td {
+  /* border: 1px solid #8c8782; */
+  text-align: center;
+}
+
+table.sample-report-table tr:last-child td {
+  /* font-size: 1rem; */
+  text-align: center;
+  font-weight: 400;
+  padding: 5px;
+  border-radius: 0px 0px 3px 3px;
 }
 
 table.overlaps-table {

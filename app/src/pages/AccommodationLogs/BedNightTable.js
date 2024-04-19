@@ -13,7 +13,7 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1100);
 
     useEffect(() => {
-        M.AutoInit();
+        // M.AutoInit();
         const handleResize = () => {
             setIsMobileView(window.innerWidth <= 1100);
         };

@@ -13,8 +13,10 @@
 # limitations under the License.
 
 """Services for interacting with travel entries."""
-from collections import Counter
-from datetime import date
+from collections import Counter, defaultdict
+from datetime import date, datetime
+from itertools import groupby
+from operator import attrgetter
 from typing import Sequence, List, Optional, Set
 from uuid import UUID
 from io import BytesIO
@@ -137,8 +139,12 @@ class SummaryService:
         )
 
     async def generate_excel_file(
-        self, labels: dict, exclude_columns: Optional[List[str]] = None
+        self,
+        labels: dict,
+        report_title: str,
+        exclude_columns: Optional[List[str]] = None,
     ) -> BytesIO:
+        """Generates an excel file with accommodation logs for reporting."""
         accommodation_logs = await self._repo.get_accommodation_logs_by_filter(
             labels, exclude_fam=True
         )
@@ -184,11 +190,8 @@ class SummaryService:
         else:
             columns_to_include = default_columns
 
-        print(columns_to_include)
-
         # Generate data for DataFrame
         data = [log.dict() for log in accommodation_logs]
-        # print(data)
 
         for log in data:
             log["consultant_name"] = (
@@ -198,6 +201,86 @@ class SummaryService:
         df = pd.DataFrame(data, columns=columns_to_include)
         df.rename(columns=column_name_mapping, inplace=True)
 
+        return await self.write_excel(df, report_title)
+
+    async def generate_custom_excel_file(self, query_params: dict, report_title: str):
+        """Generates an excel file with custom calculations for reporting."""
+        calculation_type = query_params.pop("calculation_type", None)
+        property_granularity = query_params.pop("property_granularity", None)
+        time_granularity = query_params.pop("time_granularity", None)
+
+        if not (calculation_type and property_granularity and time_granularity):
+            raise ValueError("Missing required parameters for report generation.")
+
+        accommodation_logs = await self._repo.get_accommodation_logs_by_filter(
+            query_params, exclude_fam=True
+        )
+        if not accommodation_logs:
+            raise ValueError("No data available for the given filters.")
+
+        results = self.aggregate_custom_report(
+            accommodation_logs, calculation_type, property_granularity, time_granularity
+        )
+
+        df = self.results_to_dataframe(
+            results,
+            time_granularity,
+            property_granularity,
+        )
+
+        return await self.write_excel(df, report_title)
+
+    def results_to_dataframe(self, results, time_granularity, property_granularity):
+        """Create a pandas DataFrame from the results."""
+        data = []
+        time_index = set()
+        property_index = set()
+
+        granularity_label = {
+            "property_name": "Property",
+            "country_name": "Country",
+            "property_portfolio": "Portfolio",
+        }
+
+        for (time_key, prop_key), total in results.items():
+            time_index.add(time_key)
+            property_index.add(prop_key)
+            data.append({"Time": time_key, "Property": prop_key, "Total": total})
+
+        df = pd.DataFrame(data)
+        # Pivot DataFrame to get time as columns and properties as rows
+        pivot_df = df.pivot(index="Property", columns="Time", values="Total")
+        pivot_df = pivot_df.fillna(0)  # Fill missing values with zeros
+
+        # Sort by property names or according to property_granularity
+        pivot_df = pivot_df.sort_index()
+
+        # Reformat time_keys to "Sept 2021", etc., if monthly
+        if time_granularity == "month":
+            pivot_df.columns = [
+                datetime(int(year), int(month), 1).strftime("%b %Y")
+                for (year, month) in pivot_df.columns
+            ]
+        elif time_granularity == "year":
+            pivot_df.columns = [str(year) for year in pivot_df.columns]
+
+        # Reset the index to make the 'Property' column appear explicitly
+        pivot_df.reset_index(inplace=True)
+
+        # Optionally, rename the 'Property' column to match property_granularity specifics
+        pivot_df.rename(
+            columns={
+                "Property": granularity_label.get(property_granularity, "Property")
+            },
+            inplace=True,
+        )
+
+        return pivot_df
+
+    async def write_excel(
+        self, df: pd.DataFrame, report_title: str = "Bed Night Report"
+    ):
+        """Writes a dataframe into an Excel stream."""
         excel_stream = BytesIO()
         with pd.ExcelWriter(excel_stream, engine="openpyxl") as writer:
             df.to_excel(
@@ -206,7 +289,7 @@ class SummaryService:
 
             # Set the title in the Excel sheet
             sheet = writer.sheets["Sheet1"]
-            title = "Bed Night Report"
+            title = report_title
             title_row = 1
             title_column_start = 1
             title_column_end = len(
@@ -269,6 +352,17 @@ class SummaryService:
             footer_cell.fill = fill_color
             footer_cell.border = border_style
 
+            for col_num in range(
+                1, len(df.columns) + 1
+            ):  # Apply border to all cells in the footer row
+                footer_cell = sheet.cell(row=footer_row, column=col_num)
+                footer_cell.alignment = Alignment(
+                    horizontal="center", vertical="center"
+                )
+                footer_cell.font = footer_font
+                footer_cell.fill = fill_color
+                footer_cell.border = border_style
+
             # Apply formatting for footer
             title_cell = sheet.cell(row=1, column=1)
             title_cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -278,6 +372,51 @@ class SummaryService:
 
         excel_stream.seek(0)  # Rewind the buffer to the beginning after writing
         return excel_stream
+
+    def aggregate_custom_report(
+        self,
+        accommodation_logs: Sequence[AccommodationLogSummary],
+        calculation_type: str,
+        property_granularity: str,
+        time_granularity: str,
+    ):
+        """Performs calculations for custom report results."""
+        # Define key functions for grouping by time
+        if time_granularity == "month":
+            key_func = lambda x: (x.date_in.year, x.date_in.month)
+        elif time_granularity == "year":
+            key_func = lambda x: x.date_in.year
+
+        # Group logs by time
+        logs_grouped_by_time = defaultdict(list)
+        for key, group in groupby(
+            sorted(accommodation_logs, key=key_func), key=key_func
+        ):
+            logs_grouped_by_time[key].extend(group)
+
+        # Now aggregate within each time group based on property granularity
+        final_aggregation = {}
+        for time_key, logs in logs_grouped_by_time.items():
+            group_key_func = attrgetter(
+                property_granularity
+            )  # e.g., 'property_name', 'property_portfolio', 'country_name'
+            property_group = defaultdict(list)
+            for prop_key, prop_group in groupby(
+                sorted(logs, key=group_key_func), key=group_key_func
+            ):
+                property_group[prop_key].extend(prop_group)
+
+            # Aggregate counts or bed nights within each property group
+            for prop_key, prop_logs in property_group.items():
+                if calculation_type == "bed_nights":
+                    total = sum(log.bed_nights for log in prop_logs)
+                elif calculation_type == "num_bookings":
+                    total = len(prop_logs)
+
+                # Store aggregated data
+                final_aggregation[(time_key, prop_key)] = total
+
+        return final_aggregation
 
     # AccommodationLog
     async def get_all_accommodation_logs(self) -> Sequence[AccommodationLogSummary]:

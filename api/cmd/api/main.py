@@ -696,7 +696,43 @@ def make_app(
 
         try:
             excel_stream = await summary_svc.generate_excel_file(
-                labels=query_params, exclude_columns=exclude_columns
+                labels=query_params,
+                exclude_columns=exclude_columns,
+                report_title=query_params["report_title"],
+            )
+            headers = {
+                "Content-Disposition": 'attachment; filename="accommodation_logs_report.xlsx"'
+            }
+            return StreamingResponse(
+                excel_stream,
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers=headers,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+
+    @app.get(
+        "/v1/export_custom_report",
+        operation_id="export_custom_report",
+        response_class=StreamingResponse,  # Specify the type of response you expect to send
+        response_model=None,
+        tags=["bed_night_report"],
+    )
+    async def export_custom_report(
+        request: Request,
+        current_user: User = Depends(get_current_user),
+    ) -> StreamingResponse | HTTPException:
+        query_params = dict(request.query_params)
+        print("Query Params in API call:")
+        print(query_params)
+
+        property_names = query_params.get("property_names", "")
+        if property_names:
+            query_params["property_names"] = property_names.split("|")
+
+        try:
+            excel_stream = await summary_svc.generate_custom_excel_file(
+                query_params=query_params, report_title=query_params["report_title"]
             )
             headers = {
                 "Content-Disposition": 'attachment; filename="accommodation_logs_report.xlsx"'

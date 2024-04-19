@@ -171,7 +171,7 @@ export const BedNightReports = () => {
     };
 
     useEffect(() => {
-        M.AutoInit();
+        // M.AutoInit();
 
         const queryString = getQueryString(filters);
         const apiUrl = `${process.env.REACT_APP_API}/v1/bed_night_report?${queryString}`;
@@ -221,7 +221,7 @@ export const BedNightReports = () => {
 
     useEffect(() => {
         M.AutoInit();
-    }, [filters, filterOptions, accommodationLogData, reportData]);
+    }, []);
 
     useEffect(() => {
         var elems = document.querySelectorAll('select');
@@ -729,9 +729,11 @@ export const BedNightReports = () => {
                                     refresh
                                 </span>
                             </button>
-                            <span style={{ marginLeft: '10px' }}>
+                            <span
+                                style={{ marginLeft: '10px' }}
+                            >
                                 <button
-                                    onClick={handleOpenModal}
+                                    onClick={() => handleOpenModal()}
                                     className="btn-floating waves-effect waves-light tb-teal darken-3"
                                 >
                                     <span className="material-symbols-outlined">
