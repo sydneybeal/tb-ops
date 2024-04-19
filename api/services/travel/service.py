@@ -264,6 +264,20 @@ class TravelService:
         existing_log = None
         if log_request.log_id:
             existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
+            # TODO check for "no changes detected"
+            print(log_request)
+            print(existing_log)
+            differences = {
+                k: v
+                for k, v in log_request.dict().items()
+                if getattr(existing_log, k, None) != v
+                and k not in ["updated_at", "updated_by", "log_id", "id"]
+            }
+            if not differences:
+                error_message = "No changes were detected."
+                messages.append(error_message)
+                return None, None, other_audit_logs
+
         else:
             existing_log = await self.get_accommodation_log(
                 log_request.primary_traveler,

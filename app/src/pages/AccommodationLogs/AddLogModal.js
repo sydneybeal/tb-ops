@@ -575,7 +575,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
 
 
         if (!log.booking_channel_id && !log.new_booking_channel_name) {
-            logError.property = 'Missing booking channel';
+            if (userDetails.role !== 'admin') {
+                logError.property = 'Missing booking channel';
+            }
         }
 
 
@@ -688,7 +690,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             errors.consultant = 'Missing consultant';
         }
         if (!(selectedAgencyId || '').trim() && !newAgencyName) {
-            errors.agency = 'Missing agency';
+            if (userDetails.role !== 'admin') {
+                errors.agency = 'Missing agency';
+            }
         }
         if (parseInt(numPax, 10) < 1) {
             errors.numPax = 'Number of passengers is less than 0';
