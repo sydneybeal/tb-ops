@@ -38,6 +38,7 @@ from api.services.travel.models import (
     PatchPropertyRequest,
     PropertyDetail,
     PatchPropertyDetailRequest,
+    Trip,
 )
 from api.services.travel.repository.postgres import PostgresTravelRepository
 
@@ -264,9 +265,6 @@ class TravelService:
         existing_log = None
         if log_request.log_id:
             existing_log = await self.get_accommodation_log_by_id(log_request.log_id)
-            # TODO check for "no changes detected"
-            print(log_request)
-            print(existing_log)
             differences = {
                 k: v
                 for k, v in log_request.dict().items()

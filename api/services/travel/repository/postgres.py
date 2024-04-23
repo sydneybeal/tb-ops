@@ -33,6 +33,7 @@ from api.services.travel.models import (
     Agency,
     BookingChannel,
     Portfolio,
+    Trip,
 )
 
 

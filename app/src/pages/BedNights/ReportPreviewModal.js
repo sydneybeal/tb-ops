@@ -272,13 +272,9 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
                         </span>
                     </div>
                 </div>
-
-                <div className="row" style={{ marginTop: '30px', marginBottom: '30px' }}>
-                    API Query: <span className="code tb-grey-text" style={{ wordWrap: 'break-word', whiteSpace: 'normal' }}>{combinedQueryString}</span>
-                </div>
                 {reportType === 'bed_nights' ? (
                     <>
-                        <h5>Field Selection</h5>
+                        <h5 style={{ marginBottom: '30px', marginTop: '50px' }}>Field Selection</h5>
                         <div className="row report-checkbox-columns" style={{ marginTop: '30px', marginBottom: '40px', width: '60%' }}>
                             {Object.entries(defaultFields).map(([field, details], index) => (
                                 <div className="report-checkbox-column" key={field}>
@@ -339,7 +335,7 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
                     </>
                 ) : (
                     <>
-                        <h5 style={{ marginBottom: '30px' }}>Field Selection</h5>
+                        <h5 style={{ marginBottom: '30px', marginTop: '50px' }}>Report Selection</h5>
                         <div className="row report-toggles report-radio-columns">
                             {/* <div className="col s4">
                                 <span style={{ marginLeft: '20px', display: 'inline-block', width: '200px' }}>

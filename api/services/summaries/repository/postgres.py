@@ -31,10 +31,7 @@ from api.services.summaries.models import (
     PropertySummary,
     Overlap,
 )
-from api.services.travel.models import (
-    AccommodationLog,
-    Property,
-)
+from api.services.travel.models import AccommodationLog, Property, Trip
 
 
 class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
@@ -580,3 +577,23 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 records = await con.fetch(query)
                 property_summaries = [PortfolioSummary(**record) for record in records]
                 return property_summaries
+
+    async def get_all_trips(self) -> Sequence[Trip]:
+        """Gets all Trip models."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                *
+            FROM
+            public.trips
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query)
+                trips = [Trip(**record) for record in records]
+                return trips

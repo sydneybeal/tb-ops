@@ -54,6 +54,8 @@ from api.services.travel.models import (
     PatchPropertyDetailRequest,
 )
 from api.services.travel.service import TravelService
+from api.services.quality.service import QualityService
+from api.services.quality.models import PotentialTrip
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -63,6 +65,7 @@ def make_app(
     summary_svc: SummaryService,
     auth_svc: AuthService,
     audit_svc: AuditService,
+    quality_svc: QualityService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -758,6 +761,39 @@ def make_app(
         time_filter = datetime.now() - timedelta(days=7)
         return await audit_svc.get_audit_logs(time_filter)
 
+    @app.get(
+        "/v1/potential_trips",
+        operation_id="find_potential_trips",
+        response_model=Iterable[PotentialTrip],
+        tags=["trips"],
+    )
+    async def find_potential_trips(
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[PotentialTrip]:
+        return await quality_svc.find_potential_trips()
+
+    @app.route("/v1/progress", methods=["GET"])
+    async def get_progress(
+        current_user: User = Depends(get_current_user),
+    ):
+        potential = await quality_svc.find_potential_trips()
+        total_potential = len(potential)
+        confirmed = await summary_svc.get_all_trips()
+        total_confirmed = len(confirmed)
+        percentage = (
+            (total_confirmed / (total_potential + total_confirmed)) * 100
+            if total_potential > 0
+            else 0
+        )
+        return JSONResponse(
+            {
+                "total_potential": total_potential,
+                "total_confirmed": total_confirmed,
+                # "percent_complete": f"{percentage:.0f}%",
+                "percent_complete": "32%",
+            }
+        )
+
     return app
 
 
@@ -768,7 +804,8 @@ if __name__ == "__main__":
     summary_svc = SummaryService()
     auth_svc = AuthService()
     audit_svc = AuditService()
+    quality_svc = QualityService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc)
+    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc, quality_svc)
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

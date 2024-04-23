@@ -27,6 +27,7 @@ from api.services.summaries.models import (
     PropertyDetailSummary,
     PropertySummary,
 )
+from api.services.travel.models import Trip
 
 
 class SummaryRepository(ABC):
@@ -109,3 +110,8 @@ class SummaryRepository(ABC):
     async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
         """Gets all Portfolio models joined with their foreign keys."""
         raise NotImplementedError
+
+    # Trips
+    @abstractmethod
+    async def get_all_trips(self) -> Sequence[Trip]:
+        """Gets all Trip models."""

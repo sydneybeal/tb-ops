@@ -39,6 +39,8 @@ from api.services.summaries.models import (
 )
 from api.services.summaries.repository.postgres import PostgresSummaryRepository
 
+from api.services.travel.models import Trip
+
 
 class SummaryService:
     """Service for interfacing with the travel repository."""
@@ -495,3 +497,8 @@ class SummaryService:
     async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
         """Gets all PortfolioSummary models."""
         return await self._repo.get_all_portfolios()
+
+    # Trip
+    async def get_all_trips(self) -> Sequence[Trip]:
+        """Gets all Trip models."""
+        return await self._repo.get_all_trips()
