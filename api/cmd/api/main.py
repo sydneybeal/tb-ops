@@ -121,7 +121,7 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "v0.1.11"}
+        return {"Hello": "World", "Version": "v0.1.12"}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
