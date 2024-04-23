@@ -171,6 +171,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"al.date_in >= '{value}'")
             elif key == "end_date":
                 query_conditions.append(f"al.date_out <= '{value}'")
+            elif key == "id":
+                query_conditions.append(f"al.id = '{value}'")
             elif key == "country_name":
                 query_conditions.append(f"c.name = '{value}'")
             elif key == "portfolio_name":
