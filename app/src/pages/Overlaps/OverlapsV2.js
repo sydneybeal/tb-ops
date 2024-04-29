@@ -88,7 +88,7 @@ export const OverlapsV2 = () => {
             const daysOfWeek = Array(7).fill(null); // Represents a week
             const weekStart = moment(startDate);
 
-            const renderWeekCells = (traveler, bookingChannel, consultant, overlapStartDate, overlapEndDate) => {
+            const renderWeekCells = (traveler, bookingChannel, consultant, agency, overlapStartDate, overlapEndDate) => {
                 const uniqueKey = `${traveler}-${property.propertyName}-${overlapStartDate}-${overlapEndDate}`;
                 if (renderedTravelers.has(uniqueKey)) {
                     // This traveler has been rendered for this property and date range, skip rendering
@@ -130,6 +130,12 @@ export const OverlapsV2 = () => {
                                         }
                                         <span className="material-symbols-outlined tb-md-black-text">badge</span>
                                         <em>{consultant}</em><br />
+                                        {agency && agency !== "n/a" &&
+                                            <>
+                                                <span className="material-symbols-outlined tb-md-black-text">store</span>
+                                                <em>{agency}</em><br />
+                                            </>
+                                        }
                                         <em>{overlapStartDate.format("M/D")}-{overlapEndDate.format("M/D")}</em>
                                     </div>
                                 </td>
@@ -149,9 +155,9 @@ export const OverlapsV2 = () => {
             const overlapStart2 = overlap.date_in_traveler2;
             const overlapEnd2 = overlap.date_out_traveler2;
 
-            const traveler1Row = renderWeekCells(overlap.traveler1, overlap.booking_channel_traveler1, `${overlap.consultant_first_name_traveler1} ${overlap.consultant_last_name_traveler1}`, overlapStart1, overlapEnd1);
+            const traveler1Row = renderWeekCells(overlap.traveler1, overlap.booking_channel_traveler1, `${overlap.consultant_first_name_traveler1} ${overlap.consultant_last_name_traveler1}`, overlap.agency_name_traveler1, overlapStart1, overlapEnd1);
             if (traveler1Row) renderedRows++;
-            const traveler2Row = renderWeekCells(overlap.traveler2, overlap.booking_channel_traveler2, `${overlap.consultant_first_name_traveler2} ${overlap.consultant_last_name_traveler2}`, overlapStart2, overlapEnd2);
+            const traveler2Row = renderWeekCells(overlap.traveler2, overlap.booking_channel_traveler2, `${overlap.consultant_first_name_traveler2} ${overlap.consultant_last_name_traveler2}`, overlap.agency_name_traveler2, overlapStart2, overlapEnd2);
             if (traveler2Row) renderedRows++;
 
             return {

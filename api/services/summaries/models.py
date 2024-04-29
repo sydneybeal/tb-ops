@@ -238,6 +238,8 @@ class Overlap(BaseModel):
     consultant_last_name_traveler2: str
     consultant_is_active_traveler1: bool
     consultant_is_active_traveler2: bool
+    agency_name_traveler1: Optional[str] = None
+    agency_name_traveler2: Optional[str] = None
 
     def to_json(self, **kwargs):
         """Convert the model to a dict, then serialize the dict using the custom encoder."""
