@@ -39,6 +39,7 @@ from api.services.summaries.models import (
     PropertySummary,
     PropertyDetailSummary,
     BedNightReport,
+    TripSummary,
 )
 from api.services.summaries.service import SummaryService
 from api.services.travel.models import (
@@ -52,12 +53,15 @@ from api.services.travel.models import (
     PatchPortfolioRequest,
     PatchPropertyRequest,
     PatchPropertyDetailRequest,
+    PatchTripRequest,
 )
 from api.services.travel.service import TravelService
 from api.services.quality.service import QualityService
 from api.services.quality.models import PotentialTrip
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+VERSION = "v0.1.14beta"
 
 
 def make_app(
@@ -69,20 +73,20 @@ def make_app(
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
-        title="tb_ops_api_layer",
-        version="0.0.1",
+        title="roam_and_report_api_layer",
+        version=VERSION,
         docs_url="/docs",
         openapi_url="/openapi.json",
         servers=[
             {
-                "url": "https://www.ops.travelbeyond.com",
+                "url": "https://www.api.roamandreport.com",
                 "description": "TB Operations API",
             },
         ],
         description="Travel Beyond.",
         openapi_tags=[
             {
-                "name": "service_providers",
+                "name": "roam_and_report",
                 "description": "Bed night reporting for client trips.",
             },
         ],
@@ -121,7 +125,7 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "v0.1.12"}
+        return {"Hello": "World", "Version": VERSION}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
@@ -661,16 +665,6 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
-    # responses={
-    #             200: {
-    #                 "content": {
-    #                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
-    #                 },
-    #                 "description": "Returns an Excel file of the accommodation logs.",
-    #             },
-    #             404: {"description": "No data found for the given filters."},
-    #         },
-
     @app.get(
         "/v1/export_bed_night_report",
         operation_id="export_bed_night_report",
@@ -772,6 +766,30 @@ def make_app(
     ) -> Iterable[PotentialTrip]:
         return await quality_svc.find_potential_trips()
 
+    @app.get(
+        "/v1/trips",
+        operation_id="find_potential_trips",
+        response_model=Iterable[TripSummary],
+        tags=["trips"],
+    )
+    async def get_all_trips(
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[TripSummary]:
+        return await summary_svc.get_all_trips()
+
+    @app.patch(
+        "/v1/confirm_trip",
+        operation_id="post_trips",
+        tags=["trips"],
+    )
+    async def post_trips(
+        trip_data: PatchTripRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Trip."""
+        results = await quality_svc.confirm_trip(trip_data)
+        return JSONResponse(content=results)
+
     @app.route("/v1/progress", methods=["GET"])
     async def get_progress(
         current_user: User = Depends(get_current_user),
@@ -789,8 +807,8 @@ def make_app(
             {
                 "total_potential": total_potential,
                 "total_confirmed": total_confirmed,
-                # "percent_complete": f"{percentage:.0f}%",
-                "percent_complete": "32%",
+                "percent_complete": f"{percentage:.0f}%",
+                # "percent_complete": "32%",
             }
         )
 

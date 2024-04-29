@@ -158,6 +158,7 @@ export const AuditLogs = () => {
         consultants: "consultant",
         portfolios: "portfolio",
         countries: "country",
+        trips: "trip",
         property_details: "property detail"
     };
     // const actionNames = {

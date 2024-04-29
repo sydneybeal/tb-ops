@@ -19,12 +19,10 @@ from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
+from api.services.summaries.models import AccommodationLogSummary
 from api.services.summaries.service import SummaryService
 from api.services.travel.service import TravelService
-from api.services.travel.models import (
-    AccommodationLog,
-    Trip,
-)
+from api.services.travel.models import AccommodationLog, Trip, PatchTripRequest
 from api.services.quality.models import (
     PotentialTrip,
 )
@@ -37,6 +35,8 @@ class QualityService:
     def __init__(self):
         """Initializes with a configured repository."""
         self._summary_svc = SummaryService()
+        self._travel_svc = TravelService()
+        self._audit_svc = AuditService()
         self._repo = PostgresQualityRepository()
 
     async def find_potential_trips(self) -> List[PotentialTrip]:
@@ -77,15 +77,53 @@ class QualityService:
                         break
             else:
                 # Start a new potential trip and set the trip name based on the log's details
-                trip_name = f"{log.primary_traveler} x {log.num_pax}"
-                potential_trips.append(
-                    PotentialTrip(accommodation_logs=[log], trip_name=trip_name)
-                )
+                # trip_name = self.generate_trip_name(log)
+                # potential_trips.append(
+                #     PotentialTrip(accommodation_logs=[log], trip_name=trip_name)
+                # )
+                potential_trips.append(PotentialTrip(accommodation_logs=[log]))
 
             # Update the last log for this traveler, or set it if it's the first log we're seeing for this traveler
             last_log_per_traveler[log.primary_traveler] = log
 
         return potential_trips
+
+    async def confirm_trip(self, trip_request: PatchTripRequest) -> dict:
+        """Confirms a trip and handles the repository updates."""
+        trip_id = await self._travel_svc.add_trip(trip_request)
+
+        await self._travel_svc.update_trip_id(
+            trip_request.accommodation_log_ids,
+            trip_id,
+            trip_request.updated_by,
+        )
+        # try:
+        # Create trip in the trips table
+        # trip_id = await self._travel_svc.add_trip(trip_request)
+
+        # await self._travel_svc.update_trip_id(
+        #     trip_request.accommodation_log_ids,
+        #     trip_id,
+        #     trip_request.updated_by,
+        # )
+
+        # except:
+        # raise Exception("Failed to confirm trip")
+
+        # create an audit log for the trip data
+        audit_log = AuditLog(
+            table_name="trips",
+            record_id=trip_id,
+            user_name=trip_request.updated_by,
+            # If the trip already existed, put the before value here
+            before_value={},
+            after_value=trip_request.dict(),
+            action="update",
+        )
+        await self._audit_svc.add_audit_logs(audit_log)
+
+        # Prepare the response based on the operation performed
+        return {"inserted_count": 1, "updated_count": 0}
 
     # Currently all of our accommodation logs are ungrouped
     # It is just a big table of traveler names, properties, and dates

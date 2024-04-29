@@ -3,29 +3,53 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
-import Navbar from '../../components/Navbar';
-import moment from 'moment';
+// import moment from 'moment';
 import SingleLogDisplay from '../AccommodationLogs/SingleLogDisplay';
+import ConfirmTripModal from './ConfirmTripModal';
+import FlagTripModal from './FlagTripModal';
 
 export const PotentialTrips = () => {
     const [apiData, setApiData] = useState([]);
+    const [refreshData, setRefreshData] = useState(false);
     const [sortOption, setSortOption] = useState('latestTripsFirst');
     const [loaded, setLoaded] = useState(false);
     // const [activeTripId, setActiveTripId] = useState(null);
     const { userDetails, logout } = useAuth();
     const [progress, setProgress] = useState(null);
     const [displayData, setDisplayData] = useState([]);
+    // const [currentPotentialTrip, setCurrentPotentialTrip] = useState(null);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
 
-    const handleToggleTrip = (tripId) => {
+    // const handleToggleTrip = (tripId) => {
+    //     const newSelection = new Set(selectedTrips);
+    //     if (newSelection.has(tripId)) {
+    //         newSelection.delete(tripId);
+    //     } else {
+    //         newSelection.add(tripId);
+    //     }
+    //     setSelectedTrips(newSelection);
+    // };
+    const handleToggleTrip = (trip) => {
         const newSelection = new Set(selectedTrips);
-        if (newSelection.has(tripId)) {
-            newSelection.delete(tripId);
+        const existingTrip = [...newSelection].find(t => t.id === trip.id);
+        if (existingTrip) {
+            newSelection.delete(existingTrip);
         } else {
-            newSelection.add(tripId);
+            newSelection.add(trip);
         }
         setSelectedTrips(newSelection);
+    };
+    
+    const addTripToSelection = (trip) => {
+        const newSelection = new Set(selectedTrips);
+        const existingTrip = [...newSelection].find(t => t.id === trip.id);
+        if (!existingTrip) {
+            newSelection.add(trip);
+            setSelectedTrips(newSelection);
+        }
     };
 
     useEffect(() => {
@@ -62,6 +86,10 @@ export const PotentialTrips = () => {
                     return bDuration - aDuration;
                 });
                 break;
+            case 'flaggedTrips':
+                // TODO change this to trips with flag_for_help true
+                sortedData.sort((a, b) => b.totalFlags - a.totalFlags);
+                break;
             default:
                 break;
         }
@@ -70,7 +98,6 @@ export const PotentialTrips = () => {
     }, [sortOption, apiData]);
 
     useEffect(() => {
-        M.AutoInit();
         fetch(`${process.env.REACT_APP_API}/v1/potential_trips`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
@@ -104,10 +131,9 @@ export const PotentialTrips = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                console.log(data);
                 setProgress(data);
             })
-    }, [userDetails.token, logout]);
+    }, [refreshData, userDetails.token, logout]);
 
     function validateData(trips) {
         return trips.map(trip => {
@@ -159,6 +185,82 @@ export const PotentialTrips = () => {
         });
     };
 
+    // const openConfirmTripModal = (potentialTripData) => {
+    //     if (!userDetails.email) {
+    //         M.toast({
+    //             html: 'Please log in before confirming trips.',
+    //             displayLength: 2000,
+    //             classes: 'error-red',
+    //         });
+    //         return;
+    //     } else {
+    //         setCurrentPotentialTrip(potentialTripData);
+    //         setIsConfirmModalOpen(true);
+    //     }
+    // };
+
+    const openConfirmTripModal = (trip) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before confirming trips.',
+                displayLength: 2000,
+                classes: 'error-red',
+            });
+            return;
+        } else {
+            addTripToSelection(trip); // Ensure this adds the trip object
+            setIsConfirmModalOpen(true);
+        }
+    };
+
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
+        // setCurrentPotentialTrip(null);
+        setSelectedTrips(new Set());
+        document.body.style.overflow = '';
+    };
+
+    
+    // const openFlagTripModal = (potentialTripData) => {
+    //     if (!userDetails.email) {
+    //         M.toast({
+    //             html: 'Please log in before confirming trips.',
+    //             displayLength: 2000,
+    //             classes: 'error-red',
+    //         });
+    //         return;
+    //     } else {
+    //         setCurrentPotentialTrip(potentialTripData);
+    //         setIsFlagModalOpen(true);
+    //     }
+    // };
+
+    const openFlagTripModal = (trip) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before confirming trips.',
+                displayLength: 2000,
+                classes: 'error-red',
+            });
+            return;
+        } else {
+            addTripToSelection(trip); // Ensure this adds the trip object
+            // setCurrentPotentialTrip(trip);
+            setIsFlagModalOpen(true);
+        }
+    };
+
+    const closeFlagModal = () => {
+        setIsFlagModalOpen(false);
+        // setCurrentPotentialTrip(null);
+        setSelectedTrips(new Set());
+        document.body.style.overflow = '';
+    };
+
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
     // const toggleTripDetails = (tripId) => {
     //     setActiveTripId(activeTripId === tripId ? null : tripId);
     // };
@@ -172,6 +274,22 @@ export const PotentialTrips = () => {
             ) : (
                 <>
                     <div className="center potential-trips">
+                    <ConfirmTripModal
+                        isOpen={isConfirmModalOpen}
+                        // openConfirmTripModal={openConfirmTripModal}
+                        onClose={closeConfirmModal}
+                        onRefresh={triggerRefresh}
+                        // potentialTripData={currentPotentialTrip}
+                        selectedTrips={selectedTrips}
+                    />
+                    <FlagTripModal
+                        isOpen={isFlagModalOpen}
+                        // openConfirmTripModal={openFlagTripModal}
+                        onClose={closeFlagModal}
+                        onRefresh={triggerRefresh}
+                        // potentialTripData={currentPotentialTrip}
+                        selectedTrips={selectedTrips}
+                    />
                         {loaded ? (
                             <>
                                 <div className="row">
@@ -179,7 +297,7 @@ export const PotentialTrips = () => {
                                 </div>
                                 { progress &&
                                     <div className="row" style={{ width: '60%'}}>
-                                        <div class="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                        <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
                                             <div className="determinate tb-teal darken-2" style={{ width: `${progress.percent_complete}` }}></div>
                                         </div>
                                         <h5>
@@ -194,34 +312,40 @@ export const PotentialTrips = () => {
                                 }
                                 <div className="row" style={{ marginTop: '10px', marginBottom: '30px'}}>
                                     <div
-                                        className={`chip btn ${sortOption === 'qualityIssuesFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        className={`chip waves-effect btn ${sortOption === 'qualityIssuesFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('qualityIssuesFirst')}
                                     >
                                         Quality Issues
                                     </div>
                                     <div
-                                        className={`chip btn ${sortOption === 'latestTripsFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        className={`chip waves-effect btn ${sortOption === 'latestTripsFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('latestTripsFirst')}
                                     >
                                         Latest Trips
                                     </div>
                                     <div
-                                        className={`chip btn ${sortOption === 'oldestTripsFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        className={`chip waves-effect btn ${sortOption === 'oldestTripsFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('oldestTripsFirst')}
                                     >
                                         Oldest Trips
                                     </div>
                                     <div
-                                        className={`chip btn ${sortOption === 'shortestTrips' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        className={`chip waves-effect btn ${sortOption === 'shortestTrips' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('shortestTrips')}
                                     >
                                         Shortest Trips
                                     </div>
                                     <div
-                                        className={`chip btn ${sortOption === 'longestTrips' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        className={`chip waves-effect btn ${sortOption === 'longestTrips' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('longestTrips')}
                                     >
                                         Longest Trips
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'flaggedTrips' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('flaggedTrips')}
+                                    >
+                                        Flagged Trips
                                     </div>
                                 </div>
                                 {/* <div className="container"> */}
@@ -229,19 +353,21 @@ export const PotentialTrips = () => {
                                     displayData.map(trip => (
                                         <>
                                             <div key={trip.id} className="card potential-trip-card">
-                                                <div class="card-content">
-                                                    <span class="card-title">{trip.trip_name || "Unnamed Trip"}</span>
+                                                <div className="card-content">
+                                                    <span className="card-title">{trip.trip_name || "Unnamed Trip"}</span>
                                                     <span className="chip tb-grey lighten-4">{trip.review_status}</span>
                                                     <button
-                                                        class="btn-floating btn-small waves-effect waves-light success-green"
+                                                        className="btn-floating btn-small waves-effect waves-light success-green"
+                                                        onClick={() => openConfirmTripModal(trip)}
                                                     >
-                                                        <i class="material-icons">check</i>
+                                                        <i className="material-icons">check</i>
                                                     </button>
                                                     &nbsp;
                                                     <button
-                                                        class="btn-floating btn-small waves-effect waves-light red lighten-3"
+                                                        className="btn-floating btn-small waves-effect waves-light red lighten-3"
+                                                        onClick={() => openFlagTripModal(trip)}
                                                     >
-                                                        <i class="material-icons">flag</i>
+                                                        <i className="material-icons">flag</i>
                                                     </button>
                                                     <ul>
                                                         {trip.accommodation_logs.map(log => (
@@ -250,17 +376,15 @@ export const PotentialTrips = () => {
                                                             </li>
                                                         ))}
                                                         <li style={{ marginTop: '20px' }}>
-                                                            <label
-                                                                className="tb-checkbox-label"
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    className="tb-checkbox"
-                                                                    checked={selectedTrips.has(trip.id)}
-                                                                    onChange={() => handleToggleTrip(trip.id)}
-                                                                />
-                                                                <span>Mark for merge</span>
-                                                            </label>
+                                                        <label className="tb-checkbox-label">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="tb-checkbox"
+                                                                checked={[...selectedTrips].some(t => t.id === trip.id)}
+                                                                onChange={() => handleToggleTrip(trip)}
+                                                            />
+                                                            <span>Mark for merge</span>
+                                                        </label>
                                                         </li>
                                                     </ul>
                                                 </div>

@@ -279,26 +279,31 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         updated_by=res["updated_by"],
                     )
 
-    async def get_accommodation_log_by_id(
+    async def get_accommodation_log_by_ids(
         self,
-        log_id: UUID,
-    ) -> AccommodationLog:
+        log_ids: Sequence[UUID],
+    ) -> Sequence[AccommodationLog]:
         """Gets a single AccommodationLog model in the repository by ID."""
         pool = await self._get_pool()
-        query = dedent(
-            """
+        # query = dedent(
+        #     """
+        #     SELECT * FROM public.accommodation_logs
+        #     WHERE id = $1
+        #     """
+        # )
+        placeholders = ", ".join(f"${i+1}" for i in range(len(log_ids)))
+        query = f"""
             SELECT * FROM public.accommodation_logs
-            WHERE id = $1
-            """
-        )
+            WHERE id IN ({placeholders})
+        """
         async with pool.acquire() as con:
             await con.set_type_codec(
                 "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
             async with con.transaction():
-                res = await con.fetchrow(query, log_id)
-                if res:
-                    return AccommodationLog(**res)
+                # res = await con.fetchrow(query, log_id)
+                res = await con.fetch(query, *log_ids)
+                return [AccommodationLog(**record) for record in res]
 
     async def update_accommodation_log(
         self, accommodation_logs: Sequence[AccommodationLog]
@@ -1773,3 +1778,73 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 records = await con.fetch(query)
                 agencies = [Portfolio(**record) for record in records]
                 return agencies
+
+    async def add_trip(self, trips: Sequence[Trip]) -> None:
+        """Adds a sequence of Trip models to the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.trips (
+                id,
+                trip_name,
+                created_at,
+                updated_at,
+                updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5
+            );
+            --TODO: return message when trip name already exists
+            --ON CONFLICT (trip_name) DO NOTHING
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = [
+                    (
+                        trip.id,
+                        trip.trip_name.strip(),
+                        trip.created_at,
+                        trip.updated_at,
+                        trip.updated_by,
+                    )
+                    for trip in trips
+                ]
+                await con.executemany(query, args)
+        print(f"Successfully added {len(args)} new trip record(s) to the repository.")
+
+    async def update_trip_ids(
+        self,
+        log_ids: Sequence[UUID],
+        trip_id: UUID,
+        updated_by: str,
+        updated_at: datetime.datetime,
+    ):
+        """Updates the trip IDs of a set of AccommodationLog entries."""
+        if not log_ids:
+            return  # If no log IDs are provided, exit the function early
+
+        pool = await self._get_pool()
+        # Create placeholders for each log_id in the list
+        placeholders = ", ".join(
+            f"${i+4}" for i in range(len(log_ids))
+        )  # Starting from $4
+        query = f"""
+            UPDATE public.accommodation_logs
+            SET trip_id = $1, updated_by = $2, updated_at = $3
+            WHERE id IN ({placeholders});
+        """
+
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Prepare all parameters in the right order: trip_id, updated_by, updated_at, followed by log_ids
+                params = [trip_id, updated_by, updated_at] + list(log_ids)
+                await con.execute(query, *params)
+
+        print(f"Successfully updated trip IDs for {len(log_ids)} accommodation log(s).")

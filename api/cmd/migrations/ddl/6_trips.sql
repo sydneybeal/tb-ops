@@ -14,7 +14,7 @@
 
 CREATE TABLE IF NOT EXISTS public.trips (
     id UUID PRIMARY KEY NOT NULL,
-    trip_name VARCHAR(255),
+    trip_name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255) NOT NULL
@@ -22,8 +22,9 @@ CREATE TABLE IF NOT EXISTS public.trips (
 
 CREATE TABLE IF NOT EXISTS public.potential_trips (
     id UUID PRIMARY KEY NOT NULL,
-    trip_name VARCHAR(255),
+    trip_name VARCHAR(255) NOT NULL,
     review_status VARCHAR(50) NOT NULL,  -- Includes 'confirmed','ask_for_help'
+    review_notes VARCHAR(1000),
     reviewed_at TIMESTAMP WITH TIME ZONE,
     reviewed_by VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,

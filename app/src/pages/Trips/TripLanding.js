@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import M from 'materialize-css/dist/js/materialize';
-import { useAuth } from '../../components/AuthContext';
+// import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+// import M from 'materialize-css/dist/js/materialize';
 import 'react-datepicker/dist/react-datepicker.css';
-import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
-import moment from 'moment';
+// import moment from 'moment';
 import Trips from './Trips';
 import PotentialTrips from './PotentialTrips';
 

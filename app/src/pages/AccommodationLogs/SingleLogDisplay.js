@@ -15,6 +15,8 @@ export const SingleLogDisplay = ({ log }) => {
                 <br />
                 <span className={`chip ${log.core_destination_flag ? 'error-red-light' : 'tb-grey lighten-3'}`}>{log.country_name}</span>
                 <span className={`chip ${log.core_destination_flag ? 'error-red-light' : 'tb-grey lighten-4'}`}>{log.core_destination_name}</span>
+                <br />
+                <em className="tb-grey-text">{log.primary_traveler}</em>
             </div>
 
             {/* Date In and Date Out */}

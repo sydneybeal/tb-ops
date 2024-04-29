@@ -16,9 +16,9 @@
 from datetime import datetime, date
 import json
 from typing import Optional, List, Dict
-from uuid import UUID
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 def custom_json_encoder(obj):
@@ -243,3 +243,40 @@ class Overlap(BaseModel):
         """Convert the model to a dict, then serialize the dict using the custom encoder."""
         model_dict = self.dict()
         return json.dumps(model_dict, default=custom_json_encoder, **kwargs)
+
+
+class TripSummary(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    trip_name: str
+    accommodation_logs: List[AccommodationLogSummary] = []
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def total_bed_nights(self) -> int:
+        """Calculate the total bed nights for the trip."""
+        return sum(log.bed_nights for log in self.accommodation_logs)
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def number_of_logs(self) -> int:
+        """Return the number of accommodation logs in the trip."""
+        return len(self.accommodation_logs)
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def start_date(self) -> Optional[date]:
+        """Calculate the start date of the trip by finding the earliest 'date_in' from the logs."""
+        if self.accommodation_logs:
+            return min(log.date_in for log in self.accommodation_logs)
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def end_date(self) -> Optional[date]:
+        """Calculate the end date of the trip by finding the latest 'date_out' from the logs."""
+        if self.accommodation_logs:
+            return max(log.date_out for log in self.accommodation_logs)
+        return None

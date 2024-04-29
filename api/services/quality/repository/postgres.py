@@ -64,13 +64,13 @@ class PostgresQualityRepository(PostgresMixin, QualityRepository):
                 al.updated_at,
                 al.updated_by
             FROM public.accommodation_logs al
-            JOIN public.properties p ON al.property_id = p.id
-            JOIN public.portfolios pf ON p.portfolio_id = pf.id
-            JOIN public.consultants cons ON al.consultant_id = cons.id
+            LEFT JOIN public.properties p ON al.property_id = p.id
+            LEFT JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            LEFT JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
-            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            LEFT JOIN public.core_destinations cd ON p.core_destination_id = cd.id
             WHERE al.trip_id IS NULL 
             ORDER BY al.primary_traveler ASC, al.date_in ASC
         """

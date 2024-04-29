@@ -26,6 +26,7 @@ from api.services.summaries.models import (
     PortfolioSummary,
     PropertyDetailSummary,
     PropertySummary,
+    TripSummary,
 )
 from api.services.travel.models import Trip
 
@@ -113,5 +114,5 @@ class SummaryRepository(ABC):
 
     # Trips
     @abstractmethod
-    async def get_all_trips(self) -> Sequence[Trip]:
-        """Gets all Trip models."""
+    async def get_all_trips(self) -> Sequence[TripSummary]:
+        """Gets all TripSummary models."""

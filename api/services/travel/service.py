@@ -15,6 +15,7 @@
 """Services for interacting with travel entries."""
 import datetime
 from collections import defaultdict
+from re import S
 from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID
 from api.services.audit.service import AuditService
@@ -32,6 +33,7 @@ from api.services.travel.models import (
     CoreDestination,
     Country,
     PatchCountryRequest,
+    PatchTripRequest,
     Portfolio,
     PatchPortfolioRequest,
     Property,
@@ -143,7 +145,8 @@ class TravelService:
     ) -> Optional[AccommodationLog]:
         """Finds existing accommodation log by its ID."""
         # Assuming log_request has all necessary fields to match an existing log
-        return await self._repo.get_accommodation_log_by_id(log_id)
+        logs = await self._repo.get_accommodation_log_by_ids([log_id])
+        return logs[0]
 
     async def process_accommodation_log_requests(
         self, log_requests: Sequence[PatchAccommodationLogRequest]
@@ -1730,3 +1733,62 @@ class TravelService:
 
         await self.process_audit_logs(audit_log)
         return True
+
+    async def add_trip(self, trip_request: PatchTripRequest) -> UUID:
+        """Adds Trip models to the repository."""
+        new_trip = Trip(
+            trip_name=trip_request.trip_name, updated_by=trip_request.updated_by
+        )
+        await self._repo.add_trip([new_trip])
+
+        audit_log = AuditLog(
+            table_name="trips",
+            record_id=new_trip.id,
+            user_name=new_trip.updated_by,
+            # If the trip already existed, put the before value here
+            before_value={},
+            after_value=new_trip.dict(),
+            action="insert",
+        )
+        await self._audit_svc.add_audit_logs(audit_log)
+
+        return new_trip.id
+
+    async def update_trip_id(
+        self, log_ids: Sequence[UUID], trip_id: UUID, updated_by: str
+    ) -> None:
+        """Updates trip_id of a sequence of accommodation logs."""
+        try:
+            # Retrieve current state for audit logging
+            current_logs = await self._repo.get_accommodation_log_by_ids(log_ids)
+            updated_at = datetime.datetime.now()
+
+            # Update accommodation logs with new trip_id and updated_by
+            await self._repo.update_trip_ids(
+                log_ids, trip_id, updated_by, updated_at
+            )  # TODO
+
+            # Prepare audit logs with the old and new values
+            audit_logs = [
+                AuditLog(
+                    table_name="accommodation_logs",
+                    record_id=log.id,
+                    user_name=updated_by,
+                    before_value=log.dict(),
+                    after_value={
+                        **log.dict(),
+                        "trip_id": str(trip_id),
+                        "updated_by": updated_by,
+                        "updated_at": updated_at,
+                    },
+                    action="update",
+                )
+                for log in current_logs
+            ]
+
+            # Record the audit logs
+            await self._audit_svc.add_audit_logs(audit_logs)
+
+        except Exception as e:
+            # Optionally, handle specific exceptions and log errors
+            raise Exception(f"Error updating trip IDs for logs: {str(e)}")

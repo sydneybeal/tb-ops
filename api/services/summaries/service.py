@@ -36,6 +36,7 @@ from api.services.summaries.models import (
     ReportAggregations,
     ReportInput,
     Overlap,
+    TripSummary,
 )
 from api.services.summaries.repository.postgres import PostgresSummaryRepository
 
@@ -499,6 +500,6 @@ class SummaryService:
         return await self._repo.get_all_portfolios()
 
     # Trip
-    async def get_all_trips(self) -> Sequence[Trip]:
-        """Gets all Trip models."""
+    async def get_all_trips(self) -> Sequence[TripSummary]:
+        """Gets all TripSummary models."""
         return await self._repo.get_all_trips()
