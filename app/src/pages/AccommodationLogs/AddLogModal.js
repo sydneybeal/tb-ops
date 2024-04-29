@@ -1973,8 +1973,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 </span>
                                 {
                                     (() => {
-                                        const datesIn = accommodationLogs.map(log => new Date(log.date_in)).filter(date => !isNaN(date));
-                                        const earliestDateIn = datesIn.length ? new Date(Math.min(...datesIn)) : 'N/A';
+                                        const datesIn = accommodationLogs.map(log => moment(log.date_in).toDate()).filter(date => !isNaN(date));
+                                        const earliestDateIn = datesIn.length ? moment(Math.min(...datesIn)).toDate() : 'N/A';
                                         return `${moment(earliestDateIn).format("MMM D, YYYY")}`;
                                     })()
                                 }
@@ -1989,8 +1989,8 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 </span>
                                 {
                                     (() => {
-                                        const datesOut = accommodationLogs.map(log => new Date(log.date_out)).filter(date => !isNaN(date));
-                                        const latestDateOut = datesOut.length ? new Date(Math.max(...datesOut)) : 'N/A';
+                                        const datesOut = accommodationLogs.map(log => moment(log.date_out).toDate()).filter(date => !isNaN(date));
+                                        const latestDateOut = datesOut.length ? moment(Math.max(...datesOut)).toDate() : 'N/A';
                                         return `${moment(latestDateOut).format("MMM D, YYYY")}`;
                                     })()
                                 }

@@ -306,6 +306,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             cons1.is_active AS consultant_is_active_traveler1,
             cons2.is_active AS consultant_is_active_traveler2,
             cd.name AS core_destination_name,
+            ag1.name AS agency_name_traveler1,
+            ag2.name AS agency_name_traveler2,
             -- Calculate the overlap in days
             GREATEST(0, LEAST(a1.date_out, a2.date_out) - GREATEST(a1.date_in, a2.date_in)) AS overlap_days
         FROM public.accommodation_logs a1
@@ -317,9 +319,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
         LEFT JOIN public.countries c ON p.country_id = c.id
         LEFT JOIN public.booking_channels bc1 on a1.booking_channel_id = bc1.id
         LEFT JOIN public.booking_channels bc2 on a2.booking_channel_id = bc2.id
-        JOIN public.consultants cons1 ON a1.consultant_id = cons1.id
-        JOIN public.consultants cons2 ON a2.consultant_id = cons2.id
-        JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+        LEFT JOIN public.consultants cons1 ON a1.consultant_id = cons1.id
+        LEFT JOIN public.consultants cons2 ON a2.consultant_id = cons2.id
+        LEFT JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+        LEFT JOIN public.agencies ag1 ON a1.agency_id = ag1.id
+        LEFT JOIN public.agencies ag2 ON a2.agency_id = ag2.id
         WHERE (a1.date_in BETWEEN $1 AND $2 OR a1.date_out BETWEEN $1 AND $2)
             AND (a2.date_in BETWEEN $1 AND $2 OR a2.date_out BETWEEN $1 AND $2)
         ORDER BY overlap_days ASC, a1.date_in DESC  -- Order by fewest overlap days first, then by date_in

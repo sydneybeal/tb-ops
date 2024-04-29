@@ -57,6 +57,8 @@ from api.services.travel.service import TravelService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+VERSION = "v0.1.13"
+
 
 def make_app(
     travel_svc: TravelService,
@@ -67,12 +69,12 @@ def make_app(
     """Function to build FastAPI app."""
     app = FastAPI(
         title="tb_ops_api_layer",
-        version="0.0.1",
+        version=VERSION,
         docs_url="/docs",
         openapi_url="/openapi.json",
         servers=[
             {
-                "url": "https://www.ops.travelbeyond.com",
+                "url": "https://www.api.roamandreport.com",
                 "description": "TB Operations API",
             },
         ],
@@ -118,7 +120,7 @@ def make_app(
 
     @app.get("/")
     def root():
-        return {"Hello": "World", "Version": "v0.1.12"}
+        return {"Hello": "World", "Version": VERSION}
 
     @app.post("/token")
     async def login_for_access_token(email: str = Form(...), password: str = Form(...)):
