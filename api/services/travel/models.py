@@ -98,6 +98,10 @@ class Property(BaseModel):
     representative: Optional[str] = None
     country_id: Optional[UUID] = None
     core_destination_id: Optional[UUID] = None
+    property_type: Optional[str] = None
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -257,6 +261,10 @@ class PatchPropertyRequest(BaseModel):
     portfolio_id: Optional[UUID] = None
     country_id: Optional[UUID] = None
     core_destination_id: Optional[UUID] = None
+    property_type: Optional[str] = None
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     updated_by: str
 
 

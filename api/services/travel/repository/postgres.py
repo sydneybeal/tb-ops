@@ -367,17 +367,25 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             portfolio_id,
             country_id,
             core_destination_id,
+            latitude,
+            longitude,
+            location,
+            property_type,
             created_at,
             updated_at,
             updated_by
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
         )
         ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
             portfolio_id = EXCLUDED.portfolio_id,
             country_id = EXCLUDED.country_id,
             core_destination_id = EXCLUDED.core_destination_id,
+            latitude = EXCLUDED.latitude,
+            longitude = EXCLUDED.longitude,
+            location = EXCLUDED.location,
+            property_type = EXCLUDED.property_type,
             updated_at = EXCLUDED.updated_at,
             updated_by = EXCLUDED.updated_by
         RETURNING id, (xmax = 0) AS was_inserted;
@@ -395,6 +403,10 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     property_data.portfolio_id,
                     property_data.country_id,
                     property_data.core_destination_id,
+                    property_data.latitude,
+                    property_data.longitude,
+                    property_data.location,
+                    property_data.property_type,
                     property_data.created_at,
                     property_data.updated_at,
                     property_data.updated_by,

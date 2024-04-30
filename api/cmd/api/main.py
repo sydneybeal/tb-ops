@@ -61,7 +61,7 @@ from api.services.quality.models import PotentialTrip
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.1.14beta"
+VERSION = "v-trips-beta"
 
 
 def make_app(

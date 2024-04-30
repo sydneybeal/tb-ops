@@ -535,7 +535,7 @@ export const Properties = () => {
                                             <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> properties
                                         </em>
                                     </div>
-                                    <div className="container center">
+                                    <div className="container center" style={{ width: '85%' }}>
                                         <table className="accommodation-logs-table">
                                             <thead>
                                                 <tr className="tb-md-black-text text-bold">
@@ -581,6 +581,26 @@ export const Properties = () => {
                                                     </th>
                                                     <th
                                                         onClick={() =>
+                                                            applySorting('location')
+                                                        }
+                                                    >
+                                                        {/* Dates */}
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Location (City/Park/Region)"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                near_me
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'location' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
                                                             applySorting('country_name')
                                                         }
                                                     >
@@ -616,6 +636,25 @@ export const Properties = () => {
                                                             </span>
                                                             <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                                 {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            </span>
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('property_type')
+                                                        }
+                                                    >
+                                                        <span
+                                                            className={`tooltipped`}
+                                                            data-position="bottom"
+                                                            data-tooltip="Property Type (Hotel/Accommodation, Luxury/Standard)"
+                                                            data-tooltip-class="tooltip-light"
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                camping
+                                                            </span>
+                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                                {sorting.field === 'property_type' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                             </span>
                                                         </span>
                                                     </th>
@@ -670,8 +709,28 @@ export const Properties = () => {
                                                                     <p className="text-bold">{item.name}</p>
                                                                 </td>
                                                                 <td>{item.portfolio_name}</td>
+                                                                <td>
+                                                                    {!item.location
+                                                                    ?
+                                                                    <span className="chip tb-grey lighten-2 text-bold">
+                                                                        <span className="material-symbols-outlined">
+                                                                            live_help
+                                                                        </span>
+                                                                    </span>
+                                                                    : item.location}
+                                                                </td>
                                                                 <td>{item.country_name}</td>
                                                                 <td>{item.core_destination_name}</td>
+                                                                <td>
+                                                                    {!item.property_type
+                                                                    ?
+                                                                    <span className="chip tb-grey lighten-2 text-bold">
+                                                                        <span className="material-symbols-outlined">
+                                                                            live_help
+                                                                        </span>
+                                                                    </span>
+                                                                    : item.property_type}
+                                                                </td>
                                                                 <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
                                                                 <td style={{ width: '150px' }}>
                                                                     <div style={{ textAlign: 'right', padding: '0px' }}>
@@ -704,7 +763,7 @@ export const Properties = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="6" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="8" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

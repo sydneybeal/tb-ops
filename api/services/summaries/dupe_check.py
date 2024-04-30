@@ -50,7 +50,7 @@ class DupeChecker:
 
         for dupe in potential_duplicates:
             print(
-                f"{dupe.primary_traveler},{dupe.num_pax},{dupe.property_name},{dupe.date_in},{dupe.date_out},{dupe.consultant_display_name}"
+                f'"{dupe.primary_traveler}","{dupe.num_pax}","{dupe.property_name}","{dupe.date_in}","{dupe.date_out}","{dupe.consultant_display_name}"'
             )
 
         print(f"{len(potential_duplicates)} potential duplicates found.")
