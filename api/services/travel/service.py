@@ -882,6 +882,11 @@ class TravelService:
                 == property_request.portfolio_id
                 and existing_property_by_id.country_id == property_request.country_id
                 and existing_property_by_id.core_destination_id == core_destination_id
+                and existing_property_by_id.latitude == property_request.latitude
+                and existing_property_by_id.longitude == property_request.longitude
+                and existing_property_by_id.location == property_request.location
+                and existing_property_by_id.property_type
+                == property_request.property_type
             ):
                 # No changes detected, return a message indicating so
                 return {"error": "No changes were detected."}
@@ -892,6 +897,10 @@ class TravelService:
                 portfolio_id=property_request.portfolio_id,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
+                latitude=property_request.latitude,
+                longitude=property_request.longitude,
+                location=property_request.location,
+                property_type=property_request.property_type,
                 updated_by=property_request.updated_by,
             )
             audit_log = AuditLog(
@@ -910,6 +919,10 @@ class TravelService:
                 portfolio_id=property_request.portfolio_id,
                 country_id=property_request.country_id,
                 core_destination_id=core_destination_id,
+                latitude=property_request.latitude,
+                longitude=property_request.longitude,
+                location=property_request.location,
+                property_type=property_request.property_type,
                 updated_by=property_request.updated_by,
             )
             audit_log = AuditLog(

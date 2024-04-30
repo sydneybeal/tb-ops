@@ -12,6 +12,17 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
     const [loading, setLoading] = useState(false);
     const [propertyId, setPropertyId] = useState(null);
     const [propertyName, setPropertyName] = useState('');
+    const [locationName, setLocationName] = useState('');
+    const [latitude, setLatitude] = useState('');
+    const [longitude, setLongitude] = useState('');
+    const [propertyType, setPropertyType] = useState('');
+    const [propertyOptions] = useState([
+        { value: 'standard accommodation', label: 'Standard Accommodation' },
+        { value: 'luxury accommodation', label: 'Luxury Accommodation' },
+        { value: 'standard hotel', label: 'Standard Hotel' },
+        { value: 'luxury hotel', label: 'Luxury Hotel' },
+        { value: 'ship/rail', label: 'Ship/Rail' }
+    ]);
     // const [selectedPortfolioId, setSelectedPortfolioId] = useState(n);
     const [selectedCountryId, setSelectedCountryId] = useState(null);
     const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
@@ -52,6 +63,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
             name: propertyName || null,
             portfolio_id: selectedPortfolioId || null,
             country_id: selectedCountryId || null,
+            latitude: latitude || null,
+            longitude: longitude || null,
+            location: locationName || null,
+            property_type: propertyType || null,
             core_destination_id: selectedCoreDestinationId || null,
             updated_by: userDetails.email || ''
         };
@@ -338,6 +353,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         } else if (isOpen && isEditMode && editPropertyData) {
             setPropertyId(editPropertyData.id);
             setPropertyName(editPropertyData.name);
+            setLocationName(editPropertyData.location);
+            setLongitude(editPropertyData.longitude);
+            setLatitude(editPropertyData.latitude);
+            setPropertyType(editPropertyData.property_type);
             // setPortfolioName(editPropertyData.portfolio_name);
             setSelectedPortfolioId(editPropertyData.portfolio_id);
             setSelectedCountryId(editPropertyData.country_id);
@@ -354,6 +373,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
     const resetFormState = () => {
         setPropertyId(null);
         setPropertyName('');
+        setLongitude('');
+        setLatitude('');
+        setLocationName('');
+        setPropertyType('');
         setSelectedCountryId(null);
         setSelectedPortfolioId(null);
         setSelectedCoreDestinationId(null);
@@ -417,6 +440,10 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
 
         setFilteredPropertySuggestions([]);
         setShowPropertySuggestions(false);
+    };
+
+    const handlePropertyTypeChange = selectedOption => {
+        setPropertyType(selectedOption ? selectedOption.value : '');
     };
 
     const validateSelectedCountryId = (value) => {
@@ -581,7 +608,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                             onFocus={() => setShowPropertySuggestions(true)}
                                             placeholder="Property name"
                                             style={{ marginRight: '10px', flexGrow: '1' }}
-                                            className={validationErrors.name ? 'invalid' : ''}
+                                            className={`${validationErrors.name ? 'invalid' : ''} input-placeholder-dark`}
                                             autoComplete="off"
                                         />
 
@@ -601,7 +628,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                         )}
 
                                     </div>
-                                    <label htmlFor="property_name">
+                                    <label htmlFor="property_name" className="text-bold">
                                         <span className="material-symbols-outlined">
                                             hotel
                                         </span>
@@ -610,11 +637,7 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                 </div>
                                 <div className="row" style={{
                                     marginBottom: '20px',
-                                    // position: 'relative'
                                 }}>
-                                    {/* <div
-                                    style={{ position: 'relative' }}
-                                    > */}
                                     <Select
                                         placeholder="Select Portfolio"
                                         id="portfolio_select"
@@ -652,56 +675,12 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                         }}
                                         menuPortalTarget={document.body}
                                     />
-                                    <label htmlFor="portfolio_select">
+                                    <label htmlFor="portfolio_select" className="text-bold">
                                         <span className="material-symbols-outlined">
                                             store
                                         </span>
-                                        Portfolio Name
+                                        Portfolio
                                     </label>
-                                    {/* <input
-                                            type="text"
-                                            id="name"
-                                            value={portfolioName}
-                                            onChange={handlePortfolioNameChange}
-                                            onBlur={(e) => {
-                                                // First, check if suggestionsRef.current exists to avoid the null reference error
-                                                if (suggestionsRef.current && e.relatedTarget) {
-                                                    // Then, check if the relatedTarget is not within the suggestions list
-                                                    if (!suggestionsRef.current.contains(e.relatedTarget)) {
-                                                        setShowPortfolioSuggestions(false);
-                                                    }
-                                                } else {
-                                                    // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
-                                                    setShowPortfolioSuggestions(false);
-                                                }
-                                            }}
-                                            onFocus={() => setShowPortfolioSuggestions(true)}
-                                            placeholder="Portfolio name"
-                                            style={{ marginRight: '10px', flexGrow: '1' }}
-                                            className={validationErrors.portfolio ? 'invalid' : ''}
-                                            autoComplete="off"
-                                        />
-                                        {showPortfolioSuggestions && filteredPortfolioSuggestions.length > 0 && (
-                                            <ul className="suggestions-list" ref={suggestionsRef}>
-                                                {filteredPortfolioSuggestions.map((suggestion, suggestionIndex) => (
-                                                    <li
-                                                        key={suggestionIndex}
-                                                        tabIndex="0"
-                                                        className="suggestion-item"
-                                                        onClick={() => selectPortfolioSuggestion(suggestion)}
-                                                    >
-                                                        {suggestion}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
-                                    </div>
-                                    <label htmlFor="portfolio_name">
-                                        <span className="material-symbols-outlined">
-                                            store
-                                        </span>
-                                        Portfolio Name
-                                    </label> */}
                                 </div>
                                 <div className="row" style={{ marginBottom: '20px' }}>
                                     <Select
@@ -741,12 +720,125 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                         }}
                                         menuPortalTarget={document.body}
                                     />
-                                    <label htmlFor="country_select">
+                                    <label htmlFor="country_select" className="text-bold">
                                         <span className="material-symbols-outlined">
                                             globe
                                         </span>
-                                        Country Name
+                                        Country
                                     </label>
+                                </div>
+                                <div className="row" style={{ marginBottom: '20px' }}>
+                                    <Select
+                                        placeholder="Select Property Type"
+                                        id="property_type_select"
+                                        value={propertyOptions.find(option => option.value === propertyType) || ''}
+                                        onChange={handlePropertyTypeChange}
+                                        options={propertyOptions}
+                                        isClearable
+                                        style={{ flexGrow: '1' }}
+                                        classNamePrefix="select" 
+                                        styles={{
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac' // Background color for selected options
+                                                    : state.isFocused
+                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                        : '#ffffff', // Default background color for other states
+                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                },
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                    />
+                                    <label htmlFor="property_type_select" className="text-bold">
+                                        <span className="material-symbols-outlined">
+                                            camping
+                                        </span>
+                                        Type <span className="tb-teal-text">(optional)</span>
+                                    </label>
+                                </div>
+                                <div className="row" style={{ marginBottom: '20px' }}>
+                                    <div
+                                        style={{ position: 'relative' }}
+                                    >
+                                        <input
+                                            type="text"
+                                            id="location"
+                                            value={locationName}
+                                            onChange={(e) => setLocationName(e.target.value)}
+                                            placeholder="Property location (city/park/region)"
+                                            style={{ marginRight: '10px', flexGrow: '1' }}
+                                            className="input-placeholder-dark"
+                                            // className={validationErrors.name ? 'invalid' : ''}
+                                        />
+                                    </div>
+                                    <label htmlFor="location" className="text-bold">
+                                        <span className="material-symbols-outlined">
+                                            near_me
+                                        </span>
+                                        Location <span className="tb-teal-text">(optional)</span>
+                                    </label>
+                                </div>
+                                <div className="row">
+                                    <div className="col s6">
+                                        <div
+                                            style={{ position: 'relative' }}
+                                        >
+                                            <input
+                                                type="text"
+                                                id="latitude"
+                                                value={latitude}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
+                                                        setLatitude(value);
+                                                    }
+                                                }}
+                                                placeholder="Latitude"
+                                                style={{ marginRight: '10px', flexGrow: '1' }}
+                                                className="input-placeholder-dark"
+                                                // className={validationErrors.name ? 'invalid' : ''}
+                                            />
+                                        </div>
+                                        <label htmlFor="latitude" className="text-bold">
+                                            <span className="material-symbols-outlined">
+                                                share_location
+                                            </span>
+                                            Latitude <span className="tb-teal-text">(optional)</span>
+                                        </label>
+                                    </div>
+                                    <div className="col s6">
+                                        <div
+                                            style={{ position: 'relative' }}
+                                        >
+                                            <input
+                                                type="text"
+                                                id="longitude"
+                                                value={longitude}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
+                                                        setLongitude(value);
+                                                    }
+                                                }}
+                                                placeholder="Longitude"
+                                                style={{ marginRight: '10px', flexGrow: '1' }}
+                                                className="input-placeholder-dark"
+                                                // className={validationErrors.name ? 'invalid' : ''}
+                                            />
+                                        </div>
+                                        <label htmlFor="longitude" className="text-bold">
+                                            <span className="material-symbols-outlined">
+                                                share_location
+                                            </span>
+                                            Longitude <span className="tb-teal-text">(optional)</span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <div className="row">
                                     <div className="col s6">

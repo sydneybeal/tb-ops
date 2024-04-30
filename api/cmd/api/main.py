@@ -57,7 +57,7 @@ from api.services.travel.service import TravelService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.1.13"
+VERSION = "v0.1.14"
 
 
 def make_app(

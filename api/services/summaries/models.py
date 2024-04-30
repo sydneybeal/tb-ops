@@ -90,6 +90,10 @@ class PropertySummary(BaseModel):
     portfolio_id: UUID
     core_destination_id: UUID
     country_id: Optional[UUID] = None
+    property_type: Optional[str] = None
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     created_at: datetime
     updated_at: datetime
     updated_by: str
