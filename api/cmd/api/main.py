@@ -57,11 +57,11 @@ from api.services.travel.models import (
 )
 from api.services.travel.service import TravelService
 from api.services.quality.service import QualityService
-from api.services.quality.models import PotentialTrip
+from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v-trips-beta"
+VERSION = "vTripsBeta"
 
 
 def make_app(
@@ -766,6 +766,17 @@ def make_app(
     ) -> Iterable[PotentialTrip]:
         return await quality_svc.find_potential_trips()
 
+    # @app.get(
+    #     "/v1/potential_related_trips",
+    #     operation_id="get_potential_related_trips",
+    #     response_model=Iterable[PotentialTrip],
+    #     tags=["trips"],
+    # )
+    # async def get_potential_related_trips(
+    #     current_user: User = Depends(get_current_user), potential_trip=PotentialTrip
+    # ) -> Iterable[PotentialTrip]:
+    #     return await quality_svc.get_potential_related_trips(potential_trip)
+
     @app.get(
         "/v1/trips",
         operation_id="find_potential_trips",
@@ -790,27 +801,19 @@ def make_app(
         results = await quality_svc.confirm_trip(trip_data)
         return JSONResponse(content=results)
 
-    @app.route("/v1/progress", methods=["GET"])
+    @app.get(
+        "/v1/progress",
+        operation_id="get_progress",
+        response_model=MatchingProgress,
+        tags=["trips"],
+    )
     async def get_progress(
         current_user: User = Depends(get_current_user),
     ):
-        potential = await quality_svc.find_potential_trips()
-        total_potential = len(potential)
-        confirmed = await summary_svc.get_all_trips()
-        total_confirmed = len(confirmed)
-        percentage = (
-            (total_confirmed / (total_potential + total_confirmed)) * 100
-            if total_potential > 0
-            else 0
-        )
-        return JSONResponse(
-            {
-                "total_potential": total_potential,
-                "total_confirmed": total_confirmed,
-                "percent_complete": f"{percentage:.0f}%",
-                # "percent_complete": "32%",
-            }
-        )
+        progress = await quality_svc.get_progress()
+        if progress is None:
+            raise HTTPException(status_code=404, detail="Report data not found")
+        return progress
 
     return app
 

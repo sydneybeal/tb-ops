@@ -14,8 +14,9 @@
 
 """Models for data quality on travel entries."""
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Dict
 from uuid import UUID, uuid4
+from collections import Counter
 
 from pydantic import BaseModel, Field, computed_field
 from api.services.summaries.models import AccommodationLogSummary
@@ -34,6 +35,19 @@ class PotentialTrip(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: Optional[str] = None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def core_destination(self) -> Optional[str]:
+        """Calculate the core destination of the trip by finding the most common 'destination_name' from the logs."""
+        if self.accommodation_logs:
+            destination_counts = Counter(
+                log.core_destination_name for log in self.accommodation_logs
+            )
+            return (
+                destination_counts.most_common(1)[0][0] if destination_counts else None
+            )
+        return None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -139,3 +153,15 @@ class PotentialTrip(BaseModel):
         # Form the final trip name
         trip_name = f"{last_name} x{max_pax}, {destination}, {date_title}"
         return trip_name
+
+
+class ProgressBreakdown(BaseModel):
+    confirmed: int
+    potential: int
+    percent_complete: str
+
+
+class MatchingProgress(BaseModel):
+    progress_overall: ProgressBreakdown
+    progress_by_year: Dict[str, ProgressBreakdown]
+    progress_by_destination: Dict[str, ProgressBreakdown]

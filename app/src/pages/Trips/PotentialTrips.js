@@ -10,6 +10,9 @@ import FlagTripModal from './FlagTripModal';
 
 export const PotentialTrips = () => {
     const [apiData, setApiData] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [refreshData, setRefreshData] = useState(false);
     const [sortOption, setSortOption] = useState('latestTripsFirst');
     const [loaded, setLoaded] = useState(false);
@@ -17,11 +20,25 @@ export const PotentialTrips = () => {
     const { userDetails, logout } = useAuth();
     const [progress, setProgress] = useState(null);
     const [displayData, setDisplayData] = useState([]);
+    const [isProgressExpanded, setIsProgressExpanded] = useState(true);
     // const [currentPotentialTrip, setCurrentPotentialTrip] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
+
+    useEffect(() => {
+        setDisplayData(apiData.slice(0, itemsPerPage));
+        const numberOfPages = Math.ceil(apiData.length / itemsPerPage);
+        setTotalPages(numberOfPages);
+        setCurrentPage(0);
+    }, [apiData, itemsPerPage]);
+
+    useEffect(() => {
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(apiData.slice(start, end));
+    }, [currentPage, apiData, itemsPerPage]);
 
     // const handleToggleTrip = (tripId) => {
     //     const newSelection = new Set(selectedTrips);
@@ -94,8 +111,17 @@ export const PotentialTrips = () => {
                 break;
         }
 
-        setDisplayData(sortedData);
-    }, [sortOption, apiData]);
+        const newTotalPages = Math.ceil(sortedData.length / itemsPerPage);
+        setTotalPages(newTotalPages);
+
+        // Pagination logic
+        if (currentPage >= newTotalPages) {
+            setCurrentPage(0);
+        }
+        const displayStartIndex = currentPage * itemsPerPage;
+        const displayEndIndex = displayStartIndex + itemsPerPage;
+        setDisplayData(sortedData.slice(displayStartIndex, displayEndIndex));
+    }, [sortOption, apiData, currentPage, itemsPerPage]);
 
     useEffect(() => {
         fetch(`${process.env.REACT_APP_API}/v1/potential_trips`, {
@@ -131,9 +157,59 @@ export const PotentialTrips = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                console.log("Progress: " + JSON.stringify(data));
                 setProgress(data);
             })
     }, [refreshData, userDetails.token, logout]);
+
+    function generatePageRange(current, total) {
+        const sidePages = 5; // Pages to show on each side of the current page
+        let start = Math.max(1, current - sidePages + 1);
+        let end = Math.min(total, current + sidePages + 1);
+
+        // Determine when to add ellipses
+        const addEllipsisStart = start > 2;
+        const addEllipsisEnd = end < total - 1;
+
+        // Adjust the start and end if ellipses are being added
+        if (addEllipsisStart) {
+            start++;
+        }
+        if (addEllipsisEnd) {
+            end--;
+        }
+
+        const range = [];
+
+        // Construct the range of page numbers
+        for (let i = start; i <= end; i++) {
+            range.push(i);
+        }
+
+        // Correctly add '1' and ellipses at the start of the range
+        if (addEllipsisStart) {
+            range.unshift(1, '...');
+        } else if (start === 2) {
+            range.unshift(1);
+        }
+
+        // Correctly add ellipses and the last page at the end of the range
+        if (addEllipsisEnd) {
+            range.push('...');
+        }
+        if (end <= total - 1) {
+            range.push(total);
+        }
+
+        return range;
+    };
+
+    const changePage = (newPage) => {
+        const start = newPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(displayData.slice(start, end));
+        setCurrentPage(newPage);
+    };
 
     function validateData(trips) {
         return trips.map(trip => {
@@ -296,19 +372,165 @@ export const PotentialTrips = () => {
                                     <h4>Potential Trips</h4>
                                 </div>
                                 { progress &&
-                                    <div className="row" style={{ width: '60%'}}>
-                                        <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
-                                            <div className="determinate tb-teal darken-2" style={{ width: `${progress.percent_complete}` }}></div>
-                                        </div>
-                                        <h5>
-                                            <span className="text-bold">{progress.percent_complete}</span> complete
-                                        </h5>
-                                        <p>
-                                            <span className="tb-teal-text text-bold">{progress.total_potential}</span> pending trips
+                                    <>
+                                        <div className="row" style={{ width: '60%', marginBottom: '0px', paddingBottom: '0px'}}>
+                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_overall.percent_complete}` }}></div>
+                                            </div>
+                                            <h5>
+                                                <span className="text-bold">{progress.progress_overall.percent_complete}</span> complete
+                                            </h5>
+                                            <span className="tb-teal-text text-bold">
+                                                {progress.progress_overall?.confirmed}
+                                            </span>
+                                            <span> / </span>
+                                            <span className="tb-grey-text text-bold">
+                                                {progress.progress_overall?.confirmed + progress.progress_overall?.potential}
+                                            </span>
                                             <br/>
-                                            <span className="tb-teal-text text-bold">{progress.total_confirmed}</span> validated trips
-                                        </p>
-                                    </div>
+                                            <div
+                                                className={`chip waves-effect btn ${isProgressExpanded ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                                onClick={() => setIsProgressExpanded(!isProgressExpanded)}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    expand_more
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {isProgressExpanded &&
+                                        <div className="row" style={{ width: '90%', marginTop: '0px', paddingTop: '0px'}}>
+                                            <div className="card potential-trip-card">
+                                                <div className="card-content scoreboard">
+                                                    <h5 className="scoreboard">Scorecard</h5>
+                                                    <div className="row">
+                                                        <div className="col m3 s12">
+                                                            <p>Africa</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_destination['Africa']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_destination['Africa']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_destination['Africa']?.confirmed}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {progress.progress_by_destination['Africa']?.confirmed + progress.progress_by_destination['Africa']?.potential}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>Latin America</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_destination['Latin America']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_destination['Latin America']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_destination['Latin America']?.confirmed}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {progress.progress_by_destination['Latin America']?.confirmed + progress.progress_by_destination['Latin America']?.potential}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>Asia</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_destination['Asia']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_destination['Asia']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_destination['Asia']?.confirmed}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {progress.progress_by_destination['Asia']?.confirmed + progress.progress_by_destination['Asia']?.potential}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>Other</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_destination['Other']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_destination['Other']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_destination['Other']?.confirmed}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {progress.progress_by_destination['Other']?.confirmed + progress.progress_by_destination['Other']?.potential}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row" style={{ marginTop: '30px'}}>
+                                                        <div className="col m3 s12">
+                                                            <p>Pre-2023</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_year['Pre-2023']?.percent_complete}` }}></div>
+                                                            </div>
+                                                                {progress.progress_by_year['Pre-2023']?.percent_complete ?? "-"}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_year['Pre-2023']?.confirmed ?? "0"}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {((progress.progress_by_year['Pre-2023']?.confirmed ?? 0) + (progress.progress_by_year['Pre-2023']?.potential ?? 0)) || "0"}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>2023</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_year['2023']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_year['2023']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_year['2023']?.confirmed ?? "-"}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {(progress.progress_by_year['2023']?.confirmed + progress.progress_by_year['2023']?.potential) ?? "-"}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>2024</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_year['2024']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_year['2024']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_year['2024']?.confirmed ?? "-"}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {(progress.progress_by_year['2024']?.confirmed + progress.progress_by_year['2024']?.potential) ?? "-"}
+                                                            </span>
+                                                        </div>
+                                                        <div className="col m3 s12">
+                                                            <p>Post-2024</p>
+                                                            <div className="progress tb-grey lighten-3" style={{ height: '30px', borderRadius: '15px', boxShadow:'0 8px 15px rgba(0, 0, 0, 0.1)'}}>
+                                                                <div className="determinate tb-teal darken-2" style={{ width: `${progress.progress_by_year['Post-2024']?.percent_complete}` }}></div>
+                                                            </div>
+                                                            {progress.progress_by_year['Post-2024']?.percent_complete}
+                                                            <br/>
+                                                            <span className="tb-teal-text text-bold">
+                                                                {progress.progress_by_year['Post-2024']?.confirmed}
+                                                            </span>
+                                                            <span> / </span>
+                                                            <span className="tb-grey-text text-bold">
+                                                                {progress.progress_by_year['Post-2024']?.confirmed + progress.progress_by_year['Post-2024']?.potential}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        } 
+                                    </>
                                 }
                                 <div className="row" style={{ marginTop: '10px', marginBottom: '30px'}}>
                                     <div
@@ -347,6 +569,35 @@ export const PotentialTrips = () => {
                                     >
                                         Flagged Trips
                                     </div>
+                                </div>
+                                <div className="row center">
+                                    <ul className="pagination">
+                                        <li className={currentPage === 0 ? 'disabled' : ''}>
+                                            <a
+                                                onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                                href="#!"
+                                            >
+                                                <i className="material-icons">chevron_left</i>
+                                            </a>
+                                        </li>
+                                        {generatePageRange(currentPage, totalPages).map((page, index) => (
+                                            <li key={index} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
+                                                {page === '...' ? (
+                                                    <span>...</span>
+                                                ) : (
+                                                    <a className="tb-grey-text text-darken-1" onClick={(e) => { e.preventDefault(); changePage(page - 1); }} href="#!">{page}</a>
+                                                )}
+                                            </li>
+                                        ))}
+                                        <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                                            <a
+                                                onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
+                                                href="#!"
+                                            >
+                                                <i className="material-icons">chevron_right</i>
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </div>
                                 {/* <div className="container"> */}
                                 {displayData.length ? (

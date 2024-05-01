@@ -25,6 +25,8 @@ from api.services.travel.service import TravelService
 from api.services.travel.models import AccommodationLog, Trip, PatchTripRequest
 from api.services.quality.models import (
     PotentialTrip,
+    MatchingProgress,
+    ProgressBreakdown,
 )
 from api.services.quality.repository.postgres import PostgresQualityRepository
 
@@ -124,6 +126,70 @@ class QualityService:
 
         # Prepare the response based on the operation performed
         return {"inserted_count": 1, "updated_count": 0}
+
+    async def get_progress(self) -> MatchingProgress:
+        potential_trips = await self.find_potential_trips()
+        confirmed_trips = await self._summary_svc.get_all_trips()
+
+        year_data = defaultdict(lambda: {"confirmed": 0, "potential": 0})
+        destination_data = defaultdict(lambda: {"confirmed": 0, "potential": 0})
+        for trip in potential_trips:
+            year = self.categorize_year(trip.start_date.year)
+            destination = self.categorize_destination(trip.core_destination)
+            year_data[year]["potential"] += 1
+            destination_data[destination]["potential"] += 1
+        print(year_data)
+        print(destination_data)
+
+        for trip in confirmed_trips:
+            year = self.categorize_year(trip.start_date.year)
+            destination = self.categorize_destination(trip.core_destination)
+            year_data[year]["confirmed"] += 1
+            destination_data[destination]["confirmed"] += 1
+
+        # Create progress data for overall, years, and destinations
+        total_confirmed = sum(data["confirmed"] for data in year_data.values())
+        total_potential = sum(data["potential"] for data in year_data.values())
+        overall_progress = self.create_progress_breakdown(
+            {"confirmed": total_confirmed, "potential": total_potential}
+        )
+
+        progress_by_year = {
+            year: self.create_progress_breakdown(data)
+            for year, data in year_data.items()
+        }
+        progress_by_destination = {
+            destination: self.create_progress_breakdown(data)
+            for destination, data in destination_data.items()
+        }
+
+        return MatchingProgress(
+            progress_overall=overall_progress,
+            progress_by_year=progress_by_year,
+            progress_by_destination=progress_by_destination,
+        )
+
+    def categorize_destination(self, destination):
+        if destination in ["Africa", "Asia", "Latin America"]:
+            return destination
+        return "Other"
+
+    def categorize_year(self, year):
+        if year == 2024 or year == 2023:
+            return str(year)
+        elif year < 2023:
+            return "Pre-2023"
+        else:
+            return "Post-2024"
+
+    def create_progress_breakdown(self, data: dict):
+        confirmed = data["confirmed"]
+        potential = data["potential"]
+        total = confirmed + potential
+        percent_complete = f"{(confirmed / total * 100) if total > 0 else 0:.0f}%"
+        return ProgressBreakdown(
+            confirmed=confirmed, potential=potential, percent_complete=percent_complete
+        )
 
     # Currently all of our accommodation logs are ungrouped
     # It is just a big table of traveler names, properties, and dates

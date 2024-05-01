@@ -115,7 +115,8 @@ class PropertyDetailImporter:
 
     async def seed_types(self):
         # await self.seed_region("Latin_America")
-        await self.seed_region("Asia")
+        # await self.seed_region("Asia")
+        await self.seed_region("Africa")
 
     async def seed_region(self, region: str):
         spreadsheet_data = self.read_csv(region)

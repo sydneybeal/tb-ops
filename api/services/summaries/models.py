@@ -17,6 +17,7 @@ from datetime import datetime, date
 import json
 from typing import Optional, List, Dict
 from uuid import UUID, uuid4
+from collections import Counter
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -258,6 +259,19 @@ class TripSummary(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def core_destination(self) -> Optional[str]:
+        """Calculate the core destination of the trip by finding the most common 'destination_name' from the logs."""
+        if self.accommodation_logs:
+            destination_counts = Counter(
+                log.core_destination_name for log in self.accommodation_logs
+            )
+            return (
+                destination_counts.most_common(1)[0][0] if destination_counts else None
+            )
+        return None
 
     @computed_field  # type: ignore[misc]
     @property
