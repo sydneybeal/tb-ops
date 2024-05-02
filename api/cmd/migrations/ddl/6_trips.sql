@@ -12,6 +12,9 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- drop table if exists public.potential_trips cascade;
+-- drop table if exists public.trips cascade;
+
 CREATE TABLE IF NOT EXISTS public.trips (
     id UUID PRIMARY KEY NOT NULL,
     trip_name VARCHAR(255) NOT NULL,
@@ -23,7 +26,8 @@ CREATE TABLE IF NOT EXISTS public.trips (
 CREATE TABLE IF NOT EXISTS public.potential_trips (
     id UUID PRIMARY KEY NOT NULL,
     trip_name VARCHAR(255) NOT NULL,
-    review_status VARCHAR(50) NOT NULL,  -- Includes 'confirmed','ask_for_help'
+    accommodation_log_ids VARCHAR(5000) NOT NULL,
+    review_status VARCHAR(50) NOT NULL,  -- Includes 'flagged'
     review_notes VARCHAR(1000),
     reviewed_at TIMESTAMP WITH TIME ZONE,
     reviewed_by VARCHAR(255),
@@ -32,12 +36,18 @@ CREATE TABLE IF NOT EXISTS public.potential_trips (
     updated_by VARCHAR(255) NOT NULL
 );
 
-ALTER TABLE public.accommodation_logs
-ADD COLUMN IF NOT EXISTS trip_id UUID,
-ADD FOREIGN KEY (trip_id) REFERENCES public.trips(id);
+-- ALTER TABLE public.accommodation_logs
+-- ADD COLUMN IF NOT EXISTS trip_id UUID,
+-- ADD FOREIGN KEY (trip_id) REFERENCES public.trips(id);
 
-ALTER TABLE accommodation_logs
-ADD COLUMN IF NOT EXISTS potential_trip_id UUID,
-ADD FOREIGN KEY (potential_trip_id) REFERENCES potential_trips(id);
+-- ALTER TABLE public.potential_trips
+-- ADD CONSTRAINT unique_trip_name_accommodation_log_ids UNIQUE (trip_name, accommodation_log_ids);
+
+
+-- ALTER TABLE accommodation_logs
+-- DROP CONSTRAINT accommodation_logs_potential_trip_id_fkey;
+
+-- ALTER TABLE accommodation_logs
+-- DROP COLUMN potential_trip_id;
 
 

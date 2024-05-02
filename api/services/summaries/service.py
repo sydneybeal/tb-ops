@@ -503,3 +503,7 @@ class SummaryService:
     async def get_all_trips(self) -> Sequence[TripSummary]:
         """Gets all TripSummary models."""
         return await self._repo.get_all_trips()
+
+    async def get_trip_summary_by_id(self, trip_id: UUID) -> TripSummary:
+        """Gets a TripSummary model by ID."""
+        return await self._repo.get_trip_summary_by_id(trip_id)

@@ -13,13 +13,14 @@
 # limitations under the License.
 
 """Services for interacting with travel entries."""
-from datetime import datetime, timedelta
+from asyncio import gather
+from datetime import datetime, timedelta, date
 from collections import defaultdict
-from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
+from typing import Optional, Sequence, Union, Tuple, Dict, List, Any, cast
 from uuid import UUID
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
-from api.services.summaries.models import AccommodationLogSummary
+from api.services.summaries.models import AccommodationLogSummary, BaseTrip, TripSummary
 from api.services.summaries.service import SummaryService
 from api.services.travel.service import TravelService
 from api.services.travel.models import AccommodationLog, Trip, PatchTripRequest
@@ -27,6 +28,7 @@ from api.services.quality.models import (
     PotentialTrip,
     MatchingProgress,
     ProgressBreakdown,
+    FlaggedTrip,
 )
 from api.services.quality.repository.postgres import PostgresQualityRepository
 
@@ -43,8 +45,18 @@ class QualityService:
 
     async def find_potential_trips(self) -> List[PotentialTrip]:
         """Finds unmatched entries and groups them into trips."""
-        unmatched = await self._repo.get_unmatched_accommodation_logs()
-        potential_trips = []
+        flagged_trips = await self._repo.get_flagged_trips()
+        flagged_log_ids = {
+            log_id for trip in flagged_trips for log_id in trip.accommodation_log_ids
+        }
+
+        unmatched = await self._repo.get_unmatched_accommodation_logs(
+            exclude_ids=flagged_log_ids
+        )
+
+        potential_trips = await gather(
+            *(self.get_trip_with_logs(row) for row in flagged_trips)
+        )
 
         # Sort logs by primary traveler and date_in in descending order
         sorted_unmatched = sorted(
@@ -79,16 +91,39 @@ class QualityService:
                         break
             else:
                 # Start a new potential trip and set the trip name based on the log's details
-                # trip_name = self.generate_trip_name(log)
-                # potential_trips.append(
-                #     PotentialTrip(accommodation_logs=[log], trip_name=trip_name)
-                # )
+                new_trip = PotentialTrip(accommodation_logs=[log])
                 potential_trips.append(PotentialTrip(accommodation_logs=[log]))
 
             # Update the last log for this traveler, or set it if it's the first log we're seeing for this traveler
             last_log_per_traveler[log.primary_traveler] = log
 
         return potential_trips
+
+    async def get_trip_with_logs(self, row):
+        # Fetch log summaries asynchronously and flatten the results
+        nested_log_summaries = await gather(
+            *(
+                self._summary_svc.get_accommodation_logs_by_filters({"id": log_id})
+                for log_id in row.accommodation_log_ids
+            )
+        )
+
+        # Flatten the nested list of log summaries
+        log_summaries = [item for sublist in nested_log_summaries for item in sublist]
+
+        trip = PotentialTrip(
+            id=row.id,
+            accommodation_logs=log_summaries,
+            review_status=row.review_status,
+            review_notes=row.review_notes,
+            reviewed_at=row.reviewed_at,
+            reviewed_by=row.reviewed_by,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
+            updated_by=row.updated_by,
+        )
+        trip.trip_name = row.trip_name
+        return trip
 
     async def confirm_trip(self, trip_request: PatchTripRequest) -> dict:
         """Confirms a trip and handles the repository updates."""
@@ -99,18 +134,10 @@ class QualityService:
             trip_id,
             trip_request.updated_by,
         )
-        # try:
-        # Create trip in the trips table
-        # trip_id = await self._travel_svc.add_trip(trip_request)
 
-        # await self._travel_svc.update_trip_id(
-        #     trip_request.accommodation_log_ids,
-        #     trip_id,
-        #     trip_request.updated_by,
-        # )
-
-        # except:
-        # raise Exception("Failed to confirm trip")
+        await self._repo.delete_related_potential_trips(
+            trip_request.accommodation_log_ids
+        )
 
         # create an audit log for the trip data
         audit_log = AuditLog(
@@ -127,6 +154,156 @@ class QualityService:
         # Prepare the response based on the operation performed
         return {"inserted_count": 1, "updated_count": 0}
 
+    async def flag_trip(self, trip_request: PatchTripRequest) -> dict:
+        await self.add_potential_trip(trip_request)
+        return {"inserted_count": 1, "updated_count": 0}
+
+    async def add_potential_trip(self, trip_request: PatchTripRequest) -> UUID:
+        """Adds Trip models to the repository."""
+        new_trip = FlaggedTrip(
+            trip_name=trip_request.trip_name,
+            accommodation_log_ids=trip_request.accommodation_log_ids,
+            reviewed_by=trip_request.reviewed_by,
+            review_notes=trip_request.review_notes,
+            updated_by=trip_request.updated_by,
+        )
+        await self._repo.add_flagged_trip(new_trip)
+
+        audit_log = AuditLog(
+            table_name="potential_trips",
+            record_id=new_trip.id,
+            user_name=new_trip.updated_by,
+            # If the trip already existed, put the before value here
+            before_value={},
+            after_value=new_trip.dict(),
+            action="insert",
+        )
+        await self._audit_svc.add_audit_logs(audit_log)
+
+        return new_trip.id
+
+    async def get_related_trips(
+        self, starting_trip: BaseTrip
+    ) -> List[Union[PotentialTrip, TripSummary]]:
+        """Finds either confirmed or potential trips that are related to a given trip."""
+        potential_trips = await self.find_potential_trips()
+        confirmed_trips = await self._summary_svc.get_all_trips()
+
+        # Cast each list to List[BaseTrip] before concatenation
+        all_trips = cast(List[BaseTrip], potential_trips) + cast(
+            List[BaseTrip], confirmed_trips
+        )
+
+        related_trips = []
+
+        for trip in all_trips:
+            if self.are_trips_equivalent(trip, starting_trip):
+                continue  # Skip comparing the trip to itself
+
+            # Criteria 1: Similar by accommodation
+            if self.similar_by_accommodation(starting_trip, trip):
+                related_trips.append(trip)
+            # Criteria 2: Similar by core destination but potentially misdated entries
+            else:
+                date_diff = self.calculate_date_difference(
+                    starting_trip.start_date, trip.start_date
+                )
+                # Criteria 2: Similar by core destination but potentially misdated entries
+                if self.similar_by_chance(starting_trip, trip):
+                    print("Found a stray record that might be connected to a trip.")
+                    related_trips.append(trip)
+
+        return related_trips
+
+    def are_trips_equivalent(self, trip1: BaseTrip, trip2: BaseTrip) -> bool:
+        """
+        Determines if two trips are equivalent based on a set of attributes.
+        """
+        if trip1.id and trip2.id and trip1.id == trip2.id:
+            return True
+        elif (
+            trip1.start_date == trip2.start_date
+            and trip1.end_date == trip2.end_date
+            and set(trip1.primary_travelers or []) == set(trip2.primary_travelers or [])
+            and trip1.core_destination == trip2.core_destination
+        ):
+            return True
+        return False
+
+    def calculate_date_difference(
+        self, start_date1: Optional[date], start_date2: Optional[date]
+    ) -> Optional[int]:
+        """
+        Calculates the absolute difference in days between two dates.
+        Returns None if either date is None.
+        """
+        if start_date1 is None or start_date2 is None:
+            return None  # Or handle it some other way, depending on your application's needs
+
+        return abs((start_date1 - start_date2).days)
+
+    def similar_by_accommodation(
+        self, trip1: BaseTrip, trip2: BaseTrip, threshold=0.7
+    ) -> bool:
+        """
+        Determine if two trips share a significant amount of nights at the same accommodations.
+        """
+        accommodations1 = {
+            (log.date_in, log.date_out, log.property_name): (
+                log.date_out - log.date_in
+            ).days
+            for log in trip1.accommodation_logs
+        }
+        accommodations2 = {
+            (log.date_in, log.date_out, log.property_name): (
+                log.date_out - log.date_in
+            ).days
+            for log in trip2.accommodation_logs
+        }
+
+        total_nights = sum(accommodations1.values())
+        matched_nights = 0
+
+        for key, nights2 in accommodations2.items():
+            if key in accommodations1:
+                nights1 = accommodations1[key]
+                overlapping_nights = min(nights1, nights2)
+                matched_nights += overlapping_nights
+
+        similarity_ratio = matched_nights / total_nights if total_nights > 0 else 0
+
+        return similarity_ratio >= threshold
+
+    def similar_by_chance(self, trip1: BaseTrip, trip2: BaseTrip) -> bool:
+        """
+        Check if two trips could be by chance related, such as 1-2 properties of the trip
+        entered with significantly different dates. Two trips are considered 'by chance' related if:
+        - They share at least one primary traveler.
+        - They are to the same core destination.
+        - At least one of the trips has less than 2 logs, suggesting possible data entry errors.
+        - The start or end date of one trip is within a certain threshold of the other trip's start or end date.
+        """
+        travelers1 = set(trip1.primary_travelers or [])
+        travelers2 = set(trip2.primary_travelers or [])
+
+        # Check if the primary travelers intersect
+        if travelers1.intersection(travelers2):
+            # Check if core destinations are the same
+            if trip1.core_destination == trip2.core_destination:
+                # Check if either trip has less than 2 logs
+                if trip1.number_of_logs < 2 or trip2.number_of_logs < 2:
+                    return True
+
+                # Check if the start or end date of one trip is within a certain threshold of the other trip's start or end date
+                start_date_diff = abs((trip1.start_date - trip2.start_date).days)
+                end_date_diff = abs((trip1.end_date - trip2.end_date).days)
+                threshold = timedelta(days=1)  # Adjust this threshold as needed
+
+                if start_date_diff <= threshold.days or end_date_diff <= threshold.days:
+                    return True
+
+        return False
+
     async def get_progress(self) -> MatchingProgress:
         potential_trips = await self.find_potential_trips()
         confirmed_trips = await self._summary_svc.get_all_trips()
@@ -138,8 +315,6 @@ class QualityService:
             destination = self.categorize_destination(trip.core_destination)
             year_data[year]["potential"] += 1
             destination_data[destination]["potential"] += 1
-        print(year_data)
-        print(destination_data)
 
         for trip in confirmed_trips:
             year = self.categorize_year(trip.start_date.year)

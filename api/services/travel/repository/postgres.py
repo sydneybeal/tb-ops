@@ -1831,7 +1831,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
     async def update_trip_ids(
         self,
         log_ids: Sequence[UUID],
-        trip_id: UUID,
+        trip_id: UUID | None,
         updated_by: str,
         updated_at: datetime.datetime,
     ):
@@ -1842,21 +1842,52 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
         pool = await self._get_pool()
         # Create placeholders for each log_id in the list
         placeholders = ", ".join(
-            f"${i+4}" for i in range(len(log_ids))
-        )  # Starting from $4
+            f"${i + 4}" for i in range(len(log_ids))
+        )  # Adjusting placeholder start to accommodate all params
+
         query = f"""
             UPDATE public.accommodation_logs
-            SET trip_id = $1, updated_by = $2, updated_at = $3
+            SET trip_id = COALESCE(CAST($1 AS UUID), NULL), updated_by = $2, updated_at = $3
             WHERE id IN ({placeholders});
         """
+
+        # Include trip_id in params even if it's None, SQL will handle the casting
+        params = [trip_id, updated_by, updated_at] + list(log_ids)
 
         async with pool.acquire() as con:
             await con.set_type_codec(
                 "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
             async with con.transaction():
-                # Prepare all parameters in the right order: trip_id, updated_by, updated_at, followed by log_ids
-                params = [trip_id, updated_by, updated_at] + list(log_ids)
                 await con.execute(query, *params)
 
         print(f"Successfully updated trip IDs for {len(log_ids)} accommodation log(s).")
+
+    async def delete_trip(self, trip_id: UUID) -> bool:
+        """Deletes a Trip model from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            DELETE FROM public.trips
+            WHERE id = $1
+            RETURNING *;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query
+                deleted_record = await con.fetchrow(query, trip_id)
+                if deleted_record is None:
+                    print(f"No trip found with ID: {trip_id}, nothing was deleted.")
+                    return False
+                deleted_data = {
+                    "id": deleted_record["id"],
+                    "name": deleted_record["trip_name"],
+                    "updated_at": deleted_record["updated_at"],
+                    "updated_by": deleted_record["updated_by"],
+                }
+                print(f"Successfully deleted trip with ID: {trip_id}.")
+                return deleted_data

@@ -15,7 +15,7 @@
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
 from datetime import timedelta, datetime, date
-from typing import Sequence, Iterable, Optional, List
+from typing import Sequence, Iterable, Optional, List, Union
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status
 
@@ -33,6 +33,7 @@ from api.services.auth.service import AuthService
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
+    BaseTrip,
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
@@ -332,7 +333,6 @@ def make_app(
         current_user: User = Depends(get_current_user),
     ) -> JSONResponse:
         """Add or edit a Property."""
-        print(property_detail_data)
         results = await travel_svc.process_property_detail_request(property_detail_data)
         return JSONResponse(content=results)
 
@@ -766,20 +766,27 @@ def make_app(
     ) -> Iterable[PotentialTrip]:
         return await quality_svc.find_potential_trips()
 
-    # @app.get(
-    #     "/v1/potential_related_trips",
-    #     operation_id="get_potential_related_trips",
-    #     response_model=Iterable[PotentialTrip],
-    #     tags=["trips"],
-    # )
-    # async def get_potential_related_trips(
-    #     current_user: User = Depends(get_current_user), potential_trip=PotentialTrip
-    # ) -> Iterable[PotentialTrip]:
-    #     return await quality_svc.get_potential_related_trips(potential_trip)
+    @app.post(
+        "/v1/related_trips",
+        operation_id="get_related_trips",
+        response_model=Iterable[Union[PotentialTrip, TripSummary]],
+        tags=["trips"],
+    )
+    async def get_related_trips(
+        request: Request,
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[Union[PotentialTrip, TripSummary]]:
+        try:
+            trip_data = await request.json()
+            trip = PotentialTrip(**trip_data)
+            return await quality_svc.get_related_trips(trip)
+        except Exception as e:
+            print(f"Error processing request: {e}")
+            raise HTTPException(status_code=422, detail=str(e))
 
     @app.get(
         "/v1/trips",
-        operation_id="find_potential_trips",
+        operation_id="get_all_trips",
         response_model=Iterable[TripSummary],
         tags=["trips"],
     )
@@ -799,6 +806,36 @@ def make_app(
     ) -> JSONResponse:
         """Add or edit a Trip."""
         results = await quality_svc.confirm_trip(trip_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/trips/{trip_id}",
+        operation_id="delete_trip",
+        tags=["trips"],
+    )
+    async def delete_trip(
+        trip_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete an accommodation log by its ID."""
+        is_deleted = await travel_svc.delete_trip(trip_id, current_user.email)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Trip not found")
+        return JSONResponse(
+            content={"message": "Trip deleted successfully"},
+            status_code=200,
+        )
+
+    @app.patch(
+        "/v1/flag_trip",
+        operation_id="flag_trip",
+        tags=["trips"],
+    )
+    async def flag_trip(
+        trip_data: PatchTripRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Flag a Trip."""
+        results = await quality_svc.flag_trip(trip_data)
         return JSONResponse(content=results)
 
     @app.get(

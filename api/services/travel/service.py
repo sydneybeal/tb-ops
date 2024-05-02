@@ -1767,8 +1767,38 @@ class TravelService:
 
         return new_trip.id
 
+    async def delete_trip(self, trip_id: UUID, user_email: str):
+        """Adds Trip models to the repository."""
+        trip_summary = await self._summary_svc.get_trip_summary_by_id(trip_id)
+        detail_before_deletion = {
+            "id": trip_summary.id,
+            "name": trip_summary.trip_name,
+            "primary_travelers": trip_summary.primary_travelers,
+            "core_destination": trip_summary.core_destination,
+            "updated_at": trip_summary.updated_at,
+            "updated_by": trip_summary.updated_by,
+        }
+        accommodation_log_ids = [log.id for log in trip_summary.accommodation_logs]
+
+        await self.update_trip_id(
+            log_ids=accommodation_log_ids, trip_id=None, updated_by=user_email
+        )
+        deleted = await self._repo.delete_trip(trip_id)  # returns bool
+        if not deleted:
+            return False
+        audit_log = AuditLog(
+            table_name="trips",
+            record_id=trip_id,
+            user_name=user_email,
+            before_value=detail_before_deletion,
+            after_value={},
+            action="delete",
+        )
+        await self.process_audit_logs(audit_log)
+        return deleted
+
     async def update_trip_id(
-        self, log_ids: Sequence[UUID], trip_id: UUID, updated_by: str
+        self, log_ids: Sequence[UUID], trip_id: UUID | None, updated_by: str
     ) -> None:
         """Updates trip_id of a sequence of accommodation logs."""
         try:
@@ -1777,9 +1807,7 @@ class TravelService:
             updated_at = datetime.datetime.now()
 
             # Update accommodation logs with new trip_id and updated_by
-            await self._repo.update_trip_ids(
-                log_ids, trip_id, updated_by, updated_at
-            )  # TODO
+            await self._repo.update_trip_ids(log_ids, trip_id, updated_by, updated_at)
 
             # Prepare audit logs with the old and new values
             audit_logs = [

@@ -1,19 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 import SingleLogDisplay from '../AccommodationLogs/SingleLogDisplay';
+import TricklingDotsPreloader from '../../components/TricklingDotsPreloader';
+
 // import moment from 'moment';
 
 const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set()}) => {
     const { userDetails } = useAuth();
     const [tripName, setTripName] = useState('');
+    const [relatedTripData, setRelatedTripData] = useState([]);
+    const [relatedLoaded, setRelatedLoaded] = useState(false);
     const [localSelectedTrips, setLocalSelectedTrips] = useState([]);
+
+    const fetchRelatedTrips = useCallback((formattedTrips) => {
+        setRelatedLoaded(false);
+        setRelatedTripData([]);
+        formattedTrips.forEach(trip => {
+            fetch(`${process.env.REACT_APP_API}/v1/related_trips`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userDetails.token}`
+                },
+                body: JSON.stringify(trip)
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Append related trips data tagged as 'related'
+                const relatedTrips = data.map(item => ({ ...item, type: 'related' }));
+                setLocalSelectedTrips(prevTrips => [...prevTrips, ...relatedTrips]);
+                setRelatedTripData(prevData => [...prevData, ...relatedTrips]);
+                setRelatedLoaded(true);
+            })
+            .catch(err => {
+                console.error('Error fetching related trips:', err);
+                setRelatedLoaded(true);
+            });
+        });
+    }, [userDetails.token]);
+
 
     useEffect(() => {
         if (isOpen) {
-            setLocalSelectedTrips([...selectedTrips]);
+            const formattedTrips = [...selectedTrips].map(trip => ({ ...trip, type: 'original' }));
+            setLocalSelectedTrips(formattedTrips);
+            fetchRelatedTrips(formattedTrips);
         }
-    }, [isOpen, selectedTrips]);
+    }, [isOpen, selectedTrips, fetchRelatedTrips]);
 
     const removeLog = (tripId, logId) => {
         const updatedTrips = localSelectedTrips.map(trip => {
@@ -50,17 +84,64 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
         }
 
         if (!isOpen) return;
-    }, [isOpen, onClose, userDetails.token]);
+    }, [isOpen, onClose]);
 
     useEffect(() => {
-        const uniqueNames = new Set([...localSelectedTrips].map(trip => trip.trip_name));
-        if (uniqueNames.size === 1) {
-            setTripName([...uniqueNames][0]);
-        } else if (uniqueNames.size > 1) {
-            setTripName('combined trip name'); // Placeholder for combined logic
+        const tripDetails = localSelectedTrips.map(trip => {
+            const regex = /^(.*) x(\d+), (.+), (.+)$/;
+            const match = trip.trip_name.match(regex);
+            if (match) {
+                return {
+                    primaryTravelerTitleName: match[1],
+                    primaryTravelerFullNames: trip.primary_travelers,
+                    size: parseInt(match[2], 10), // Ensure the size is treated as a number
+                    destination: match[3],
+                    date: match[4],
+                    full: trip.trip_name
+                };
+            }
+            return null;  // Handle non-matching names appropriately
+        }).filter(trip => trip !== null);
+        
+        if (tripDetails.length === 0) return;
+    
+        const uniqueDestinations = new Set(tripDetails.map(trip => trip.destination));
+        const uniqueDates = new Set(tripDetails.map(trip => trip.date));
+        
+        if (uniqueDestinations.size === 1 && uniqueDates.size === 1) {
+            // If only the destinations and dates are the same
+            const travelersMap = new Map(); // Map to track sizes for each primary traveler
+            tripDetails.forEach(trip => {
+                const { primaryTravelerTitleName, primaryTravelerFullNames, size } = trip;
+                const key = primaryTravelerTitleName; // Use primary traveler title name as the key
+                if (!travelersMap.has(key)) {
+                    travelersMap.set(key, { primaryTravelerTitleName, primaryTravelerFullNames, size });
+                } else {
+                    // If an entry with the same primary traveler title name exists, update its size
+                    const existingEntry = travelersMap.get(key);
+                    const areNamesIdentical = primaryTravelerFullNames?.every(name => existingEntry.primaryTravelerFullNames?.includes(name));
+                    if (areNamesIdentical) {
+                        return;
+                    }
+                    existingEntry.size += size; // Add to the existing size
+                }
+            });
+            
+            // Concatenate primary traveler names for different last names
+            const combinedTravelers = Array.from(travelersMap.values())
+                .map(entry => entry.primaryTravelerTitleName)
+                .join('/');
+            const totalSize = Array.from(travelersMap.values()).reduce((acc, curr) => acc + curr.size, 0);
+            const anyTrip = tripDetails[0];
+            const tripName = `${combinedTravelers} x${totalSize}, ${anyTrip.destination}, ${anyTrip.date}`;
+            
+            setTripName(tripName);
+        } else {
+            // More substantial differences
+            setTripName('CUSTOM TRIP NAME');
         }
     }, [localSelectedTrips]);
-
+    
     const onSubmit = (e) => {
         // M.toast({
         //     html: 'Downloading Excel report...',
@@ -144,8 +225,10 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                 <h4>Validate Trip</h4>
                 <button className="btn error-red" onClick={onClose}>Close</button>
                 &nbsp;&nbsp;
-                <button className="btn success-green" onClick={onSubmit}>Submit</button>
-                <div className="row">
+                {relatedLoaded &&
+                    <button className="btn success-green" onClick={onSubmit}>Submit</button>
+                }
+                <div className="row" style={{ marginBottom: '0px' }}>
                     <div className="col s12 m12">
                         <div className="input-field col s12 l8 offset-l2">
                             <span className="material-symbols-outlined grey-text text-darken-1 prefix">
@@ -167,8 +250,31 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                         </div>
                     </div>
                 </div>
+                {relatedLoaded ? (
+                    relatedTripData.length > 0 ? (
+                        <span className="chip warning-yellow" style={{ marginTop: '0px', fontSize: '1.3rem' }}>
+                            <span className="material-symbols-outlined">
+                                arrow_downward
+                            </span>
+                            <span className="text-bold">{relatedTripData.length}</span> possibly related trip{relatedTripData.length !== 1 && "s"} 
+                        </span>
+                    ) : (
+                        <span className="chip success-green-light" style={{ marginTop: '0px', fontSize: '1.3rem' }}>
+                            <span className="material-symbols-outlined">
+                                check_circle
+                            </span>
+                            No related trips
+                        </span>
+                    )
+                ) : (
+                    <div>
+                        <TricklingDotsPreloader show={true} /> 
+                        <p className="tb-teal-text">Searching for possibly related trips...</p>
+                    </div>
+                )
+                }
                 <ul>
-                    {localSelectedTrips.map(trip => (
+                    {localSelectedTrips.filter(trip => trip.type === 'original').map(trip => (
                         trip.accommodation_logs.length > 0 && (
                             <div key={trip.id}>
                                 <h5
@@ -202,6 +308,45 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                         )
                     ))}
                 </ul>
+                
+                {relatedTripData && relatedTripData.length > 0 && 
+                <>
+                    <h5>Possibly Related Trips</h5>
+                    <ul>
+                    {localSelectedTrips.filter(trip => trip.type === 'related').map(relatedTrip => (
+                        <div key={relatedTrip.id}>
+                            <h5
+                                className="tb-teal darken-2 tb-off-white-text"
+                                style={{
+                                    height: '40px',
+                                    borderRadius: '4px',
+                                    marginBottom: '40px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                {relatedTrip.trip_name}
+                            </h5>
+                            {relatedTrip.accommodation_logs.map(log => (
+                                <li key={log.id}>
+                                    <div className="row">
+                                        <div className="col m1">
+                                            <button className="btn btn-floating btn-small error-red" onClick={() => removeLog(relatedTrip.id, log.id)}>
+                                                x
+                                            </button>
+                                        </div>
+                                        <div className="col m11">
+                                            <SingleLogDisplay log={log} />
+                                        </div>
+                                    </div>
+                                </li>
+                            ))}
+                        </div>
+                    ))}
+                    </ul>
+                </>
+                }
             </div>
         </div>
     );

@@ -18,6 +18,7 @@ import json
 from typing import Optional, List, Dict
 from uuid import UUID, uuid4
 from collections import Counter
+from abc import ABC, abstractmethod
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -252,13 +253,12 @@ class Overlap(BaseModel):
         return json.dumps(model_dict, default=custom_json_encoder, **kwargs)
 
 
-class TripSummary(BaseModel):
+class BaseTrip(ABC, BaseModel):
     id: UUID = Field(default_factory=uuid4)
-    trip_name: str
-    accommodation_logs: List[AccommodationLogSummary] = []
+    accommodation_logs: List[AccommodationLogSummary]
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-    updated_by: str
+    updated_by: Optional[str] = None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -271,6 +271,16 @@ class TripSummary(BaseModel):
             return (
                 destination_counts.most_common(1)[0][0] if destination_counts else None
             )
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def primary_travelers(self) -> Optional[List[str]]:
+        """Calculate the list of primary travelers on this trip."""
+        if self.accommodation_logs:
+            # Using a set to collect unique primary_traveler names
+            unique_travelers = {log.primary_traveler for log in self.accommodation_logs}
+            return list(unique_travelers)
         return None
 
     @computed_field  # type: ignore[misc]
@@ -300,3 +310,7 @@ class TripSummary(BaseModel):
         if self.accommodation_logs:
             return max(log.date_out for log in self.accommodation_logs)
         return None
+
+
+class TripSummary(BaseTrip):
+    trip_name: str

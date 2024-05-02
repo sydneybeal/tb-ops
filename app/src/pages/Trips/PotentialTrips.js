@@ -12,15 +12,16 @@ export const PotentialTrips = () => {
     const [apiData, setApiData] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(10);
     const [refreshData, setRefreshData] = useState(false);
     const [sortOption, setSortOption] = useState('latestTripsFirst');
     const [loaded, setLoaded] = useState(false);
     // const [activeTripId, setActiveTripId] = useState(null);
     const { userDetails, logout } = useAuth();
     const [progress, setProgress] = useState(null);
+    const [currentFlaggedTrip, setCurrentFlaggedTrip] = useState(null);
     const [displayData, setDisplayData] = useState([]);
-    const [isProgressExpanded, setIsProgressExpanded] = useState(true);
+    const [isProgressExpanded, setIsProgressExpanded] = useState(false);
     // const [currentPotentialTrip, setCurrentPotentialTrip] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
@@ -28,27 +29,27 @@ export const PotentialTrips = () => {
     const [selectedTrips, setSelectedTrips] = useState(new Set());
 
     useEffect(() => {
-        setDisplayData(apiData.slice(0, itemsPerPage));
+        // Calculate the number of pages with the new data
         const numberOfPages = Math.ceil(apiData.length / itemsPerPage);
         setTotalPages(numberOfPages);
-        setCurrentPage(0);
-    }, [apiData, itemsPerPage]);
-
+    
+        // If the current page index is out of range after new data arrives, reset it to the last available page
+        if (currentPage >= numberOfPages) {
+            setCurrentPage(Math.max(0, numberOfPages - 1));
+        }
+    
+        // Update displayData for the currentPage only if it's still within the new range
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(apiData.slice(start, end));
+    }, [apiData, itemsPerPage, currentPage]);
+    
     useEffect(() => {
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
         setDisplayData(apiData.slice(start, end));
-    }, [currentPage, apiData, itemsPerPage]);
-
-    // const handleToggleTrip = (tripId) => {
-    //     const newSelection = new Set(selectedTrips);
-    //     if (newSelection.has(tripId)) {
-    //         newSelection.delete(tripId);
-    //     } else {
-    //         newSelection.add(tripId);
-    //     }
-    //     setSelectedTrips(newSelection);
-    // };
+    }, [currentPage, itemsPerPage, apiData]);
+    
     const handleToggleTrip = (trip) => {
         const newSelection = new Set(selectedTrips);
         const existingTrip = [...newSelection].find(t => t.id === trip.id);
@@ -104,8 +105,57 @@ export const PotentialTrips = () => {
                 });
                 break;
             case 'flaggedTrips':
-                // TODO change this to trips with flag_for_help true
-                sortedData.sort((a, b) => b.totalFlags - a.totalFlags);
+                sortedData.sort((a, b) => {
+                    const flagA = !a.review_status?.includes('flagged') ? 1 : 0;
+                    const flagB = !b.review_status?.includes('flagged') ? 1 : 0;
+                    return flagA - flagB;
+                });
+                break;
+            case 'africaFirst':
+                sortedData.sort((a, b) => {
+                    const continentA = a.core_destination?.includes('Africa') ? 0 : 1;
+                    const continentB = b.core_destination?.includes('Africa') ? 0 : 1;
+                    return continentA - continentB;
+                });
+                break;
+            case 'latinAmericaFirst':
+                sortedData.sort((a, b) => {
+                    const continentA = a.core_destination?.includes('Latin America') ? 0 : 1;
+                    const continentB = b.core_destination?.includes('Latin America') ? 0 : 1;
+                    return continentA - continentB;
+                });
+                break;
+            case 'otherFirst':
+                sortedData.sort((a, b) => {
+                    // Check if the destination does not include Africa, Latin America, or Asia
+                    const continents = ['Africa', 'Latin America', 'Asia']; // List of continents to check against
+                    const isOtherA = !continents.some(continent => a.core_destination?.includes(continent));
+                    const isOtherB = !continents.some(continent => b.core_destination?.includes(continent));
+                    const continentA = isOtherA ? 0 : 1; // 0 if none of the listed continents are included, otherwise 1
+                    const continentB = isOtherB ? 0 : 1;
+                    return continentA - continentB;
+                });
+                break;
+            case 'asiaFirst':
+                sortedData.sort((a, b) => {
+                    const continentA = a.core_destination?.includes('Asia') ? 0 : 1;
+                    const continentB = b.core_destination?.includes('Asia') ? 0 : 1;
+                    return continentA - continentB;
+                });
+                break;
+            case 'year2023First':
+                sortedData.sort((a, b) => {
+                    const yearA = new Date(a.start_date).getFullYear() === 2023 ? 0 : 1;
+                    const yearB = new Date(b.end_date).getFullYear() === 2023 ? 0 : 1;
+                    return yearA - yearB;
+                });
+                break;
+            case 'year2024First':
+                sortedData.sort((a, b) => {
+                    const yearA = new Date(a.start_date).getFullYear() === 2024 ? 0 : 1;
+                    const yearB = new Date(b.end_date).getFullYear() === 2024 ? 0 : 1;
+                    return yearA - yearB;
+                });
                 break;
             default:
                 break;
@@ -157,7 +207,6 @@ export const PotentialTrips = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-                console.log("Progress: " + JSON.stringify(data));
                 setProgress(data);
             })
     }, [refreshData, userDetails.token, logout]);
@@ -243,6 +292,17 @@ export const PotentialTrips = () => {
                     }
                 }
 
+                // Check for gap between consecutive logs
+                if (i < logs.length - 1) {
+                    const currentDateOut = new Date(log.date_out);
+                    const nextDateIn = new Date(logs[i + 1].date_in);
+                    const gapDays = (nextDateIn - currentDateOut) / (1000 * 60 * 60 * 24);
+                    if (gapDays > 0) {
+                        log.date_out_flag = true;
+                        logs[i + 1].date_in_flag = true;
+                    }
+                }
+
                 // Check for mismatch in consultant, destination, and num_pax
                 if (log.consultant_display_name !== mostCommonConsultant) {
                     log.consultant_flag = true;
@@ -314,14 +374,14 @@ export const PotentialTrips = () => {
     const openFlagTripModal = (trip) => {
         if (!userDetails.email) {
             M.toast({
-                html: 'Please log in before confirming trips.',
+                html: 'Please log in before flagging trips.',
                 displayLength: 2000,
                 classes: 'error-red',
             });
             return;
         } else {
-            addTripToSelection(trip); // Ensure this adds the trip object
-            // setCurrentPotentialTrip(trip);
+            // addTripToSelection(trip); // Ensure this adds the trip object
+            setCurrentFlaggedTrip(trip);
             setIsFlagModalOpen(true);
         }
     };
@@ -363,7 +423,7 @@ export const PotentialTrips = () => {
                         // openConfirmTripModal={openFlagTripModal}
                         onClose={closeFlagModal}
                         onRefresh={triggerRefresh}
-                        // potentialTripData={currentPotentialTrip}
+                        potentialTripData={currentFlaggedTrip}
                         selectedTrips={selectedTrips}
                     />
                         {loaded ? (
@@ -392,7 +452,7 @@ export const PotentialTrips = () => {
                                                 className={`chip waves-effect btn ${isProgressExpanded ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                                 onClick={() => setIsProgressExpanded(!isProgressExpanded)}
                                             >
-                                                <span className="material-symbols-outlined">
+                                                Progress<span className="material-symbols-outlined">
                                                     expand_more
                                                 </span>
                                             </div>
@@ -532,7 +592,7 @@ export const PotentialTrips = () => {
                                         } 
                                     </>
                                 }
-                                <div className="row" style={{ marginTop: '10px', marginBottom: '30px'}}>
+                                <div className="row" style={{ marginTop: '10px', marginBottom: '0px'}}>
                                     <div
                                         className={`chip waves-effect btn ${sortOption === 'qualityIssuesFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
                                         onClick={() => setSortOption('qualityIssuesFirst')}
@@ -570,6 +630,44 @@ export const PotentialTrips = () => {
                                         Flagged Trips
                                     </div>
                                 </div>
+                                <div className="row" style={{ paddingTop: '0px', marginBottom: '30px'}}>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'africaFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('africaFirst')}
+                                    >
+                                        Africa
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'latinAmericaFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('latinAmericaFirst')}
+                                    >
+                                        Latin America
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'asiaFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('asiaFirst')}
+                                    >
+                                        Asia
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'otherFirst' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('otherFirst')}
+                                    >
+                                        Other
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'year2024First' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('year2024First')}
+                                    >
+                                        2024
+                                    </div>
+                                    <div
+                                        className={`chip waves-effect btn ${sortOption === 'year2023First' ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                        onClick={() => setSortOption('year2023First')}
+                                    >
+                                        2023
+                                    </div>
+                                </div>
                                 <div className="row center">
                                     <ul className="pagination">
                                         <li className={currentPage === 0 ? 'disabled' : ''}>
@@ -599,48 +697,72 @@ export const PotentialTrips = () => {
                                         </li>
                                     </ul>
                                 </div>
-                                {/* <div className="container"> */}
                                 {displayData.length ? (
                                     displayData.map(trip => (
-                                        <>
-                                            <div key={trip.id} className="card potential-trip-card">
-                                                <div className="card-content">
-                                                    <span className="card-title">{trip.trip_name || "Unnamed Trip"}</span>
-                                                    <span className="chip tb-grey lighten-4">{trip.review_status}</span>
-                                                    <button
-                                                        className="btn-floating btn-small waves-effect waves-light success-green"
-                                                        onClick={() => openConfirmTripModal(trip)}
-                                                    >
-                                                        <i className="material-icons">check</i>
-                                                    </button>
-                                                    &nbsp;
-                                                    <button
-                                                        className="btn-floating btn-small waves-effect waves-light red lighten-3"
-                                                        onClick={() => openFlagTripModal(trip)}
-                                                    >
-                                                        <i className="material-icons">flag</i>
-                                                    </button>
-                                                    <ul>
-                                                        {trip.accommodation_logs.map(log => (
-                                                            <li key={log.id}>
-                                                                <SingleLogDisplay log={log} />
-                                                            </li>
-                                                        ))}
-                                                        <li style={{ marginTop: '20px' }}>
-                                                        <label className="tb-checkbox-label">
-                                                            <input
-                                                                type="checkbox"
-                                                                className="tb-checkbox"
-                                                                checked={[...selectedTrips].some(t => t.id === trip.id)}
-                                                                onChange={() => handleToggleTrip(trip)}
-                                                            />
-                                                            <span>Mark for merge</span>
-                                                        </label>
-                                                        </li>
-                                                    </ul>
+                                        <div key={trip.id} className="card potential-trip-card">
+                                            <div className="card-content">
+                                                <span className="card-title">{trip.trip_name || "Unnamed Trip"}</span>
+                                                {trip.review_status === "pending" ? (
+                                                    <span className="chip warning-yellow-light lighten-4">
+                                                        <span className="material-symbols-outlined">
+                                                            pending
+                                                        </span>
+                                                        {trip.review_status}
+                                                    </span>
+                                                ) : (
+                                                    <span className="chip error-red-light">
+                                                        <span className="material-symbols-outlined">
+                                                            flag
+                                                        </span>
+                                                        {trip.review_status} by <span className="text-bold">{trip.reviewed_by.split('@')[0]}</span>
+                                                    </span>
+                                                )}
+                                                <button
+                                                    className="btn-floating btn-small waves-effect waves-light success-green"
+                                                    onClick={() => openConfirmTripModal(trip)}
+                                                >
+                                                    <i className="material-icons">check</i>
+                                                </button>
+                                                &nbsp;
+                                                {trip.review_status !== "flagged" &&
+                                                <button
+                                                    className="btn-floating btn-small waves-effect waves-light red lighten-3"
+                                                    onClick={() => openFlagTripModal(trip)}
+                                                >
+                                                    <i className="material-icons">flag</i>
+                                                </button>
+                                                 }
+                                                {trip.review_notes &&
+                                                <div className="container center">
+                                                <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
+                                                        <p className="tb-teal-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
+                                                            <span className="text-bold">Note from {trip.reviewed_by.split('@')[0]}:</span>
+                                                            <br/>
+                                                            {trip.review_notes}
+                                                        </p>
                                                 </div>
+                                                </div>
+                                                }
+                                                <ul>
+                                                    {trip.accommodation_logs.map(log => (
+                                                        <li key={log.id}>
+                                                            <SingleLogDisplay log={log} />
+                                                        </li>
+                                                    ))}
+                                                    <li style={{ marginTop: '20px' }}>
+                                                    <label className="tb-checkbox-label">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="tb-checkbox"
+                                                            checked={[...selectedTrips].some(t => t.id === trip.id)}
+                                                            onChange={() => handleToggleTrip(trip)}
+                                                        />
+                                                        <span>Mark for merge</span>
+                                                    </label>
+                                                    </li>
+                                                </ul>
                                             </div>
-                                        </>
+                                        </div>
                                     ))
                                 ) : (
                                     <p>No trips available for grouping.</p>

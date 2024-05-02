@@ -20,6 +20,7 @@ from typing import Sequence
 from api.services.summaries.models import AccommodationLogSummary
 
 from api.services.quality.models import (
+    FlaggedTrip,
     PotentialTrip,
 )
 
@@ -31,4 +32,9 @@ class QualityRepository(ABC):
     @abstractmethod
     async def get_unmatched_accommodation_logs(self) -> PotentialTrip:
         """Gets accommodation logs without an associated trip_id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def add_flagged_trip(self, flagged_trip: FlaggedTrip):
+        """Adds a FlaggedTrip to the repo."""
         raise NotImplementedError

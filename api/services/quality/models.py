@@ -19,77 +19,28 @@ from uuid import UUID, uuid4
 from collections import Counter
 
 from pydantic import BaseModel, Field, computed_field
-from api.services.summaries.models import AccommodationLogSummary
+from api.services.summaries.models import AccommodationLogSummary, BaseTrip
 
 
-class PotentialTrip(BaseModel):
+class PotentialTrip(BaseTrip):
     """A model representing a potential trip, which is a collection of accommodation logs."""
 
-    id: UUID = Field(default_factory=uuid4)
-    # trip_name: Optional[str]
-    accommodation_logs: List[AccommodationLogSummary] = []
-    review_status: str = Field(default="pending")  # pending, confirmed, ask_for_help
+    review_status: str = Field(default="pending")
     review_notes: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    updated_by: Optional[str] = None
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def core_destination(self) -> Optional[str]:
-        """Calculate the core destination of the trip by finding the most common 'destination_name' from the logs."""
-        if self.accommodation_logs:
-            destination_counts = Counter(
-                log.core_destination_name for log in self.accommodation_logs
-            )
-            return (
-                destination_counts.most_common(1)[0][0] if destination_counts else None
-            )
-        return None
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def total_bed_nights(self) -> int:
-        """Calculate the total bed nights for the trip."""
-        return sum(log.bed_nights for log in self.accommodation_logs)
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def number_of_logs(self) -> int:
-        """Return the number of accommodation logs in the trip."""
-        return len(self.accommodation_logs)
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def start_date(self) -> Optional[date]:
-        """Calculate the start date of the trip by finding the earliest 'date_in' from the logs."""
-        if self.accommodation_logs:
-            return min(log.date_in for log in self.accommodation_logs)
-        return None
-
-    @computed_field  # type: ignore[misc]
-    @property
-    def end_date(self) -> Optional[date]:
-        """Calculate the end date of the trip by finding the latest 'date_out' from the logs."""
-        if self.accommodation_logs:
-            return max(log.date_out for log in self.accommodation_logs)
-        return None
+    _trip_name: Optional[str] = None
 
     @computed_field  # type: ignore[misc]
     @property
     def trip_name(self) -> str:
+        """Uses the accommodation logs to assemble the suggested trip name."""
         if not self.accommodation_logs:
             return "No Trip Name Available"
 
-        # Assuming primary_traveler is in the format "LastName/FirstName"
         last_name = self.accommodation_logs[0].primary_traveler.split("/")[0]
-
-        # Maximum number of pax
         max_pax = max(log.num_pax for log in self.accommodation_logs)
 
-        # Extract unique country names and core destinations
         countries_in_logs = set(
             log.country_name for log in self.accommodation_logs if log.country_name
         )
@@ -99,22 +50,43 @@ class PotentialTrip(BaseModel):
             if log.core_destination_name
         )
 
-        # Determine the main destination
+        # Determine the destination based on the count of core destinations and countries
         if len(countries_in_logs) == 1:
-            # If only one country is present, use it directly
             destination = next(iter(countries_in_logs))
-        elif len(countries_in_logs) > 1:
-            # Use the core destination if multiple countries are involved, replace "Asia" with "Southeast Asia"
-            destination = next(
-                (
-                    dest if dest != "Asia" else "Southeast Asia"
-                    for dest in core_destinations
-                ),
-                "Multiple Destinations",
-            )
+        elif countries_in_logs == {"Australia", "New Zealand"}:
+            destination = "Australia & New Zealand"
+        else:
+            # If there are no specific core destinations mentioned, fall back to countries or special cases
+            if len(countries_in_logs) == 1:
+                destination = next(iter(countries_in_logs))
+            else:
+                destination = self._handle_special_cases(
+                    countries_in_logs, core_destinations
+                )
 
-        # Handle core destinations specifically for Africa using a lookup list
-        africa_lookup_list = {
+        earliest_date = min(log.date_in for log in self.accommodation_logs)
+        date_title = earliest_date.strftime("%B %Y")
+
+        return f"{last_name} x{max_pax}, {destination}, {date_title}"
+
+    def _handle_special_cases(self, countries, core_destinations):
+        # Special handling for regions within Asia and Africa
+        asia_lookup = {
+            "Southeast Asia": {"Thailand", "Vietnam", "Malaysia", "Singapore"}
+        }
+        south_america_lookup = {
+            "South America": {
+                "Argentina",
+                "Bolivia",
+                "Brazil",
+                "Chile",
+                "Colombia",
+                "Ecuador",
+                "Peru",
+                "Uruguay",
+            }
+        }
+        africa_lookup = {
             "East Africa": {
                 "Kenya",
                 "Tanzania",
@@ -135,24 +107,48 @@ class PotentialTrip(BaseModel):
             },
             "North Africa": {"Egypt", "Jordan", "Morocco"},
         }
-        africa_regions = set()
-        if len(countries_in_logs) > 1:
-            for region, countries in africa_lookup_list.items():
-                if countries.intersection(countries_in_logs):
-                    africa_regions.add(region)
-            if len(africa_regions) == 1:
-                destination = next(iter(africa_regions))
-            elif "Africa" in [
-                log.core_destination_name for log in self.accommodation_logs
-            ]:
-                destination = "Africa"
 
-        earliest_date = min(log.date_in for log in self.accommodation_logs)
-        date_title = earliest_date.strftime("%B %Y")
+        for region, countries_set in asia_lookup.items():
+            if countries_set.intersection(countries):
+                return region
 
-        # Form the final trip name
-        trip_name = f"{last_name} x{max_pax}, {destination}, {date_title}"
-        return trip_name
+        for region, countries_set in south_america_lookup.items():
+            if countries_set.intersection(countries):
+                return region
+
+        africa_regions = [
+            region
+            for region, countries_set in africa_lookup.items()
+            if countries_set.intersection(countries)
+        ]
+        if len(africa_regions) == 1:
+            return africa_regions[0]
+        # If no specific region fits, use a general core destination if one exists
+        if len(core_destinations) == 1:
+            return next(iter(core_destinations))
+
+        # Default to "Multiple Countries" only if no better label is available
+        return "Multiple Countries"
+
+    @trip_name.setter
+    def trip_name(self, value: str):
+        """Allows setting a specific trip name, bypassing the computed name."""
+        self._trip_name = value
+
+
+class FlaggedTrip(BaseModel):
+    """A model representing a potential trip, which is a collection of accommodation logs."""
+
+    id: UUID = Field(default_factory=uuid4)
+    trip_name: str
+    accommodation_log_ids: List[UUID]
+    review_status: str = Field(default="flagged")
+    review_notes: Optional[str] = None
+    reviewed_at: datetime = Field(default_factory=datetime.now)
+    reviewed_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
 
 
 class ProgressBreakdown(BaseModel):

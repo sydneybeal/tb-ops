@@ -382,3 +382,8 @@ class TravelRepository(ABC):
     async def add_trip(self, trips: Sequence[Trip]) -> None:
         """Adds a sequence of Trip models to the repository."""
         raise NotImplementedError
+
+    @abstractmethod
+    async def delete_trip(self, trip_id: UUID) -> bool:
+        """Deletes a Trip model from the repository."""
+        raise NotImplementedError

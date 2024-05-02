@@ -679,3 +679,95 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                     )
 
                 return list(trip_summaries.values())
+
+    async def get_trip_summary_by_id(self, trip_id: UUID) -> TripSummary:
+        """Gets a TripSummary model by its ID."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                t.id AS trip_id,
+                t.trip_name,
+                t.created_at AS trip_created_at,
+                t.updated_at AS trip_updated_at,
+                t.updated_by AS trip_updated_by,
+                al.id AS log_id,
+                al.primary_traveler,
+                cd.name AS core_destination_name,
+                cd.id AS core_destination_id,
+                c.name AS country_name,
+                c.id AS country_id,
+                al.date_in,
+                al.date_out,
+                al.num_pax,
+                p.name AS property_name,
+                p.id AS property_id,
+                p.portfolio_id AS property_portfolio_id,
+                pf.name AS property_portfolio,
+                bc.name AS booking_channel_name,
+                a.name AS agency_name,
+                cons.id AS consultant_id,
+                cons.first_name AS consultant_first_name,
+                cons.last_name AS consultant_last_name,
+                cons.is_active AS consultant_is_active,
+                al.created_at,
+                al.updated_at,
+                al.updated_by
+            FROM public.trips t
+            JOIN public.accommodation_logs al ON t.id = al.trip_id
+            JOIN public.properties p ON al.property_id = p.id
+            JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            JOIN public.consultants cons ON al.consultant_id = cons.id
+            LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
+            LEFT JOIN public.agencies a ON al.agency_id = a.id
+            LEFT JOIN public.countries c ON p.country_id = c.id
+            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            WHERE t.id = $1
+            """
+        )
+
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(query, trip_id)  # fetch, not fetchrow
+                if not records:
+                    return None
+
+                trip_summary = TripSummary(
+                    id=records[0]["trip_id"],
+                    trip_name=records[0]["trip_name"],
+                    created_at=records[0]["trip_created_at"],
+                    updated_at=records[0]["trip_updated_at"],
+                    updated_by=records[0]["trip_updated_by"],
+                    accommodation_logs=[],
+                )
+
+                for record in records:
+                    trip_summary.accommodation_logs.append(
+                        AccommodationLogSummary(
+                            id=record["log_id"],
+                            primary_traveler=record["primary_traveler"],
+                            country_name=record["country_name"],
+                            core_destination_name=record["core_destination_name"],
+                            property_name=record["property_name"],
+                            property_id=record["property_id"],
+                            property_portfolio_id=record["property_portfolio_id"],
+                            property_portfolio=record["property_portfolio"],
+                            booking_channel_name=record["booking_channel_name"],
+                            agency_name=record["agency_name"],
+                            consultant_id=record["consultant_id"],
+                            consultant_first_name=record["consultant_first_name"],
+                            consultant_last_name=record["consultant_last_name"],
+                            consultant_is_active=record["consultant_is_active"],
+                            date_in=record["date_in"],
+                            date_out=record["date_out"],
+                            num_pax=record["num_pax"],
+                            created_at=record["created_at"],
+                            updated_at=record["updated_at"],
+                            updated_by=record["updated_by"],
+                        )
+                    )
+
+                return trip_summary

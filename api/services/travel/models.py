@@ -206,6 +206,7 @@ class PatchTripRequest(BaseModel):
     accommodation_log_ids: List[UUID]
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
+    reviewed_by: Optional[str] = None
     review_status: Optional[str] = None  # Include only if needed for flagging logic
     review_notes: Optional[str] = None  # Include only if needed for flagging logic
 
