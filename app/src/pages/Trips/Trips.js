@@ -5,7 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import SingleLogDisplay from '../AccommodationLogs/SingleLogDisplay';
 // import Navbar from '../../components/Navbar';
-// import moment from 'moment';
+import moment from 'moment';
 
 export const Trips = () => {
     const [apiData, setApiData] = useState([]);
@@ -42,7 +42,7 @@ export const Trips = () => {
     }, [currentPage, itemsPerPage, apiData]);
 
     useEffect(() => {
-        // M.AutoInit();
+        setLoaded(false);
         fetch(`${process.env.REACT_APP_API}/v1/trips`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
@@ -78,7 +78,7 @@ export const Trips = () => {
             .then(data => {
                 console.log('Trip successfully removed:', data);
                 M.toast({ html: 'Trip successfully deleted', classes: 'success-green' });
-                setRefreshData(!refreshData);
+                triggerRefresh();
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -134,13 +134,18 @@ export const Trips = () => {
     };
 
     const changePage = (newPage) => {
+        if (newPage === currentPage) {
+            return; // Do nothing if the page hasn't changed
+        }
         const start = newPage * itemsPerPage;
         const end = start + itemsPerPage;
         setDisplayData(displayData.slice(start, end));
         setCurrentPage(newPage);
     };
 
-    
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
 
     return (
         <>
@@ -192,7 +197,7 @@ export const Trips = () => {
                                                     <span className="material-symbols-outlined">
                                                         check_circle
                                                     </span>
-                                                    validated
+                                                    validated by <span className="text-bold">{trip.updated_by?.split('@')[0]}</span>
                                                 </span>
                                                 <button className="btn btn-floating btn-small error-red" onClick={() => handleRemoveTrip(trip.id)}>
                                                     x
@@ -204,6 +209,9 @@ export const Trips = () => {
                                                         </li>
                                                     ))}
                                                 </ul>
+                                                <em className="tb-grey-text">
+                                                    Last updated by <span className="text-bold">{trip.updated_by?.split('@')[0]}</span> {moment(trip.updated_at).local().fromNow()}
+                                                </em>
                                             </div>
                                         </div>
                                     ))

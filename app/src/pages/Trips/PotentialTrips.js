@@ -3,7 +3,7 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
-// import moment from 'moment';
+import moment from 'moment';
 import SingleLogDisplay from '../AccommodationLogs/SingleLogDisplay';
 import ConfirmTripModal from './ConfirmTripModal';
 import FlagTripModal from './FlagTripModal';
@@ -25,6 +25,7 @@ export const PotentialTrips = () => {
     // const [currentPotentialTrip, setCurrentPotentialTrip] = useState(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
 
@@ -71,7 +72,14 @@ export const PotentialTrips = () => {
     };
 
     useEffect(() => {
-        let sortedData = [...apiData]; // Create a shallow copy to sort
+        let filteredData = apiData.filter(trip => {
+            return trip.trip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                trip.accommodation_logs.some(log => log.primary_traveler.toLowerCase().includes(searchTerm.toLowerCase()));
+        });
+    
+        let sortedData = [...filteredData];
+
+        // let sortedData = [...apiData]; // Create a shallow copy to sort
         sortedData.forEach(trip => {
             // Count the total number of flags in each trip
             trip.totalFlags = trip.accommodation_logs.reduce((acc, log) => {
@@ -171,7 +179,7 @@ export const PotentialTrips = () => {
         const displayStartIndex = currentPage * itemsPerPage;
         const displayEndIndex = displayStartIndex + itemsPerPage;
         setDisplayData(sortedData.slice(displayStartIndex, displayEndIndex));
-    }, [sortOption, apiData, currentPage, itemsPerPage]);
+    }, [sortOption, apiData, currentPage, itemsPerPage, searchTerm]);
 
     useEffect(() => {
         fetch(`${process.env.REACT_APP_API}/v1/potential_trips`, {
@@ -254,6 +262,9 @@ export const PotentialTrips = () => {
     };
 
     const changePage = (newPage) => {
+        if (newPage === currentPage) {
+            return; // Do nothing if the page hasn't changed
+        }
         const start = newPage * itemsPerPage;
         const end = start + itemsPerPage;
         setDisplayData(displayData.slice(start, end));
@@ -335,7 +346,7 @@ export const PotentialTrips = () => {
     //     }
     // };
 
-    const openConfirmTripModal = (trip) => {
+    const openConfirmTripModal = (trip = null) => {
         if (!userDetails.email) {
             M.toast({
                 html: 'Please log in before confirming trips.',
@@ -344,7 +355,9 @@ export const PotentialTrips = () => {
             });
             return;
         } else {
-            addTripToSelection(trip); // Ensure this adds the trip object
+            if (trip) {
+                addTripToSelection(trip); // Only add the trip if it's passed
+            }
             setIsConfirmModalOpen(true);
         }
     };
@@ -475,7 +488,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {progress.progress_by_destination['Africa']?.confirmed + progress.progress_by_destination['Africa']?.potential}
+                                                                {(progress.progress_by_destination['Africa']?.confirmed + progress.progress_by_destination['Africa']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                         <div className="col m3 s12">
@@ -490,7 +503,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {progress.progress_by_destination['Latin America']?.confirmed + progress.progress_by_destination['Latin America']?.potential}
+                                                                {(progress.progress_by_destination['Latin America']?.confirmed + progress.progress_by_destination['Latin America']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                         <div className="col m3 s12">
@@ -505,7 +518,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {progress.progress_by_destination['Asia']?.confirmed + progress.progress_by_destination['Asia']?.potential}
+                                                                {(progress.progress_by_destination['Asia']?.confirmed + progress.progress_by_destination['Asia']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                         <div className="col m3 s12">
@@ -516,11 +529,11 @@ export const PotentialTrips = () => {
                                                             {progress.progress_by_destination['Other']?.percent_complete}
                                                             <br/>
                                                             <span className="tb-teal-text text-bold">
-                                                                {progress.progress_by_destination['Other']?.confirmed}
+                                                                {progress.progress_by_destination['Other']?.confirmed || "0"}
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {progress.progress_by_destination['Other']?.confirmed + progress.progress_by_destination['Other']?.potential}
+                                                                {(progress.progress_by_destination['Other']?.confirmed + progress.progress_by_destination['Other']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -537,7 +550,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {((progress.progress_by_year['Pre-2023']?.confirmed ?? 0) + (progress.progress_by_year['Pre-2023']?.potential ?? 0)) || "0"}
+                                                                {(progress.progress_by_year['Pre-2023']?.confirmed + progress.progress_by_year['Pre-2023']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                         <div className="col m3 s12">
@@ -552,7 +565,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {(progress.progress_by_year['2023']?.confirmed + progress.progress_by_year['2023']?.potential) ?? "-"}
+                                                                {(progress.progress_by_year['2023']?.confirmed || 0 + progress.progress_by_year['2023']?.potential || 0) ?? "-"}
                                                             </span>
                                                         </div>
                                                         <div className="col m3 s12">
@@ -582,7 +595,7 @@ export const PotentialTrips = () => {
                                                             </span>
                                                             <span> / </span>
                                                             <span className="tb-grey-text text-bold">
-                                                                {progress.progress_by_year['Post-2024']?.confirmed + progress.progress_by_year['Post-2024']?.potential}
+                                                                {(progress.progress_by_year['Post-2024']?.confirmed + progress.progress_by_year['Post-2024']?.potential) ?? "-"}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -697,6 +710,56 @@ export const PotentialTrips = () => {
                                         </li>
                                     </ul>
                                 </div>
+                                <div className="row center">
+                                    <div className="col s6 offset-s3 input-field">
+                                        <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                search
+                                            </span>
+                                            <input
+                                                type="text"
+                                                id="potential-search-query"
+                                                placeholder="Search..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                className="search-input"
+                                                autoComplete="off"
+                                            />
+                                            <span>
+                                                <button className="btn btn-floating btn-small error-red" onClick={() => setSearchTerm('')}>
+                                                    x
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {selectedTrips.size > 0 && (
+                                    <div className="row white" style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 1000 }}>
+                                        <div className="row white" style= {{marginBottom: '0px'}}>
+                                            <span className="code">Trips selected:</span>
+                                            <span className="chip warning-yellow text-bold" style={{ marginLeft: '5px' }}>
+                                                {selectedTrips.size}
+                                            </span>
+                                        </div>
+                                        <div className="row white">
+                                            <button
+                                                className="btn error-red-light grey-text text-darken-4"
+                                                onClick={() => setSelectedTrips(new Set())}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    remove_done
+                                                </span>
+                                            </button>
+                                            &nbsp;
+                                            <button
+                                                className="btn tb-teal lighten-3 grey-text text-darken-4"
+                                                onClick={() => openConfirmTripModal()}
+                                            >
+                                                <i className="material-icons">merge</i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                                 {displayData.length ? (
                                     displayData.map(trip => (
                                         <div key={trip.id} className="card potential-trip-card">
@@ -731,14 +794,16 @@ export const PotentialTrips = () => {
                                                 >
                                                     <i className="material-icons">flag</i>
                                                 </button>
-                                                 }
+                                                }
                                                 {trip.review_notes &&
                                                 <div className="container center">
                                                 <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
-                                                        <p className="tb-teal-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
-                                                            <span className="text-bold">Note from {trip.reviewed_by.split('@')[0]}:</span>
+                                                        <p className="tb-grey-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
+                                                            <span className="text-bold">Note from <span className="tb-teal-text text-darken-1">{trip.reviewed_by.split('@')[0]}</span>:</span>
                                                             <br/>
                                                             {trip.review_notes}
+                                                            <br/>
+                                                            <em style={{ fontSize: '1rem' }}>{moment(trip.reviewed_at).local().fromNow()}</em>
                                                         </p>
                                                 </div>
                                                 </div>

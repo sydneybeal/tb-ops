@@ -274,6 +274,49 @@ class QualityService:
 
         return similarity_ratio >= threshold
 
+    # def similar_by_accommodation(
+    #     self, trip1: BaseTrip, trip2: BaseTrip, threshold=0.7
+    # ) -> bool:
+    #     """
+    #     Determine if two trips share a significant amount of nights at the same accommodations,
+    #     with a more nuanced consideration of the total length of both trips.
+    #     """
+    #     accommodations1 = {
+    #         (log.date_in, log.date_out, log.property_name): (
+    #             log.date_out - log.date_in
+    #         ).days
+    #         for log in trip1.accommodation_logs
+    #     }
+    #     accommodations2 = {
+    #         (log.date_in, log.date_out, log.property_name): (
+    #             log.date_out - log.date_in
+    #         ).days
+    #         for log in trip2.accommodation_logs
+    #     }
+
+    #     total_nights1 = sum(accommodations1.values())
+    #     total_nights2 = sum(accommodations2.values())
+    #     matched_nights = 0
+
+    #     # Calculate the matched nights based on exact match of accommodation logs
+    #     for key, nights1 in accommodations1.items():
+    #         if key in accommodations2:
+    #             nights2 = accommodations2[key]
+    #             overlapping_nights = min(nights1, nights2)
+    #             matched_nights += overlapping_nights
+
+    #     # Calculate similarity ratio as the fraction of total nights overlapped to average trip length
+    #     average_total_nights = (total_nights1 + total_nights2) / 2
+    #     similarity_ratio = (
+    #         matched_nights / average_total_nights if average_total_nights > 0 else 0
+    #     )
+
+    #     # Optionally, ensure that the overlap is not just a single night if both trips are longer
+    #     if matched_nights == 1 and (total_nights1 > 1 or total_nights2 > 1):
+    #         return False
+
+    #     return similarity_ratio >= threshold
+
     def similar_by_chance(self, trip1: BaseTrip, trip2: BaseTrip) -> bool:
         """
         Check if two trips could be by chance related, such as 1-2 properties of the trip

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../components/AuthContext';
 import M from 'materialize-css';
 import SingleLogDisplay from '../AccommodationLogs/SingleLogDisplay';
@@ -112,7 +112,7 @@ const FlagTripModal = ({ isOpen, onClose, onRefresh, potentialTripData = null}) 
                                 type="text"
                                 id="trip-name"
                                 placeholder="Trip name"
-                                value={tripName}
+                                value={tripName || ''}
                                 onChange={(e) => setTripName(e.target.value)}
                                 className="name-input input-placeholder-dark" // Apply any styling as needed
                             />

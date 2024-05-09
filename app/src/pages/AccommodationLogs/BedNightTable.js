@@ -388,10 +388,17 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                             <React.Fragment key={item.id}>
                                 <tr>
                                     <td style={{ verticalAlign: 'top', maxWidth: '120px' }}>
-                                        <p className="text-bold">{item.property_name}</p>
-                                        <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'left', marginTop: '8px' }}>
-                                            {item.property_portfolio}
-                                        </div>
+                                        {/* <span // TODO add tooltip for property location, type, etc
+                                            className={`tooltipped`}
+                                            data-position="left"
+                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                            data-tooltip-class="tooltip-updated-by"
+                                        > */}
+                                            <p className="text-bold">{item.property_name}</p>
+                                            <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'left', marginTop: '8px' }}>
+                                                {item.property_portfolio}
+                                            </div>
+                                        {/* </span> */}
                                     </td>
                                     <td>
                                         <p>{item.primary_traveler}</p>
@@ -400,7 +407,7 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                                 className="material-symbols-outlined tb-md-black-text"
                                                 style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}
                                             >
-                                                airline_seat_recline_extra
+                                                group
                                             </span>
                                             {item.num_pax}
                                         </span>
@@ -543,7 +550,7 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                                     className="material-symbols-outlined tb-md-black-text"
                                                     style={{ fontSize: '0.9rem', verticalAlign: 'middle' }}
                                                 >
-                                                    airline_seat_recline_extra
+                                                    group
                                                 </span>
                                                 {item.num_pax}
                                             </span>

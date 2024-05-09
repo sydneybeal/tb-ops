@@ -1035,7 +1035,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 />
                                 <label htmlFor="primary_traveler">
                                     <span className="material-symbols-outlined">
-                                        hiking
+                                        person
                                     </span>
                                     Primary Traveler (Last/First)
 
@@ -1055,7 +1055,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                 />
                                 <label htmlFor="num_pax">
                                     <span className="material-symbols-outlined">
-                                        airplane_ticket
+                                        group
                                     </span>
                                     Pax
                                 </label>

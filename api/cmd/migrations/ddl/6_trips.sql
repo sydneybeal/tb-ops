@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS public.potential_trips (
     updated_by VARCHAR(255) NOT NULL
 );
 
--- ALTER TABLE public.accommodation_logs
--- ADD COLUMN IF NOT EXISTS trip_id UUID,
--- ADD FOREIGN KEY (trip_id) REFERENCES public.trips(id);
+ALTER TABLE public.accommodation_logs
+ADD COLUMN IF NOT EXISTS trip_id UUID,
+ADD FOREIGN KEY (trip_id) REFERENCES public.trips(id);
 
--- ALTER TABLE public.potential_trips
--- ADD CONSTRAINT unique_trip_name_accommodation_log_ids UNIQUE (trip_name, accommodation_log_ids);
+ALTER TABLE public.potential_trips
+ADD CONSTRAINT unique_trip_name_accommodation_log_ids UNIQUE (trip_name, accommodation_log_ids);
 
 
 -- ALTER TABLE accommodation_logs

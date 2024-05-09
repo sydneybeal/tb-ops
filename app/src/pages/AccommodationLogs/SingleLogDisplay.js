@@ -28,14 +28,14 @@ export const SingleLogDisplay = ({ log }) => {
 
             {/* Bed Nights and Pax */}
             <div className="col s2" style={{ textAlign: 'left', marginBottom: '0px' }}>
-                <span className={`chip ${log.num_pax_flag ? 'error-red-light' : 'tb-teal lighten-2'}`} style={{ paddingLeft: '8px', paddingRight: '12px' }}>
+                <span className={`chip ${log.num_pax_flag ? 'error-red-light' : 'tb-teal lighten-3'}`} style={{ paddingLeft: '8px', paddingRight: '12px' }}>
                     <span className="material-symbols-outlined">
-                        airline_seat_recline_extra
+                        group
                     </span>
                     {log.num_pax}
                 </span>
                 <br />
-                <span className="chip tb-teal lighten-2" style={{ paddingLeft: '8px', paddingRight: '12px' }}>
+                <span className="chip tb-teal darken-4 tb-grey-text text-lighten-4" style={{ paddingLeft: '8px', paddingRight: '12px' }}>
                     <span className="material-symbols-outlined">
                         dark_mode
                     </span>
