@@ -62,7 +62,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.1.16"
+VERSION = "v0.1.17"
 
 
 def make_app(

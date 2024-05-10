@@ -16,7 +16,11 @@ export const SingleLogDisplay = ({ log }) => {
                 <span className={`chip ${log.core_destination_flag ? 'error-red-light' : 'tb-grey lighten-3'}`}>{log.country_name}</span>
                 <span className={`chip ${log.core_destination_flag ? 'error-red-light' : 'tb-grey lighten-4'}`}>{log.core_destination_name}</span>
                 <br />
-                <em className="tb-grey-text">{log.primary_traveler}</em>
+                {log.primary_traveler_flag ? (
+                    <span className="chip error-red-light text-bold">{log.primary_traveler}</span>
+                ) : (
+                    <em className="tb-grey-text">{log.primary_traveler}</em>
+                )}
             </div>
 
             {/* Date In and Date Out */}
@@ -45,7 +49,7 @@ export const SingleLogDisplay = ({ log }) => {
 
             {/* Consultant Display Name */}
             <div className="col s2">
-                <span className={`text-bold ${log.consultant_flag ? 'error-red-light-text' : 'tb-med-grey'}`}>
+                <span className={`text-bold ${log.consultant_flag ? 'error-red-text' : 'tb-med-grey'}`}>
                     {log.consultant_display_name}
                 </span>
             </div>

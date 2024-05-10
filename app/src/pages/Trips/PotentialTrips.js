@@ -99,7 +99,7 @@ export const PotentialTrips = () => {
             switch (filterOption) {
                 case 'qualityIssues':
                     return matchesSearchTerm && trip.accommodation_logs.some(log =>
-                        log.consultant_flag || log.num_pax_flag || log.date_out_flag || log.date_in_flag || log.core_destination_flag);
+                        log.consultant_flag || log.num_pax_flag || log.date_out_flag || log.date_in_flag || log.core_destination_flag || log.primary_traveler_flag);
                 case 'flaggedTrips':
                     return matchesSearchTerm && trip.review_status?.includes('flagged');
                 case 'year2023':
@@ -127,7 +127,8 @@ export const PotentialTrips = () => {
             // Count the total number of flags in each trip
             trip.totalFlags = trip.accommodation_logs.reduce((acc, log) => {
                 return acc + (log.consultant_flag ? 1 : 0) + (log.num_pax_flag ? 1 : 0) +
-                    (log.date_out_flag ? 1 : 0) + (log.date_in_flag ? 1 : 0) + (log.core_destination_flag ? 1 : 0);
+                    (log.date_out_flag ? 1 : 0) + (log.date_in_flag ? 1 : 0) + (log.core_destination_flag ? 1 : 0)
+                    + (log.primary_traveler_flag ? 1 : 0);
             }, 0);
         });
 
@@ -330,18 +331,21 @@ export const PotentialTrips = () => {
             const consultantCounts = {};
             const coreDestinationCounts = {};
             const numPaxCounts = {};
+            const primaryTravelerCount = {};
 
             // Count occurrences of each value
             logs.forEach(log => {
                 consultantCounts[log.consultant_display_name] = (consultantCounts[log.consultant_display_name] || 0) + 1;
                 coreDestinationCounts[log.core_destination_name] = (coreDestinationCounts[log.core_destination_name] || 0) + 1;
                 numPaxCounts[log.num_pax] = (numPaxCounts[log.num_pax] || 0) + 1;
+                primaryTravelerCount[log.primary_traveler] = (primaryTravelerCount[log.primary_traveler] || 0) + 1;
             });
 
             // Determine most common values
             const mostCommonConsultant = Object.keys(consultantCounts).reduce((a, b) => consultantCounts[a] > consultantCounts[b] ? a : b);
             const mostCommonDestination = Object.keys(coreDestinationCounts).reduce((a, b) => coreDestinationCounts[a] > coreDestinationCounts[b] ? a : b);
             const mostCommonNumPax = Object.keys(numPaxCounts).reduce((a, b) => numPaxCounts[a] > numPaxCounts[b] ? a : b);
+            const mostCommonTraveler = Object.keys(primaryTravelerCount).reduce((a, b) => primaryTravelerCount[a] > primaryTravelerCount[b] ? a : b);
 
             // Validate each log
             for (let i = 0; i < logs.length; i++) {
@@ -373,6 +377,9 @@ export const PotentialTrips = () => {
                 }
                 if (log.core_destination_name !== mostCommonDestination) {
                     log.core_destination_flag = true;
+                }
+                if (log.primary_traveler !== mostCommonTraveler) {
+                    log.primary_traveler_flag = true;
                 }
                 const logNumPax = parseInt(log.num_pax, 10);  // Ensure it's an integer
                 const commonNumPax = parseInt(mostCommonNumPax, 10);  // Ensure it's an integer
@@ -861,7 +868,7 @@ export const PotentialTrips = () => {
                                                     <span className="material-symbols-outlined">
                                                         flag
                                                     </span>
-                                                    {trip.review_status} by <span className="text-bold">{trip.reviewed_by.split('@')[0]}</span>
+                                                    {trip.review_status} by <span className="text-bold">{trip.reviewed_by?.split('@')[0]}</span>
                                                 </span>
                                             )}
                                             <button

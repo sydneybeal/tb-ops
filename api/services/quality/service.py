@@ -65,7 +65,8 @@ class QualityService:
 
         # Sort logs by primary traveler and date_in in descending order
         sorted_unmatched = sorted(
-            unmatched, key=lambda x: (x.primary_traveler, x.date_in.toordinal())
+            unmatched,
+            key=lambda x: (x.primary_traveler.lower().strip(), x.date_in.toordinal()),
         )
 
         # Initialize a dictionary to keep track of the last log per traveler for easy reference
@@ -75,8 +76,8 @@ class QualityService:
             should_append = False
 
             # Check if this log can continue a trip from the same traveler
-            if log.primary_traveler in last_log_per_traveler:
-                last_log = last_log_per_traveler[log.primary_traveler]
+            if log.primary_traveler.lower().strip() in last_log_per_traveler:
+                last_log = last_log_per_traveler[log.primary_traveler.lower().strip()]
                 # Allow a gap of up to 3 days; consider large gaps as a new trip
                 if last_log.date_out + timedelta(days=3) >= log.date_in:
                     should_append = True
@@ -87,8 +88,8 @@ class QualityService:
                     potential_trips
                 ):  # Reverse to optimize search, likely near the end
                     if (
-                        trip.accommodation_logs[-1].primary_traveler
-                        == log.primary_traveler
+                        trip.accommodation_logs[-1].primary_traveler.lower().strip()
+                        == log.primary_traveler.lower().strip()
                         and trip.accommodation_logs[-1].date_out + timedelta(days=3)
                         >= log.date_in
                     ):
@@ -96,11 +97,10 @@ class QualityService:
                         break
             else:
                 # Start a new potential trip and set the trip name based on the log's details
-                new_trip = PotentialTrip(accommodation_logs=[log])
                 potential_trips.append(PotentialTrip(accommodation_logs=[log]))
 
             # Update the last log for this traveler, or set it if it's the first log we're seeing for this traveler
-            last_log_per_traveler[log.primary_traveler] = log
+            last_log_per_traveler[log.primary_traveler.lower().strip()] = log
 
         return potential_trips
 
@@ -226,10 +226,19 @@ class QualityService:
         """
         if trip1.id and trip2.id and trip1.id == trip2.id:
             return True
-        elif (
+
+        # Normalize primary_travelers lists by stripping spaces and converting to lowercase
+        normalized_travelers1 = {
+            traveler.lower().strip() for traveler in (trip1.primary_travelers or [])
+        }
+        normalized_travelers2 = {
+            traveler.lower().strip() for traveler in (trip2.primary_travelers or [])
+        }
+
+        if (
             trip1.start_date == trip2.start_date
             and trip1.end_date == trip2.end_date
-            and set(trip1.primary_travelers or []) == set(trip2.primary_travelers or [])
+            and normalized_travelers1 == normalized_travelers2
             and trip1.core_destination == trip2.core_destination
         ):
             return True
@@ -331,8 +340,12 @@ class QualityService:
         - At least one of the trips has less than 2 logs, suggesting possible data entry errors.
         - The start or end date of one trip is within a certain threshold of the other trip's start or end date.
         """
-        travelers1 = set(trip1.primary_travelers or [])
-        travelers2 = set(trip2.primary_travelers or [])
+        travelers1 = {
+            traveler.lower().strip() for traveler in (trip1.primary_travelers or [])
+        }
+        travelers2 = {
+            traveler.lower().strip() for traveler in (trip2.primary_travelers or [])
+        }
 
         # Check if the primary travelers intersect
         if travelers1.intersection(travelers2):

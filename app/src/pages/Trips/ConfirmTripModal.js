@@ -37,11 +37,20 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                 body: JSON.stringify(trip)
             })
             .then(res => res.json())
-            .then(data => data.map(item => ({
-                ...item,
-                type: 'related',
-                clientId: generateInternalTripId(item)
-            })))
+            // .then(data => data.map(item => ({
+            //     ...item,
+            //     type: 'related',
+            //     clientId: generateInternalTripId(item)
+            // })))
+            .then(data => {
+                const validatedData = validateData(data);
+                const transformedData = validatedData.map(item => ({
+                    ...item,
+                    type: 'related',
+                    clientId: generateInternalTripId(item)
+                }));
+                return transformedData;
+            })
             .catch(err => {
                 console.error('Error fetching related trips for trip:', trip, err);
             })
@@ -94,6 +103,73 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
         if (updatedTrips.length === 0 || updatedTrips.every(trip => trip.accommodation_logs.length === 0)) {
             onClose();
         }
+    };
+
+    function validateData(trips) {
+        return trips.map(trip => {
+            const logs = trip.accommodation_logs;
+            const consultantCounts = {};
+            const coreDestinationCounts = {};
+            const numPaxCounts = {};
+            const primaryTravelerCount = {};
+
+            // Count occurrences of each value
+            logs.forEach(log => {
+                consultantCounts[log.consultant_display_name] = (consultantCounts[log.consultant_display_name] || 0) + 1;
+                coreDestinationCounts[log.core_destination_name] = (coreDestinationCounts[log.core_destination_name] || 0) + 1;
+                numPaxCounts[log.num_pax] = (numPaxCounts[log.num_pax] || 0) + 1;
+                primaryTravelerCount[log.primary_traveler] = (primaryTravelerCount[log.primary_traveler] || 0) + 1;
+            });
+
+            // Determine most common values
+            const mostCommonConsultant = Object.keys(consultantCounts).reduce((a, b) => consultantCounts[a] > consultantCounts[b] ? a : b);
+            const mostCommonDestination = Object.keys(coreDestinationCounts).reduce((a, b) => coreDestinationCounts[a] > coreDestinationCounts[b] ? a : b);
+            const mostCommonNumPax = Object.keys(numPaxCounts).reduce((a, b) => numPaxCounts[a] > numPaxCounts[b] ? a : b);
+            const mostCommonTraveler = Object.keys(primaryTravelerCount).reduce((a, b) => primaryTravelerCount[a] > primaryTravelerCount[b] ? a : b);
+
+            // Validate each log
+            for (let i = 0; i < logs.length; i++) {
+                const log = logs[i];
+
+                // Check for date overlap issues
+                if (i < logs.length - 1) {
+                    const nextLog = logs[i + 1];
+                    if (new Date(log.date_out) > new Date(nextLog.date_in)) {
+                        log.date_out_flag = true;
+                        nextLog.date_in_flag = true;
+                    }
+                }
+
+                // Check for gap between consecutive logs
+                if (i < logs.length - 1) {
+                    const currentDateOut = new Date(log.date_out);
+                    const nextDateIn = new Date(logs[i + 1].date_in);
+                    const gapDays = (nextDateIn - currentDateOut) / (1000 * 60 * 60 * 24);
+                    if (gapDays > 0) {
+                        log.date_out_flag = true;
+                        logs[i + 1].date_in_flag = true;
+                    }
+                }
+
+                // Check for mismatch in consultant, destination, and num_pax
+                if (log.consultant_display_name !== mostCommonConsultant) {
+                    log.consultant_flag = true;
+                }
+                if (log.core_destination_name !== mostCommonDestination) {
+                    log.core_destination_flag = true;
+                }
+                if (log.primary_traveler !== mostCommonTraveler) {
+                    log.primary_traveler_flag = true;
+                }
+                const logNumPax = parseInt(log.num_pax, 10);  // Ensure it's an integer
+                const commonNumPax = parseInt(mostCommonNumPax, 10);  // Ensure it's an integer
+                if (logNumPax !== commonNumPax) {
+                    log.num_pax_flag = true;
+                }
+            }
+
+            return trip;
+        });
     };
 
     useEffect(() => {
@@ -423,13 +499,24 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                                         style={{
                                             height: '40px',
                                             borderRadius: '4px',
-                                            // marginBottom: '40px',
+                                            marginBottom: '40px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center'
                                         }}
                                     >
                                         {relatedTrip.trip_name}
+                                        {!relatedTrip.review_status &&
+                                            <>
+                                                &nbsp;&nbsp;
+                                                <span className="chip success-green-light" style={{height: '65%', marginBottom: '0px', paddingBottom: '10px'}}>
+                                                    <span className="material-symbols-outlined">
+                                                        check_circle
+                                                    </span>
+                                                    <span>validated trip</span>
+                                                </span>
+                                            </>
+                                        }
                                     </h5>
                                     {relatedTrip.review_status === "flagged"  &&
                                         <div className="container center">
