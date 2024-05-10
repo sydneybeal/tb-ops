@@ -10,6 +10,7 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
     const [tripName, setTripName] = useState('');
     const [numPossiblyRelatedTrips, setNumPossiblyRelatedTrips] = useState([]);
     const [relatedLoaded, setRelatedLoaded] = useState(false);
+    const [submitLoading, setSubmitLoading] = useState(false);
     const [localSelectedTrips, setLocalSelectedTrips] = useState([]);
 
     const generateInternalTripId = (trip) => {
@@ -18,40 +19,6 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
             .replace(/\s+/g, '')
             .toLowerCase();
     };
-
-    // const fetchRelatedTrips = useCallback((formattedTrips) => {
-    //     setRelatedLoaded(false);
-    //     const selectedClientIds = new Set(formattedTrips.map(trip => trip.clientId));
-
-    //     formattedTrips.forEach(trip => {
-    //         fetch(`${process.env.REACT_APP_API}/v1/related_trips`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${userDetails.token}`
-    //             },
-    //             body: JSON.stringify(trip)
-    //         })
-    //         .then(res => res.json())
-    //         .then(data => {
-    //             // Append related trips data tagged as 'related'
-    //             const relatedTrips = data.map(item => ({
-    //                 ...item,
-    //                 type: 'related',
-    //                 clientId: generateInternalTripId(item)
-    //             }));
-    //             setLocalSelectedTrips(prevTrips => [
-    //                 ...prevTrips, 
-    //                 ...relatedTrips.filter(item => !selectedClientIds.has(item.clientId))
-    //             ]);
-    //             setRelatedLoaded(true);
-    //         })
-    //         .catch(err => {
-    //             console.error('Error fetching related trips:', err);
-    //             setRelatedLoaded(true);
-    //         });
-    //     });
-    // }, [userDetails.token]);
 
     const fetchRelatedTrips = useCallback((formattedTrips) => {
         setRelatedLoaded(false);
@@ -135,25 +102,39 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
     }, [localSelectedTrips]);
 
     useEffect(() => {
-        const options = {
-            onCloseEnd: () => {
-                onClose(); // This will be called when the modal closes
-            },
-        };
-        // if (!isOpen) return;
+        let modalInstance = null;
         const modalElement = document.getElementById('confirm-trip-modal');
-        const instance = M.Modal.init(modalElement, options);
-
-        if (isOpen) {
-            instance.open();
-        } else {
-            if (instance) {
-                instance.close();
+    
+        if (modalElement) {
+            const options = {
+                onCloseEnd: () => {
+                    onClose(); // This will be called when the modal closes
+                },
+            };
+    
+            // Initialize the modal only if it has not been initialized yet
+            if (!M.Modal.getInstance(modalElement)) {
+                modalInstance = M.Modal.init(modalElement, options);
+            } else {
+                modalInstance = M.Modal.getInstance(modalElement);
+            }
+    
+            // Open or close the modal based on the isOpen prop
+            if (isOpen) {
+                modalInstance.open();
+            } else {
+                modalInstance.close();
             }
         }
-
-        if (!isOpen) return;
+    
+        // Clean up function to destroy the modal instance when the component unmounts or before reinitializing
+        return () => {
+            if (modalInstance) {
+                modalInstance.destroy();
+            }
+        };
     }, [isOpen, onClose]);
+    
 
     useEffect(() => {
         const tripDetails = localSelectedTrips.map(trip => {
@@ -233,6 +214,7 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
         };
 
         console.log("Sending payload:", tripConfirmPayload);
+        setSubmitLoading(true);
 
         
         fetch(`${process.env.REACT_APP_API}/v1/confirm_trip`, {
@@ -275,6 +257,7 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                         displayLength: 4000,
                         classes: toastColor,
                     });
+                    setSubmitLoading(false);
                 })
                 .finally(() => {
                     // resetFormState();
@@ -283,6 +266,7 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
                 })
                 .catch((error) => {
                     console.error('Error: ', error);
+                    setSubmitLoading(false);
                     M.toast({
                         html: 'Your entry was valid, but we were unable to save to the database.',
                         displayLength: 4000,
@@ -295,194 +279,203 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
         <div id="confirm-trip-modal" className="modal add-log-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4>Validate Trip</h4>
-                <button className="btn error-red" onClick={onClose}>Close</button>
-                &nbsp;&nbsp;
-                {relatedLoaded &&
-                    <button className="btn success-green" onClick={onSubmit}>Submit</button>
-                }
-                <div className="row center" style={{ marginBottom: '0px' }}>
-                    <div className="col s12 m12">
-                        {tripName.includes("{") &&
-                            <div style={{ marginTop: '10px'}}>
-                                <div className="chip error-red-light text-bold">
-                                    Name could not be determined, please enter a name.
-                                </div>
-                            </div>
-                        }
-                        {tripName === "" &&
-                            <div style={{ marginTop: '10px'}}>
-                                <div className="chip error-red-light text-bold">
-                                    Please enter a name.
-                                </div>
-                            </div>
-                        }
-                        <div className="input-field col s12 l8 offset-l2">
-                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                airplane_ticket
-                            </span>
-                            <input
-                                type="text"
-                                id="search-query"
-                                placeholder="Trip name"
-                                value={tripName}
-                                onChange={(e) => setTripName(e.target.value)}
-                                // className="name-input" // Apply any styling as needed
-                                className={`${(tripName.includes("{") || tripName === "") ? 'invalid' : ''} name-input`}
-                            />
-                            <span
-                                className="grey-text text-darken-1"
-                            >
-                                Trip Name
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                {relatedLoaded ? (
-                    numPossiblyRelatedTrips > 0 ? (
-                        <span className="chip warning-yellow" style={{ marginTop: '0px', fontSize: '1.2rem' }}>
-                            <span className="material-symbols-outlined">
-                                arrow_downward
-                            </span>
-                            <span className="text-bold">{numPossiblyRelatedTrips}</span> possibly related trip{numPossiblyRelatedTrips !== 1 && "s"} 
-                        </span>
-                    ) : (
-                        <span className="chip success-green-light" style={{ marginTop: '0px', fontSize: '1.2rem' }}>
-                            <span className="material-symbols-outlined">
-                                check_circle
-                            </span>
-                            No related trips
-                        </span>
-                    )
-                ) : (
-                    <div>
+                {submitLoading ? (
+                    <div style={{ marginTop: '50px'}}>
                         <TricklingDotsPreloader show={true} /> 
-                        <p className="tb-teal-text">Searching for possibly related trips...</p>
                     </div>
-                )
-                }
-                <ul>
-                    {localSelectedTrips.filter(trip => trip.type === 'original').map(trip => (
-                        trip.accommodation_logs.length > 0 && (
-                            <div key={trip.id}>
-                                <h5
-                                    className="tb-teal darken-2 tb-off-white-text"
-                                    style={{
-                                        height: '40px',
-                                        borderRadius: '4px',
-                                        marginBottom: '40px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                >
-                                    {trip.trip_name}
-                                </h5>
-                                {trip.review_status === "flagged"  &&
-                                    <div className="container center">
-                                        <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
-                                                <p className="tb-grey-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
-                                                    <span className="chip error-red-light">
-                                                        <span className="material-symbols-outlined">
-                                                            flag
-                                                        </span>
-                                                        {trip.review_status} by <span className="text-bold">{trip.reviewed_by.split('@')[0]}</span>
-                                                    </span>
-                                                    {trip.review_notes &&
-                                                    <>
-                                                        <br/>
-                                                        <span className="text-bold">Note from <span className="tb-teal-text text-darken-1">{trip.reviewed_by.split('@')[0]}</span>:</span>
-                                                        <br/>
-                                                        {trip.review_notes}
-                                                        <br/>
-                                                        <em style={{ fontSize: '1rem' }}>{moment(trip.reviewed_at).local().fromNow()}</em>
-                                                    </>
-                                                    }
-                                                </p>
+                ) : (
+                    <>
+                    <button className="btn error-red" onClick={onClose}>Close</button>
+                    &nbsp;&nbsp;
+                    {relatedLoaded &&
+                        <button className="btn success-green" onClick={onSubmit}>Submit</button>
+                    }
+                        <div className="row center" style={{ marginBottom: '0px' }}>
+                            <div className="col s12 m12">
+                                {tripName.includes("{") &&
+                                    <div style={{ marginTop: '10px'}}>
+                                        <div className="chip error-red-light text-bold">
+                                            Name could not be determined, please enter a name.
                                         </div>
                                     </div>
                                 }
-                                {trip.accommodation_logs.map(log => (
-                                    <li key={log.id}>
-                                        <div className="row">
-                                            <div className="col m1">
-                                                <button className="btn btn-floating btn-small error-red" onClick={() => removeLog(trip.id, log.id)}>
-                                                    x
-                                                </button>
-                                            </div>
-                                            <div className="col m11">
-                                                <SingleLogDisplay log={log} />
-                                            </div>
+                                {tripName === "" &&
+                                    <div style={{ marginTop: '10px'}}>
+                                        <div className="chip error-red-light text-bold">
+                                            Please enter a name.
                                         </div>
-                                    </li>
-                                ))}
+                                    </div>
+                                }
+                                <div className="input-field col s12 l8 offset-l2">
+                                    <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                        airplane_ticket
+                                    </span>
+                                    <input
+                                        type="text"
+                                        id="search-query"
+                                        placeholder="Trip name"
+                                        value={tripName}
+                                        onChange={(e) => setTripName(e.target.value)}
+                                        // className="name-input" // Apply any styling as needed
+                                        className={`${(tripName.includes("{") || tripName === "") ? 'invalid' : ''} name-input`}
+                                    />
+                                    <span
+                                        className="grey-text text-darken-1"
+                                    >
+                                        Trip Name
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {relatedLoaded ? (
+                            numPossiblyRelatedTrips > 0 ? (
+                                <span className="chip warning-yellow" style={{ marginTop: '0px', fontSize: '1.2rem' }}>
+                                    <span className="material-symbols-outlined">
+                                        arrow_downward
+                                    </span>
+                                    <span className="text-bold">{numPossiblyRelatedTrips}</span> possibly related trip{numPossiblyRelatedTrips !== 1 && "s"} 
+                                </span>
+                            ) : (
+                                <span className="chip success-green-light" style={{ marginTop: '0px', fontSize: '1.2rem' }}>
+                                    <span className="material-symbols-outlined">
+                                        check_circle
+                                    </span>
+                                    No related trips
+                                </span>
+                            )
+                        ) : (
+                            <div>
+                                <TricklingDotsPreloader show={true} /> 
+                                <p className="tb-teal-text">Searching for possibly related trips...</p>
                             </div>
                         )
-                    ))}
-                </ul>
-                
-                {localSelectedTrips && numPossiblyRelatedTrips > 0 && 
-                <>
-                    <span className="chip warning-yellow" style={{ marginTop: '0px', fontSize: '1.6rem', padding: '0px 30px' }}>
-                        Possibly Related Trip{numPossiblyRelatedTrips !== 1 && "s"}
-                    </span>
-                    <ul>
-                    {localSelectedTrips.filter(trip => trip.type === 'related').map(relatedTrip => (
-                        <div key={relatedTrip.id}>
-                            <h5
-                                className="tb-teal darken-2 tb-off-white-text"
-                                style={{
-                                    height: '40px',
-                                    borderRadius: '4px',
-                                    // marginBottom: '40px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                {relatedTrip.trip_name}
-                            </h5>
-                            {relatedTrip.review_status === "flagged"  &&
-                                <div className="container center">
-                                    <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
-                                            <p className="tb-grey-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
-                                                <span className="chip error-red-light">
-                                                    <span className="material-symbols-outlined">
-                                                        flag
-                                                    </span>
-                                                    {relatedTrip.review_status} by <span className="text-bold">{relatedTrip.reviewed_by.split('@')[0]}</span>
-                                                </span>
-                                                {relatedTrip.review_notes &&
-                                                <>
-                                                    <br/>
-                                                    <span className="text-bold">Note from <span className="tb-teal-text text-darken-1">{relatedTrip.reviewed_by.split('@')[0]}</span>:</span>
-                                                    <br/>
-                                                    {relatedTrip.review_notes}
-                                                    <br/>
-                                                    <em style={{ fontSize: '1rem' }}>{moment(relatedTrip.reviewed_at).local().fromNow()}</em>
-                                                </>
-                                                }
-                                            </p>
+                        }
+                        <ul>
+                            {localSelectedTrips.filter(trip => trip.type === 'original').map(trip => (
+                                trip.accommodation_logs.length > 0 && (
+                                    <div key={trip.id}>
+                                        <h5
+                                            className="tb-teal darken-2 tb-off-white-text"
+                                            style={{
+                                                height: '40px',
+                                                borderRadius: '4px',
+                                                marginBottom: '40px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {trip.trip_name}
+                                        </h5>
+                                        {trip.review_status === "flagged"  &&
+                                            <div className="container center">
+                                                <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
+                                                        <p className="tb-grey-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
+                                                            <span className="chip error-red-light">
+                                                                <span className="material-symbols-outlined">
+                                                                    flag
+                                                                </span>
+                                                                {trip.review_status} by <span className="text-bold">{trip.reviewed_by.split('@')[0]}</span>
+                                                            </span>
+                                                            {trip.review_notes &&
+                                                            <>
+                                                                <br/>
+                                                                <span className="text-bold">Note from <span className="tb-teal-text text-darken-1">{trip.reviewed_by.split('@')[0]}</span>:</span>
+                                                                <br/>
+                                                                {trip.review_notes}
+                                                                <br/>
+                                                                <em style={{ fontSize: '1rem' }}>{moment(trip.reviewed_at).local().fromNow()}</em>
+                                                            </>
+                                                            }
+                                                        </p>
+                                                </div>
+                                            </div>
+                                        }
+                                        {trip.accommodation_logs.map(log => (
+                                            <li key={log.id}>
+                                                <div className="row">
+                                                    <div className="col m1">
+                                                        <button className="btn btn-floating btn-small error-red" onClick={() => removeLog(trip.id, log.id)}>
+                                                            x
+                                                        </button>
+                                                    </div>
+                                                    <div className="col m11">
+                                                        <SingleLogDisplay log={log} />
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        ))}
                                     </div>
-                                </div>
-                            }
-                            {relatedTrip.accommodation_logs.map(log => (
-                                <li key={log.id}>
-                                    <div className="row">
-                                        <div className="col m1">
-                                            <button className="btn btn-floating btn-small error-red" onClick={() => removeLog(relatedTrip.id, log.id)}>
-                                                x
-                                            </button>
-                                        </div>
-                                        <div className="col m11">
-                                            <SingleLogDisplay log={log} />
-                                        </div>
-                                    </div>
-                                </li>
+                                )
                             ))}
-                        </div>
-                    ))}
-                    </ul>
-                </>
+                        </ul>
+                        
+                        {localSelectedTrips && numPossiblyRelatedTrips > 0 && 
+                        <>
+                            <span className="chip warning-yellow" style={{ marginTop: '0px', fontSize: '1.6rem', padding: '0px 30px' }}>
+                                Possibly Related Trip{numPossiblyRelatedTrips !== 1 && "s"}
+                            </span>
+                            <ul>
+                            {localSelectedTrips.filter(trip => trip.type === 'related').map(relatedTrip => (
+                                <div key={relatedTrip.id}>
+                                    <h5
+                                        className="tb-teal darken-2 tb-off-white-text"
+                                        style={{
+                                            height: '40px',
+                                            borderRadius: '4px',
+                                            // marginBottom: '40px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        {relatedTrip.trip_name}
+                                    </h5>
+                                    {relatedTrip.review_status === "flagged"  &&
+                                        <div className="container center">
+                                            <div className="card tb-grey lighten-4 potential-trip-card" style={{ marginTop: '30px', marginBottom: '30px', fontSize: '1.2rem'}}>
+                                                    <p className="tb-grey-text text-darken-2" style={{ paddingTop: '10px', paddingBottom: '10px'}}>
+                                                        <span className="chip error-red-light">
+                                                            <span className="material-symbols-outlined">
+                                                                flag
+                                                            </span>
+                                                            {relatedTrip.review_status} by <span className="text-bold">{relatedTrip.reviewed_by.split('@')[0]}</span>
+                                                        </span>
+                                                        {relatedTrip.review_notes &&
+                                                        <>
+                                                            <br/>
+                                                            <span className="text-bold">Note from <span className="tb-teal-text text-darken-1">{relatedTrip.reviewed_by.split('@')[0]}</span>:</span>
+                                                            <br/>
+                                                            {relatedTrip.review_notes}
+                                                            <br/>
+                                                            <em style={{ fontSize: '1rem' }}>{moment(relatedTrip.reviewed_at).local().fromNow()}</em>
+                                                        </>
+                                                        }
+                                                    </p>
+                                            </div>
+                                        </div>
+                                    }
+                                    {relatedTrip.accommodation_logs.map(log => (
+                                        <li key={log.id}>
+                                            <div className="row">
+                                                <div className="col m1">
+                                                    <button className="btn btn-floating btn-small error-red" onClick={() => removeLog(relatedTrip.id, log.id)}>
+                                                        x
+                                                    </button>
+                                                </div>
+                                                <div className="col m11">
+                                                    <SingleLogDisplay log={log} />
+                                                </div>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </div>
+                            ))}
+                            </ul>
+                        </>
+                        }
+                    </>
+                    )
                 }
             </div>
         </div>

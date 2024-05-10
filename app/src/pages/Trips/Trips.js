@@ -16,7 +16,8 @@ export const Trips = () => {
     const [refreshData, setRefreshData] = useState(false);
     const [displayData, setDisplayData] = useState([]);
     // const [activeTripId, setActiveTripId] = useState(null);
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
+    const [searchTerm, setSearchTerm] = useState('');
     // const [displayData, setDisplayData] = useState([]);
 
     useEffect(() => {
@@ -32,13 +33,13 @@ export const Trips = () => {
         // Update displayData for the currentPage only if it's still within the new range
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
-        setDisplayData(apiData.slice(start, end));
+        setDisplayData(apiData?.slice(start, end));
     }, [apiData, itemsPerPage, currentPage]);
 
     useEffect(() => {
         const start = currentPage * itemsPerPage;
         const end = start + itemsPerPage;
-        setDisplayData(apiData.slice(start, end));
+        setDisplayData(apiData?.slice(start, end));
     }, [currentPage, itemsPerPage, apiData]);
 
     useEffect(() => {
@@ -50,6 +51,16 @@ export const Trips = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 setApiData(data);
                 setLoaded(true);
             })
@@ -57,7 +68,7 @@ export const Trips = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, refreshData]);
+    }, [userDetails.token, refreshData, logout]);
 
     const handleRemoveTrip = (tripId) => {
         const confirmRemove = window.confirm("Are you sure you want to ungroup this trip?");
@@ -90,6 +101,29 @@ export const Trips = () => {
             });
         }
     };
+
+    useEffect(() => {
+        let filteredData = apiData.filter(trip => {
+            return trip.trip_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                trip.accommodation_logs.some(log => log.primary_traveler.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                trip.accommodation_logs.some(log => log.consultant_display_name.toLowerCase().includes(searchTerm.toLowerCase()));
+        });
+    
+        let sortedData = [...filteredData];
+
+        // TODO: sorting
+
+        const newTotalPages = Math.ceil(sortedData.length / itemsPerPage);
+        setTotalPages(newTotalPages);
+
+        // Pagination logic
+        if (currentPage >= newTotalPages) {
+            setCurrentPage(0);
+        }
+        const displayStartIndex = currentPage * itemsPerPage;
+        const displayEndIndex = displayStartIndex + itemsPerPage;
+        setDisplayData(sortedData.slice(displayStartIndex, displayEndIndex));
+    }, [apiData, currentPage, itemsPerPage, searchTerm]);
 
     function generatePageRange(current, total) {
         const sidePages = 5; // Pages to show on each side of the current page
@@ -155,9 +189,10 @@ export const Trips = () => {
                 </div>
             ) : (
                 <>
-                    {loaded ? (
+                    
+                    <h4>All Trips</h4>
+                        {loaded ? (
                         <>
-                            <h4>All Trips</h4>
                             <div className="row center">
                                 <ul className="pagination">
                                     <li className={currentPage === 0 ? 'disabled' : ''}>
@@ -187,9 +222,32 @@ export const Trips = () => {
                                     </li>
                                 </ul>
                             </div>
+                            <div className="row center">
+                                <div className="col s6 offset-s3 input-field">
+                                    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                        <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                            search
+                                        </span>
+                                        <input
+                                            type="text"
+                                            id="potential-search-query"
+                                            placeholder="Search..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="search-input"
+                                            autoComplete="off"
+                                        />
+                                        <span>
+                                            <button className="btn btn-floating btn-small error-red" onClick={() => setSearchTerm('')}>
+                                                x
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                             {/* <div className="container"> */}
-                            {apiData.length ? (
-                                    apiData.map(trip => (
+                            {displayData.length ? (
+                                    displayData.map(trip => (
                                         <div key={trip.id} className="card potential-trip-card">
                                             <div className="card-content">
                                                 <span className="card-title">{trip.trip_name || "Unnamed Trip"}</span>

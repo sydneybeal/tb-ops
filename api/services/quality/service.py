@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, date
 from collections import defaultdict
 from typing import Optional, Sequence, Union, Tuple, Dict, List, Any, cast
 from uuid import UUID
+import time
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.summaries.models import AccommodationLogSummary, BaseTrip, TripSummary
@@ -50,8 +51,12 @@ class QualityService:
             log_id for trip in flagged_trips for log_id in trip.accommodation_log_ids
         }
 
+        start_time = time.time()
         unmatched = await self._repo.get_unmatched_accommodation_logs(
             exclude_ids=flagged_log_ids
+        )
+        print(
+            f"got unmatched accommodation logs in {float(time.time() - start_time)} seconds"
         )
 
         potential_trips = await gather(
