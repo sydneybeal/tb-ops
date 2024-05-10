@@ -12,4 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-CREATE INDEX idx_accommodation_logs_on_traveler_date_in ON public.accommodation_logs (primary_traveler ASC, date_in ASC);
+CREATE INDEX IF NOT EXISTS idx_accommodation_logs_on_traveler_date_in ON public.accommodation_logs (primary_traveler ASC, date_in ASC);
+CREATE INDEX IF NOT EXISTS idx_accommodation_logs_trip_id ON public.accommodation_logs(trip_id);
+CREATE INDEX IF NOT EXISTS idx_accommodation_logs_on_traveler_date_in ON public.accommodation_logs(primary_traveler, date_in, id);
+CREATE INDEX IF NOT EXISTS idx_accommodation_logs_covering ON public.accommodation_logs (primary_traveler, date_in, property_id, consultant_id, booking_channel_id, agency_id) INCLUDE (id, date_out, num_pax, updated_at);

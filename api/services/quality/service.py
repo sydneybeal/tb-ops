@@ -256,37 +256,88 @@ class QualityService:
 
         return abs((start_date1 - start_date2).days)
 
-    def similar_by_accommodation(
-        self, trip1: BaseTrip, trip2: BaseTrip, threshold=0.7
-    ) -> bool:
+    def generate_nights(self, date_in, date_out):
+        """
+        Generate all dates from date_in to date_out (exclusive of date_out).
+        """
+        return [date_in + timedelta(days=i) for i in range((date_out - date_in).days)]
+
+    def similar_by_accommodation(self, trip1, trip2, threshold=0.7):
         """
         Determine if two trips share a significant amount of nights at the same accommodations.
         """
-        accommodations1 = {
-            (log.date_in, log.date_out, log.property_name): (
-                log.date_out - log.date_in
-            ).days
-            for log in trip1.accommodation_logs
-        }
-        accommodations2 = {
-            (log.date_in, log.date_out, log.property_name): (
-                log.date_out - log.date_in
-            ).days
-            for log in trip2.accommodation_logs
-        }
+        # Generate a dictionary with the property name as key and a set of nights as values
+        accommodations1 = {}
+        for log in trip1.accommodation_logs:
+            nights = self.generate_nights(log.date_in, log.date_out)
+            if log.property_name in accommodations1:
+                accommodations1[log.property_name].update(nights)
+            else:
+                accommodations1[log.property_name] = set(nights)
 
-        total_nights = sum(accommodations1.values())
+        accommodations2 = {}
+        for log in trip2.accommodation_logs:
+            nights = self.generate_nights(log.date_in, log.date_out)
+            if log.property_name in accommodations2:
+                accommodations2[log.property_name].update(nights)
+            else:
+                accommodations2[log.property_name] = set(nights)
+
+        # Calculate the total nights and matched nights
+        total_nights = sum(len(nights) for nights in accommodations1.values())
         matched_nights = 0
 
-        for key, nights2 in accommodations2.items():
-            if key in accommodations1:
-                nights1 = accommodations1[key]
-                overlapping_nights = min(nights1, nights2)
-                matched_nights += overlapping_nights
+        for property_name, nights2 in accommodations2.items():
+            if property_name in accommodations1:
+                nights1 = accommodations1[property_name]
+                matched_nights += len(nights1.intersection(nights2))
 
+        # Calculate the similarity ratio
         similarity_ratio = matched_nights / total_nights if total_nights > 0 else 0
 
         return similarity_ratio >= threshold
+
+    # def similar_by_accommodation(
+    #     self, trip1: BaseTrip, trip2: BaseTrip, threshold=0.7
+    # ) -> bool:
+    #     """
+    #     Determine if two trips share a significant amount of nights at the same accommodations.
+    #     """
+    #     accommodations1 = {
+    #         (log.date_in, log.date_out, log.property_name): (
+    #             log.date_out - log.date_in
+    #         ).days
+    #         for log in trip1.accommodation_logs
+    #     }
+    #     accommodations2 = {
+    #         (log.date_in, log.date_out, log.property_name): (
+    #             log.date_out - log.date_in
+    #         ).days
+    #         for log in trip2.accommodation_logs
+    #     }
+    #     if trip2.primary_travelers and "Margo/Cynthia" in trip2.primary_travelers:
+    #         print(f"{accommodations1=}")
+    #         print(f"{accommodations2=}")
+
+    #     total_nights = sum(accommodations1.values())
+    #     matched_nights = 0
+
+    #     for key, nights2 in accommodations2.items():
+    #         if key in accommodations1:
+    #             nights1 = accommodations1[key]
+    #             overlapping_nights = min(nights1, nights2)
+    #             matched_nights += overlapping_nights
+
+    #     if trip2.primary_travelers and "Margo/Cynthia" in trip2.primary_travelers:
+    #         print(f"Margo/Cynthia trip has {matched_nights} matched_nights")
+    #         print(f"Margo/Cynthia trip has {overlapping_nights} overlapping_nights")
+
+    #     similarity_ratio = matched_nights / total_nights if total_nights > 0 else 0
+
+    #     if trip2.primary_travelers and "Margo/Cynthia" in trip2.primary_travelers:
+    #         print(f"Margo/Cynthia trip has {similarity_ratio} similarity_ratio")
+
+    #     return similarity_ratio >= threshold
 
     # def similar_by_accommodation(
     #     self, trip1: BaseTrip, trip2: BaseTrip, threshold=0.7
