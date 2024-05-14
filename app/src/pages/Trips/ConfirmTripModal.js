@@ -15,7 +15,7 @@ const ConfirmTripModal = ({ isOpen, onClose, onRefresh, selectedTrips = new Set(
 
     const generateInternalTripId = (trip) => {
         // Create a safe ID by removing spaces and lowercasing everything for consistency
-        return `${trip.trip_name}-${trip.core_destination}-${trip.start_date}-${trip.end_date}`
+        return `${trip.trip_name}-${trip.core_destination}-${trip.start_date}-${trip.end_date}-${trip.primary_travelers}`
             .replace(/\s+/g, '')
             .toLowerCase();
     };
