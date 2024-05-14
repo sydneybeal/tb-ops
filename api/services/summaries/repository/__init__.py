@@ -14,7 +14,7 @@
 
 """Repositories for travel-related data."""
 import datetime
-import uuid
+from uuid import UUID
 from abc import ABC, abstractmethod
 from typing import Sequence
 from api.services.summaries.models import (
@@ -26,7 +26,9 @@ from api.services.summaries.models import (
     PortfolioSummary,
     PropertyDetailSummary,
     PropertySummary,
+    TripSummary,
 )
+from api.services.travel.models import Trip
 
 
 class SummaryRepository(ABC):
@@ -68,8 +70,8 @@ class SummaryRepository(ABC):
         self,
         name: str,
         portfolio_name: str,
-        country_id: uuid,
-        core_destination_id: uuid,
+        country_id: UUID,
+        core_destination_id: UUID,
     ) -> PropertySummary:
         """Returns a single Property model in the repository by name."""
         raise NotImplementedError
@@ -109,3 +111,12 @@ class SummaryRepository(ABC):
     async def get_all_portfolios(self) -> Sequence[PortfolioSummary]:
         """Gets all Portfolio models joined with their foreign keys."""
         raise NotImplementedError
+
+    # Trips
+    @abstractmethod
+    async def get_all_trips(self) -> Sequence[TripSummary]:
+        """Gets all TripSummary models."""
+
+    @abstractmethod
+    async def get_trip_summary_by_id(self, trip_id: UUID) -> TripSummary:
+        """Gets a TripSummary model by its ID."""

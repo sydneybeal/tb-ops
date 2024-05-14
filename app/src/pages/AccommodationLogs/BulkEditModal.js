@@ -294,7 +294,7 @@ export const BulkEditModal = ({ isOpen, onClose, onRefresh, bulkAction, entries 
     return (
         <div id="duplicate-log-modal" className="modal add-log-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
-                <h4 className="tb-grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
+                <h4 className="tb-grey-text text-darken-3" style={{ marginTop: '20px', marginBottom: '30px' }}>
                     {bulkAction === 'duplicate' ? (
                         "Duplicate "
                     ) : "Delete "}
@@ -337,7 +337,7 @@ export const BulkEditModal = ({ isOpen, onClose, onRefresh, bulkAction, entries 
                                 </div>
                                 <div class="input-field col l3 s12">
                                     <span className="material-symbols-outlined tb-grey-text prefix">
-                                        airline_seat_recline_extra
+                                        group
                                     </span>
                                     <input
                                         type="number"

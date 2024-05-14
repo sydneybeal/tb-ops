@@ -19,6 +19,7 @@ import Countries from './pages/Countries/Countries';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLogs from './pages/AuditLogs/AuditLogs';
+import TripLanding from './pages/Trips/TripLanding';
 import FaqPage from './pages/FAQ/FAQ';
 
 
@@ -144,6 +145,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AuditLogs />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trips/',
+    element: (
+      <ProtectedRoute>
+        <TripLanding />
       </ProtectedRoute>
     ),
   },

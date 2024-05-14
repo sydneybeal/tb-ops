@@ -27,6 +27,7 @@ from api.services.travel.models import (
     Agency,
     BookingChannel,
     Portfolio,
+    Trip,
 )
 
 
@@ -69,10 +70,10 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_accommodation_log_by_id(
+    async def get_accommodation_log_by_ids(
         self,
-        log_id: UUID,
-    ) -> AccommodationLog:
+        log_id: Sequence[UUID],
+    ) -> Sequence[AccommodationLog]:
         """Gets a single AccommodationLog model in the repository by ID."""
         raise NotImplementedError
 
@@ -374,4 +375,15 @@ class TravelRepository(ABC):
     @abstractmethod
     async def get_all_portfolios(self) -> Sequence[Portfolio]:
         """Gets all Portfolio models."""
+        raise NotImplementedError
+
+    # Trip
+    @abstractmethod
+    async def add_trip(self, trips: Sequence[Trip]) -> None:
+        """Adds a sequence of Trip models to the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete_trip(self, trip_id: UUID) -> bool:
+        """Deletes a Trip model from the repository."""
         raise NotImplementedError

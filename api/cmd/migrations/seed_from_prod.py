@@ -59,7 +59,7 @@ async def insert_data(uat_conn, table, data):
         await uat_conn.executemany(insert_query, values_to_insert)
 
 
-async def main() -> int:
+async def main() -> None:
     """Entrypoint script for running migrations."""
     log = logging.getLogger()
     logging.basicConfig()
@@ -89,22 +89,23 @@ async def main() -> int:
 
     # Ingest from the following tables in prod into corresponding in UAT
     tables = [
-        "public.core_destinations",
-        "public.countries",
-        "public.agencies",
-        "public.booking_channels",
-        "public.portfolios",
-        "public.consultants",
-        "public.properties",
+        # "public.core_destinations",
+        # "public.countries",
+        # "public.agencies",
+        # "public.booking_channels",
+        # "public.portfolios",
+        # "public.consultants",
+        # "public.properties",
         "public.accommodation_logs",
-        "public.property_details",
-        "public.users",
+        # "public.property_details",
+        # "public.users",
+        # "public.trips",
     ]
 
     for table in tables:
         if table == "public.accommodation_logs":
-            prod_count = await count_rows(conn, table, "date_in > '2023-10-01'")
-            uat_count = await count_rows(uat_conn, table, "date_in > '2023-10-01'")
+            prod_count = await count_rows(conn, table, "date_in > '2022-07-01'")
+            uat_count = await count_rows(uat_conn, table, "date_in > '2022-07-01'")
         else:
             prod_count = await count_rows(conn, table)
             uat_count = await count_rows(uat_conn, table)
@@ -112,7 +113,7 @@ async def main() -> int:
 
     for table in tables:
         condition = (
-            "date_in > '2023-10-01'" if table == "public.accommodation_logs" else None
+            "date_in > '2022-07-01'" if table == "public.accommodation_logs" else None
         )
         data = await fetch_data(conn, table, condition)
         await insert_data(uat_conn, table, data)

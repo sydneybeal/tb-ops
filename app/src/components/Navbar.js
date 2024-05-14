@@ -5,14 +5,33 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.1.19';
+    const version = 'v0.1.23';
+
+    // useEffect(() => {
+    //     // Initialize Sidenav
+    //     let elems = document.querySelectorAll('.sidenav');
+    //     M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
+    //     let dropdowns = document.querySelectorAll('.dropdown-trigger');
+    //     M.Dropdown.init(dropdowns, {});
+    // }, []);
 
     useEffect(() => {
         // Initialize Sidenav
         let elems = document.querySelectorAll('.sidenav');
-        M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
+        let sidenavInstances = M.Sidenav.init(elems, {}); // If you have options, they would go inside the {}
         let dropdowns = document.querySelectorAll('.dropdown-trigger');
         M.Dropdown.init(dropdowns, {});
+    
+        // Cleanup function
+        return () => {
+            // Destroy all sidenav instances
+            sidenavInstances.forEach(instance => {
+                // Check if the sidenav element still exists in the document
+                if (document.body.contains(instance.el)) {
+                    instance.destroy();
+                }
+            });
+        };
     }, []);
 
     return (
@@ -186,6 +205,16 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/countries'} className="text-bold">
                                     Countries
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/trips'} className="text-bold">
+                                    <span className="material-symbols-outlined">
+                                        casino
+                                    </span>
+                                    Trip Matching
                                 </Link>
                             </li>
                         </div>

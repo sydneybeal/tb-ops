@@ -29,7 +29,7 @@ class PostgresConfig:
     dbname: str
     port: int = 5432
     min_pool_size: int = 4
-    max_pool_size: int = 12
+    max_pool_size: int = 40
 
     @classmethod
     def from_env(cls) -> "PostgresConfig":
@@ -41,7 +41,7 @@ class PostgresConfig:
             os.getenv("POSTGRES_DB", "tb-ops"),
             int(os.getenv("POSTGRES_PORT", "5432")),
             int(os.getenv("POSTGRES_MIN_POOL_SIZE", "4")),
-            int(os.getenv("POSTGRES_MAX_POOL_SIZE", "12")),
+            int(os.getenv("POSTGRES_MAX_POOL_SIZE", "40")),
         )
 
 

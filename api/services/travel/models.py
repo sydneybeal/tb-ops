@@ -14,7 +14,7 @@
 
 """Models for travel entries."""
 from datetime import datetime, date
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, computed_field
@@ -140,6 +140,8 @@ class AccommodationLog(BaseModel):
     date_out: date
     booking_channel_id: Optional[UUID] = None
     agency_id: Optional[UUID] = None
+    potential_trip_id: Optional[UUID] = None
+    trip_id: Optional[UUID] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -150,6 +152,63 @@ class AccommodationLog(BaseModel):
         """Number of bed nights occupied by this record."""
         duration = (self.date_out - self.date_in).days
         return duration * self.num_pax
+
+
+# class Trip(BaseModel):
+#     """A model representing a trip, which is a collection of accommodation logs."""
+
+#     id: UUID = Field(default_factory=uuid4)
+#     trip_name: Optional[str] = None
+#     accommodation_logs: List[AccommodationLog] = []
+#     created_at: datetime = Field(default_factory=datetime.now)
+#     updated_at: datetime = Field(default_factory=datetime.now)
+#     updated_by: str
+
+#     @property
+#     def total_bed_nights(self) -> int:
+#         """Calculate the total bed nights for the trip."""
+#         return sum(log.bed_nights for log in self.accommodation_logs)
+
+#     @property
+#     def number_of_logs(self) -> int:
+#         """Return the number of accommodation logs in the trip."""
+#         return len(self.accommodation_logs)
+
+#     @property
+#     def start_date(self) -> Optional[date]:
+#         """Calculate the start date of the trip by finding the earliest 'date_in' from the logs."""
+#         if self.accommodation_logs:
+#             return min(log.date_in for log in self.accommodation_logs)
+#         return None
+
+#     @property
+#     def end_date(self) -> Optional[date]:
+#         """Calculate the end date of the trip by finding the latest 'date_out' from the logs."""
+#         if self.accommodation_logs:
+#             return max(log.date_out for log in self.accommodation_logs)
+#         return None
+
+
+class Trip(BaseModel):
+    """Model for trips, reflecting the database schema."""
+
+    id: UUID = Field(default_factory=uuid4)
+    trip_name: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+
+
+class PatchTripRequest(BaseModel):
+    """A request model for patching or creating a trip via API."""
+
+    trip_name: str
+    accommodation_log_ids: List[UUID]
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+    reviewed_by: Optional[str] = None
+    review_status: Optional[str] = None  # Include only if needed for flagging logic
+    review_notes: Optional[str] = None  # Include only if needed for flagging logic
 
 
 # class NewEntity(BaseModel):

@@ -15,7 +15,7 @@
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
 from datetime import timedelta, datetime, date
-from typing import Sequence, Iterable, Optional, List
+from typing import Sequence, Iterable, Optional, List, Union
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status
 
@@ -33,12 +33,14 @@ from api.services.auth.service import AuthService
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
+    BaseTrip,
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
     PropertySummary,
     PropertyDetailSummary,
     BedNightReport,
+    TripSummary,
 )
 from api.services.summaries.service import SummaryService
 from api.services.travel.models import (
@@ -52,12 +54,15 @@ from api.services.travel.models import (
     PatchPortfolioRequest,
     PatchPropertyRequest,
     PatchPropertyDetailRequest,
+    PatchTripRequest,
 )
 from api.services.travel.service import TravelService
+from api.services.quality.service import QualityService
+from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.1.14"
+VERSION = "v0.1.17"
 
 
 def make_app(
@@ -65,10 +70,11 @@ def make_app(
     summary_svc: SummaryService,
     auth_svc: AuthService,
     audit_svc: AuditService,
+    quality_svc: QualityService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
-        title="tb_ops_api_layer",
+        title="roam_and_report_api_layer",
         version=VERSION,
         docs_url="/docs",
         openapi_url="/openapi.json",
@@ -81,7 +87,7 @@ def make_app(
         description="Travel Beyond.",
         openapi_tags=[
             {
-                "name": "service_providers",
+                "name": "roam_and_report",
                 "description": "Bed night reporting for client trips.",
             },
         ],
@@ -327,7 +333,6 @@ def make_app(
         current_user: User = Depends(get_current_user),
     ) -> JSONResponse:
         """Add or edit a Property."""
-        print(property_detail_data)
         results = await travel_svc.process_property_detail_request(property_detail_data)
         return JSONResponse(content=results)
 
@@ -660,16 +665,6 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
-    # responses={
-    #             200: {
-    #                 "content": {
-    #                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {}
-    #                 },
-    #                 "description": "Returns an Excel file of the accommodation logs.",
-    #             },
-    #             404: {"description": "No data found for the given filters."},
-    #         },
-
     @app.get(
         "/v1/export_bed_night_report",
         operation_id="export_bed_night_report",
@@ -760,6 +755,103 @@ def make_app(
         time_filter = datetime.now() - timedelta(days=7)
         return await audit_svc.get_audit_logs(time_filter)
 
+    @app.get(
+        "/v1/potential_trips",
+        operation_id="find_potential_trips",
+        response_model=Iterable[PotentialTrip],
+        tags=["trips"],
+    )
+    async def find_potential_trips(
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[PotentialTrip]:
+        return await quality_svc.find_potential_trips()
+
+    @app.post(
+        "/v1/related_trips",
+        operation_id="get_related_trips",
+        response_model=Iterable[Union[PotentialTrip, TripSummary]],
+        tags=["trips"],
+    )
+    async def get_related_trips(
+        request: Request,
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[Union[PotentialTrip, TripSummary]]:
+        try:
+            trip_data = await request.json()
+            trip = PotentialTrip(**trip_data)
+            return await quality_svc.get_related_trips(trip)
+        except Exception as e:
+            print(f"Error processing request: {e}")
+            raise HTTPException(status_code=422, detail=str(e))
+
+    @app.get(
+        "/v1/trips",
+        operation_id="get_all_trips",
+        response_model=Iterable[TripSummary],
+        tags=["trips"],
+    )
+    async def get_all_trips(
+        current_user: User = Depends(get_current_user),
+    ) -> Iterable[TripSummary]:
+        return await summary_svc.get_all_trips()
+
+    @app.patch(
+        "/v1/confirm_trip",
+        operation_id="post_trips",
+        tags=["trips"],
+    )
+    async def post_trips(
+        trip_data: PatchTripRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Trip."""
+        results = await quality_svc.confirm_trip(trip_data)
+        return JSONResponse(content=results)
+
+    @app.delete(
+        "/v1/trips/{trip_id}",
+        operation_id="delete_trip",
+        tags=["trips"],
+    )
+    async def delete_trip(
+        trip_id: UUID, current_user: User = Depends(get_current_user)
+    ) -> JSONResponse:
+        """Delete an accommodation log by its ID."""
+        is_deleted = await travel_svc.delete_trip(trip_id, current_user.email)
+        if not is_deleted:
+            raise HTTPException(status_code=404, detail="Trip not found")
+        return JSONResponse(
+            content={"message": "Trip deleted successfully"},
+            status_code=200,
+        )
+
+    @app.patch(
+        "/v1/flag_trip",
+        operation_id="flag_trip",
+        tags=["trips"],
+    )
+    async def flag_trip(
+        trip_data: PatchTripRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Flag a Trip."""
+        results = await quality_svc.flag_trip(trip_data)
+        return JSONResponse(content=results)
+
+    @app.get(
+        "/v1/progress",
+        operation_id="get_progress",
+        response_model=MatchingProgress,
+        tags=["trips"],
+    )
+    async def get_progress(
+        current_user: User = Depends(get_current_user),
+    ):
+        progress = await quality_svc.get_progress()
+        if progress is None:
+            raise HTTPException(status_code=404, detail="Report data not found")
+        return progress
+
     return app
 
 
@@ -770,7 +862,8 @@ if __name__ == "__main__":
     summary_svc = SummaryService()
     auth_svc = AuthService()
     audit_svc = AuditService()
+    quality_svc = QualityService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc)
+    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc, quality_svc)
 
     uvicorn.run(app, host="0.0.0.0", port=9900)
