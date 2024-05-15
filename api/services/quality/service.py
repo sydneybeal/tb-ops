@@ -59,9 +59,13 @@ class QualityService:
             f"got unmatched accommodation logs in {float(time.time() - start_time)} seconds"
         )
 
-        potential_trips = await gather(
-            *(self.get_trip_with_logs(row) for row in flagged_trips)
-        )
+        potential_trips = [
+            trip
+            for trip in await gather(
+                *(self.get_trip_with_logs(row) for row in flagged_trips)
+            )
+            if trip is not None
+        ]
 
         # Sort logs by primary traveler and date_in in descending order
         sorted_unmatched = sorted(
@@ -115,6 +119,9 @@ class QualityService:
 
         # Flatten the nested list of log summaries
         log_summaries = [item for sublist in nested_log_summaries for item in sublist]
+
+        if not log_summaries:
+            return None
 
         trip = PotentialTrip(
             id=row.id,
@@ -423,15 +430,17 @@ class QualityService:
         year_data = defaultdict(lambda: {"confirmed": 0, "potential": 0})
         destination_data = defaultdict(lambda: {"confirmed": 0, "potential": 0})
         for trip in potential_trips:
-            year = self.categorize_year(trip.start_date.year)
+            if trip.start_date:
+                year = self.categorize_year(trip.start_date.year)
+                year_data[year]["potential"] += 1
             destination = self.categorize_destination(trip.core_destination)
-            year_data[year]["potential"] += 1
             destination_data[destination]["potential"] += 1
 
         for trip in confirmed_trips:
-            year = self.categorize_year(trip.start_date.year)
+            if trip.start_date:
+                year = self.categorize_year(trip.start_date.year)
+                year_data[year]["confirmed"] += 1
             destination = self.categorize_destination(trip.core_destination)
-            year_data[year]["confirmed"] += 1
             destination_data[destination]["confirmed"] += 1
 
         # Create progress data for overall, years, and destinations

@@ -594,6 +594,16 @@ input[type=text]:focus + label {
 
 }
 
+.hide-tooltip {
+  pointer-events: none; /* Disables mouse events on the element */
+  cursor: default; /* Ensures the cursor does not change to indicate a tooltip */
+}
+
+/* If tooltips are managed via a visibility or display property */
+.hide-tooltip .tooltip-content {
+  display: none; /* Hides the tooltip content if that's how your tooltips are structured */
+}
+
 .toast {
   font-size: 1.2rem !important;
   font-weight: bold !important;

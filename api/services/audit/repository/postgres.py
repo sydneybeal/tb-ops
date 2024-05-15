@@ -13,7 +13,7 @@
 # limitations under the License.
 """Postgres Repository for travel-related data."""
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Optional
 
 import json
 
@@ -76,7 +76,12 @@ class PostgresAuditRepository(PostgresMixin, AuditRepository):
                     )
         print(f"Inserted {len(audit_logs)} audit logs into the repository.")
 
-    async def get(self, action_timestamp: datetime) -> Iterable[AuditLog]:
+    async def get(
+        self,
+        action_timestamp: Optional[datetime] = None,
+        table_name: Optional[str] = None,
+        record_id: Optional[str] = None,
+    ) -> Iterable[AuditLog]:
         """Returns AuditLogs for all actions in the repository after a given date.
 
         Args:
@@ -86,19 +91,35 @@ class PostgresAuditRepository(PostgresMixin, AuditRepository):
             List[AuditLog]
         """
         pool = await self._get_pool()
-        query = dedent(
-            """
-            SELECT
-                *
-            FROM public.audit_logs
-            WHERE
-                action_timestamp >= $1
-            ORDER BY action_timestamp desc;
-            """
-        )
+        base_query = """
+        SELECT *
+        FROM public.audit_logs
+        """
+        values = []
+        conditions = []
+
+        if action_timestamp and not (table_name and record_id):
+            conditions.append("action_timestamp >= $1")
+            values.append(action_timestamp)
+
+        if table_name:
+            conditions.append("table_name = ${}".format(len(values) + 1))
+            values.append(table_name)
+
+        if record_id:
+            conditions.append("record_id = ${}".format(len(values) + 1))
+            values.append(record_id)
+
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+
+        base_query += " ORDER BY action_timestamp DESC;"
+        print("Audit logs query:")
+        print(values)
+
         async with pool.acquire() as con:
             async with con.transaction():
-                rows = await con.fetch(query, action_timestamp)
+                rows = await con.fetch(base_query, *values)
 
         # Process each record to handle JSON fields correctly
         audit_logs = []

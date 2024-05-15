@@ -17,7 +17,7 @@
 from datetime import timedelta, datetime, date
 from typing import Sequence, Iterable, Optional, List, Union
 from uuid import UUID
-from fastapi import FastAPI, Depends, Request, HTTPException, status
+from fastapi import FastAPI, Depends, Request, HTTPException, status, Query
 
 # from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,7 +62,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.1.17"
+VERSION = "v0.2.0"
 
 
 def make_app(
@@ -181,6 +181,27 @@ def make_app(
     ) -> Sequence[AccommodationLogSummary] | JSONResponse:
         """Get all AccommodationLog summaries."""
         return await summary_svc.get_all_accommodation_logs()
+
+    @app.get(
+        "/v1/accommodation_logs/{log_id}",
+        operation_id="get_accommodation_logs",
+        response_model=AccommodationLogSummary,
+        tags=["accommodation_logs"],
+    )
+    async def get_accommodation_log_by_id(
+        log_id: UUID,
+        current_user: User = Depends(get_current_user),
+    ) -> AccommodationLogSummary | JSONResponse:
+        """Get all AccommodationLog summaries."""
+        accommodation_log_summary = await summary_svc.get_accommodation_logs_by_filters(
+            {"id": log_id}
+        )
+        if accommodation_log_summary:
+            return accommodation_log_summary[0]
+        return JSONResponse(
+            content={"message": "Accommodation log not found"},
+            status_code=200,
+        )
 
     @app.patch(
         "/v1/accommodation_logs",
@@ -750,10 +771,14 @@ def make_app(
     )
     async def get_audit_logs(
         current_user: User = Depends(get_current_user),
+        table_name: Optional[str] = None,
+        record_id: Optional[str] = None,
+        time_filter: Optional[datetime] = Query(default=None),
     ) -> Iterable[AuditLog] | JSONResponse:
         """Get all AccommodationLog summaries."""
-        time_filter = datetime.now() - timedelta(days=7)
-        return await audit_svc.get_audit_logs(time_filter)
+        if not time_filter and not (table_name and record_id):
+            time_filter = datetime.now() - timedelta(days=7)
+        return await audit_svc.get_audit_logs(time_filter, table_name, record_id)
 
     @app.get(
         "/v1/potential_trips",

@@ -53,6 +53,7 @@ const FaqPage = () => {
                                 <li>In general, build the primary travelers/service providers like the Res Cards in CB+.</li>
                                 <li>The person paying for the accommodation is the primary traveler.</li>
                                 <li>There should only be one traveler name on each entry.</li>
+                                <li>Make sure the name in R&R matches the name of the primary traveler in CB+ exactly.</li>
                                 <li>
                                     When in doubt: Do what makes sense. Keep in mind the purpose of R&R
                                     is to have an accurate reflection of bed nights per location.
@@ -178,6 +179,51 @@ const FaqPage = () => {
                             </ul>
 
 
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '40px' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                live_help
+                            </span>
+                            <span className="text-bold">
+                                How do I enter Kilimanjaro and Inca Trail Treks?
+                            </span>
+                        </div>
+                        <div>
+                            <ul className="custom-icons">
+                                <li>
+                                Kilimanjaro - Select <span className="text-bold">Kilimanjaro Climb</span> as the property and include all dates of trek.  Do not enter each camp individually.
+                                </li>
+                                <li>
+                                Inca Trail - If booked through Explorandes, select <span className="text-bold">Inca Trail Explorandes</span> as the property and include all dates of trek. If booked through another supplier, please email Steph or Joleen to add a new property.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '40px' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                live_help
+                            </span>
+                            <span className="text-bold">
+                                How are migrational camps tracked?
+                            </span>
+                        </div>
+                        <div>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                menu_book
+                            </span>
+                            One location is listed for each migrational camp.  Do not add a new property for each seasonal location.
                         </div>
                     </div>
                     <div style={{ marginBottom: '40px' }}>

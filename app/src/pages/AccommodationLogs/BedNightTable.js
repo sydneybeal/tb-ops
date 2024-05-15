@@ -72,12 +72,12 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
         // Initialize tooltips
         const tooltipElems = document.querySelectorAll('.tooltipped');
         M.Tooltip.init(tooltipElems, {
-            exitDelay: 100,
-            enterDelay: 10,
+            exitDelay: 50,
+            enterDelay: 5,
             html: false,
             margin: 0,
-            inDuration: 300,
-            outDuration: 250,
+            inDuration: 100,
+            outDuration: 100,
             position: 'bottom',
             transitionMovement: 10
         });
@@ -106,6 +106,11 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
         setDisplayData(sortedData.slice(start, end));
         setCurrentPage(newPage);
     };
+
+    const toTitleCase = str => str ? str.replace(
+        /\w\S*/g, 
+        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    ) : '';
 
     /**
 * Sets sorting criteria.
@@ -388,17 +393,39 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                             <React.Fragment key={item.id}>
                                 <tr>
                                     <td style={{ verticalAlign: 'top', maxWidth: '120px' }}>
-                                        {/* <span // TODO add tooltip for property location, type, etc
-                                            className={`tooltipped`}
-                                            data-position="left"
-                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                            data-tooltip-class="tooltip-updated-by"
-                                        > */}
+                                            <span
+                                                className={`tooltipped ${item.property_type || item.property_location ? '' : 'hide-tooltip'}`}
+                                                data-position="left"
+                                                data-tooltip={
+                                                    item.property_type && item.property_location
+                                                    ? `${toTitleCase(item.property_type)} in ${item.property_location}`
+                                                    : (toTitleCase(item.property_type) || item.property_location || '')
+                                                }
+                                                data-tooltip-class="tooltip-extra-detail"
+                                            >
                                             <p className="text-bold">{item.property_name}</p>
                                             <div style={{ fontStyle: 'italic', color: 'grey', fontSize: 'smaller', textAlign: 'left', marginTop: '8px' }}>
                                                 {item.property_portfolio}
                                             </div>
-                                        {/* </span> */}
+                                        </span>
+
+                                        {!forReport && item.trip_id &&
+                                            <span
+                                                className={`tooltipped ${item.trip_name ? '' : 'hide-tooltip'}`}
+                                                
+                                                data-position="left"
+                                                data-tooltip={
+                                                    item.trip_name
+                                                }
+                                                data-tooltip-class="tooltip-extra-detail"
+                                            >
+                                                <span style={{ cursor: 'default' }} className="chip btn btn-small tb-teal darken-2 tb-grey-text text-lighten-4">
+                                                    <span className="material-symbols-outlined">
+                                                        trip
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        }
                                     </td>
                                     <td>
                                         <p>{item.primary_traveler}</p>
@@ -490,6 +517,15 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                                                         edit
                                                                     </span>
                                                                 </button>
+                                                                &nbsp;
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-teal darken-2"
+                                                                    onClick={() => window.open(`/service_providers/${item.id}`, '_blank')} style={{ cursor: 'pointer' }}
+                                                                >
+                                                                    <span className="material-symbols-outlined tb-grey-text text-lighten-5" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                    open_in_new
+                                                                    </span>
+                                                                </button>
                                                                 <label className="tb-checkbox-label" style={{ marginLeft: '10px', display: 'flex', alignItems: 'center' }}>
                                                                     <input
                                                                         type="checkbox"
@@ -515,7 +551,6 @@ const BedNightTable = ({ id = "bedNightTable", filteredData, openEditModal, hand
                                         </td>
                                     }
                                 </tr>
-
                             </React.Fragment>
                         ))
                     ) : (

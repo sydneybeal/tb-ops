@@ -120,6 +120,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.date_out,
                 al.num_pax,
                 p.name AS property_name,
+                p.property_type AS property_type,
+                p.location AS property_location,
                 p.id AS property_portfolio_id,
                 pf.name AS property_portfolio,
                 bc.name AS booking_channel_name,
@@ -131,6 +133,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.property_id,
                 al.booking_channel_id,
                 al.agency_id,
+                t.id as trip_id,
+                t.trip_name as trip_name,
                 al.created_at,
                 al.updated_at,
                 al.updated_by
@@ -139,6 +143,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             JOIN public.portfolios pf ON p.portfolio_id = pf.id
             JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
+            LEFT JOIN public.trips t ON al.trip_id = t.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id
@@ -227,6 +232,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.date_out,
                 al.num_pax,
                 p.name AS property_name,
+                p.property_type AS property_type,
+                p.location AS property_location,
                 pf.name AS property_portfolio,
                 p.portfolio_id AS property_portfolio_id,
                 bc.name AS booking_channel_name,
@@ -237,6 +244,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 cons.is_active AS consultant_is_active,
                 al.property_id,
                 al.booking_channel_id,
+                t.id as trip_id,
+                t.trip_name as trip_name,
                 al.agency_id,
                 al.created_at,
                 al.updated_at,
@@ -246,6 +255,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             JOIN public.portfolios pf ON p.portfolio_id = pf.id
             JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
+            LEFT JOIN public.trips t ON al.trip_id = t.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
             JOIN public.core_destinations cd ON p.core_destination_id = cd.id

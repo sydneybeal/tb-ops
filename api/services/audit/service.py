@@ -16,7 +16,7 @@
 # from typing import Optional, Sequence, Union
 # from uuid import UUID
 from datetime import datetime
-from typing import Iterable, Union
+from typing import Iterable, Union, Optional
 from api.services.audit.models import AuditLog
 from api.services.audit.repository.postgres import PostgresAuditRepository
 
@@ -37,6 +37,11 @@ class AuditService:
         audit_logs_to_insert = [log.to_json() for log in audit_logs]
         await self._repo.add(audit_logs_to_insert)
 
-    async def get_audit_logs(self, action_timestamp: datetime) -> Iterable[AuditLog]:
+    async def get_audit_logs(
+        self,
+        action_timestamp: Optional[datetime] = None,
+        table_name: Optional[str] = None,
+        record_id: Optional[str] = None,
+    ) -> Iterable[AuditLog]:
         """Returns AuditLogs from the repository given a timestamp filter."""
-        return await self._repo.get(action_timestamp)
+        return await self._repo.get(action_timestamp, table_name, record_id)

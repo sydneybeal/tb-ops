@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { AuthProvider } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
+import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
@@ -18,7 +19,7 @@ import Countries from './pages/Countries/Countries';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
-import AuditLogs from './pages/AuditLogs/AuditLogs';
+import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
 import FaqPage from './pages/FAQ/FAQ';
 
@@ -41,6 +42,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AccommodationLogs />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/service_providers/:log_id',
+    element: (
+      <ProtectedRoute>
+        <AccommodationLogDetails />
       </ProtectedRoute>
     ),
   },
@@ -144,7 +153,7 @@ const router = createBrowserRouter([
     path: '/audit_logs/',
     element: (
       <ProtectedRoute>
-        <AuditLogs />
+        <AuditLanding />
       </ProtectedRoute>
     ),
   },
