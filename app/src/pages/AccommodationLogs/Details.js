@@ -124,10 +124,18 @@ const AccommodationLogDetails = () => {
                         apiData ? (
                             <div>
                                 <h4>Entry Details</h4>
-                                <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '30px'}}>
+                                <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                                     <div className="card-content">
                                         <div className="row">
-                                            <div className="col s12 l3">
+                                            <h5 className="text-bold">
+                                                {apiData.primary_traveler} x{apiData.num_pax}
+                                            </h5>
+                                            <p className="tb-teal-text">
+                                                {apiData.trip_name}
+                                            </p>
+                                        </div>
+                                        <div className="row">
+                                            {/* <div className="col s12 l3">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {apiData.primary_traveler}
                                                 </span>
@@ -150,8 +158,8 @@ const AccommodationLogDetails = () => {
                                                     </span>
                                                     Pax
                                                 </em>
-                                            </div>
-                                            <div className="col s12 l2">
+                                            </div> */}
+                                            <div className="col s12 l4">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {apiData.consultant_display_name}
                                                 </span>
@@ -163,7 +171,7 @@ const AccommodationLogDetails = () => {
                                                     Consultant
                                                 </em>
                                             </div>
-                                            <div className="col s12 l3">
+                                            <div className="col s12 l4">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {!apiData.agency_name
                                                     ?
@@ -181,7 +189,7 @@ const AccommodationLogDetails = () => {
                                                 </em>
                                             </div>
 
-                                            <div className="col s12 l3">
+                                            <div className="col s12 l4">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {!apiData.booking_channel_name
                                                     ?
@@ -201,8 +209,8 @@ const AccommodationLogDetails = () => {
                                         </div>
                                         <hr
                                             style={{
-                                                border: '2px solid #0e9bac',
-                                                borderRadius: '2px',
+                                                border: '1px solid #0e9bac',
+                                                borderRadius: '1px',
                                                 width: '80%',
                                                 margin: '40px auto'
                                             }}
@@ -233,7 +241,7 @@ const AccommodationLogDetails = () => {
                                                 </em>
                                             </div>
                                             <div className="col s12 l4">
-                                                <span className="text-bold" style={{ fontSize: '1.5rem' }}>
+                                                <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {apiData.bed_nights}
                                                 </span>
                                                 <br />
@@ -247,15 +255,32 @@ const AccommodationLogDetails = () => {
                                         </div>
                                         <hr
                                             style={{
-                                                border: '2px solid #0e9bac',
+                                                border: '1px solid #0e9bac',
                                                 // border: '0px',
-                                                borderRadius: '2px',
+                                                borderRadius: '1px',
                                                 width: '80%',
                                                 margin: '40px auto'
                                             }}
                                         />
                                         <div className="row" style={{ fontSize: '1.5rem'}}>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l3">
+                                                <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                    {!apiData.property_portfolio
+                                                    ?
+                                                    <span className="material-symbols-outlined">
+                                                        live_help
+                                                    </span>
+                                                    : toTitleCase(apiData.property_portfolio)}
+                                                </span>
+                                                <br />
+                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '1rem' }}>
+                                                    <span className="material-symbols-outlined">
+                                                        hotel
+                                                    </span>
+                                                    Portfolio
+                                                </em>
+                                            </div>
+                                            <div className="col s12 l3">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {!apiData.property_type
                                                     ?
@@ -272,7 +297,7 @@ const AccommodationLogDetails = () => {
                                                     Property Type
                                                 </em>
                                             </div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l3">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {apiData.property_location && apiData.country_name ? (
                                                         <span>{toTitleCase(apiData.property_location)}, {toTitleCase(apiData.country_name)}</span>
@@ -288,7 +313,7 @@ const AccommodationLogDetails = () => {
                                                     Property Location
                                                 </em>
                                             </div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l3">
                                                 <span className="text-bold" style={{ fontSize: '1.2rem' }}>
                                                     {apiData.core_destination_name}
                                                 </span>
