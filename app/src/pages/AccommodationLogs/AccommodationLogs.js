@@ -29,6 +29,8 @@ export const Overview = () => {
         country_name: [],
         consultant_name: [],
         property_name: [],
+        property_locations: [],
+        property_type: [],
         property_portfolio: [],
         booking_channel: [],
         agency: [],
@@ -44,9 +46,16 @@ export const Overview = () => {
         // property_name: '',
         property_names: [],
         property_portfolio: '',
+        property_locations: [],
+        property_type: '',
         booking_channel: '',
         agency: '',
     });
+
+    const toTitleCase = str => str ? str.replace(
+        /\w\S*/g, 
+        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    ) : '';
 
     useEffect(() => {
         fetch(`${process.env.REACT_APP_API}/v1/accommodation_logs`, {
@@ -102,118 +111,6 @@ export const Overview = () => {
             instances.forEach(instance => instance.destroy());
         };
     }, [filters, filterOptions, bulkSelectedEntries]);
-
-    useEffect(() => {
-        const coreDestMap = apiData.reduce((acc, item) => {
-            if (!acc[item.core_destination_id]) {
-                acc[item.core_destination_id] = {
-                    value: item.core_destination_id || '',
-                    label: item.core_destination_name || ''
-                };
-            }
-            return acc;
-        }, {});
-        const countryMap = apiData.reduce((acc, item) => {
-            const countryId = item.country_id || 'no-country'; // Use a placeholder value for missing country_id
-            const countryName = item.country_name || 'No country'; // A readable placeholder for missing country_name
-
-            if (!acc[countryId]) {
-                acc[countryId] = {
-                    value: countryId,
-                    label: countryName
-                };
-            }
-            return acc;
-        }, {});
-        const propertyMap = apiData.reduce((acc, item) => {
-            if (!acc[item.property_id]) {
-                acc[item.property_id] = {
-                    value: item.property_id || '',
-                    label: item.property_name || ''
-                };
-            }
-            return acc;
-        }, {});
-        const portfolioMap = apiData.reduce((acc, item) => {
-            if (!acc[item.property_portfolio_id]) {
-                acc[item.property_portfolio_id] = {
-                    value: item.property_portfolio_id || '',
-                    label: item.property_portfolio || ''
-                };
-            }
-            return acc;
-        }, {});
-        const bookingChannelMap = apiData.reduce((acc, item) => {
-            const bookingChannelId = item.booking_channel_id || 'no-booking-channel';
-            const bookingChannelName = item.booking_channel_name || 'No booking channel';
-
-            if (!acc[bookingChannelId]) {
-                acc[bookingChannelId] = {
-                    value: bookingChannelId || '',
-                    label: bookingChannelName || ''
-                };
-            }
-            return acc;
-        }, {});
-        const agencyMap = apiData.reduce((acc, item) => {
-            const agencyId = item.agency_id || 'no-agency';
-            const agencyName = item.booking_channel_name || 'No agency';
-
-            if (!acc[agencyId]) {
-                acc[agencyId] = {
-                    value: agencyId || '',
-                    label: agencyName || ''
-                };
-            }
-            return acc;
-        }, {});
-        const coreDestOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
-        const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
-        const propertyOptions = Object.values(propertyMap).sort((a, b) => a.label.localeCompare(b.label));
-        const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
-        const bookingChannelOptions = Object.values(bookingChannelMap).sort((a, b) => a.label.localeCompare(b.label));
-        const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
-        const uniqueConsultants = apiData.reduce((acc, item) => {
-            if (!acc[item.consultant_id]) {
-                acc[item.consultant_id] = {
-                    consultant_id: item.consultant_id,
-                    consultant_display_name: item.consultant_display_name,
-                    consultant_is_active: item.consultant_is_active
-                };
-            }
-            return acc;
-        }, {});
-        const distinctConsultants = Object.values(uniqueConsultants);
-        const consultantOptions = distinctConsultants
-            .map(item => ({
-                value: item.consultant_id || '',
-                label: item.consultant_display_name || '',
-                consultant_is_active: item.consultant_is_active
-            }))
-            .sort((a, b) => {
-                // Sort by is_active, true before false
-                if (a.consultant_is_active && !b.consultant_is_active) return -1;
-                if (!a.consultant_is_active && b.consultant_is_active) return 1;
-
-                // Then sort alphabetically by label
-                return a.label.localeCompare(b.label);
-            })
-            .map(item => ({
-                value: item.value,
-                label: `${item.label} ${item.consultant_is_active ? '' : '(inactive)'}`, // Append (inactive) if not active
-                apiLabel: item.label
-            }));
-
-        setFilterOptions({
-            core_destination_name: coreDestOptions,
-            country_name: countryOptions,
-            consultant_name: consultantOptions,
-            property_name: propertyOptions,
-            property_portfolio: portfolioOptions,
-            booking_channel: bookingChannelOptions,
-            agency: agencyOptions,
-        });
-    }, [apiData,]);
 
     useEffect(() => {
         M.AutoInit();
@@ -307,6 +204,17 @@ export const Overview = () => {
                 includeItem = false;
             }
 
+            if (filters.property_type) {
+                if (filters.property_type === 'Unknown') {
+                    if (item.property_type !== null) {
+                        includeItem = false;
+                    }
+                } else if (item.property_type !== filters.property_type) {
+                    includeItem = false;
+                }
+            }
+            
+
             // Additional conditions for other filters as necessary, excluding property_names
 
             if (filters.property_portfolio && item.property_portfolio !== filters.property_portfolio) {
@@ -314,16 +222,20 @@ export const Overview = () => {
             }
 
             if (filters.booking_channel) {
-                if (filters.booking_channel === 'No booking channel' && item.booking_channel_name) {
-                    includeItem = false;
+                if (filters.booking_channel === 'No booking channel') {
+                    if (item.booking_channel_name !== null) {
+                        includeItem = false;
+                    }
                 } else if (item.booking_channel_name !== filters.booking_channel) {
                     includeItem = false;
                 }
             }
 
             if (filters.agency) {
-                if (filters.agency === 'No agency' && item.agency_name) {
-                    includeItem = false;
+                if (filters.agency === 'No agency') {
+                    if (item.agency_name !== null) {
+                        includeItem = false;
+                    }
                 } else if (item.agency_name !== filters.agency) {
                     includeItem = false;
                 }
@@ -361,6 +273,18 @@ export const Overview = () => {
             );
         }
 
+        if (filters.property_locations && filters.property_locations.length > 0) {
+            newFilteredData = newFilteredData.filter(item => {
+                // Check if "Unknown" is selected and the item's location is null
+                if (filters.property_locations.includes("Unknown") && item.property_location === null) {
+                    return true;
+                }
+                // Otherwise, check if the item's location matches any of the selected filters
+                return filters.property_locations.includes(item.property_location);
+            });
+        }
+        
+
         if (searchQuery) {
             const normalizedSearchQuery = normalizeString(searchQuery);
             newFilteredData = newFilteredData.filter((item) =>
@@ -371,7 +295,8 @@ export const Overview = () => {
                 (item.agency_name ? normalizeString(item.agency_name) : '').includes(normalizedSearchQuery) ||
                 (item.booking_channel_name ? normalizeString(item.booking_channel_name) : '').includes(normalizedSearchQuery) ||
                 (item.country_name ? normalizeString(item.country_name) : '').includes(normalizedSearchQuery) ||
-                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery),
+                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery) ||
+                (item.property_location ? normalizeString(item.property_location) : '').includes(normalizedSearchQuery)
             );
         }
 
@@ -419,6 +344,30 @@ export const Overview = () => {
             return acc;
         }, {});
         const agencyOptions = Object.values(agencyMap).sort((a, b) => a.label.localeCompare(b.label));
+        const locationMap = apiData.reduce((acc, item) => {
+            const locationName = item.property_location || 'Unknown';
+
+            if (!acc[locationName]) {
+                acc[locationName] = {
+                    value: locationName || '',
+                    label: locationName || ''
+                };
+            }
+            return acc;
+        }, {});
+        const locationOptions = Object.values(locationMap).sort((a, b) => a.label.localeCompare(b.label));
+        const typeMap = apiData.reduce((acc, item) => {
+            const typeName = item.property_type || 'Unknown';
+
+            if (!acc[typeName]) {
+                acc[typeName] = {
+                    value: typeName || '',
+                    label: toTitleCase(typeName) || ''
+                };
+            }
+            return acc;
+        }, {});
+        const typeOptions = Object.values(typeMap).sort((a, b) => a.label.localeCompare(b.label));
         const uniqueConsultants = newFilteredData.reduce((acc, item) => {
             if (!acc[item.consultant_id]) {
                 acc[item.consultant_id] = {
@@ -456,6 +405,8 @@ export const Overview = () => {
             consultant_name: consultantOptions,
             property_name: propertyOptions,
             property_portfolio: portfolioOptions,
+            property_locations: locationOptions,
+            property_type: typeOptions,
             booking_channel: bookingChannelOptions,
             agency: agencyOptions,
         });
@@ -773,11 +724,9 @@ export const Overview = () => {
                                 </div>
                             </div>
                             <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
-                                <div className="col s12 l6">
+                                <div className="col s12 l5">
                                     <Select
                                         placeholder="Properties"
-                                        // value={filterOptions.property_name.find(prop => prop.label === filters.property_name) ? { value: filters.property_name, label: filters.property_name } : null}
-                                        // onChange={(selectedOption) => setFilters({ ...filters, property_name: selectedOption ? selectedOption.label : '' })}
                                         options={filterOptions.property_name}
                                         className={`select ${filters.property_names?.length > 0 ? 'select--has-value' : ''}`}
                                         classNamePrefix="select"
@@ -818,7 +767,96 @@ export const Overview = () => {
                                     </span>
                                     {/*  */}
                                 </div>
-                                <div className="col s6 l3">
+                                <div className="col s12 l4">
+                                    <Select
+                                        placeholder="Locations"
+                                        options={filterOptions.property_locations}
+                                        className={`select ${filters.property_locations?.length > 0 ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        isClearable
+                                        isMulti
+                                        value={filterOptions.property_locations.filter(option => filters.property_locations.includes(option.label))}
+                                        onChange={(selectedOptions) => setFilters({
+                                            ...filters,
+                                            property_locations: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                        })}
+                                    />
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
+                                        near_me
+                                    </span>
+                                    {/*  */}
+                                </div>
+                                <div className="col s12 l3">
+                                    <Select
+                                        placeholder="Property Type"
+                                        // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
+                                        value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
+                                        onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
+                                        options={filterOptions.property_type}
+                                        className={`select ${filters.property_type ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        isClearable
+                                    />
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
+                                        camping
+                                    </span>
+                                </div>
+
+                            </div>
+                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
+
+                            </div>
+                            <div className="row center">
+
+                            <div className="col s6 l2 offset-l3">
                                     <div>
                                         <ReactDatePicker
                                             id="date-in"
@@ -843,7 +881,7 @@ export const Overview = () => {
                                         Start Date
                                     </span>
                                 </div>
-                                <div className="col s6 l3">
+                                <div className="col s6 l2">
                                     <div>
                                         <ReactDatePicker
                                             id="date-out"
@@ -868,29 +906,29 @@ export const Overview = () => {
                                         End Date
                                     </span>
                                 </div>
-
-                            </div>
-                            <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
-
-                            </div>
-                            <div className="row center">
-                                <div>
-                                    <button className="btn tb-grey lighten-2" onClick={() => {
-                                        setFilters(
-                                            {
-                                                start_date: '',
-                                                end_date: '',
-                                                core_destination_name: '',
-                                                country_name: '',
-                                                consultant_name: '',
-                                                property_names: [],
-                                                property_portfolio: '',
-                                                booking_channel: '',
-                                                agency: '',
-                                            }
-                                        );
-                                        setSearchQuery('');
-                                    }}>
+                                <div className="col s6 l2">
+                                    <button
+                                        className="btn tb-grey lighten-2"
+                                        onClick={() => {
+                                            setFilters(
+                                                {
+                                                    start_date: '',
+                                                    end_date: '',
+                                                    core_destination_name: '',
+                                                    country_name: '',
+                                                    consultant_name: '',
+                                                    property_names: [],
+                                                    property_locations: [],
+                                                    property_type: '',
+                                                    property_portfolio: '',
+                                                    booking_channel: '',
+                                                    agency: '',
+                                                }
+                                            );
+                                            setSearchQuery('');
+                                        }}
+                                        style={{ marginTop: '18px' }}
+                                    >
                                         Reset Filters
                                         <span className="material-symbols-outlined">
                                             refresh

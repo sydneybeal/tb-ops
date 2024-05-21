@@ -206,6 +206,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 query_conditions.append(f"agency_id = '{value}'")
             elif key == "portfolio_id":
                 query_conditions.append(f"portfolio_id = '{value}'")
+            elif key == "property_type":
+                query_conditions.append(f"p.property_type = '{value}'")
             elif key == "country_id":
                 query_conditions.append(f"p.country_id = '{value}'")
             elif key == "property_names" and isinstance(value, list):
@@ -213,6 +215,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                     "'" + v.replace("'", "''") + "'" for v in value
                 )
                 query_conditions.append(f"p.name IN ({property_names_list})")
+            elif key == "property_location" and isinstance(value, list):
+                property_locations_list = ", ".join(
+                    "'" + v.replace("'", "''") + "'" for v in value
+                )
+                query_conditions.append(f"p.location IN ({property_locations_list})")
             # Note: consultant_name will be handled below
         if exclude_fam:
             query_conditions.append("(bc.name IS NULL OR bc.name != 'FAM/TB Travel')")

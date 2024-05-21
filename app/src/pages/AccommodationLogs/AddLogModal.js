@@ -1250,8 +1250,10 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                             </div>
                         )}
 
-                        {accommodationLogs.map((log, index) => (
-                            // <>
+                        {accommodationLogs.map((log, index) => {
+                            const previousLog = accommodationLogs[index - 1];
+                            const previousLogDateOut = previousLog ? moment(previousLog.date_out).toDate() : null;
+                            return (
                             <div key={index} style={{ marginBottom: '20px' }}>
                                 <div className="row">
                                     <div className="col s11">
@@ -1751,7 +1753,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                 minDate={new Date('2017-01-01')}
                                                 maxDate={new Date('2100-12-31')}
                                                 autoComplete="off"
-                                                openToDate={log.date_out ? moment(log.date_out).subtract(1, 'days').toDate() : new Date()}
+                                                openToDate={previousLogDateOut ? moment(previousLogDateOut).toDate() : (log.date_out ? moment(log.date_out).subtract(1, 'days').toDate() : new Date())}
                                             />
                                         </div>
                                         <label htmlFor="form-date-in">
@@ -1923,11 +1925,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                     </div>
                                 </div>
                             </div>
+                            );
                             //{/* <div style={{ textAlign: 'center' }}>
                             //<hr style={{ width: '10%', borderColor: '#000', borderWidth: '1px', margin: '20px auto' }} />
                             //</div> */}
                             // </>
-                        ))}
+                        })}
                         {!isEditMode &&
                             <button type="button" className="btn tb-teal" onClick={addLogEntry}>
                                 <span className="material-symbols-outlined">
