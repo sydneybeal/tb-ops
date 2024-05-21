@@ -62,7 +62,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.2.0"
+VERSION = "v0.2.1"
 
 
 def make_app(
@@ -679,6 +679,9 @@ def make_app(
         property_names = query_params.get("property_names", "")
         if property_names:
             query_params["property_names"] = property_names.split("|")
+        property_location = query_params.get("property_location", "")
+        if property_location:
+            query_params["property_location"] = property_location.split("|")
         # Similar parsing for other array-like parameters if necessary
 
         report_data = await summary_svc.get_bed_night_report(query_params)
