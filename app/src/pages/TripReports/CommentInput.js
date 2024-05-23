@@ -8,7 +8,7 @@ const CommentInput = ({ item, placeholder, comment, onCommentChange }) => {
     return (
         <>
             <div className="">
-                <div class="input-field col s12">
+                <div className="input-field col s12">
                     <textarea
                         name={`${item}-comments`}
                         id={`${item}-comments`}
@@ -18,7 +18,7 @@ const CommentInput = ({ item, placeholder, comment, onCommentChange }) => {
                         // style={{paddingLeft: '10px'}}
                         className="materialize-textarea input-placeholder-dark trip-report-comments"
                     />
-                    <label for={`${item}-comments`}></label>
+                    <label htmlFor={`${item}-comments`}></label>
                 </div>
             </div>
         </>

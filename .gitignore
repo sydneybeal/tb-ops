@@ -1,6 +1,6 @@
 seed/*
 *seed_from_prod.py
-*seed_users.py
+*user_passwords.py
 *seed_local.py
 *manual_updates.sql
 *cloudbuild*

@@ -29,6 +29,7 @@ from jose import JWTError, jwt
 from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
+from api.services.auth.models import UserSummary
 from api.services.auth.service import AuthService
 from api.services.summaries.models import (
     AccommodationLogSummary,
@@ -62,7 +63,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.2.1"
+VERSION = "vTripReports"
 
 
 def make_app(
@@ -326,10 +327,11 @@ def make_app(
         tags=["properties"],
     )
     async def get_all_property_details(
+        entered_only: bool = True,
         current_user: User = Depends(get_current_user),
     ) -> Sequence[PropertyDetailSummary] | JSONResponse:
         """Get all PropertyDetail summaries."""
-        return await summary_svc.get_all_property_details()
+        return await summary_svc.get_all_property_details(entered_only)
 
     @app.get(
         "/v1/property_details/{property_id}",
@@ -879,6 +881,18 @@ def make_app(
         if progress is None:
             raise HTTPException(status_code=404, detail="Report data not found")
         return progress
+
+    @app.get(
+        "/v1/users",
+        operation_id="get_users",
+        response_model=Sequence[UserSummary],
+        tags=["users"],
+    )
+    async def get_all_users(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[UserSummary] | JSONResponse:
+        """Get all Country models."""
+        return await auth_svc.get_all_users()
 
     return app
 

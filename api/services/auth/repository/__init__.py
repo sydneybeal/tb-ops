@@ -18,7 +18,7 @@ from uuid import UUID
 from abc import ABC, abstractmethod
 from typing import Sequence, Callable
 
-from api.services.auth.models import User
+from api.services.auth.models import User, UserSummary
 
 
 class AuthRepository(ABC):
@@ -30,4 +30,8 @@ class AuthRepository(ABC):
 
     async def add_user(self, users: Sequence[User]):
         """Adds a sequence of User models to the repository."""
+        raise NotImplementedError
+
+    async def get_all_users(self) -> Sequence[UserSummary]:
+        """Gets all users as UserSummary models from the repository."""
         raise NotImplementedError

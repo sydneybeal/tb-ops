@@ -702,7 +702,12 @@ input {
   width: 50%;
 }
 
-
+.btn-floating.btn-tiny {
+  width: 20.4px;
+  height: 20.4px;
+  font-size: 0.2rem;
+  line-height: 0.2rem;
+}
 
 /* @media screen and (min-width: 993px) {
   nav.top-nav {

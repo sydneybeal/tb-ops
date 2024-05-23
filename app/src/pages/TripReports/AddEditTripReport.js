@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
 import RatingSelect from './RatingSelect';
 import CommentInput from './CommentInput';
+import AttributeChip from '../PropertyDetails/AttributeChip';
 import ReactDatePicker from 'react-datepicker';
 import Select from 'react-select';
 import moment from 'moment';
@@ -12,9 +13,11 @@ const CreateEditTripReport = () => {
     const { userDetails } = useAuth();
     const { trip_report_id } = useParams(); // Get the id from URL params
     const [propertyOptions, setPropertyOptions] = useState();
+    const [userOptions, setUserOptions] = useState();
+    const [filteredUserOptions, setFilteredUserOptions] = useState([]);
+    const [travelerSearchText, setTravelerSearchText] = useState('');
     const [formData, setFormData] = useState({
-        travelerNames: '',
-        // TODO make this able to add more properties with the following fields
+        travelerNames: [],
         properties: [
             {
                 date_in: '',
@@ -23,6 +26,7 @@ const CreateEditTripReport = () => {
                 property_id: '',
                 portfolio: '',
                 country: '',
+                property_type: '',
                 core_destination_name: '',
                 accommodation_rating: '',
                 service_rating: '',
@@ -37,6 +41,13 @@ const CreateEditTripReport = () => {
                 clientele_comments: '',
                 pairing_comments: '',
                 insider_comments: '',
+                activities: [
+                    {
+                        name: '',
+                        rating: '',
+                        comments: '',
+                    }
+                ]
             }
         ]
     });
@@ -47,7 +58,8 @@ const CreateEditTripReport = () => {
             clientele_comments: true,
             pairing_comments: true,
             insider_comments: true,
-            // Initialize other helper visibility flags if needed
+            guiding_comments: true,
+            attribute_updates: false,
         }))
     );
     // TODO make report title automatic for the properties/countries,
@@ -62,6 +74,7 @@ const CreateEditTripReport = () => {
             portfolio: '',
             country: '',
             core_destination_name: '',
+            property_type: '',
             accommodation_rating: '',
             service_rating: '',
             food_rating: '',
@@ -75,11 +88,83 @@ const CreateEditTripReport = () => {
             clientele_comments: '',
             pairing_comments: '',
             insider_comments: '',
+            activities: [
+                {
+                    name: '',
+                    rating: '',
+                    comments: '',
+                }
+            ]
         };
         setFormData({
             ...formData,
             properties: [...formData.properties, newProperty]
         });
+    };
+
+    const addActivity = (index) => {
+        const newActivity = {
+            name: '',
+            rating: '',
+            comments: '',
+        };
+    
+        setFormData((prevFormData) => {
+            const updatedProperties = prevFormData.properties.map((property, propertyIndex) => {
+                if (propertyIndex === index) {
+                    return {
+                        ...property,
+                        activities: [...property.activities, newActivity],
+                    };
+                }
+                return property;
+            });
+
+            console.log(JSON.stringify(updatedProperties));
+    
+            return {
+                ...prevFormData,
+                properties: updatedProperties,
+            };
+        });
+    };
+
+    const handleActivityNameChange = (propertyIndex, activityIndex) => (e) => {
+        const newProperties = [...formData.properties];
+        newProperties[propertyIndex].activities[activityIndex].name = e.target.value;
+        setFormData({
+            ...formData,
+            properties: newProperties
+        });
+    };
+
+    const handleActivityRatingChange = (rating, propertyIndex, activityIndex) => {
+        const newProperties = [...formData.properties];
+        newProperties[propertyIndex].activities[activityIndex].rating = rating;
+        setFormData({
+            ...formData,
+            properties: newProperties
+        });
+    };
+
+    const handleActivityCommentChange = (comment, propertyIndex, activityIndex) => {
+        const newProperties = [...formData.properties];
+        newProperties[propertyIndex].activities[activityIndex].comments = comment;
+        setFormData({
+            ...formData,
+            properties: newProperties
+        });
+    };
+
+    const removeActivity = (propertyIndex, activityIndex) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this activity?");
+        if (confirmDelete) {
+            setFormData((prevData) => {
+                const updatedProperties = [...prevData.properties];
+                updatedProperties[propertyIndex].activities = updatedProperties[propertyIndex].activities.filter((_, idx) => idx !== activityIndex);
+                return { ...prevData, properties: updatedProperties };
+            });
+        }
     };
 
     const removeAccommodation = (index) => {
@@ -93,7 +178,7 @@ const CreateEditTripReport = () => {
     };
 
     useEffect(() => {
-        fetch(`${process.env.REACT_APP_API}/v1/properties`, {
+        fetch(`${process.env.REACT_APP_API}/v1/property_details?entered_only=false`, {
             headers: {
                 'Authorization': `Bearer ${userDetails.token}`
             }
@@ -102,7 +187,7 @@ const CreateEditTripReport = () => {
             .then((data) => {
 
                 const formattedProperties = data.map((property) => ({
-                    value: property.id,
+                    value: property.property_id,
                     label: `${property.name} (${property.country_name || property.core_destination_name})`,
                     name: property.name,
                     portfolio_id: property.portfolio_id,
@@ -110,12 +195,47 @@ const CreateEditTripReport = () => {
                     property_type: property.property_type,
                     location: property.location,
                     country_name: property.country_name,
-                    core_destination_name: property.core_destination_name
+                    core_destination_name: property.core_destination_name,
+                    num_tents: property.num_tents,
+                    has_trackers: property.has_trackers,
+                    has_wifi_in_room: property.has_wifi_in_room,
+                    has_wifi_in_common_areas: property.has_wifi_in_common_areas,
+                    has_hairdryers: property.has_hairdryers,
+                    has_pool: property.has_pool,
+                    has_heated_pool: property.has_heated_pool,
+                    has_credit_card_tipping: property.has_credit_card_tipping,
+                    is_child_friendly: property.is_child_friendly,
+                    is_handicap_accessible: property.is_handicap_accessible
                 }));
+                // formattedProperties.map((property) => {
+                //     if (property.name === "MalaMala Camp") {
+                //         console.log(property);
+                //     }
+                // });
                 setPropertyOptions(formattedProperties);
                 // const portfolioNames = [...new Set(data.map(property => property.portfolio_name))];
                 // setPortfolioNames(portfolioNames);
                 // setFilteredPortfolioSuggestions(portfolioNames);
+            })
+            .catch((err) => console.error(err));
+        
+        fetch(`${process.env.REACT_APP_API}/v1/users`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                // Exclude specific emails from the list
+                const excludedEmails = [
+                    "demo@travelbeyond.com",
+                    "admin@travelbeyond.com",
+                    "user@travelbeyond.com",
+                    "uat@travelbeyond.com",
+                    "testuser@travelbeyond.com"
+                ];
+                const filteredUsers = data.filter(user => !excludedEmails.includes(user.email));
+                setUserOptions(filteredUsers);
             })
             .catch((err) => console.error(err));
     }, [userDetails.token]);
@@ -134,9 +254,49 @@ const CreateEditTripReport = () => {
             properties: updatedProperties
         });
     };
+
+    const handleUserSearchTextChange = (e) => {
+        const value = e.target.value;
+        setTravelerSearchText(value);
+
+        // Filter user options based on input and exclude already selected travelers
+        const filtered = userOptions.filter(user =>
+            user.email.toLowerCase().includes(value.toLowerCase()) &&
+            !formData.travelerNames.some(traveler => traveler.id === user.id)
+        );
+        setFilteredUserOptions(filtered);
+    };
+
+    const handleUserSelect = (user) => {
+        // Only add the user if they aren't already in the list
+        if (!formData.travelerNames.some(traveler => traveler.id === user.id)) {
+            setFormData((prevData) => ({
+                ...prevData,
+                travelerNames: [...prevData.travelerNames, user]
+            }));
+        }
+        setTravelerSearchText('');
+        setFilteredUserOptions([]);
+    };
+
+    const handleChipDelete = (userId) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            travelerNames: prevData.travelerNames.filter(traveler => traveler.id !== userId)
+        }));
+    };
+
+    const hasAnimals = (property) => {
+        // Check if core_destination is Africa
+        const isAfrica = property.core_destination_name === 'Africa';
+        // Check if property_type is "standard accommodation" or "luxury accommodation"
+        const isAccommodation = property.property_type?.toLowerCase() === 'standard accommodation' || property.property_type?.toLowerCase() === 'luxury accommodation';
+        
+        // Return true if both conditions are met
+        return isAfrica && isAccommodation;
+    };    
     
     const handlePropertyChange = (index, selectedOption) => {
-        console.log(selectedOption);
         // handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
         const updatedProperties = formData.properties.map((property, i) => {
             if (i === index) {
@@ -148,6 +308,16 @@ const CreateEditTripReport = () => {
                     'core_destination_name': selectedOption ? selectedOption.core_destination_name : '',
                     'property_type': selectedOption ? selectedOption.property_type : '',
                     'location': selectedOption ? selectedOption.location : '',
+                    'num_tents': selectedOption ? selectedOption.num_tents : '',
+                    'has_trackers': selectedOption ? selectedOption.has_trackers : '',
+                    'has_wifi_in_room': selectedOption ? selectedOption.has_wifi_in_room : '',
+                    'has_wifi_in_common_areas': selectedOption ? selectedOption.has_wifi_in_common_areas : '',
+                    'has_hairdryers': selectedOption ? selectedOption.has_hairdryers : '',
+                    'has_pool': selectedOption ? selectedOption.has_pool : '',
+                    'has_heated_pool': selectedOption ? selectedOption.has_heated_pool : '',
+                    'has_credit_card_tipping': selectedOption ? selectedOption.has_credit_card_tipping : '',
+                    'is_child_friendly': selectedOption ? selectedOption.is_child_friendly : '',
+                    'is_handicap_accessible': selectedOption ? selectedOption.is_handicap_accessible : '',
                 };
             }
             return property;
@@ -226,14 +396,6 @@ const CreateEditTripReport = () => {
         // Redirect after submit
     };
 
-    const handleTextChange = (event) => {
-        const { name, value } = event.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-    };
-
     return (
         <>
             <header>
@@ -241,11 +403,79 @@ const CreateEditTripReport = () => {
             </header>
             <main className="tb-grey lighten-6">
                 <div className="container" style={{ width: '80%', paddingBottom: '100px' }}>
-                    <h4 className="center">{trip_report_id ? 'Update' : 'New'} Trip Report</h4>
+                    <h4 className="center report-title">{trip_report_id ? 'Update' : 'New'} Trip Report</h4>
                     <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                         <div className="card-content">
                             <form onSubmit={handleSubmit}>
-                                <div className="row">
+                            <div className="row">
+                                <div className="input-field col s12 l8 offset-l2 center">
+                                    <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                        hiking
+                                    </span>
+                                    <input
+                                        type="text"
+                                        name="travelerNames"
+                                        id="travelerNames"
+                                        placeholder="Search to add a traveler"
+                                        value={travelerSearchText}
+                                        onChange={handleUserSearchTextChange}
+                                        className="search-input"
+                                        autoComplete='off'
+                                    />
+                                    {filteredUserOptions.length > 0 && (
+                                        <ul className="suggestions-list">
+                                            {filteredUserOptions.map(user => (
+                                                <li key={user.id} onClick={() => handleUserSelect(user)}>
+                                                    {user.email}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+                            {formData.travelerNames.length > 0 && (
+                                <div className="row center">
+                                    <h5 className="report-title">Travelers</h5>
+                                    {formData.travelerNames.map(traveler => (
+                                        <span style={{ paddingLeft: '18px' }} key={traveler.id} className="chip tb-teal darken-3 tb-off-white-text">
+                                            <span style={{ fontSize: '1.1rem'}} >{traveler.email.split('@')[0]} </span>
+                                            <button
+                                                className="btn btn-floating btn-tiny tb-grey lighten-2"
+                                                type="button"
+                                                style={{ marginLeft: '4px', marginBottom: '6px', paddingTop: '5px', paddingLeft: '1px'}}
+                                                onClick={() => handleChipDelete(traveler.id)}
+                                            >
+                                                <span className="material-symbols-outlined text-bold" style={{ fontSize: '0.8rem'}} >
+                                                    close
+                                                </span>
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            {formData.travelerNames.length > 1 && (
+                            <div className="container" style={{ width: '90%'}}>
+                                <div>
+                                    <ul className="custom-icons">
+                                        <li>
+                                            If multiple Travel Beyond employees are traveling together, each employee should review a
+                                            property in a rotating order so that similar reviews are not written for the same property.
+                                        </li>
+                                        <li>
+                                            The employee(s) who do not write the review should read through the review and only add to it if
+                                            they have a differing opinion and/or feel something important was omitted.
+                                        </li>
+                                    </ul>
+                                </div>
+                                {/* <span className="tb-md-black-text">
+                                    If multiple Travel Beyond employees are traveling together, each employee should review a
+                                    property in a rotating order so that similar reviews are not written for the same property.
+                                    The employee(s) who do not write the review should read through the review and only add to it if
+                                    they have a differing opinion and/or feel something important was omitted.
+                                </span> */}
+                            </div>
+                            )}
+                                {/* <div className="row">
                                     <div className="input-field col s12 l8 offset-l2 center">
                                         <span className="material-symbols-outlined grey-text text-darken-1 prefix">
                                             hiking
@@ -267,7 +497,8 @@ const CreateEditTripReport = () => {
                                         </span>
                                     </div>
                                 </div>
-
+                                <div className="row">
+                                </div> */}
                                 <div className="tb-teal-text text-darken-1 text-bold" style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px'}}>
                                     <span className="material-symbols-outlined">
                                         task
@@ -284,7 +515,9 @@ const CreateEditTripReport = () => {
                                     item="Important notes"
                                     placeholder="Document updates"
                                 />
-                                {formData.properties.map((property, index) => (
+                                {formData.properties.map((property, index) => {
+                                    const propertyHasAnimals = hasAnimals(property);
+                                    return (
                                     <div key={index} style={{ marginTop: '60px' }}>
                                         <div className="row">
                                             <div className="col s11">
@@ -490,6 +723,87 @@ const CreateEditTripReport = () => {
                                         <>
                                             <div className="row">
                                                 <p className="trip-report-direction center text-bold">
+                                                    Do any of the following attributes require updates?
+                                                </p>
+                                                <div className="col s12 prop-chips-container" style={{ paddingBottom: '20px', paddingTop: '10px' }}>
+                                                    {propertyHasAnimals &&
+                                                        <AttributeChip
+                                                            attribute={property.has_wifi_in_room}
+                                                            icon='pets'
+                                                            label='Trackers'
+                                                        />
+                                                    }
+                                                    <AttributeChip
+                                                        attribute={property.has_wifi_in_room}
+                                                        icon='wifi_home'
+                                                        label='WiFi (Room)'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.has_wifi_in_common_areas}
+                                                        icon='wifi'
+                                                        label='WiFi (Common Area)'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.has_hairdryers}
+                                                        icon='self_care'
+                                                        label='Hair Dryers'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.has_credit_card_tipping}
+                                                        icon='credit_card_heart'
+                                                        label='Credit Card Tips'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.has_pool}
+                                                        icon='pool'
+                                                        label='Pool'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.has_heated_pool}
+                                                        icon='local_fire_department'
+                                                        label='Heated Pool'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.is_child_friendly}
+                                                        icon='family_restroom'
+                                                        label='Child Friendly'
+                                                    />
+                                                    <AttributeChip
+                                                        attribute={property.is_handicap_accessible}
+                                                        icon='accessible'
+                                                        label='Accessible'
+                                                    />
+                                                </div>
+                                                <div className="center">
+                                                    <div
+                                                        className="tb-teal-text text-darken-1 text-bold"
+                                                        style={{ fontSize: '1.4rem', paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
+                                                        onClick={() => toggleHelpers('attribute_updates', index)}
+                                                    >
+                                                        {/* <span className="material-symbols-outlined">
+                                                            electric_bolt
+                                                        </span> */}
+                                                        <span>YES    </span>
+                                                        <span className="material-symbols-outlined">
+                                                            expand_more
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {showHelpers[index]?.attribute_updates &&
+                                                    <>
+                                                        <CommentInput
+                                                            key={`${index}-attribute-updates`}
+                                                            item="attribute_updates"
+                                                            placeholder="Please explain which attributes need updates. NOTE: We could also put yes/no toggles in a card here instead."
+                                                            comment={property.attribute_updates}
+                                                            onCommentChange={(comment) => handleCommentChange(comment, 'attribute_updates', index)}
+                                                        />
+                                                    </>
+                                                }
+                                                
+                                            </div>
+                                            <div className="row">
+                                                <p className="trip-report-direction center text-bold">
                                                     Please rate the property on the following qualities:
                                                 </p>
                                                 <div
@@ -516,7 +830,7 @@ const CreateEditTripReport = () => {
                                                         rating={property.food_rating}
                                                         onRatingChange={(rating) => handleRatingChange(rating, 'food', index)}
                                                     />
-                                                    {property.property_type === 'standard accommodation' &&
+                                                    {propertyHasAnimals &&
                                                         <RatingSelect
                                                             key={`${index}-guide-vehicle`}
                                                             item="Guide/Vehicle"
@@ -565,19 +879,28 @@ const CreateEditTripReport = () => {
                                                     comment={property.management_comments}
                                                     onCommentChange={(comment) => handleCommentChange(comment, 'management', index)}
                                                 />
-                                                {property.property_type === 'standard accommodation' &&
+                                                {propertyHasAnimals &&
                                                     <>
-                                                        <div className="tb-teal-text text-darken-1 text-bold" style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px'}}>
+                                                        <div
+                                                            className="tb-teal-text text-darken-1 text-bold"
+                                                            style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
+                                                            onClick={() => toggleHelpers('guiding_comments', index)}
+                                                        >
                                                             <span className="material-symbols-outlined">
                                                             airport_shuttle
                                                             </span>
-                                                            Guiding
+                                                            <span>Guiding    </span>
+                                                            <span className="material-symbols-outlined">
+                                                                expand_more
+                                                            </span>
                                                         </div>
-                                                        <div style={{ paddingLeft: '20px' }}>
-                                                            <ul className="custom-icons">
-                                                                <li>Include guide's name</li>
-                                                            </ul>
-                                                        </div>
+                                                        {showHelpers[index]?.guiding_comments &&
+                                                            <div style={{ paddingLeft: '20px' }}>
+                                                                <ul className="custom-icons">
+                                                                    <li>Include guide's name</li>
+                                                                </ul>
+                                                            </div>
+                                                        }
                                                         <CommentInput
                                                             key={`${index}-guiding`}
                                                             item="guiding"
@@ -585,35 +908,35 @@ const CreateEditTripReport = () => {
                                                             comment={property.guiding_comments}
                                                             onCommentChange={(comment) => handleCommentChange(comment, 'guiding', index)}
                                                         />
+                                                        <div
+                                                            className="tb-teal-text text-darken-1 text-bold"
+                                                            style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
+                                                            onClick={() => toggleHelpers('animal_viewing_comments', index)}
+                                                        >
+                                                            <span className="material-symbols-outlined">
+                                                                pets
+                                                            </span>
+                                                            <span>Animal Viewing    </span>
+                                                            <span className="material-symbols-outlined">
+                                                                expand_more
+                                                            </span>
+                                                        </div>
+                                                        {showHelpers[index]?.animal_viewing_comments &&
+                                                            <div style={{ paddingLeft: '20px' }}>
+                                                                <ul className="custom-icons">
+                                                                    <li>What animals you saw or what most guests see according to the guides/what animals you will not see in the area</li>
+                                                                </ul>
+                                                            </div>
+                                                        }
+                                                        <CommentInput
+                                                            key={`${index}-animal_viewing`}
+                                                            item="animal_viewing"
+                                                            placeholder="Comments on the animal viewing in the area."
+                                                            comment={property.animal_viewing_comments}
+                                                            onCommentChange={(comment) => handleCommentChange(comment, 'animal_viewing', index)}
+                                                        />
                                                     </>
                                                 }
-                                                <div
-                                                    className="tb-teal-text text-darken-1 text-bold"
-                                                    style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
-                                                    onClick={() => toggleHelpers('animal_viewing_comments', index)}
-                                                >
-                                                    <span className="material-symbols-outlined">
-                                                        pets
-                                                    </span>
-                                                    <span>Animal Viewing    </span>
-                                                    <span className="material-symbols-outlined">
-                                                        expand_more
-                                                    </span>
-                                                </div>
-                                                {showHelpers[index]?.animal_viewing_comments &&
-                                                    <div style={{ paddingLeft: '20px' }}>
-                                                        <ul className="custom-icons">
-                                                            <li>What animals you saw or what most guests see according to the guides/what animals you will not see in the area</li>
-                                                        </ul>
-                                                    </div>
-                                                }
-                                                <CommentInput
-                                                    key={`${index}-animal_viewing`}
-                                                    item="animal_viewing"
-                                                    placeholder="Comments on the animal viewing in the area."
-                                                    comment={property.animal_viewing_comments}
-                                                    onCommentChange={(comment) => handleCommentChange(comment, 'animal_viewing', index)}
-                                                />
                                                 <div
                                                     className="tb-teal-text text-darken-1 text-bold"
                                                     style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
@@ -728,12 +1051,72 @@ const CreateEditTripReport = () => {
                                                     comment={property.insider_comments}
                                                     onCommentChange={(comment) => handleCommentChange(comment, 'insider', index)}
                                                 />
-                                            </div> 
+                                            </div>
+                                            <div className="container center">
+                                                <p className="trip-report-direction center text-bold">
+                                                    Add any activities/restaurants from this segment:
+                                                </p>
+                                                {property.activities.map((activity, activityIndex) => {
+                                                    console.log(activity);
+                                                    return (
+                                                        <div key={activityIndex} className="card potential-trip-card tb-grey lighten-4">
+                                                            <div className="card-content">
+                                                                <div className="row container" style={{ width: '80%'}}>
+                                                                    <div className="col s11">
+                                                                        <input
+                                                                            type="text"
+                                                                            id="name"
+                                                                            value={activity.name}
+                                                                            onChange={handleActivityNameChange(index, activityIndex)}
+                                                                            placeholder="Activity/restaurant name"
+                                                                            style={{ marginRight: '20px', flexGrow: '1' }}
+                                                                            className="input-placeholder-dark"
+                                                                            autoComplete="off"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="col s1">
+                                                                        <button
+                                                                            className="btn-floating btn-small waves-effect waves-light error-red"
+                                                                            onClick={() => removeActivity(index, activityIndex)}
+                                                                        >
+                                                                            x
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                                <RatingSelect
+                                                                    key={`${index}-${activityIndex}-rating`}
+                                                                    item="Rating"
+                                                                    icon="star"
+                                                                    rating={activity.rating}
+                                                                    onRatingChange={(rating) => handleActivityRatingChange(rating, index, activityIndex)}
+                                                                />
+                                                                <CommentInput
+                                                                    key={`${index}-${activityIndex}-comment`}
+                                                                    item="comment"
+                                                                    placeholder="Comments on your experience at this activity."
+                                                                    icon="dinner_dining"
+                                                                    comment={activity.comments}
+                                                                    onCommentChange={(comment) => handleActivityCommentChange(comment, index, activityIndex)}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                <div className="row">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {addActivity(index)}}
+                                                        className="btn tb-grey"
+                                                    >
+                                                        + Activity / Restaurant
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </>
                                         }  
                                     </div>
-                                    
-                                ))}
+                                    );
+                                })}
                                 <div className="row" style={{ marginTop: '60px' }}>
                                     <button type="button" onClick={addAccommodation} className="btn tb-teal darken-1">
                                         Add Property

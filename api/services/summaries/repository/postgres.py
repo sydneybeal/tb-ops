@@ -15,7 +15,7 @@
 import datetime
 import json
 from uuid import UUID
-from typing import Sequence
+from typing import Sequence, Optional
 from textwrap import dedent
 
 from api.adapters.repository import PostgresMixin
@@ -406,7 +406,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 return property_summaries
 
     async def get_property_details(
-        self, entered_only: bool = True, by_id: UUID = None
+        self, entered_only: bool = True, by_id: Optional[UUID] = None
     ) -> Sequence[PropertyDetailSummary]:
         """Gets all PropertyDetail models in the repository, joined with their foreign keys."""
         pool = await self._get_pool()
@@ -421,8 +421,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.portfolio_id,
                 cd.id AS core_destination_id,
                 c.id AS country_id,
-                pd.property_type,
+                p.property_type,
                 pd.price_range,
+                p.location,
+                p.latitude,
+                p.longitude,
                 pd.num_tents,
                 pd.has_trackers,
                 pd.has_wifi_in_room,

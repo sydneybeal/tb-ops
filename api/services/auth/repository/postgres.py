@@ -18,7 +18,7 @@ from textwrap import dedent
 
 from api.adapters.repository import PostgresMixin
 from api.services.auth.repository import AuthRepository
-from api.services.auth.models import User
+from api.services.auth.models import User, UserSummary
 
 
 class PostgresAuthRepository(PostgresMixin, AuthRepository):
@@ -74,3 +74,27 @@ class PostgresAuthRepository(PostgresMixin, AuthRepository):
                 ]
                 await con.executemany(query, args)
         print(f"Successfully added {len(args)} new user(s) to the repository.")
+
+    async def get_all_users(self) -> Sequence[UserSummary]:
+        """Gets all users as UserSummary models from the repository."""
+        """Gets a user from the repository by email."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+            id,
+            email,
+            role
+            FROM public.users
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                records = await con.fetch(
+                    query
+                )  # Use fetch to retrieve all matching rows
+                user_summaries = [UserSummary(**record) for record in records]
+                return user_summaries
