@@ -48,6 +48,8 @@ class AccommodationLogSummary(BaseModel):
     property_name: str
     property_type: Optional[str] = None
     property_location: Optional[str] = None
+    property_latitude: Optional[float] = None
+    property_longitude: Optional[float] = None
     property_portfolio_id: UUID
     property_portfolio: str
     booking_channel_name: Optional[str] = None

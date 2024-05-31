@@ -16,6 +16,7 @@ import Consultants from './pages/Consultants/Consultants';
 import Properties from './pages/Properties/Properties';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
 import Countries from './pages/Countries/Countries';
+import Maps from './pages/Maps/Maps';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
@@ -179,6 +180,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <TripLanding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/maps/',
+    element: (
+      <ProtectedRoute>
+        <Maps />
       </ProtectedRoute>
     ),
   },
