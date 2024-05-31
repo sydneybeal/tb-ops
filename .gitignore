@@ -3,6 +3,7 @@ seed/*
 *seed_users.py
 *seed_local.py
 *manual_updates.sql
+*user_passwords.py
 *cloudbuild*
 *.editorconfig
 

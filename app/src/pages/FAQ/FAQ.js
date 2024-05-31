@@ -102,8 +102,8 @@ const FaqPage = () => {
                         </div>
                         <div>
                             <ul className="custom-icons">
-                                <li>If the client cancels AFTER FULL PAYMENT has been made, the bed nights stay in R&R.</li>
-                                <li>If the client cancels AFTER DEPOSIT but BEFORE FULL PAYMENT, remove the bed nights from R&R.</li>
+                                <li>If the client cancels and the vendor is <span className="text-bold">paid in full</span>, the bed nights stay in R&R.</li>
+                                <li>If the client cancels and the vendor was <span className="text-bold">only paid deposit</span>, or is <span className="text-bold">offering a refund</span>, remove the bed nights from R&R.</li>
                             </ul>
                         </div>
                     </div>
