@@ -28,14 +28,23 @@ export const Properties = () => {
         core_dest: [],
         country: [],
         portfolio: [],
+        property_locations: [],
+        property_type: [],
     });
     const [filters, setFilters] = useState({
         core_dest: '',
         country: '',
         portfolio: '',
+        property_locations: [],
+        property_type: '',
     });
 
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1400);
+
+    const toTitleCase = str => str ? str.replace(
+        /\w\S*/g, 
+        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    ) : '';
 
     useEffect(() => {
         const handleResize = () => {
@@ -142,16 +151,43 @@ export const Properties = () => {
             }
             return acc;
         }, {}) : [];
+        const locationMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
+            const locationName = item.location || 'Unknown';
+
+            if (!acc[locationName]) {
+                acc[locationName] = {
+                    value: locationName || '',
+                    label: locationName || ''
+                };
+            }
+            return acc;
+        }, {}) : [];
+
+        const typeMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
+            const typeName = item.property_type || 'Unknown';
+
+            if (!acc[typeName]) {
+                acc[typeName] = {
+                    value: typeName || '',
+                    label: toTitleCase(typeName) || ''
+                };
+            }
+            return acc;
+        }, {}) : [];
 
         const countryOptions = Object.values(countryMap).sort((a, b) => a.label.localeCompare(b.label));
         const coreDestinationOptions = Object.values(coreDestMap).sort((a, b) => a.label.localeCompare(b.label));
         const portfolioOptions = Object.values(portfolioMap).sort((a, b) => a.label.localeCompare(b.label));
+        const locationOptions = Object.values(locationMap).sort((a, b) => a.label.localeCompare(b.label));
+        const typeOptions = Object.values(typeMap).sort((a, b) => a.label.localeCompare(b.label));
 
 
         setFilterOptions({
             country: countryOptions,
             core_destination: coreDestinationOptions,
             portfolio: portfolioOptions,
+            property_locations: locationOptions,
+            property_type: typeOptions,
         });
     }, [apiData,]);
 
@@ -160,7 +196,50 @@ export const Properties = () => {
     };
 
     useEffect(() => {
-        let newFilteredData = apiData;
+        let contextFilteredData = apiData;
+
+        if (filters.country) {
+            if (filters.country === 'No country') {
+                // Filter for records where country_name is null or undefined
+                contextFilteredData = contextFilteredData.filter(item => !item.country_name);
+            } else {
+                // Filter for records matching the selected country name
+                contextFilteredData = contextFilteredData.filter(item => item.country_name === filters.country);
+            }
+        }
+
+        if (filters.core_destination) {
+            contextFilteredData = contextFilteredData.filter((item) => item.core_destination_name === filters.core_destination);
+        }
+
+        if (filters.portfolio) {
+            contextFilteredData = contextFilteredData.filter((item) => item.portfolio_name === filters.portfolio);
+        }
+
+        if (filters.property_type) {
+            if (filters.property_type === 'Unknown') {
+                // Filter for records where country_name is null or undefined
+                contextFilteredData = contextFilteredData.filter(item => !item.property_type);
+            } else {
+                // Filter for records matching the selected country name
+                contextFilteredData = contextFilteredData.filter(item => item.property_type === filters.property_type);
+            }
+        }
+
+        // Step 2: Now filter newFilteredData including property_names
+        let newFilteredData = contextFilteredData;
+
+        if (filters.property_locations && filters.property_locations.length > 0) {
+            newFilteredData = newFilteredData.filter(item => {
+                // Check if "Unknown" is selected and the item's location is null
+                if (filters.property_locations.includes("Unknown") && item.location === null) {
+                    return true;
+                }
+                // Otherwise, check if the item's location matches any of the selected filters
+                return filters.property_locations.includes(item.location);
+            });
+        }
+
 
         if (searchQuery) {
             const normalizedSearchQuery = normalizeString(searchQuery);
@@ -169,26 +248,9 @@ export const Properties = () => {
                 (item.name ? normalizeString(item.name) : '').includes(normalizedSearchQuery) ||
                 (item.portfolio_name ? normalizeString(item.portfolio_name) : '').includes(normalizedSearchQuery) ||
                 (item.country_name ? normalizeString(item.country_name) : '').includes(normalizedSearchQuery) ||
-                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery),
+                (item.core_destination_name ? normalizeString(item.core_destination_name) : '').includes(normalizedSearchQuery) ||
+                (item.property_location ? normalizeString(item.property_location) : '').includes(normalizedSearchQuery),
             );
-        }
-
-        if (filters.country) {
-            if (filters.country === 'No country') {
-                // Filter for records where country_name is null or undefined
-                newFilteredData = newFilteredData.filter(item => !item.country_name);
-            } else {
-                // Filter for records matching the selected country name
-                newFilteredData = newFilteredData.filter(item => item.country_name === filters.country);
-            }
-        }
-
-        if (filters.core_destination) {
-            newFilteredData = newFilteredData.filter((item) => item.core_destination_name === filters.core_destination);
-        }
-
-        if (filters.portfolio) {
-            newFilteredData = newFilteredData.filter((item) => item.portfolio_name === filters.portfolio);
         }
 
         setFilteredData(newFilteredData);
@@ -392,9 +454,9 @@ export const Properties = () => {
                                     </div>
                                     <div className="row center">
                                         <div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l2">
                                                 <Select
-                                                    placeholder="Search by Core Destination"
+                                                    placeholder="Core Destination"
                                                     value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.core_destination}
@@ -429,9 +491,9 @@ export const Properties = () => {
                                                 </span>
                                             </div>
                                             {/* TODO: change filters to drill down on other selections*/}
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l2">
                                                 <Select
-                                                    placeholder="Search by Country"
+                                                    placeholder="Country"
                                                     value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.country}
@@ -465,9 +527,9 @@ export const Properties = () => {
                                                     globe
                                                 </span>
                                             </div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l2">
                                                 <Select
-                                                    placeholder="Search by Portfolio"
+                                                    placeholder="Portfolio"
                                                     value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
                                                     onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
                                                     options={filterOptions.portfolio}
@@ -501,6 +563,88 @@ export const Properties = () => {
                                                     store
                                                 </span>
                                             </div>
+                                            <div className="col s12 l4">
+                                                <Select
+                                                    placeholder="Locations"
+                                                    options={filterOptions.property_locations}
+                                                    className={`select ${filters.property_locations?.length > 0 ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                        menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                    }}
+                                                    menuPortalTarget={document.body}
+                                                    isClearable
+                                                    isMulti
+                                                    value={filterOptions.property_locations.filter(option => filters.property_locations.includes(option.label))}
+                                                    onChange={(selectedOptions) => setFilters({
+                                                        ...filters,
+                                                        property_locations: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                                    })}
+                                                />
+                                                <span className="material-symbols-outlined grey-text text-darken-1">
+                                                    near_me
+                                                </span>
+                                                {/*  */}
+                                            </div>
+                                        </div>
+                                        <div className="col s12 l2">
+                                            <Select
+                                                placeholder="Property Type"
+                                                // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
+                                                value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
+                                                onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
+                                                options={filterOptions.property_type}
+                                                className={`select ${filters.property_type ? 'select--has-value' : ''}`}
+                                                classNamePrefix="select"
+                                                styles={{
+                                                    control: (provided, state) => ({
+                                                        ...provided,
+                                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                        '&:hover': {
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                        },
+                                                        boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                                    }),
+                                                    option: (provided, state) => ({
+                                                        ...provided,
+                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                        backgroundColor: state.isSelected
+                                                            ? '#0e9bac'
+                                                            : state.isFocused
+                                                                ? '#e8e5e1'
+                                                                : '#ffffff',
+                                                        ':active': {
+                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                        },
+                                                    }),
+                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                }}
+                                                menuPortalTarget={document.body}
+                                                isClearable
+                                            />
+                                            <span className="material-symbols-outlined grey-text text-darken-1">
+                                                camping
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="row center">
