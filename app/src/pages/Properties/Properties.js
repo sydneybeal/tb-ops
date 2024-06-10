@@ -527,42 +527,7 @@ export const Properties = () => {
                                                     globe
                                                 </span>
                                             </div>
-                                            <div className="col s12 l2">
-                                                <Select
-                                                    placeholder="Portfolio"
-                                                    value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
-                                                    options={filterOptions.portfolio}
-                                                    className={`select ${filters.portfolio ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                    }}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                    store
-                                                </span>
-                                            </div>
+
                                             <div className="col s12 l4">
                                                 <Select
                                                     placeholder="Locations"
@@ -606,45 +571,81 @@ export const Properties = () => {
                                                 </span>
                                                 {/*  */}
                                             </div>
-                                        </div>
-                                        <div className="col s12 l2">
-                                            <Select
-                                                placeholder="Property Type"
-                                                // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
-                                                value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
-                                                onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
-                                                options={filterOptions.property_type}
-                                                className={`select ${filters.property_type ? 'select--has-value' : ''}`}
-                                                classNamePrefix="select"
-                                                styles={{
-                                                    control: (provided, state) => ({
-                                                        ...provided,
-                                                        borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                        '&:hover': {
+                                            <div className="col s12 l2">
+                                                <Select
+                                                    placeholder="Portfolio"
+                                                    value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.portfolio}
+                                                    className={`select ${filters.portfolio ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                                    store
+                                                </span>
+                                            </div>
+                                            <div className="col s12 l2">
+                                                <Select
+                                                    placeholder="Property Type"
+                                                    // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
+                                                    value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
+                                                    options={filterOptions.property_type}
+                                                    className={`select ${filters.property_type ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
                                                             borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                        },
-                                                        boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
-                                                    }),
-                                                    option: (provided, state) => ({
-                                                        ...provided,
-                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                        backgroundColor: state.isSelected
-                                                            ? '#0e9bac'
-                                                            : state.isFocused
-                                                                ? '#e8e5e1'
-                                                                : '#ffffff',
-                                                        ':active': {
-                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                        },
-                                                    }),
-                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
-                                                }}
-                                                menuPortalTarget={document.body}
-                                                isClearable
-                                            />
-                                            <span className="material-symbols-outlined grey-text text-darken-1">
-                                                camping
-                                            </span>
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                        menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                    }}
+                                                    menuPortalTarget={document.body}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined grey-text text-darken-1">
+                                                    camping
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="row center">
@@ -873,7 +874,7 @@ export const Properties = () => {
                                                                             live_help
                                                                         </span>
                                                                     </span>
-                                                                    : item.property_type}
+                                                                    : toTitleCase(item.property_type)}
                                                                 </td>
                                                                 <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
                                                                 <td style={{ width: '150px' }}>
