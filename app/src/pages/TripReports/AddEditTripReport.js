@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
@@ -13,11 +13,15 @@ const CreateEditTripReport = () => {
     const { userDetails } = useAuth();
     const { trip_report_id } = useParams(); // Get the id from URL params
     const [propertyOptions, setPropertyOptions] = useState();
+    const [locationOptions, setLocationOptions] = useState();
     const [userOptions, setUserOptions] = useState();
     const [filteredUserOptions, setFilteredUserOptions] = useState([]);
+    const [showTravelerSuggestions, setShowTravelerSuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
     const [travelerSearchText, setTravelerSearchText] = useState('');
     const [formData, setFormData] = useState({
         travelerNames: [],
+        documentUpdates: '',
         properties: [
             {
                 date_in: '',
@@ -41,13 +45,14 @@ const CreateEditTripReport = () => {
                 clientele_comments: '',
                 pairing_comments: '',
                 insider_comments: '',
-                activities: [
-                    {
-                        name: '',
-                        rating: '',
-                        comments: '',
-                    }
-                ]
+            }
+        ],
+        activities: [
+            {
+                name: '',
+                rating: '',
+                comments: '',
+                type: '',
             }
         ]
     });
@@ -88,13 +93,6 @@ const CreateEditTripReport = () => {
             clientele_comments: '',
             pairing_comments: '',
             insider_comments: '',
-            activities: [
-                {
-                    name: '',
-                    rating: '',
-                    comments: '',
-                }
-            ]
         };
         setFormData({
             ...formData,
@@ -102,67 +100,71 @@ const CreateEditTripReport = () => {
         });
     };
 
-    const addActivity = (index) => {
+    const addActivity = () => {
         const newActivity = {
             name: '',
             rating: '',
             comments: '',
+            type: '',
         };
     
-        setFormData((prevFormData) => {
-            const updatedProperties = prevFormData.properties.map((property, propertyIndex) => {
-                if (propertyIndex === index) {
-                    return {
-                        ...property,
-                        activities: [...property.activities, newActivity],
-                    };
-                }
-                return property;
-            });
+        setFormData({
+            ...formData,
+            activities: [...formData.activities, newActivity]
+        });
+    };
 
-            console.log(JSON.stringify(updatedProperties));
+    const handleActivityNameChange = (activityIndex) => (e) => {
+        const newActivities = [...formData.activities];
+        newActivities[activityIndex].name = e.target.value;
+        setFormData({
+            ...formData,
+            activities: newActivities
+        });
+    };
+    const handleActivityLocationChange = (activityIndex, selectedOption) => {
+        const newActivities = [...formData.activities];
+        newActivities[activityIndex].location = selectedOption ? selectedOption.value : null; // Use selectedOption.value or reset to null if cleared
+        setFormData({
+            ...formData,
+            activities: newActivities
+        });
+    };
     
-            return {
-                ...prevFormData,
-                properties: updatedProperties,
-            };
-        });
-    };
 
-    const handleActivityNameChange = (propertyIndex, activityIndex) => (e) => {
-        const newProperties = [...formData.properties];
-        newProperties[propertyIndex].activities[activityIndex].name = e.target.value;
+    const handleActivityTypeChange = (activityIndex) => (value) => {
+        const newActivities = [...formData.activities];
+        newActivities[activityIndex].type = value; // Directly use the passed value
         setFormData({
             ...formData,
-            properties: newProperties
+            activities: newActivities
         });
     };
 
-    const handleActivityRatingChange = (rating, propertyIndex, activityIndex) => {
-        const newProperties = [...formData.properties];
-        newProperties[propertyIndex].activities[activityIndex].rating = rating;
+    const handleActivityRatingChange = (rating, activityIndex) => {
+        const newActivities = [...formData.activities];
+        newActivities[activityIndex].rating = rating;
         setFormData({
             ...formData,
-            properties: newProperties
+            activities: newActivities
         });
     };
 
-    const handleActivityCommentChange = (comment, propertyIndex, activityIndex) => {
-        const newProperties = [...formData.properties];
-        newProperties[propertyIndex].activities[activityIndex].comments = comment;
+    const handleActivityCommentChange = (comment, activityIndex) => {
+        const newActivities = [...formData.activities];
+        newActivities[activityIndex].comments = comment;
         setFormData({
             ...formData,
-            properties: newProperties
+            activities: newActivities
         });
     };
 
-    const removeActivity = (propertyIndex, activityIndex) => {
+    const removeActivity = (activityIndex) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this activity?");
         if (confirmDelete) {
-            setFormData((prevData) => {
-                const updatedProperties = [...prevData.properties];
-                updatedProperties[propertyIndex].activities = updatedProperties[propertyIndex].activities.filter((_, idx) => idx !== activityIndex);
-                return { ...prevData, properties: updatedProperties };
+            setFormData({
+                ...formData,
+                activities: formData.activities.filter((_, i) => i !== activityIndex)
             });
         }
     };
@@ -213,9 +215,18 @@ const CreateEditTripReport = () => {
                 //     }
                 // });
                 setPropertyOptions(formattedProperties);
-                // const portfolioNames = [...new Set(data.map(property => property.portfolio_name))];
-                // setPortfolioNames(portfolioNames);
-                // setFilteredPortfolioSuggestions(portfolioNames);
+
+                const locationStrings = new Set(data
+                    .filter(property => property.location && property.country_name)  // Ensure both location and country_name are truthy
+                    .map(property => JSON.stringify({
+                        label: `${property.location} (${property.country_name})`,
+                        value: property.location
+                    }))
+                  );
+                
+                const uniqueLocations = Array.from(locationStrings).map(string => JSON.parse(string));
+                  
+                setLocationOptions(uniqueLocations);
             })
             .catch((err) => console.error(err));
         
@@ -277,6 +288,7 @@ const CreateEditTripReport = () => {
         }
         setTravelerSearchText('');
         setFilteredUserOptions([]);
+        setShowTravelerSuggestions(false);
     };
 
     const handleChipDelete = (userId) => {
@@ -351,6 +363,15 @@ const CreateEditTripReport = () => {
         });
     };
 
+    const handleDocumentCommentChange = (comment) => {
+        setFormData((prevState) => {
+            return {
+                ...prevState,
+                documentUpdates: comment
+            };
+        });
+    };
+
     const handleCheckboxChange = (item, index) => {
         setFormData((prevState) => {
             const newProperties = [...prevState.properties];
@@ -410,7 +431,7 @@ const CreateEditTripReport = () => {
                             <div className="row">
                                 <div className="input-field col s12 l8 offset-l2 center">
                                     <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                        hiking
+                                        person_add
                                     </span>
                                     <input
                                         type="text"
@@ -419,13 +440,32 @@ const CreateEditTripReport = () => {
                                         placeholder="Search to add a traveler"
                                         value={travelerSearchText}
                                         onChange={handleUserSearchTextChange}
+                                        onBlur={(e) => {
+                                            // First, check if suggestionsRef.current exists to avoid the null reference error
+                                            if (suggestionsRef.current && e.relatedTarget) {
+                                                // Then, check if the relatedTarget is not within the suggestions list
+                                                if (!suggestionsRef.current.contains(e.relatedTarget)) {
+                                                    setShowTravelerSuggestions(false);
+                                                }
+                                            } else {
+                                                // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
+                                                setShowTravelerSuggestions(false);
+                                            }
+                                            // handlePropertyNameBlur();
+                                        }}
+                                        onFocus={() => setShowTravelerSuggestions(true)}
                                         className="search-input"
                                         autoComplete='off'
                                     />
-                                    {filteredUserOptions.length > 0 && (
-                                        <ul className="suggestions-list">
+                                    {showTravelerSuggestions && filteredUserOptions.length > 0 && (
+                                        <ul className="suggestions-list" ref={suggestionsRef}>
                                             {filteredUserOptions.map(user => (
-                                                <li key={user.id} onClick={() => handleUserSelect(user)}>
+                                                <li
+                                                    key={user.id}
+                                                    onClick={() => handleUserSelect(user)}
+                                                    tabIndex="0"
+                                                    className="suggestion-item"
+                                                >
                                                     {user.email}
                                                 </li>
                                             ))}
@@ -512,9 +552,13 @@ const CreateEditTripReport = () => {
                                     </ul>
                                 </div>
                                 <CommentInput
-                                    item="Important notes"
+                                    key="document-updates"
+                                    item="document_updates"
                                     placeholder="Document updates"
+                                    comment={formData.documentUpdates}
+                                    onCommentChange={(comment) => handleDocumentCommentChange(comment)}
                                 />
+                                <h4 className="center report-title">Properties</h4>
                                 {formData.properties.map((property, index) => {
                                     const propertyHasAnimals = hasAnimals(property);
                                     return (
@@ -586,11 +630,6 @@ const CreateEditTripReport = () => {
                                                         styles={{
                                                             control: (provided, state) => ({
                                                                 ...provided,
-                                                                // borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided.borderColor,
-                                                                // '&:hover': {
-                                                                //     borderColor: validationErrors?.[index]?.property ? '#d1685d' : provided['&:hover'].borderColor,
-                                                                // },
-                                                                // boxShadow: state.isFocused ? (validationErrors?.[index]?.property ? '0 0 0 1px #d1685d' : provided.boxShadow) : 'none',
                                                             }),
                                                             option: (provided, state) => ({
                                                                 ...provided,
@@ -794,7 +833,7 @@ const CreateEditTripReport = () => {
                                                         <CommentInput
                                                             key={`${index}-attribute-updates`}
                                                             item="attribute_updates"
-                                                            placeholder="Please explain which attributes need updates. NOTE: We could also put yes/no toggles in a card here instead."
+                                                            placeholder="Please explain which attributes need updates."
                                                             comment={property.attribute_updates}
                                                             onCommentChange={(comment) => handleCommentChange(comment, 'attribute_updates', index)}
                                                         />
@@ -810,21 +849,21 @@ const CreateEditTripReport = () => {
                                                     className="rating-box"
                                                 >
                                                     <RatingSelect
-                                                        key={`${index}-accommodation`}
+                                                        keyId={`${index}-accommodation`}
                                                         item="Accommodation"
                                                         icon="hotel"
                                                         rating={property.accommodation_rating}
                                                         onRatingChange={(rating) => handleRatingChange(rating, 'accommodation', index)}
                                                     />
                                                     <RatingSelect
-                                                        key={`${index}-service`}
+                                                        keyId={`${index}-service`}
                                                         item="Service"
                                                         icon="concierge"
                                                         rating={property.service_rating}
                                                         onRatingChange={(rating) => handleRatingChange(rating, 'service', index)}
                                                     />
                                                     <RatingSelect
-                                                        key={`${index}-food`}
+                                                        keyId={`${index}-food`}
                                                         item="Food"
                                                         icon="restaurant"
                                                         rating={property.food_rating}
@@ -832,7 +871,7 @@ const CreateEditTripReport = () => {
                                                     />
                                                     {propertyHasAnimals &&
                                                         <RatingSelect
-                                                            key={`${index}-guide-vehicle`}
+                                                            keyId={`${index}-guide-vehicle`}
                                                             item="Guide/Vehicle"
                                                             icon="airport_shuttle"
                                                             rating={property.guide_rating}
@@ -840,7 +879,7 @@ const CreateEditTripReport = () => {
                                                         />
                                                     }
                                                     <RatingSelect
-                                                        key={`${index}-overall`}
+                                                        keyId={`${index}-overall`}
                                                         item="Overall"
                                                         icon="favorite"
                                                         rating={property.overall_rating}
@@ -1052,75 +1091,145 @@ const CreateEditTripReport = () => {
                                                     onCommentChange={(comment) => handleCommentChange(comment, 'insider', index)}
                                                 />
                                             </div>
-                                            <div className="container center">
-                                                <p className="trip-report-direction center text-bold">
-                                                    Add any activities/restaurants from this segment:
-                                                </p>
-                                                {property.activities.map((activity, activityIndex) => {
-                                                    console.log(activity);
-                                                    return (
-                                                        <div key={activityIndex} className="card potential-trip-card tb-grey lighten-4">
-                                                            <div className="card-content">
-                                                                <div className="row container" style={{ width: '80%'}}>
-                                                                    <div className="col s11">
-                                                                        <input
-                                                                            type="text"
-                                                                            id="name"
-                                                                            value={activity.name}
-                                                                            onChange={handleActivityNameChange(index, activityIndex)}
-                                                                            placeholder="Activity/restaurant name"
-                                                                            style={{ marginRight: '20px', flexGrow: '1' }}
-                                                                            className="input-placeholder-dark"
-                                                                            autoComplete="off"
-                                                                        />
-                                                                    </div>
-                                                                    <div className="col s1">
-                                                                        <button
-                                                                            className="btn-floating btn-small waves-effect waves-light error-red"
-                                                                            onClick={() => removeActivity(index, activityIndex)}
-                                                                        >
-                                                                            x
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                                <RatingSelect
-                                                                    key={`${index}-${activityIndex}-rating`}
-                                                                    item="Rating"
-                                                                    icon="star"
-                                                                    rating={activity.rating}
-                                                                    onRatingChange={(rating) => handleActivityRatingChange(rating, index, activityIndex)}
-                                                                />
-                                                                <CommentInput
-                                                                    key={`${index}-${activityIndex}-comment`}
-                                                                    item="comment"
-                                                                    placeholder="Comments on your experience at this activity."
-                                                                    icon="dinner_dining"
-                                                                    comment={activity.comments}
-                                                                    onCommentChange={(comment) => handleActivityCommentChange(comment, index, activityIndex)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                                <div className="row">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {addActivity(index)}}
-                                                        className="btn tb-grey"
-                                                    >
-                                                        + Activity / Restaurant
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            
                                         </>
                                         }  
                                     </div>
                                     );
                                 })}
-                                <div className="row" style={{ marginTop: '60px' }}>
-                                    <button type="button" onClick={addAccommodation} className="btn tb-teal darken-1">
-                                        Add Property
+                                <div className="row center" style={{ marginTop: '20px', marginBottom: '50px' }}>
+                                    <button type="button" onClick={addAccommodation} className="btn tb-grey">
+                                        + Property
                                     </button>
+                                </div>
+                                <h4 className="center report-title">Activities</h4>
+                                <div className="container center">
+                                    {formData.activities.map((activity, index) => {
+                                        // console.log(activity);
+                                        return (
+                                            <div key={index} className="card potential-trip-card tb-grey lighten-4">
+                                                <div className="card-content">
+                                                    <div className="row container" style={{ width: '80%'}}>
+                                                        <div className="col s11">
+                                                            <input
+                                                                type="text"
+                                                                id="name"
+                                                                value={activity.name}
+                                                                onChange={handleActivityNameChange(index)}
+                                                                placeholder="Activity/restaurant name"
+                                                                style={{ marginRight: '20px', flexGrow: '1' }}
+                                                                className="input-placeholder-dark"
+                                                                autoComplete="off"
+                                                            />
+                                                        </div>
+                                                        <div className="col s1">
+                                                            <button
+                                                                className="btn-floating btn-small waves-effect waves-light error-red"
+                                                                onClick={() => removeActivity(index)}
+                                                            >
+                                                                x
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row">
+                                                        <RatingSelect
+                                                            keyId={`activity-${index}-rating`}
+                                                            item="Rating"
+                                                            icon="star"
+                                                            rating={activity.rating}
+                                                            onRatingChange={(rating) => handleActivityRatingChange(rating, index)}
+                                                        />
+                                                    </div>
+                                                    <div className="row">
+                                                        <div className="col s6">
+                                                            <Select
+                                                                placeholder="Select activity type"
+                                                                value={activity.type}
+                                                                onChange={handleActivityTypeChange(index)}
+                                                                options={[
+                                                                    { label: "Restaurant", value: "restaurant" },
+                                                                    { label: "Activity", value: "activity" }
+                                                                ]}
+                                                                classNamePrefix="select"
+                                                                styles={{
+                                                                    control: (provided, state) => ({
+                                                                        ...provided,
+                                                                    }),
+                                                                    option: (provided, state) => ({
+                                                                        ...provided,
+                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                        backgroundColor: state.isSelected
+                                                                            ? '#0e9bac' // Background color for selected options
+                                                                            : state.isFocused
+                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                : '#ffffff', // Default background color for other states
+                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                        },
+                                                                    }),
+                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                }}
+                                                                menuPortalTarget={document.body}
+                                                                isClearable
+                                                            />
+                                                        </div>
+                                                        <div className="col s6">
+                                                            <Select
+                                                                placeholder="Select property"
+                                                                inputId="property_select"
+                                                                value={locationOptions?.find(prop => prop.value === activity.location) || ''}
+                                                                onChange={(selectedOption) => handleActivityLocationChange(index, selectedOption)}
+                                                                options={locationOptions}
+                                                                classNamePrefix="select"
+                                                                styles={{
+                                                                    control: (provided, state) => ({
+                                                                        ...provided,
+                                                                    }),
+                                                                    option: (provided, state) => ({
+                                                                        ...provided,
+                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                        backgroundColor: state.isSelected
+                                                                            ? '#0e9bac' // Background color for selected options
+                                                                            : state.isFocused
+                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                : '#ffffff', // Default background color for other states
+                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                        },
+                                                                    }),
+                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                }}
+                                                                menuPortalTarget={document.body}
+                                                                isClearable
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="row">
+                                                        <CommentInput
+                                                            key={`activity-${index}-comment`}
+                                                            item="comment"
+                                                            placeholder="Comments on your experience at this activity."
+                                                            icon="dinner_dining"
+                                                            comment={activity.comments}
+                                                            onCommentChange={(comment) => handleActivityCommentChange(comment, index)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className="row">
+                                        <button
+                                            type="button"
+                                            onClick={() => {addActivity()}}
+                                            className="btn tb-grey"
+                                            style={{ marginBottom: '50px'}}
+                                        >
+                                            + Activity / Restaurant
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="modal-footer center" style={{ marginBottom: '20px', zIndex: '-1' }}>
                                     <div>

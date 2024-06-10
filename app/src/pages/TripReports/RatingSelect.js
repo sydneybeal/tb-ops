@@ -4,7 +4,7 @@ import Navbar from '../../components/Navbar';
 import ReactDatePicker from 'react-datepicker';
 import Select from 'react-select';
 
-const RatingSelect = ({ item, icon, rating, onRatingChange }) => {
+const RatingSelect = ({ keyId, item, icon, rating, onRatingChange }) => {
     const handleChange = (e) => {
         onRatingChange((e.target.value));
     };
@@ -19,10 +19,10 @@ const RatingSelect = ({ item, icon, rating, onRatingChange }) => {
                     {item}
                 </div>
                 {['n/a', '1', '2', '3', '4', '5'].map((rate) => (
-                    <div className="col s2 l1" key={rate}>
+                    <div className="col s2 l1" key={`${keyId}-${rate}`}>
                         <label>
                             <input
-                                name={`${item}-rating`}
+                                name={`${keyId}-rating`}
                                 type="radio"
                                 value={rate}
                                 checked={rating === rate}
