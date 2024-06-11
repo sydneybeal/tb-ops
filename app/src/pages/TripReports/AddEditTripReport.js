@@ -1,19 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
 import RatingSelect from './RatingSelect';
 import CommentInput from './CommentInput';
+import SaveModal from './SaveModal';
 import AttributeChip from '../PropertyDetails/AttributeChip';
 import ReactDatePicker from 'react-datepicker';
 import Select from 'react-select';
 import moment from 'moment';
+import M from 'materialize-css';
+
+// Utility function to debounce any function
+const useDebouncedEffect = (effect, deps, delay) => {
+    const callback = useCallback(effect, deps);
+  
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        callback();
+      }, delay);
+  
+      return () => clearTimeout(handler);
+    }, [callback, delay]);
+  };
 
 const CreateEditTripReport = () => {
     const { userDetails } = useAuth();
     const { trip_report_id } = useParams(); // Get the id from URL params
+    const [showSaveModal, setShowSaveModal] = useState(false);
     const [propertyOptions, setPropertyOptions] = useState();
     const [locationOptions, setLocationOptions] = useState();
+    const [portfolioOptions, setPortfolioOptions] = useState();
+    const [countryOptions, setCountryOptions] = useState();
     const [userOptions, setUserOptions] = useState();
     const [filteredUserOptions, setFilteredUserOptions] = useState([]);
     const [showTravelerSuggestions, setShowTravelerSuggestions] = useState(false);
@@ -28,8 +46,9 @@ const CreateEditTripReport = () => {
                 site_inspection_only: false,
                 date_out: '',
                 property_id: '',
-                portfolio: '',
-                country: '',
+                property_name: '',
+                portfolio_name: '',
+                country_name: '',
                 property_type: '',
                 core_destination_name: '',
                 accommodation_rating: '',
@@ -45,6 +64,16 @@ const CreateEditTripReport = () => {
                 clientele_comments: '',
                 pairing_comments: '',
                 insider_comments: '',
+                // allow to enter new property if it doesn't exist
+                is_new_property: false,
+                new_property_name: '',
+                new_property_portfolio_id: '',
+                new_property_portfolio_name: '',
+                new_property_country_id: '',
+                new_property_country_name: '',
+                new_property_location: '',
+                new_property_core_destination_id: '',
+                new_property_core_destination_name: '',
             }
         ],
         activities: [
@@ -56,6 +85,7 @@ const CreateEditTripReport = () => {
             }
         ]
     });
+    const [hasChanged, setHasChanged] = useState(false);
     const [showHelpers, setShowHelpers] = useState(
         formData.properties.map(() => ({
             animal_viewing_comments: true,
@@ -67,8 +97,40 @@ const CreateEditTripReport = () => {
             attribute_updates: false,
         }))
     );
-    // TODO make report title automatic for the properties/countries,
-    // dates selected, and traveler names
+    const toggleModal = () => {
+        setShowSaveModal(!showSaveModal);
+        document.body.style.overflow = '';
+    };
+
+    const handleSaveAsDraft = () => {
+        M.toast({
+            html: 'Trip report has been saved to your drafts.',
+            displayLength: 3000,
+            classes: 'success-green',
+        });
+        // Implement saving logic here
+        const payloadToSubmit = {
+            ...formData,
+            status: 'draft'
+        }
+        console.log(JSON.stringify(payloadToSubmit));
+        setShowSaveModal(false);
+    };
+
+    const handleSaveAsFinal = () => {
+        M.toast({
+            html: 'Trip report has been published.',
+            displayLength: 3000,
+            classes: 'success-green',
+        });
+        // Implement saving logic here
+        const payloadToSubmit = {
+            ...formData,
+            status: 'final'
+        }
+        console.log(JSON.stringify(payloadToSubmit));
+        setShowSaveModal(false);
+    };
 
     const addAccommodation = () => {
         const newProperty = {
@@ -76,7 +138,9 @@ const CreateEditTripReport = () => {
             site_inspection_only: false,
             date_out: '',
             property_id: '',
-            portfolio: '',
+            property_name: '',
+            portfolio_name: '',
+            country_name: '',
             country: '',
             core_destination_name: '',
             property_type: '',
@@ -93,12 +157,54 @@ const CreateEditTripReport = () => {
             clientele_comments: '',
             pairing_comments: '',
             insider_comments: '',
+            // allow to enter new property if it doesn't exist
+            is_new_property: false,
+            new_property_name: '',
+            new_property_portfolio_id: '',
+            new_property_portfolio_name: '',
+            new_property_country_id: '',
+            new_property_country_name: '',
+            new_property_location: '',
+            new_property_core_destination_id: '',
+            new_property_core_destination_name: '',
         };
         setFormData({
             ...formData,
             properties: [...formData.properties, newProperty]
         });
+        setShowHelpers(prevShowHelpers => [
+            ...prevShowHelpers,
+            {
+                animal_viewing_comments: true,
+                seasonality_comments: true,
+                clientele_comments: true,
+                pairing_comments: true,
+                insider_comments: true,
+                guiding_comments: true,
+                attribute_updates: false,
+            }
+        ]);
+        setHasChanged(true);
     };
+
+    const saveDraft = useCallback(() => {
+        if (hasChanged) {
+            // Perform your save operation here
+            M.toast({
+                html: 'Draft saved.',
+                displayLength: 1000,
+                classes: 'success-green',
+            });
+        }
+    }, [formData, hasChanged]);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            saveDraft();
+        }, 2000); // Debounce time
+
+        return () => clearTimeout(handler);
+    }, [saveDraft]);
 
     const addActivity = () => {
         const newActivity = {
@@ -112,7 +218,13 @@ const CreateEditTripReport = () => {
             ...formData,
             activities: [...formData.activities, newActivity]
         });
+        setHasChanged(true);
     };
+
+    const activityOptions = [
+        { label: "Restaurant", value: "restaurant" },
+        { label: "Activity", value: "activity" }
+    ];
 
     const handleActivityNameChange = (activityIndex) => (e) => {
         const newActivities = [...formData.activities];
@@ -121,6 +233,7 @@ const CreateEditTripReport = () => {
             ...formData,
             activities: newActivities
         });
+        setHasChanged(true);
     };
     const handleActivityLocationChange = (activityIndex, selectedOption) => {
         const newActivities = [...formData.activities];
@@ -129,16 +242,18 @@ const CreateEditTripReport = () => {
             ...formData,
             activities: newActivities
         });
+        setHasChanged(true);
     };
     
 
-    const handleActivityTypeChange = (activityIndex) => (value) => {
+    const handleActivityTypeChange = (activityIndex) => (selectedOption) => {
         const newActivities = [...formData.activities];
-        newActivities[activityIndex].type = value; // Directly use the passed value
+        newActivities[activityIndex].type = selectedOption.value; // Directly use the passed value
         setFormData({
             ...formData,
             activities: newActivities
         });
+        setHasChanged(true);
     };
 
     const handleActivityRatingChange = (rating, activityIndex) => {
@@ -148,6 +263,7 @@ const CreateEditTripReport = () => {
             ...formData,
             activities: newActivities
         });
+        setHasChanged(true);
     };
 
     const handleActivityCommentChange = (comment, activityIndex) => {
@@ -157,6 +273,7 @@ const CreateEditTripReport = () => {
             ...formData,
             activities: newActivities
         });
+        setHasChanged(true);
     };
 
     const removeActivity = (activityIndex) => {
@@ -166,6 +283,7 @@ const CreateEditTripReport = () => {
                 ...formData,
                 activities: formData.activities.filter((_, i) => i !== activityIndex)
             });
+            setHasChanged(true);
         }
     };
 
@@ -176,6 +294,8 @@ const CreateEditTripReport = () => {
                 ...formData,
                 properties: formData.properties.filter((_, i) => i !== index)
             });
+            setShowHelpers(prevShowHelpers => prevShowHelpers.filter((_, i) => i !== index));
+            setHasChanged(true);
         }
     };
 
@@ -209,24 +329,44 @@ const CreateEditTripReport = () => {
                     is_child_friendly: property.is_child_friendly,
                     is_handicap_accessible: property.is_handicap_accessible
                 }));
-                // formattedProperties.map((property) => {
-                //     if (property.name === "MalaMala Camp") {
-                //         console.log(property);
-                //     }
-                // });
                 setPropertyOptions(formattedProperties);
 
+                // set portfolio options for usage in dropdowns
+                const portfolioStrings = new Set(data
+                    .filter(property => property.portfolio_name && property.portfolio_id)
+                    .map(property => JSON.stringify({
+                        label: property.portfolio_name,
+                        value: property.portfolio_id
+                    }))
+                );
+                const uniquePortfolios = Array.from(portfolioStrings).map(string => JSON.parse(string));
+                setPortfolioOptions(uniquePortfolios);
+
+                // set location options for usage in dropdowns
                 const locationStrings = new Set(data
                     .filter(property => property.location && property.country_name)  // Ensure both location and country_name are truthy
                     .map(property => JSON.stringify({
                         label: `${property.location} (${property.country_name})`,
-                        value: property.location
+                        value: property.location,
+                        country_name: property.country_name,
+                        country_id: property.country_id,
                     }))
-                  );
-                
+                );
                 const uniqueLocations = Array.from(locationStrings).map(string => JSON.parse(string));
-                  
                 setLocationOptions(uniqueLocations);
+
+                // set country options for usage in dropdowns
+                const countryStrings = new Set(data
+                    .filter(property => property.country_id && property.country_name)
+                    .map(property => JSON.stringify({
+                        label: property.country_name,
+                        value: property.country_id,
+                        core_destination_id: property.core_destination_id,
+                        core_destination_name: property.core_destination_name
+                    }))
+                );
+                const uniqueCountries = Array.from(countryStrings).map(string => JSON.parse(string));
+                setCountryOptions(uniqueCountries);
             })
             .catch((err) => console.error(err));
         
@@ -264,6 +404,7 @@ const CreateEditTripReport = () => {
             ...formData,
             properties: updatedProperties
         });
+        setHasChanged(true);
     };
 
     const handleUserSearchTextChange = (e) => {
@@ -285,6 +426,7 @@ const CreateEditTripReport = () => {
                 ...prevData,
                 travelerNames: [...prevData.travelerNames, user]
             }));
+            setHasChanged(true);
         }
         setTravelerSearchText('');
         setFilteredUserOptions([]);
@@ -296,9 +438,14 @@ const CreateEditTripReport = () => {
             ...prevData,
             travelerNames: prevData.travelerNames.filter(traveler => traveler.id !== userId)
         }));
+        setHasChanged(true);
     };
 
     const hasAnimals = (property) => {
+        // Allow all answers for newly entered properties
+        if (property.is_new_property) {
+            return true;
+        }
         // Check if core_destination is Africa
         const isAfrica = property.core_destination_name === 'Africa';
         // Check if property_type is "standard accommodation" or "luxury accommodation"
@@ -315,6 +462,7 @@ const CreateEditTripReport = () => {
                 return {
                     ...property,
                     'property_id': selectedOption ? selectedOption.value : '',
+                    'property_name': selectedOption ? selectedOption.name : '',
                     'portfolio_name': selectedOption ? selectedOption.portfolio_name : '',
                     'country_name': selectedOption ? selectedOption.country_name : '',
                     'core_destination_name': selectedOption ? selectedOption.core_destination_name : '',
@@ -339,6 +487,7 @@ const CreateEditTripReport = () => {
             ...formData,
             properties: updatedProperties
         });
+        setHasChanged(true);
     };
 
     const handleRatingChange = (rating, item, index) => {
@@ -350,6 +499,7 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
+        setHasChanged(true);
     };
 
     const handleCommentChange = (comment, item, index) => {
@@ -361,6 +511,7 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
+        setHasChanged(true);
     };
 
     const handleDocumentCommentChange = (comment) => {
@@ -370,6 +521,7 @@ const CreateEditTripReport = () => {
                 documentUpdates: comment
             };
         });
+        setHasChanged(true);
     };
 
     const handleCheckboxChange = (item, index) => {
@@ -381,10 +533,35 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
+        setHasChanged(true);
     };
 
+    const handlePropertyEntryChange = (index, value) => {
+        setFormData((prevState) => {
+            const newProperties = [...prevState.properties];
+            newProperties[index].is_new_property = value;
+            return {
+                ...prevState,
+                properties: newProperties
+            };
+        });
+        setHasChanged(true);
+    };
+
+    const handlePropertyItemChange = (index, item, value) => {
+        setFormData((prevState) => {
+            const newProperties = [...prevState.properties];
+            newProperties[index][item] = value;
+            return {
+                ...prevState,
+                properties: newProperties
+            };
+        });
+        setHasChanged(true);
+    }
+
     const toggleHelpers = (item, index) => {
-        setShowHelpers((prevShowHelpers) => {
+        setShowHelpers(prevShowHelpers => {
             const newShowHelpers = [...prevShowHelpers];
             newShowHelpers[index] = {
                 ...newShowHelpers[index],
@@ -424,9 +601,19 @@ const CreateEditTripReport = () => {
             </header>
             <main className="tb-grey lighten-6">
                 <div className="container" style={{ width: '80%', paddingBottom: '100px' }}>
-                    <h4 className="center report-title">{trip_report_id ? 'Update' : 'New'} Trip Report</h4>
+                    {showSaveModal && (
+                        <SaveModal
+                            isOpen={showSaveModal}
+                            onClose={toggleModal}
+                            formData={formData}
+                            onSaveAsDraft={handleSaveAsDraft}
+                            onSaveAsFinal={handleSaveAsFinal}
+                        />
+                    )}
                     <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                         <div className="card-content">
+
+                            <h3 className="center report-title">{trip_report_id ? 'Update' : 'New'} Trip Report</h3>
                             <form onSubmit={handleSubmit}>
                             <div className="row">
                                 <div className="input-field col s12 l8 offset-l2 center">
@@ -507,38 +694,8 @@ const CreateEditTripReport = () => {
                                         </li>
                                     </ul>
                                 </div>
-                                {/* <span className="tb-md-black-text">
-                                    If multiple Travel Beyond employees are traveling together, each employee should review a
-                                    property in a rotating order so that similar reviews are not written for the same property.
-                                    The employee(s) who do not write the review should read through the review and only add to it if
-                                    they have a differing opinion and/or feel something important was omitted.
-                                </span> */}
                             </div>
                             )}
-                                {/* <div className="row">
-                                    <div className="input-field col s12 l8 offset-l2 center">
-                                        <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                            hiking
-                                        </span>
-                                        <input
-                                            type="text"
-                                            name="travelerNames"
-                                            id="travelerNames"
-                                            placeholder="Traveler Names"
-                                            value={formData.travelerNames}
-                                            onChange={handleTextChange}
-                                            className="search-input"
-                                            autoComplete='off'
-                                        />
-                                        <span
-                                            className="grey-text text-darken-1"
-                                        >
-                                            Traveler Names
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                </div> */}
                                 <div className="tb-teal-text text-darken-1 text-bold" style={{ paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px'}}>
                                     <span className="material-symbols-outlined">
                                         task
@@ -562,7 +719,7 @@ const CreateEditTripReport = () => {
                                 {formData.properties.map((property, index) => {
                                     const propertyHasAnimals = hasAnimals(property);
                                     return (
-                                    <div key={index} style={{ marginTop: '60px' }}>
+                                    <div key={index} style={{ marginTop: '40px' }}>
                                         <div className="row">
                                             <div className="col s11">
                                                 <div
@@ -571,36 +728,36 @@ const CreateEditTripReport = () => {
                                                 >
                                                     {index + 1}
                                                 </div>
-                                                {property.portfolio_name &&
+                                                {(property.portfolio_name || property.new_property_portfolio_name) &&
                                                     <div className="chip tb-teal lighten-3">
                                                         <span className="text-bold">
                                                             Portfolio:&nbsp;
                                                         </span>
-                                                            {property.portfolio_name}
+                                                            {property.portfolio_name || property.new_property_portfolio_name}
                                                         &nbsp;
                                                         <span className="material-symbols-outlined">
                                                             store
                                                         </span>
                                                     </div>
                                                 }
-                                                {property.country_name &&
+                                                {(property.country_name || property.new_property_country_name) &&
                                                     <div className="chip tb-grey lighten-3">
                                                         <span className="text-bold">
                                                             Country:&nbsp;
                                                         </span>
-                                                            {property.country_name}
+                                                            {property.country_name || property.new_property_country_name}
                                                         &nbsp;
                                                         <span className="material-symbols-outlined">
                                                             globe
                                                         </span>
                                                     </div>
                                                 }
-                                                {property.core_destination_name &&
+                                                {(property.core_destination_name || property.new_property_core_destination_name) &&
                                                     <div className="chip tb-grey lighten-3">
                                                         <span className="text-bold">
                                                             Core Destination:&nbsp;
                                                         </span>
-                                                            {property.core_destination_name}
+                                                            {property.core_destination_name || property.new_property_core_destination_name}
                                                         &nbsp;
                                                         <span className="material-symbols-outlined">
                                                             explore
@@ -620,49 +777,268 @@ const CreateEditTripReport = () => {
                                         <div className="row">
                                             <div className="col s12 l8">
                                                 <div className="row">
-                                                    <Select
-                                                        placeholder="Select property"
-                                                        inputId="property_select"
-                                                        value={propertyOptions?.find(prop => prop.value === property.property_id) || ''}
-                                                        onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
-                                                        options={propertyOptions}
-                                                        classNamePrefix="select"
-                                                        styles={{
-                                                            control: (provided, state) => ({
-                                                                ...provided,
-                                                            }),
-                                                            option: (provided, state) => ({
-                                                                ...provided,
-                                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                                backgroundColor: state.isSelected
-                                                                    ? '#0e9bac' // Background color for selected options
-                                                                    : state.isFocused
-                                                                        ? '#e8e5e1' // Background color for focused (including hovered) options
-                                                                        : '#ffffff', // Default background color for other states
-                                                                color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
-                                                                ':active': { // This targets the state when an option is being clicked or selected with the keyboard
-                                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
-                                                                },
-                                                            }),
-                                                            menuPortal: base => ({ ...base, zIndex: 9999 })
-                                                        }}
-                                                        menuPortalTarget={document.body}
-                                                        isClearable
-                                                    />
-                                                    <label className="tb-grey-text text-darken-1" htmlFor="property_select">
-                                                        <span className="material-symbols-outlined">
-                                                            hotel
-                                                        </span>
-                                                        Property Name
-                                                    </label>
+                                                    {(!property.property_id && !(property.new_property_name)) && (
+                                                        <div className="row" style={{ marginLeft: '5px'}}>
+                                                            <div>
+                                                                <em className="tb-grey-text">
+                                                                    Please select an&nbsp;
+                                                                    <a
+                                                                        className="text-bold new-existing-prop tb-teal-text text-darken-1"
+                                                                        href="/#"
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            handlePropertyEntryChange(index, false);
+                                                                        }}
+                                                                    >
+                                                                        <span className="material-symbols-outlined">
+                                                                            manage_search
+                                                                        </span>
+                                                                        Existing Property
+                                                                    </a>
+                                                                    &nbsp;or&nbsp;
+
+                                                                    <a
+                                                                        className="text-bold new-existing-prop success-green-text"
+                                                                        href="/#"
+                                                                        onClick={(e) => { e.preventDefault(); handlePropertyEntryChange(index, true); }}>
+                                                                        <span className="material-symbols-outlined">
+                                                                            add_circle
+                                                                        </span>
+                                                                        New Property
+                                                                    </a>
+                                                                </em>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {!property.is_new_property ? (
+                                                        <>
+                                                            <Select
+                                                                placeholder="Select property"
+                                                                inputId="property_select"
+                                                                value={propertyOptions?.find(prop => prop.value === property.property_id) || ''}
+                                                                onChange={(selectedOption) => handlePropertyChange(index, selectedOption)}
+                                                                options={propertyOptions}
+                                                                classNamePrefix="select"
+                                                                styles={{
+                                                                    control: (provided, state) => ({
+                                                                        ...provided,
+                                                                    }),
+                                                                    option: (provided, state) => ({
+                                                                        ...provided,
+                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                        backgroundColor: state.isSelected
+                                                                            ? '#0e9bac' // Background color for selected options
+                                                                            : state.isFocused
+                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                : '#ffffff', // Default background color for other states
+                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                        },
+                                                                    }),
+                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                }}
+                                                                menuPortalTarget={document.body}
+                                                                isClearable
+                                                            />
+                                                            <label className="tb-grey-text text-darken-1" htmlFor="property_select">
+                                                                <span className="material-symbols-outlined">
+                                                                    hotel
+                                                                </span>
+                                                                Property Name
+                                                            </label>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="card new-property-card tb-grey lighten-4">
+                                                                <div className="card-content">
+                                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <em className="text-bold tb-grey-text text-darken-3" style={{ marginBottom: '10px'}}>
+                                                                            Enter details known about the property...&nbsp;
+                                                                        </em>
+                                                                        <a
+                                                                            className="text-bold new-existing-prop error-red-text"
+                                                                            href="/#"
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                handlePropertyEntryChange(index, false);
+                                                                                handlePropertyItemChange(index, 'new_property_name', '');
+                                                                                handlePropertyItemChange(index, 'new_property_core_destination_name', '');
+                                                                                handlePropertyItemChange(index, 'new_property_core_destination_id', '');
+                                                                                handlePropertyItemChange(index, 'new_property_portfolio_name', '');
+                                                                                handlePropertyItemChange(index, 'new_property_portfolio_id', '');
+                                                                                handlePropertyItemChange(index, 'new_property_country_name', '');
+                                                                                handlePropertyItemChange(index, 'new_property_country_id', '');
+                                                                                handlePropertyItemChange(index, 'new_property_location', '');
+                                                                            }}
+                                                                        >
+                                                                            Cancel
+                                                                            <span className="material-symbols-outlined">
+                                                                                close
+                                                                            </span>
+                                                                        </a>
+                                                                    </div>
+                                                                    <div className="row">
+                                                                        <div className="col s6">
+                                                                            <input
+                                                                                type="text"
+                                                                                id={`new_portfolio_name-${index}`}
+                                                                                value={property.new_property_name || ''}
+                                                                                onChange={(e) => handlePropertyItemChange(index, 'new_property_name', e.target.value)}
+                                                                                placeholder="Property Name"
+                                                                                style={{ marginRight: '10px', flexGrow: '1' }}
+                                                                                className="input-placeholder-dark"
+                                                                            />
+                                                                            <label htmlFor="new_property_name" className="tb-grey-text text-darken-3">
+                                                                                <span className="material-symbols-outlined">
+                                                                                    hotel
+                                                                                </span>
+                                                                                Property Name
+                                                                            </label>
+                                                                        </div>
+                                                                        <div
+                                                                            className="col s6"
+                                                                            style={{ position: 'relative' }}
+                                                                        >
+                                                                            <Select
+                                                                                placeholder="Select Portfolio"
+                                                                                id={`new_portfolio_select-${index}`}
+                                                                                value={portfolioOptions.find(cons => cons.value === property.new_property_portfolio_id) || ''}
+                                                                                onChange={(selectedOption) => {
+                                                                                    handlePropertyItemChange(index, 'new_property_portfolio_id', selectedOption ? selectedOption.value : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_portfolio_name', selectedOption ? selectedOption.label : '');
+                                                                                }}
+                                                                                options={portfolioOptions}
+                                                                                isClearable
+                                                                                style={{ flexGrow: '1' }}
+                                                                                classNamePrefix="select"
+                                                                                styles={{
+                                                                                    control: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                    }),
+                                                                                    option: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                                        backgroundColor: state.isSelected
+                                                                                            ? '#0e9bac' // Background color for selected options
+                                                                                            : state.isFocused
+                                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                                : '#ffffff', // Default background color for other states
+                                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                                        },
+                                                                                    }),
+                                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                                }}
+                                                                                menuPortalTarget={document.body}
+                                                                            />
+                                                                            <label htmlFor="portfolio_select" className="tb-grey-text text-darken-3">
+                                                                                <span className="material-symbols-outlined">
+                                                                                    store
+                                                                                </span>
+                                                                                Portfolio Name
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="row">
+                                                                    <div className="col s6">
+                                                                            <Select
+                                                                                placeholder="Select location"
+                                                                                inputId="property_select"
+                                                                                value={locationOptions?.find(prop => prop.value === property.new_property_location) || ''}
+                                                                                onChange={(selectedOption) => {
+                                                                                    handlePropertyItemChange(index, 'new_property_location', selectedOption ? selectedOption.value : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_country_name', selectedOption ? selectedOption.country_name : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_country_id', selectedOption ? selectedOption.country_id : '');
+                                                                                }}
+                                                                                options={locationOptions}
+                                                                                classNamePrefix="select"
+                                                                                styles={{
+                                                                                    control: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                    }),
+                                                                                    option: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                                        backgroundColor: state.isSelected
+                                                                                            ? '#0e9bac' // Background color for selected options
+                                                                                            : state.isFocused
+                                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                                : '#ffffff', // Default background color for other states
+                                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                                        },
+                                                                                    }),
+                                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                                }}
+                                                                                menuPortalTarget={document.body}
+                                                                                isClearable
+                                                                            />
+                                                                            <label htmlFor="portfolio_select" className="tb-grey-text text-darken-3">
+                                                                                <span className="material-symbols-outlined">
+                                                                                    near_me
+                                                                                </span>
+                                                                                Location
+                                                                            </label>
+                                                                        </div>
+                                                                        <div className="col s6">
+                                                                            <Select
+                                                                                placeholder="Select Country"
+                                                                                id={`new_portfolio_select-${index}`}
+                                                                                value={countryOptions.find(cons => cons.value === property.new_property_country_id) || ''}
+                                                                                onChange={(selectedOption) => {
+                                                                                    handlePropertyItemChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_country_name', selectedOption ? selectedOption.label : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_core_destination_name', selectedOption ? selectedOption.core_destination_name : '');
+                                                                                    handlePropertyItemChange(index, 'new_property_core_destination_id', selectedOption ? selectedOption.core_destination_id : '');
+                                                                                }}
+                                                                                options={countryOptions}
+                                                                                isClearable
+                                                                                style={{ flexGrow: '1' }}
+                                                                                classNamePrefix="select"
+                                                                                styles={{
+                                                                                    control: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                    }),
+                                                                                    option: (provided, state) => ({
+                                                                                        ...provided,
+                                                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                                                        backgroundColor: state.isSelected
+                                                                                            ? '#0e9bac' // Background color for selected options
+                                                                                            : state.isFocused
+                                                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                                                : '#ffffff', // Default background color for other states
+                                                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                                                        },
+                                                                                    }),
+                                                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                                                }}
+                                                                                menuPortalTarget={document.body}
+                                                                            />
+                                                                            <label htmlFor="new_country_select" className="tb-grey-text text-darken-3">
+                                                                                <span className="material-symbols-outlined">
+                                                                                    globe
+                                                                                </span>
+                                                                                Country Name
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="row">
-                                                    {property.location &&
+                                                    {(property.location || property.new_property_location) &&
                                                         <div className="chip tb-grey lighten-3">
                                                             <span className="text-bold">
                                                                 Location:&nbsp;
                                                             </span>
-                                                                {property.location}
+                                                                {property.location || property.new_property_location}
                                                             &nbsp;
                                                             <span className="material-symbols-outlined">
                                                                 near_me
@@ -758,7 +1134,7 @@ const CreateEditTripReport = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        {property.property_id &&
+                                        {(property.property_id || property.is_new_property) &&
                                         <>
                                             <div className="row">
                                                 <p className="trip-report-direction center text-bold">
@@ -767,48 +1143,48 @@ const CreateEditTripReport = () => {
                                                 <div className="col s12 prop-chips-container" style={{ paddingBottom: '20px', paddingTop: '10px' }}>
                                                     {propertyHasAnimals &&
                                                         <AttributeChip
-                                                            attribute={property.has_wifi_in_room}
+                                                            attribute={property.has_trackers || null}
                                                             icon='pets'
                                                             label='Trackers'
                                                         />
                                                     }
                                                     <AttributeChip
-                                                        attribute={property.has_wifi_in_room}
+                                                        attribute={property.has_wifi_in_room || null}
                                                         icon='wifi_home'
                                                         label='WiFi (Room)'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.has_wifi_in_common_areas}
+                                                        attribute={property.has_wifi_in_common_areas || null}
                                                         icon='wifi'
                                                         label='WiFi (Common Area)'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.has_hairdryers}
+                                                        attribute={property.has_hairdryers || null}
                                                         icon='self_care'
                                                         label='Hair Dryers'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.has_credit_card_tipping}
+                                                        attribute={property.has_credit_card_tipping || null}
                                                         icon='credit_card_heart'
                                                         label='Credit Card Tips'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.has_pool}
+                                                        attribute={property.has_pool || null}
                                                         icon='pool'
                                                         label='Pool'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.has_heated_pool}
+                                                        attribute={property.has_heated_pool || null}
                                                         icon='local_fire_department'
                                                         label='Heated Pool'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.is_child_friendly}
+                                                        attribute={property.is_child_friendly || null}
                                                         icon='family_restroom'
                                                         label='Child Friendly'
                                                     />
                                                     <AttributeChip
-                                                        attribute={property.is_handicap_accessible}
+                                                        attribute={property.is_handicap_accessible || null}
                                                         icon='accessible'
                                                         label='Accessible'
                                                     />
@@ -1102,7 +1478,7 @@ const CreateEditTripReport = () => {
                                         + Property
                                     </button>
                                 </div>
-                                <h4 className="center report-title">Activities</h4>
+                                <h4 className="center report-title" style={{ marginBottom: '40px' }}>Activities</h4>
                                 <div className="container center">
                                     {formData.activities.map((activity, index) => {
                                         // console.log(activity);
@@ -1132,24 +1508,12 @@ const CreateEditTripReport = () => {
                                                         </div>
                                                     </div>
                                                     <div className="row">
-                                                        <RatingSelect
-                                                            keyId={`activity-${index}-rating`}
-                                                            item="Rating"
-                                                            icon="star"
-                                                            rating={activity.rating}
-                                                            onRatingChange={(rating) => handleActivityRatingChange(rating, index)}
-                                                        />
-                                                    </div>
-                                                    <div className="row">
                                                         <div className="col s6">
                                                             <Select
                                                                 placeholder="Select activity type"
-                                                                value={activity.type}
+                                                                value={activityOptions?.find(prop => prop.value === activity.type) || ''}
                                                                 onChange={handleActivityTypeChange(index)}
-                                                                options={[
-                                                                    { label: "Restaurant", value: "restaurant" },
-                                                                    { label: "Activity", value: "activity" }
-                                                                ]}
+                                                                options={activityOptions}
                                                                 classNamePrefix="select"
                                                                 styles={{
                                                                     control: (provided, state) => ({
@@ -1176,7 +1540,7 @@ const CreateEditTripReport = () => {
                                                         </div>
                                                         <div className="col s6">
                                                             <Select
-                                                                placeholder="Select property"
+                                                                placeholder="Select location"
                                                                 inputId="property_select"
                                                                 value={locationOptions?.find(prop => prop.value === activity.location) || ''}
                                                                 onChange={(selectedOption) => handleActivityLocationChange(index, selectedOption)}
@@ -1205,6 +1569,15 @@ const CreateEditTripReport = () => {
                                                                 isClearable
                                                             />
                                                         </div>
+                                                    </div>
+                                                    <div className="row" style={{ marginBottom: '0px', marginTop: '40px'}}>
+                                                        <RatingSelect
+                                                            keyId={`activity-${index}-rating`}
+                                                            item="Rating"
+                                                            icon="star"
+                                                            rating={activity.rating}
+                                                            onRatingChange={(rating) => handleActivityRatingChange(rating, index)}
+                                                        />
                                                     </div>
                                                     <div className="row">
                                                         <CommentInput
@@ -1236,6 +1609,7 @@ const CreateEditTripReport = () => {
                                         <button
                                             className="btn tb-teal darken-3"
                                             type="submit"
+                                            onClick={toggleModal}
                                         >
                                             <span className="material-symbols-outlined">
                                                 save
