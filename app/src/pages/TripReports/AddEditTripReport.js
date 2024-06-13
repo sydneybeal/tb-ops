@@ -38,10 +38,11 @@ const CreateEditTripReport = () => {
     const suggestionsRef = useRef(null);
     const [travelerSearchText, setTravelerSearchText] = useState('');
     const [formData, setFormData] = useState({
-        travelerNames: [],
-        documentUpdates: '',
+        travelers: [],
+        document_updates: '',
         properties: [
             {
+                travelers: [],
                 date_in: '',
                 site_inspection_only: false,
                 date_out: '',
@@ -50,6 +51,7 @@ const CreateEditTripReport = () => {
                 portfolio_name: '',
                 country_name: '',
                 property_type: '',
+                attribute_updates_comments: '',
                 core_destination_name: '',
                 accommodation_rating: '',
                 service_rating: '',
@@ -78,6 +80,7 @@ const CreateEditTripReport = () => {
         ],
         activities: [
             {
+                travelers: [],
                 name: '',
                 rating: '',
                 comments: '',
@@ -102,6 +105,70 @@ const CreateEditTripReport = () => {
         document.body.style.overflow = '';
     };
 
+    function prepareFormDataForSubmission(formData, status) {
+        // Copy the formData to avoid direct mutation
+        const submissionData = { ...formData };
+      
+        // Update status
+        submissionData.status = status;
+      
+        // Filter travelers to keep necessary attributes
+        submissionData.travelers = submissionData.travelers.map(traveler => traveler.id);
+        
+        // Process each property
+        submissionData.properties = submissionData.properties.map(property => {
+          const filteredProperty = {
+            // Include only necessary fields
+            travelers: property.travelers,
+            date_in: property.date_in,
+            site_inspection_only: property.site_inspection_only,
+            date_out: property.date_out,
+            property_id: property.property_id,
+            attribute_updates: property.attribute_updates_comments,
+            accommodation_rating: property.accommodation_rating,
+            service_rating: property.service_rating,
+            food_rating: property.food_rating,
+            guide_rating: property.guide_rating,
+            overall_rating: property.overall_rating,
+            food_and_beverage_comments: property.food_and_beverage_comments,
+            management_comments: property.management_comments,
+            guiding_comments: property.guiding_comments,
+            animal_viewing_comments: property.animal_viewing_comments,
+            seasonality_comments: property.seasonality_comments,
+            clientele_comments: property.clientele_comments,
+            pairing_comments: property.pairing_comments,
+            insider_comments: property.insider_comments
+          };
+      
+          // Conditionally include new property fields if it is a new property
+          if (property.is_new_property) {
+            filteredProperty.new_property_name = property.new_property_name;
+            filteredProperty.new_property_portfolio_id = property.new_property_portfolio_id;
+            filteredProperty.new_property_portfolio_name = property.new_property_portfolio_name;
+            filteredProperty.new_property_country_id = property.new_property_country_id;
+            filteredProperty.new_property_country_name = property.new_property_country_name;
+            filteredProperty.new_property_location = property.new_property_location;
+            filteredProperty.new_property_core_destination_id = property.new_property_core_destination_id;
+            filteredProperty.new_property_core_destination_name = property.new_property_core_destination_name;
+          }
+      
+          return filteredProperty;
+        });
+      
+        // Keep activities as is, assuming you want to keep all data shown
+        submissionData.activities = submissionData.activities.map(activity => ({
+          name: activity.name,
+          rating: activity.rating,
+          comments: activity.comments,
+          type: activity.type,
+          location: activity.location
+        }));
+
+        submissionData.updated_by = userDetails.email || ''
+      
+        return submissionData;
+    }
+
     const handleSaveAsDraft = () => {
         M.toast({
             html: 'Trip report has been saved to your drafts.',
@@ -109,11 +176,8 @@ const CreateEditTripReport = () => {
             classes: 'success-green',
         });
         // Implement saving logic here
-        const payloadToSubmit = {
-            ...formData,
-            status: 'draft'
-        }
-        console.log(JSON.stringify(payloadToSubmit));
+        const preparedData = prepareFormDataForSubmission(formData, "draft");
+        console.log(JSON.stringify(preparedData));
         setShowSaveModal(false);
     };
 
@@ -124,16 +188,14 @@ const CreateEditTripReport = () => {
             classes: 'success-green',
         });
         // Implement saving logic here
-        const payloadToSubmit = {
-            ...formData,
-            status: 'final'
-        }
-        console.log(JSON.stringify(payloadToSubmit));
+        const preparedData = prepareFormDataForSubmission(formData, "final");
+        console.log(JSON.stringify(preparedData));
         setShowSaveModal(false);
     };
 
     const addAccommodation = () => {
         const newProperty = {
+            travelers: [],
             date_in: '',
             site_inspection_only: false,
             date_out: '',
@@ -141,8 +203,8 @@ const CreateEditTripReport = () => {
             property_name: '',
             portfolio_name: '',
             country_name: '',
-            country: '',
             core_destination_name: '',
+            attribute_updates: '',
             property_type: '',
             accommodation_rating: '',
             service_rating: '',
@@ -209,6 +271,7 @@ const CreateEditTripReport = () => {
     const addActivity = () => {
         const newActivity = {
             name: '',
+            travelers: [],
             rating: '',
             comments: '',
             type: '',
@@ -414,17 +477,17 @@ const CreateEditTripReport = () => {
         // Filter user options based on input and exclude already selected travelers
         const filtered = userOptions.filter(user =>
             user.email.toLowerCase().includes(value.toLowerCase()) &&
-            !formData.travelerNames.some(traveler => traveler.id === user.id)
+            !formData.travelers.some(traveler => traveler.id === user.id)
         );
         setFilteredUserOptions(filtered);
     };
 
     const handleUserSelect = (user) => {
         // Only add the user if they aren't already in the list
-        if (!formData.travelerNames.some(traveler => traveler.id === user.id)) {
+        if (!formData.travelers.some(traveler => traveler.id === user.id)) {
             setFormData((prevData) => ({
                 ...prevData,
-                travelerNames: [...prevData.travelerNames, user]
+                travelers: [...prevData.travelers, user]
             }));
             setHasChanged(true);
         }
@@ -436,7 +499,7 @@ const CreateEditTripReport = () => {
     const handleChipDelete = (userId) => {
         setFormData((prevData) => ({
             ...prevData,
-            travelerNames: prevData.travelerNames.filter(traveler => traveler.id !== userId)
+            travelers: prevData.travelers.filter(traveler => traveler.id !== userId)
         }));
         setHasChanged(true);
     };
@@ -518,7 +581,7 @@ const CreateEditTripReport = () => {
         setFormData((prevState) => {
             return {
                 ...prevState,
-                documentUpdates: comment
+                document_updates: comment
             };
         });
         setHasChanged(true);
@@ -622,8 +685,8 @@ const CreateEditTripReport = () => {
                                     </span>
                                     <input
                                         type="text"
-                                        name="travelerNames"
-                                        id="travelerNames"
+                                        name="travelers"
+                                        id="travelers"
                                         placeholder="Search to add a traveler"
                                         value={travelerSearchText}
                                         onChange={handleUserSearchTextChange}
@@ -660,10 +723,10 @@ const CreateEditTripReport = () => {
                                     )}
                                 </div>
                             </div>
-                            {formData.travelerNames.length > 0 && (
+                            {formData.travelers.length > 0 && (
                                 <div className="row center">
                                     <h5 className="report-title">Travelers</h5>
-                                    {formData.travelerNames.map(traveler => (
+                                    {formData.travelers.map(traveler => (
                                         <span style={{ paddingLeft: '18px' }} key={traveler.id} className="chip tb-teal darken-3 tb-off-white-text">
                                             <span style={{ fontSize: '1.1rem'}} >{traveler.email.split('@')[0]} </span>
                                             <button
@@ -680,7 +743,7 @@ const CreateEditTripReport = () => {
                                     ))}
                                 </div>
                             )}
-                            {formData.travelerNames.length > 1 && (
+                            {formData.travelers.length > 1 && (
                             <div className="container" style={{ width: '90%'}}>
                                 <div>
                                     <ul className="custom-icons">
@@ -712,7 +775,7 @@ const CreateEditTripReport = () => {
                                     key="document-updates"
                                     item="document_updates"
                                     placeholder="Document updates"
-                                    comment={formData.documentUpdates}
+                                    comment={formData.document_updates}
                                     onCommentChange={(comment) => handleDocumentCommentChange(comment)}
                                 />
                                 <h4 className="center report-title">Properties</h4>
@@ -1134,6 +1197,7 @@ const CreateEditTripReport = () => {
                                                 </div>
                                             </div>
                                         </div>
+                                        {/* TODO: add list of .travelers to allow deleting people from segments */}
                                         {(property.property_id || property.is_new_property) &&
                                         <>
                                             <div className="row">
@@ -1507,6 +1571,7 @@ const CreateEditTripReport = () => {
                                                             </button>
                                                         </div>
                                                     </div>
+                                                    {/* TODO: add list of .travelers to allow deleting people from activities */}
                                                     <div className="row">
                                                         <div className="col s6">
                                                             <Select

@@ -33,7 +33,7 @@ const SaveModal = ({ onClose, isOpen, formData, onSaveAsDraft, onSaveAsFinal }) 
                     </button>
                     <div className="row">
                         <h5>Travelers</h5>
-                        {formData.travelerNames.map(traveler => (
+                        {formData.travelers.map(traveler => (
                             <>
                                 <p key={traveler.id} className="tb-grey-text" style={{ fontSize: '1.1rem' }}>
                                     {traveler.email.split('@')[0]}

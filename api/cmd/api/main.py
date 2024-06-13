@@ -58,6 +58,8 @@ from api.services.travel.models import (
     PatchTripRequest,
 )
 from api.services.travel.service import TravelService
+from api.services.reviews.models import PatchTripReportRequest
+from api.services.reviews.service import ReviewService
 from api.services.quality.service import QualityService
 from api.services.quality.models import PotentialTrip, MatchingProgress
 
@@ -71,6 +73,7 @@ def make_app(
     summary_svc: SummaryService,
     auth_svc: AuthService,
     audit_svc: AuditService,
+    review_svc: ReviewService,
     quality_svc: QualityService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
@@ -630,6 +633,22 @@ def make_app(
         results = await travel_svc.process_portfolio_request(portfolio_data)
         return JSONResponse(content=results)
 
+    @app.patch(
+        "/v1/trip_reports",
+        operation_id="post_trip_report",
+        tags=["reviews"],
+    )
+    async def post_trip_report(
+        trip_report_data: PatchTripReportRequest,
+        trip_report_id: Optional[UUID] = None,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Portfolio."""
+        results = await review_svc.process_trip_report_request(
+            trip_report_data, trip_report_id
+        )
+        return JSONResponse(content=results)
+
     @app.delete(
         "/v1/portfolios/{portfolio_id}",
         operation_id="delete_portfolio",
@@ -904,8 +923,11 @@ if __name__ == "__main__":
     summary_svc = SummaryService()
     auth_svc = AuthService()
     audit_svc = AuditService()
+    review_svc = ReviewService()
     quality_svc = QualityService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc, quality_svc)
+    app = make_app(
+        travel_svc, summary_svc, auth_svc, audit_svc, review_svc, quality_svc
+    )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

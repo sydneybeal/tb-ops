@@ -14,7 +14,7 @@
 
 """Models for travel entries."""
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, computed_field
@@ -24,6 +24,10 @@ class Activity(BaseModel):
     """Model for an activity/restaurant of a trip report segment."""
 
     name: str
+    travelers: Optional[List[UUID]] = None
+    type: Optional[str] = None
+    location: Optional[str] = None
+    rating: Optional[int] = None
     comments: Optional[str] = None
 
 
@@ -44,25 +48,53 @@ class Comment(BaseModel):
 class Segment(BaseModel):
     """Model for a segment of a trip report."""
 
-    property_id: UUID
-    date_in: date
+    date_in: Optional[date] = None
     date_out: Optional[date] = None
-    is_inspection_only: bool = False
+    site_inspection_only: bool = False
+    travelers: Optional[List[UUID]] = None
+    property_id: Optional[UUID] = None
     ratings: Optional[List[Rating]] = None
     comments: Optional[List[Comment]] = None
-    # TODO compare to form fields
 
 
 class TripReport(BaseModel):
     """Record for a trip report."""
 
     id: UUID = Field(default_factory=uuid4)
-    document_comments: Optional[str] = None
     segments: Optional[List[Segment]] = None
     travelers: Optional[List[UUID]] = None
+    activities: Optional[List[Activity]] = None
+    status: str = "draft"
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
+
+
+class AdminComment(BaseModel):
+    """Record for a comment to be processed by an admin."""
+
+    id: UUID = Field(default_factory=uuid4)
+    trip_report_id: UUID
+    comment_type: str
+    comment: str
+    status: str = "unreviewed"
+    reported_by: Optional[List[UUID]] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+
+class PatchTripReportRequest(BaseModel):
+    """Model for updating an existing trip report."""
+
+    travelers: Optional[List[UUID]] = None
+    document_updates: Optional[str] = None
+    properties: Optional[List[dict]]  # Accept any dictionary that represents properties
+    activities: Optional[List[dict]]  # Accept any dictionary that represents activities
+    status: str = "draft"
+    updated_by: str
+
+    class Config:
+        extra = "allow"
 
 
 class TripReportSummary(BaseModel):
