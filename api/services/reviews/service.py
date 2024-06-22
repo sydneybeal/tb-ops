@@ -15,7 +15,7 @@
 """Services for interacting with travel entries."""
 import datetime
 from collections import defaultdict
-from re import S
+from re import S, T
 from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID, uuid4
 from api.services.audit.service import AuditService
@@ -28,6 +28,7 @@ from api.services.reviews.models import (
     Segment,
     Rating,
     TripReport,
+    TripReportSummary,
 )
 from api.services.reviews.repository.postgres import PostgresReviewsRepository
 
@@ -41,20 +42,30 @@ class ReviewService:
         self._audit_svc = AuditService()
         # self._summary_svc = SummaryService()
 
+    async def get_trip_report(
+        self, trip_report_id: UUID
+    ) -> Optional[TripReportSummary]:
+        return await self._repo.get_trip_report(trip_report_id)
+
     async def process_trip_report_request(
         self,
         trip_report_request: PatchTripReportRequest,
-        existing_trip_report_id: Optional[UUID] = None,
     ) -> dict:
-        trip_report_id = existing_trip_report_id or uuid4()
+        trip_report_id = trip_report_request.trip_report_id or uuid4()
         admin_comments = []
-        segments = []
+        properties = []
         activities = []
+        admin_comment_uuids = {"document_updates": None, "attribute_updates": {}}
 
         # If any document_updates, process them as AdminComment models
         if trip_report_request.document_updates:
+            document_update_id = (
+                trip_report_request.document_update_comment_id or uuid4()
+            )
+            admin_comment_uuids["document_updates"] = document_update_id
             admin_comments.append(
                 AdminComment(
+                    id=document_update_id,  # Use the generated UUID here
                     trip_report_id=trip_report_id,
                     comment_type="document_update",
                     comment=trip_report_request.document_updates,
@@ -65,13 +76,28 @@ class ReviewService:
         # Process each segment/property of the trip report
         if trip_report_request.properties:
             for segment in trip_report_request.properties:
+                if not any(
+                    segment.values()
+                ):  # Skip if segment has all None or empty values
+                    continue
+                property_id = segment.get("property_id")
                 # If any attribute_updates, process them as AdminComment models
-                if "attribute_updates" in segment:
+                if segment.get("attribute_updates_comments"):
+                    attribute_update_id = (
+                        segment.get("attribute_update_comment_id") or uuid4()
+                    )
+                    if property_id not in admin_comment_uuids["attribute_updates"]:
+                        admin_comment_uuids["attribute_updates"][property_id] = []
+                    admin_comment_uuids["attribute_updates"][property_id].append(
+                        attribute_update_id
+                    )
                     admin_comments.append(
                         AdminComment(
+                            id=attribute_update_id,  # Use the generated UUID here
                             trip_report_id=trip_report_id,
+                            property_id=property_id,
                             comment_type="attribute_update",
-                            comment=segment["attribute_updates"],
+                            comment=segment["attribute_updates_comments"],
                             reported_by=segment.get("travelers"),
                         )
                     )
@@ -81,10 +107,10 @@ class ReviewService:
                 ## put it in the properties table with status = "unverified"
 
                 # Convert each segment to an Segment model
-                segments.append(self.process_segment(segment))
+                properties.append(self.process_segment(segment))
 
-        print(admin_comments)
-        print(segments)
+        # print(admin_comments)
+        # print(properties)
 
         # Process each segment/property of the trip report
         if trip_report_request.activities:
@@ -92,12 +118,12 @@ class ReviewService:
                 # Convert each activity to an Activity model
                 activities.append(self.process_activity(activity))
 
-        print(activities)
+        # print(activities)
 
         trip_report = TripReport(
             id=trip_report_id,
             travelers=trip_report_request.travelers,
-            segments=segments,
+            properties=properties,
             activities=activities,
             status=trip_report_request.status,
             updated_by=trip_report_request.updated_by,
@@ -109,6 +135,14 @@ class ReviewService:
             trip_report=trip_report, admin_comments=admin_comments
         )
 
+        return_value["trip_report_id"] = str(trip_report_id)
+        return_value["admin_comment_uuids"] = {
+            "document_updates": str(admin_comment_uuids["document_updates"]),
+            "attribute_updates": {
+                prop_id: [str(uuid) for uuid in uuids]
+                for prop_id, uuids in admin_comment_uuids["attribute_updates"].items()
+            },
+        }
         return return_value
 
     def process_segment(self, segment_dict: dict) -> Segment:
@@ -134,14 +168,16 @@ class ReviewService:
 
         # Create Rating instances
         ratings = [
-            Rating(attribute=attr, rating=int(segment_dict.get(attr, 0)))
+            Rating(attribute=attr, rating=str(segment_dict[attr]))
             for attr in rating_attributes
+            if segment_dict.get(attr) is not None
         ]
 
         # Create Comment instances
         comments = [
-            Comment(attribute=attr, comments=segment_dict.get(attr, ""))
+            Comment(attribute=attr, comments=segment_dict[attr])
             for attr in comment_attributes
+            if segment_dict.get(attr) is not None
         ]
 
         return Segment(
@@ -158,10 +194,11 @@ class ReviewService:
         rating_value = activity_dict.get("rating")
         return Activity(
             name=activity_dict.get("name", ""),
+            visit_date=activity_dict.get("visit_date", ""),
             travelers=activity_dict.get("travelers"),
             type=activity_dict.get("type"),
             location=activity_dict.get("location"),
-            rating=int(rating_value) if rating_value is not None else None,
+            rating=str(rating_value) if rating_value is not None else None,
             comments=activity_dict.get("comments"),
         )
 
@@ -203,7 +240,12 @@ class ReviewService:
                     admin_comments_result["inserted"] > 0
                     or admin_comments_result["updated"] > 0
                 )
-                return_value["admin_comments"]["details"] = admin_comments_result
+                return_value["admin_comments"]["details"]["inserted"] = (
+                    admin_comments_result["inserted"]
+                )
+                return_value["admin_comments"]["details"]["updated"] = (
+                    admin_comments_result["updated"]
+                )
             except Exception as e:
                 print(f"Failed to upsert admin comments: {e}")
                 return_value["admin_comments"]["success"] = False

@@ -12,7 +12,7 @@ const CommentInput = ({ item, placeholder, comment, onCommentChange }) => {
                     <textarea
                         name={`${item}-comments`}
                         id={`${item}-comments`}
-                        value={comment}
+                        value={comment || ''}
                         placeholder={placeholder}
                         onChange={handleChange}
                         // style={{paddingLeft: '10px'}}

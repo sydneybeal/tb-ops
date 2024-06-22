@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
 import RatingSelect from './RatingSelect';
@@ -11,22 +11,10 @@ import Select from 'react-select';
 import moment from 'moment';
 import M from 'materialize-css';
 
-// Utility function to debounce any function
-const useDebouncedEffect = (effect, deps, delay) => {
-    const callback = useCallback(effect, deps);
-  
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        callback();
-      }, delay);
-  
-      return () => clearTimeout(handler);
-    }, [callback, delay]);
-  };
-
 const CreateEditTripReport = () => {
-    const { userDetails } = useAuth();
-    const { trip_report_id } = useParams(); // Get the id from URL params
+    const { userDetails, logout } = useAuth();
+    const navigate = useNavigate();
+    const { trip_report_id } = useParams();
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [propertyOptions, setPropertyOptions] = useState();
     const [locationOptions, setLocationOptions] = useState();
@@ -38,6 +26,8 @@ const CreateEditTripReport = () => {
     const suggestionsRef = useRef(null);
     const [travelerSearchText, setTravelerSearchText] = useState('');
     const [formData, setFormData] = useState({
+        trip_report_id: trip_report_id || null,
+        status: 'draft',
         travelers: [],
         document_updates: '',
         properties: [
@@ -81,6 +71,7 @@ const CreateEditTripReport = () => {
         activities: [
             {
                 travelers: [],
+                visit_date: '',
                 name: '',
                 rating: '',
                 comments: '',
@@ -89,138 +80,86 @@ const CreateEditTripReport = () => {
         ]
     });
     const [hasChanged, setHasChanged] = useState(false);
-    const [showHelpers, setShowHelpers] = useState(
-        formData.properties.map(() => ({
+
+    const initializeShowHelpers = (properties) => {
+        return properties.map(() => ({
             animal_viewing_comments: true,
             seasonality_comments: true,
             clientele_comments: true,
             pairing_comments: true,
             insider_comments: true,
             guiding_comments: true,
-            attribute_updates: false,
-        }))
-    );
+            attribute_updates_comments: false,
+        }));
+    };
+
+    const [showHelpers, setShowHelpers] = useState(initializeShowHelpers(formData.properties));
+    const prevPropertiesLength = useRef(formData.properties.length);
+
+    useEffect(() => {
+        const newPropertiesCount = formData.properties.length - prevPropertiesLength.current;
+        if (newPropertiesCount > 0) {
+            setShowHelpers(prevShowHelpers => [
+                ...prevShowHelpers,
+                ...initializeShowHelpers(formData.properties.slice(-newPropertiesCount))
+            ]);
+        }
+        prevPropertiesLength.current = formData.properties.length;
+    }, [formData.properties]);
+    
+    const activityOptions = [
+        { label: "Restaurant", value: "restaurant" },
+        { label: "Activity", value: "activity" }
+    ];
+
+    const toTitleCase = str => str ? str.replace(
+        /\w\S*/g,
+        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    ) : '';
+
+    const toggleHelpers = (item, index) => {
+        setShowHelpers(prevShowHelpers => {
+            const newShowHelpers = [...prevShowHelpers];
+            newShowHelpers[index] = {
+                ...newShowHelpers[index],
+                [item]: !newShowHelpers[index][item],
+            };
+            return newShowHelpers;
+        });
+    };
+
     const toggleModal = () => {
         setShowSaveModal(!showSaveModal);
         document.body.style.overflow = '';
     };
 
-    function prepareFormDataForSubmission(formData, status) {
-        // Copy the formData to avoid direct mutation
-        const submissionData = { ...formData };
-      
-        // Update status
-        submissionData.status = status;
-      
-        // Filter travelers to keep necessary attributes
-        submissionData.travelers = submissionData.travelers.map(traveler => traveler.id);
-        
-        // Process each property
-        submissionData.properties = submissionData.properties.map(property => {
-          const filteredProperty = {
-            // Include only necessary fields
-            travelers: property.travelers,
-            date_in: property.date_in,
-            site_inspection_only: property.site_inspection_only,
-            date_out: property.date_out,
-            property_id: property.property_id,
-            attribute_updates: property.attribute_updates_comments,
-            accommodation_rating: property.accommodation_rating,
-            service_rating: property.service_rating,
-            food_rating: property.food_rating,
-            guide_rating: property.guide_rating,
-            overall_rating: property.overall_rating,
-            food_and_beverage_comments: property.food_and_beverage_comments,
-            management_comments: property.management_comments,
-            guiding_comments: property.guiding_comments,
-            animal_viewing_comments: property.animal_viewing_comments,
-            seasonality_comments: property.seasonality_comments,
-            clientele_comments: property.clientele_comments,
-            pairing_comments: property.pairing_comments,
-            insider_comments: property.insider_comments
-          };
-      
-          // Conditionally include new property fields if it is a new property
-          if (property.is_new_property) {
-            filteredProperty.new_property_name = property.new_property_name;
-            filteredProperty.new_property_portfolio_id = property.new_property_portfolio_id;
-            filteredProperty.new_property_portfolio_name = property.new_property_portfolio_name;
-            filteredProperty.new_property_country_id = property.new_property_country_id;
-            filteredProperty.new_property_country_name = property.new_property_country_name;
-            filteredProperty.new_property_location = property.new_property_location;
-            filteredProperty.new_property_core_destination_id = property.new_property_core_destination_id;
-            filteredProperty.new_property_core_destination_name = property.new_property_core_destination_name;
-          }
-      
-          return filteredProperty;
-        });
-      
-        // Keep activities as is, assuming you want to keep all data shown
-        submissionData.activities = submissionData.activities.map(activity => ({
-          name: activity.name,
-          rating: activity.rating,
-          comments: activity.comments,
-          type: activity.type,
-          location: activity.location
-        }));
-
-        submissionData.updated_by = userDetails.email || ''
-      
-        return submissionData;
-    }
-
-    const handleSaveAsDraft = () => {
-        M.toast({
-            html: 'Trip report has been saved to your drafts.',
-            displayLength: 3000,
-            classes: 'success-green',
-        });
-        // Implement saving logic here
-        const preparedData = prepareFormDataForSubmission(formData, "draft");
-        console.log(JSON.stringify(preparedData));
-        setShowSaveModal(false);
-    };
-
-    const handleSaveAsFinal = () => {
-        M.toast({
-            html: 'Trip report has been published.',
-            displayLength: 3000,
-            classes: 'success-green',
-        });
-        // Implement saving logic here
-        const preparedData = prepareFormDataForSubmission(formData, "final");
-        console.log(JSON.stringify(preparedData));
-        setShowSaveModal(false);
-    };
-
-    const addAccommodation = () => {
-        const newProperty = {
-            travelers: [],
-            date_in: '',
-            site_inspection_only: false,
-            date_out: '',
-            property_id: '',
-            property_name: '',
+    const mapApiToFormData = (data) => {
+        const mapProperty = (property) => ({
+            travelers: property.travelers || [],
+            date_in: property.date_in || '',
+            site_inspection_only: property.site_inspection_only || false,
+            date_out: property.date_out || '',
+            property_id: property.property_id || '',
+            property_name: '', // Assuming these details need to be fetched separately or are empty initially
             portfolio_name: '',
             country_name: '',
-            core_destination_name: '',
-            attribute_updates: '',
             property_type: '',
-            accommodation_rating: '',
-            service_rating: '',
-            food_rating: '',
-            guide_rating: '',
-            overall_rating: '',
-            food_and_beverage_comments: '',
-            management_comments: '',
-            guiding_comments: '',
-            animal_viewing_comments: '',
-            seasonality_comments: '',
-            clientele_comments: '',
-            pairing_comments: '',
-            insider_comments: '',
-            // allow to enter new property if it doesn't exist
-            is_new_property: false,
+            attribute_updates_comments: property.attribute_updates_comments || '',
+            core_destination_name: '',
+            accommodation_rating: (property.ratings.find(r => r.attribute === 'accommodation_rating') || {}).rating || '',
+            service_rating: (property.ratings.find(r => r.attribute === 'service_rating') || {}).rating || '',
+            food_rating: (property.ratings.find(r => r.attribute === 'food_rating') || {}).rating || '',
+            guide_rating: (property.ratings.find(r => r.attribute === 'guide_rating') || {}).rating || '',
+            overall_rating: (property.ratings.find(r => r.attribute === 'overall_rating') || {}).rating || '',
+            food_and_beverage_comments: (property.comments.find(c => c.attribute === 'food_and_beverage_comments') || {}).comments || '',
+            management_comments: (property.comments.find(c => c.attribute === 'management_comments') || {}).comments || '',
+            guiding_comments: (property.comments.find(c => c.attribute === 'guiding_comments') || {}).comments || '',
+            animal_viewing_comments: (property.comments.find(c => c.attribute === 'animal_viewing_comments') || {}).comments || '',
+            seasonality_comments: (property.comments.find(c => c.attribute === 'seasonality_comments') || {}).comments || '',
+            clientele_comments: (property.comments.find(c => c.attribute === 'clientele_comments') || {}).comments || '',
+            pairing_comments: (property.comments.find(c => c.attribute === 'pairing_comments') || {}).comments || '',
+            insider_comments: (property.comments.find(c => c.attribute === 'insider_comments') || {}).comments || '',
+            is_new_property: false, // Assuming default is false
             new_property_name: '',
             new_property_portfolio_id: '',
             new_property_portfolio_name: '',
@@ -228,139 +167,72 @@ const CreateEditTripReport = () => {
             new_property_country_name: '',
             new_property_location: '',
             new_property_core_destination_id: '',
-            new_property_core_destination_name: '',
-        };
-        setFormData({
-            ...formData,
-            properties: [...formData.properties, newProperty]
+            new_property_core_destination_name: ''
         });
-        setShowHelpers(prevShowHelpers => [
-            ...prevShowHelpers,
-            {
-                animal_viewing_comments: true,
-                seasonality_comments: true,
-                clientele_comments: true,
-                pairing_comments: true,
-                insider_comments: true,
-                guiding_comments: true,
-                attribute_updates: false,
+    
+        const mapActivity = (activity) => ({
+            travelers: activity.travelers || [],
+            visit_date: activity.visit_date || '',
+            name: activity.name || '',
+            rating: activity.rating || '',
+            comments: activity.comments || '',
+            type: activity.type || '',
+            location: activity.location || ''
+        });
+    
+        return {
+            trip_report_id: data.id || null,
+            status: data.status || 'draft',
+            travelers: data.travelers || [],
+            document_updates: data.document_updates || '', // Assuming this field is not in the API response and defaulting to empty
+            properties: data.properties.map(mapProperty),
+            activities: data.activities.map(mapActivity)
+        };
+    };      
+
+    const fetchTripReport = useCallback(async (tripReportId) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API}/v1/trip_reports/${tripReportId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userDetails.token}`,
+                },
+            });
+            if (response.detail && response.detail === "Could not validate credentials") {
+                // Session has expired or credentials are invalid
+                M.toast({
+                    html: 'Your session has timed out, please log in again.',
+                    displayLength: 4000,
+                    classes: 'error-red',
+                });
+                logout();
+                return;
             }
-        ]);
-        setHasChanged(true);
-    };
 
-    const saveDraft = useCallback(() => {
-        if (hasChanged) {
-            // Perform your save operation here
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+
+            const data = await response.json();
+            // console.log(JSON.stringify(data));
+            // setFormData(prevState => ({
+            //     ...prevState,
+            //     ...data,
+            //     trip_report_id: tripReportId,
+            // }));
+            const mappedData = mapApiToFormData(data);
+            console.log(JSON.stringify(mappedData));
+            setFormData(mappedData);
+        } catch (error) {
+            console.error('Error fetching trip report:', error);
             M.toast({
-                html: 'Draft saved.',
-                displayLength: 1000,
-                classes: 'success-green',
+                html: 'Failed to load trip report.',
+                displayLength: 4000,
+                classes: 'error-red',
             });
         }
-    }, [formData, hasChanged]);
-
-    useEffect(() => {
-        const handler = setTimeout(() => {
-            saveDraft();
-        }, 2000); // Debounce time
-
-        return () => clearTimeout(handler);
-    }, [saveDraft]);
-
-    const addActivity = () => {
-        const newActivity = {
-            name: '',
-            travelers: [],
-            rating: '',
-            comments: '',
-            type: '',
-        };
-    
-        setFormData({
-            ...formData,
-            activities: [...formData.activities, newActivity]
-        });
-        setHasChanged(true);
-    };
-
-    const activityOptions = [
-        { label: "Restaurant", value: "restaurant" },
-        { label: "Activity", value: "activity" }
-    ];
-
-    const handleActivityNameChange = (activityIndex) => (e) => {
-        const newActivities = [...formData.activities];
-        newActivities[activityIndex].name = e.target.value;
-        setFormData({
-            ...formData,
-            activities: newActivities
-        });
-        setHasChanged(true);
-    };
-    const handleActivityLocationChange = (activityIndex, selectedOption) => {
-        const newActivities = [...formData.activities];
-        newActivities[activityIndex].location = selectedOption ? selectedOption.value : null; // Use selectedOption.value or reset to null if cleared
-        setFormData({
-            ...formData,
-            activities: newActivities
-        });
-        setHasChanged(true);
-    };
-    
-
-    const handleActivityTypeChange = (activityIndex) => (selectedOption) => {
-        const newActivities = [...formData.activities];
-        newActivities[activityIndex].type = selectedOption.value; // Directly use the passed value
-        setFormData({
-            ...formData,
-            activities: newActivities
-        });
-        setHasChanged(true);
-    };
-
-    const handleActivityRatingChange = (rating, activityIndex) => {
-        const newActivities = [...formData.activities];
-        newActivities[activityIndex].rating = rating;
-        setFormData({
-            ...formData,
-            activities: newActivities
-        });
-        setHasChanged(true);
-    };
-
-    const handleActivityCommentChange = (comment, activityIndex) => {
-        const newActivities = [...formData.activities];
-        newActivities[activityIndex].comments = comment;
-        setFormData({
-            ...formData,
-            activities: newActivities
-        });
-        setHasChanged(true);
-    };
-
-    const removeActivity = (activityIndex) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this activity?");
-        if (confirmDelete) {
-            setFormData({
-                ...formData,
-                activities: formData.activities.filter((_, i) => i !== activityIndex)
-            });
-            setHasChanged(true);
-        }
-    };
-
-    const removeAccommodation = (index) => {
-        const confirmDelete = window.confirm("Are you sure you want to delete your progress on this property?");
-        if (confirmDelete) {
-            setFormData({
-                ...formData,
-                properties: formData.properties.filter((_, i) => i !== index)
-            });
-            setShowHelpers(prevShowHelpers => prevShowHelpers.filter((_, i) => i !== index));
-            setHasChanged(true);
-        }
-    };
+    }, [logout, userDetails.token]);
 
     useEffect(() => {
         fetch(`${process.env.REACT_APP_API}/v1/property_details?entered_only=false`, {
@@ -370,7 +242,16 @@ const CreateEditTripReport = () => {
         })
             .then((res) => res.json())
             .then((data) => {
-
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 const formattedProperties = data.map((property) => ({
                     value: property.property_id,
                     label: `${property.name} (${property.country_name || property.core_destination_name})`,
@@ -452,22 +333,199 @@ const CreateEditTripReport = () => {
                 setUserOptions(filteredUsers);
             })
             .catch((err) => console.error(err));
-    }, [userDetails.token]);
+    }, [userDetails.token, logout]);
+
+    useEffect(() => {
+        if (trip_report_id) {
+            fetchTripReport(trip_report_id);
+        }
+    }, [trip_report_id, fetchTripReport]);
+
+    const hasAnimals = (property) => {
+        // Allow all answers for newly entered properties
+        if (property.is_new_property) {
+            return true;
+        }
+        // Check if core_destination is Africa
+        const isAfrica = property.core_destination_name === 'Africa';
+
+        // Check if property_type is "standard accommodation" or "luxury accommodation" or blank
+        const isAccommodation = (
+            property.property_type?.toLowerCase() === 'standard accommodation' ||
+            property.property_type?.toLowerCase() === 'luxury accommodation' ||
+            property.property_type === null
+        );
+        
+        // Return true if both conditions are met
+        return isAfrica && isAccommodation;
+    };
+
+    const prepareFormDataForSubmission = useCallback((formData) => {
+        console.log(JSON.stringify(formData));
+        const convertEmptyToNull = (value) => {
+            return value === '' ? null : value;
+        };
+        // Copy the formData to avoid direct mutation
+        const submissionData = { ...formData };
+        submissionData.trip_report_id = convertEmptyToNull(submissionData.trip_report_id);
+        submissionData.travelers = submissionData.travelers.map(traveler => traveler.id);
+        
+        // Process each property
+        submissionData.properties = submissionData.properties.map(property => {
+            const filteredProperty = {
+                travelers: property.travelers.map(traveler => traveler.id),
+                date_in: convertEmptyToNull(property.date_in),
+                site_inspection_only: property.site_inspection_only,
+                date_out: convertEmptyToNull(property.date_out),
+                property_id: convertEmptyToNull(property.property_id),
+                attribute_updates_comments: convertEmptyToNull(property.attribute_updates_comments),
+                accommodation_rating: convertEmptyToNull(property.accommodation_rating),
+                service_rating: convertEmptyToNull(property.service_rating),
+                food_rating: convertEmptyToNull(property.food_rating),
+                guide_rating: convertEmptyToNull(property.guide_rating),
+                overall_rating: convertEmptyToNull(property.overall_rating),
+                food_and_beverage_comments: convertEmptyToNull(property.food_and_beverage_comments),
+                management_comments: convertEmptyToNull(property.management_comments),
+                guiding_comments: convertEmptyToNull(property.guiding_comments),
+                animal_viewing_comments: convertEmptyToNull(property.animal_viewing_comments),
+                seasonality_comments: convertEmptyToNull(property.seasonality_comments),
+                clientele_comments: convertEmptyToNull(property.clientele_comments),
+                pairing_comments: convertEmptyToNull(property.pairing_comments),
+                insider_comments: convertEmptyToNull(property.insider_comments)
+            };
     
-    const handleDateChange = (index, name, date) => {
-        const newValue = date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : null;
-        const updatedProperties = formData.properties.map((property, i) => {
-            if (i === index) {
-                return { ...property, [name]: newValue };
+            // Conditionally include new property fields if it is a new property
+            if (property.is_new_property) {
+                filteredProperty.new_property_name = convertEmptyToNull(property.new_property_name);
+                filteredProperty.new_property_portfolio_id = convertEmptyToNull(property.new_property_portfolio_id);
+                filteredProperty.new_property_portfolio_name = convertEmptyToNull(property.new_property_portfolio_name);
+                filteredProperty.new_property_country_id = convertEmptyToNull(property.new_property_country_id);
+                filteredProperty.new_property_country_name = convertEmptyToNull(property.new_property_country_name);
+                filteredProperty.new_property_location = convertEmptyToNull(property.new_property_location);
+                filteredProperty.new_property_core_destination_id = convertEmptyToNull(property.new_property_core_destination_id);
+                filteredProperty.new_property_core_destination_name = convertEmptyToNull(property.new_property_core_destination_name);
             }
-            return property;
+    
+            return filteredProperty;
         });
     
-        setFormData({
-            ...formData,
-            properties: updatedProperties
-        });
+        // Process each activity
+        submissionData.activities = submissionData.activities.map(activity => ({
+            travelers: activity.travelers.map(traveler => traveler.id),
+            name: convertEmptyToNull(activity.name),
+            visit_date: convertEmptyToNull(activity.visit_date),
+            rating: convertEmptyToNull(activity.rating),
+            comments: convertEmptyToNull(activity.comments),
+            type: convertEmptyToNull(activity.type),
+            location: convertEmptyToNull(activity.location)
+        }));
+    
+        submissionData.updated_by = userDetails.email || '';
+      
+        return submissionData;
+    }, [userDetails.email]);
+
+    const saveTripReport = useCallback(async (preparedData, status) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_API}/v1/trip_reports`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userDetails.token}`,
+                },
+                body: JSON.stringify(preparedData),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+    
+            const data = await response.json();
+            let toastHtml = '';
+            let toastColor = 'success-green';
+    
+            if (data.error) {
+                toastHtml = data.error;
+                toastColor = 'error-red';
+            } else {
+                toastHtml = status === 'draft' ? 'Draft saved.' : 'Trip report has been published.';
+                if (!preparedData.trip_report_id && data.trip_report_id) {
+                    setFormData(prevState => ({
+                        ...prevState,
+                        trip_report_id: data.trip_report_id,
+                        status,
+                    }));
+                } else {
+                    setFormData(prevState => ({
+                        ...prevState,
+                        status,
+                    }));
+                }
+                setHasChanged(false); // Reset change flag after successful save
+                if (!trip_report_id && data.trip_report_id) {
+                    navigate(`/trip_reports/edit/${data.trip_report_id}`);
+                }
+            }
+    
+            M.toast({
+                html: toastHtml,
+                displayLength: 3000,
+                classes: toastColor,
+            });
+    
+            setShowSaveModal(false);
+        } catch (error) {
+            console.error('Error:', error);
+            M.toast({
+                html: 'Your entry was valid, but we were unable to save to the database.',
+                displayLength: 4000,
+                classes: 'warning-yellow tb-md-black-text',
+            });
+        } finally {
+            // setLoading(false);
+        }
+    }, [userDetails.token, navigate, trip_report_id]);
+
+    const handleFormChange = (newData) => {
+        setFormData(newData);
         setHasChanged(true);
+    };
+
+    const saveDraft = useCallback(() => {
+        if (hasChanged) {
+            const preparedData = prepareFormDataForSubmission(formData);
+            saveTripReport(preparedData, "draft");
+        }
+    }, [hasChanged, formData, saveTripReport, prepareFormDataForSubmission]);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            saveDraft();
+        }, 2000); // Debounce time
+
+        return () => clearTimeout(handler);
+    }, [saveDraft]);
+
+    const handleSaveAsDraft = () => {
+        const preparedData = prepareFormDataForSubmission(formData);
+        saveTripReport(preparedData, "draft");
+    };
+
+    const handleSaveAsFinal = async () => {
+        const updatedFormData = { ...formData, status: 'final' };
+        const preparedData = prepareFormDataForSubmission(updatedFormData);
+
+        try {
+            await saveTripReport(preparedData, "final");
+        } catch (error) {
+            console.error('Error saving trip report:', error);
+        }
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        // Submit logic here
+        // Redirect after submit
     };
 
     const handleUserSearchTextChange = (e) => {
@@ -482,79 +540,381 @@ const CreateEditTripReport = () => {
         setFilteredUserOptions(filtered);
     };
 
+    const addAccommodation = () => {
+        setFormData((prevFormData) => {
+            const newProperty = {
+                travelers: [...prevFormData.travelers], // Copy the travelers from formData
+                date_in: '',
+                site_inspection_only: false,
+                date_out: '',
+                property_id: '',
+                property_name: '',
+                portfolio: '',
+                country: '',
+                core_destination_name: '',
+                property_type: '',
+                accommodation_rating: '',
+                service_rating: '',
+                food_rating: '',
+                guide_rating: '',
+                overall_rating: '',
+                food_and_beverage_comments: '',
+                management_comments: '',
+                guiding_comments: '',
+                animal_viewing_comments: '',
+                seasonality_comments: '',
+                clientele_comments: '',
+                pairing_comments: '',
+                insider_comments: '',
+                is_new_property: false,
+                new_property_name: '',
+                new_property_portfolio_id: '',
+                new_property_portfolio_name: '',
+                new_property_country_id: '',
+                new_property_country_name: '',
+                new_property_location: '',
+                new_property_core_destination_id: '',
+                new_property_core_destination_name: '',
+            };
+    
+            return {
+                ...prevFormData,
+                properties: [...prevFormData.properties, newProperty],
+            };
+        });
+        setShowHelpers(prevShowHelpers => [
+            ...prevShowHelpers,
+            {
+                animal_viewing_comments: true,
+                seasonality_comments: true,
+                clientele_comments: true,
+                pairing_comments: true,
+                insider_comments: true,
+                guiding_comments: true,
+                attribute_updates_comments: false,
+            }
+        ]);
+        setHasChanged(true);
+    };
+
+    const addActivity = () => {
+        handleFormChange((prevFormData) => {
+            const newActivity = {
+                name: '',
+                visit_date: '',
+                travelers: [...prevFormData.travelers], // Copy the travelers from formData
+                rating: '',
+                comments: '',
+                type: '',
+            };
+    
+            return {
+                ...prevFormData,
+                activities: [...prevFormData.activities, newActivity],
+            };
+        });
+    };
+
+    const handleActivityNameChange = (activityIndex) => (e) => {
+        handleFormChange((prevFormData) => {
+            const newActivities = [...prevFormData.activities];
+            newActivities[activityIndex].name = e.target.value;
+    
+            return {
+                ...prevFormData,
+                activities: newActivities
+            };
+        });
+    };
+
+    const handleActivityLocationChange = (activityIndex, selectedOption) => {
+        handleFormChange((prevFormData) => {
+            const newActivities = [...prevFormData.activities];
+            newActivities[activityIndex].location = selectedOption ? selectedOption.value : null; // Use selectedOption.value or reset to null if cleared
+    
+            return {
+                ...prevFormData,
+                activities: newActivities
+            };
+        });
+    };
+
+    const handleActivityDateChange = (index, date) => {
+        handleFormChange((prevFormData) => {
+            const newValue = date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : null;
+            const updatedActivities = prevFormData.activities.map((activity, i) => {
+                if (i === index) {
+                    return { ...activity, visit_date: newValue };
+                }
+                return activity;
+            });
+    
+            return {
+                ...prevFormData,
+                activities: updatedActivities
+            };
+        });
+    };
+    
+    const getOpenToDate = () => {
+        const propertyDates = formData.properties.map(property => property.date_in).filter(date => date);
+        if (propertyDates.length === 0) {
+            return new Date();
+        }
+        const minDateIn = moment.min(propertyDates.map(date => moment(date)));
+        return minDateIn.isValid() ? minDateIn.toDate() : new Date();
+    };
+
+    const handleActivityTypeChange = (activityIndex) => (selectedOption) => {
+        handleFormChange((prevFormData) => {
+            const newActivities = [...prevFormData.activities];
+            newActivities[activityIndex].type = selectedOption ? selectedOption.value : ''; // Check for null and set to empty string
+    
+            return {
+                ...prevFormData,
+                activities: newActivities
+            };
+        });
+    };
+    
+    const handleActivityRatingChange = (rating, activityIndex) => {
+        handleFormChange((prevFormData) => {
+            const newActivities = [...prevFormData.activities];
+            newActivities[activityIndex].rating = rating;
+    
+            return {
+                ...prevFormData,
+                activities: newActivities
+            };
+        });
+    };
+
+    const handleActivityCommentChange = (comment, activityIndex) => {
+        handleFormChange((prevFormData) => {
+            const newActivities = [...prevFormData.activities];
+            newActivities[activityIndex].comments = comment;
+    
+            return {
+                ...prevFormData,
+                activities: newActivities
+            };
+        });
+    };
+    
+    const removeActivity = (activityIndex) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this activity?");
+        if (confirmDelete) {
+            handleFormChange((prevFormData) => {
+                return {
+                    ...prevFormData,
+                    activities: prevFormData.activities.filter((_, i) => i !== activityIndex)
+                };
+            });
+        }
+    };
+
+    const removeAccommodation = (index) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete your progress on this property?");
+        if (confirmDelete) {
+            handleFormChange((prevFormData) => {
+                return {
+                    ...prevFormData,
+                    properties: prevFormData.properties.filter((_, i) => i !== index)
+                };
+            });
+            setShowHelpers(prevShowHelpers => prevShowHelpers.filter((_, i) => i !== index));
+        }
+    };
+
+    const handleDateChange = (index, name, date) => {
+        handleFormChange((prevFormData) => {
+            const newValue = date && moment(date).isValid() ? moment(date).format('YYYY-MM-DD') : null;
+            const updatedProperties = prevFormData.properties.map((property, i) => {
+                if (i === index) {
+                    return { ...property, [name]: newValue };
+                }
+                return property;
+            });
+    
+            return {
+                ...prevFormData,
+                properties: updatedProperties
+            };
+        });
+    };
+
     const handleUserSelect = (user) => {
         // Only add the user if they aren't already in the list
         if (!formData.travelers.some(traveler => traveler.id === user.id)) {
-            setFormData((prevData) => ({
-                ...prevData,
-                travelers: [...prevData.travelers, user]
-            }));
-            setHasChanged(true);
-        }
-        setTravelerSearchText('');
-        setFilteredUserOptions([]);
-        setShowTravelerSuggestions(false);
-    };
-
-    const handleChipDelete = (userId) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            travelers: prevData.travelers.filter(traveler => traveler.id !== userId)
-        }));
-        setHasChanged(true);
-    };
-
-    const hasAnimals = (property) => {
-        // Allow all answers for newly entered properties
-        if (property.is_new_property) {
-            return true;
-        }
-        // Check if core_destination is Africa
-        const isAfrica = property.core_destination_name === 'Africa';
-        // Check if property_type is "standard accommodation" or "luxury accommodation"
-        const isAccommodation = property.property_type?.toLowerCase() === 'standard accommodation' || property.property_type?.toLowerCase() === 'luxury accommodation';
-        
-        // Return true if both conditions are met
-        return isAfrica && isAccommodation;
-    };    
+            handleFormChange((prevData) => {
+                const updatedTravelers = [...prevData.travelers, user];
     
-    const handlePropertyChange = (index, selectedOption) => {
-        // handleLogChange(index, 'property_id', selectedOption ? selectedOption.value : '');
-        const updatedProperties = formData.properties.map((property, i) => {
-            if (i === index) {
-                return {
+                // Update properties with the new traveler
+                const updatedProperties = prevData.properties.map(property => ({
                     ...property,
-                    'property_id': selectedOption ? selectedOption.value : '',
-                    'property_name': selectedOption ? selectedOption.name : '',
-                    'portfolio_name': selectedOption ? selectedOption.portfolio_name : '',
-                    'country_name': selectedOption ? selectedOption.country_name : '',
-                    'core_destination_name': selectedOption ? selectedOption.core_destination_name : '',
-                    'property_type': selectedOption ? selectedOption.property_type : '',
-                    'location': selectedOption ? selectedOption.location : '',
-                    'num_tents': selectedOption ? selectedOption.num_tents : '',
-                    'has_trackers': selectedOption ? selectedOption.has_trackers : '',
-                    'has_wifi_in_room': selectedOption ? selectedOption.has_wifi_in_room : '',
-                    'has_wifi_in_common_areas': selectedOption ? selectedOption.has_wifi_in_common_areas : '',
-                    'has_hairdryers': selectedOption ? selectedOption.has_hairdryers : '',
-                    'has_pool': selectedOption ? selectedOption.has_pool : '',
-                    'has_heated_pool': selectedOption ? selectedOption.has_heated_pool : '',
-                    'has_credit_card_tipping': selectedOption ? selectedOption.has_credit_card_tipping : '',
-                    'is_child_friendly': selectedOption ? selectedOption.is_child_friendly : '',
-                    'is_handicap_accessible': selectedOption ? selectedOption.is_handicap_accessible : '',
+                    travelers: updatedTravelers
+                }));
+    
+                // Update activities with the new traveler
+                const updatedActivities = prevData.activities.map(activity => ({
+                    ...activity,
+                    travelers: updatedTravelers
+                }));
+    
+                return {
+                    ...prevData,
+                    travelers: updatedTravelers,
+                    properties: updatedProperties,
+                    activities: updatedActivities
+                };
+            });
+    
+            setTravelerSearchText('');
+            setFilteredUserOptions([]);
+            setShowTravelerSuggestions(false);
+        }
+    };
+
+    const handleUserDelete = (userId) => {
+        handleFormChange((prevData) => {
+            const updatedTravelers = prevData.travelers.filter(traveler => traveler.id !== userId);
+    
+            // Update properties to remove the traveler
+            const updatedProperties = prevData.properties.map(property => ({
+                ...property,
+                travelers: property.travelers.filter(traveler => traveler.id !== userId)
+            }));
+    
+            // Update activities to remove the traveler
+            const updatedActivities = prevData.activities.map(activity => ({
+                ...activity,
+                travelers: activity.travelers.filter(traveler => traveler.id !== userId)
+            }));
+    
+            return {
+                ...prevData,
+                travelers: updatedTravelers,
+                properties: updatedProperties,
+                activities: updatedActivities
+            };
+        });
+    };
+
+    const handleUserSegmentActivityRemove = (type, index, travelerId) => {
+        handleFormChange((prevData) => {
+            if (type === 'property') {
+                const updatedProperties = prevData.properties.map((property, i) => {
+                    if (i === index) {
+                        return {
+                            ...property,
+                            travelers: property.travelers.filter(traveler => traveler.id !== travelerId)
+                        };
+                    }
+                    return property;
+                });
+    
+                return {
+                    ...prevData,
+                    properties: updatedProperties
+                };
+            } else if (type === 'activity') {
+                const updatedActivities = prevData.activities.map((activity, i) => {
+                    if (i === index) {
+                        return {
+                            ...activity,
+                            travelers: activity.travelers.filter(traveler => traveler.id !== travelerId)
+                        };
+                    }
+                    return activity;
+                });
+    
+                return {
+                    ...prevData,
+                    activities: updatedActivities
                 };
             }
-            return property;
+            return prevData;
         });
+    };
+
+    const handleRestoreTravelers = (type, index) => {
+        handleFormChange((prevData) => {
+            if (type === 'property') {
+                const updatedProperties = prevData.properties.map((property, i) => {
+                    if (i === index) {
+                        return {
+                            ...property,
+                            travelers: [...prevData.travelers]
+                        };
+                    }
+                    return property;
+                });
     
-        setFormData({
-            ...formData,
-            properties: updatedProperties
+                return {
+                    ...prevData,
+                    properties: updatedProperties
+                };
+            } else if (type === 'activity') {
+                const updatedActivities = prevData.activities.map((activity, i) => {
+                    if (i === index) {
+                        return {
+                            ...activity,
+                            travelers: [...prevData.travelers]
+                        };
+                    }
+                    return activity;
+                });
+    
+                return {
+                    ...prevData,
+                    activities: updatedActivities
+                };
+            }
+            return prevData;
         });
-        setHasChanged(true);
+    };
+
+    const handlePropertyChange = (index, selectedOption) => {
+        handleFormChange((prevData) => {
+            const updatedProperties = prevData.properties.map((property, i) => {
+                if (i === index) {
+                    return {
+                        ...property,
+                        'property_id': selectedOption ? selectedOption.value : '',
+                        'property_name': selectedOption ? selectedOption.name : '',
+                        'portfolio_name': selectedOption ? selectedOption.portfolio_name : '',
+                        'country_name': selectedOption ? selectedOption.country_name : '',
+                        'core_destination_name': selectedOption ? selectedOption.core_destination_name : '',
+                        'property_type': selectedOption ? selectedOption.property_type : '',
+                        'location': selectedOption ? selectedOption.location : '',
+                        'num_tents': selectedOption ? selectedOption.num_tents : '',
+                        'has_trackers': selectedOption ? selectedOption.has_trackers : '',
+                        'has_wifi_in_room': selectedOption ? selectedOption.has_wifi_in_room : '',
+                        'has_wifi_in_common_areas': selectedOption ? selectedOption.has_wifi_in_common_areas : '',
+                        'has_hairdryers': selectedOption ? selectedOption.has_hairdryers : '',
+                        'has_pool': selectedOption ? selectedOption.has_pool : '',
+                        'has_heated_pool': selectedOption ? selectedOption.has_heated_pool : '',
+                        'has_credit_card_tipping': selectedOption ? selectedOption.has_credit_card_tipping : '',
+                        'is_child_friendly': selectedOption ? selectedOption.is_child_friendly : '',
+                        'is_handicap_accessible': selectedOption ? selectedOption.is_handicap_accessible : '',
+                        // Reset animal/guide ratings/comments if no longer applicable
+                        'guide_rating': hasAnimals(selectedOption) ? property.guide_rating : null,
+                        'guiding_comments': hasAnimals(selectedOption) ? property.guiding_comments : null,
+                        'animal_viewing_comments': hasAnimals(selectedOption) ? property.animal_viewing_comments : null
+                    };
+                }
+                return property;
+            });
+    
+            return {
+                ...prevData,
+                properties: updatedProperties
+            };
+        });
     };
 
     const handleRatingChange = (rating, item, index) => {
-        setFormData((prevState) => {
+        handleFormChange((prevState) => {
             const newProperties = [...prevState.properties];
             newProperties[index][`${item}_rating`] = rating;
             return {
@@ -562,11 +922,10 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
-        setHasChanged(true);
     };
-
+    
     const handleCommentChange = (comment, item, index) => {
-        setFormData((prevState) => {
+        handleFormChange((prevState) => {
             const newProperties = [...prevState.properties];
             newProperties[index][`${item}_comments`] = comment;
             return {
@@ -574,33 +933,40 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
-        setHasChanged(true);
     };
-
+    
     const handleDocumentCommentChange = (comment) => {
-        setFormData((prevState) => {
+        handleFormChange((prevState) => {
             return {
                 ...prevState,
                 document_updates: comment
             };
         });
-        setHasChanged(true);
     };
 
-    const handleCheckboxChange = (item, index) => {
-        setFormData((prevState) => {
-            const newProperties = [...prevState.properties];
-            newProperties[index][item] = !newProperties[index][item];
+    const handleSiteInspectionChange = (index) => {
+        handleFormChange((prevFormData) => {
+            const newProperties = [...prevFormData.properties];
+            const property = newProperties[index];
+    
+            if (property.site_inspection_only) {
+                // Unchecking the box
+                property.site_inspection_only = false;
+            } else {
+                // Checking the box
+                property.site_inspection_only = true;
+                property.date_out = null;
+            }
+    
             return {
-                ...prevState,
-                properties: newProperties
+                ...prevFormData,
+                properties: newProperties,
             };
         });
-        setHasChanged(true);
     };
-
+    
     const handlePropertyEntryChange = (index, value) => {
-        setFormData((prevState) => {
+        handleFormChange((prevState) => {
             const newProperties = [...prevState.properties];
             newProperties[index].is_new_property = value;
             return {
@@ -608,11 +974,10 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
-        setHasChanged(true);
     };
-
+    
     const handlePropertyItemChange = (index, item, value) => {
-        setFormData((prevState) => {
+        handleFormChange((prevState) => {
             const newProperties = [...prevState.properties];
             newProperties[index][item] = value;
             return {
@@ -620,41 +985,6 @@ const CreateEditTripReport = () => {
                 properties: newProperties
             };
         });
-        setHasChanged(true);
-    }
-
-    const toggleHelpers = (item, index) => {
-        setShowHelpers(prevShowHelpers => {
-            const newShowHelpers = [...prevShowHelpers];
-            newShowHelpers[index] = {
-                ...newShowHelpers[index],
-                [item]: !newShowHelpers[index][item],
-            };
-            return newShowHelpers;
-        });
-    };
-    
-
-    const toTitleCase = str => str ? str.replace(
-        /\w\S*/g, 
-        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-    ) : '';
-
-    useEffect(() => {
-        if (trip_report_id) {
-        // Fetch the data for editing
-        fetch(`/api/trip_reports/${trip_report_id}`)
-            .then(response => response.json())
-            .then(data => setFormData(data))
-            .catch(error => console.log('Error fetching data:', error));
-        }
-    }, [trip_report_id]);
-
-    const handleSubmit = (event) => {
-        event.preventDefault();
-        // Submit logic here
-        console.log('Form data submitted:', formData);
-        // Redirect after submit
     };
 
     return (
@@ -675,8 +1005,19 @@ const CreateEditTripReport = () => {
                     )}
                     <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                         <div className="card-content">
-
-                            <h3 className="center report-title">{trip_report_id ? 'Update' : 'New'} Trip Report</h3>
+                            <h3 className="center report-title">{formData.status === 'final' ? 'Update' : 'New'} Trip Report</h3>
+                            <div className="center">
+                                {formData.status === 'final' ? (
+                                    <div className="chip success-green tb-off-white-text text-bold">
+                                        PUBLISHED
+                                    </div>
+                                ) : (
+                                    <div className="chip warning-yellow tb-md-grey-text text-bold">
+                                        DRAFT
+                                    </div>
+                                )
+                                }
+                            </div>
                             <form onSubmit={handleSubmit}>
                             <div className="row">
                                 <div className="input-field col s12 l8 offset-l2 center">
@@ -733,7 +1074,7 @@ const CreateEditTripReport = () => {
                                                 className="btn btn-floating btn-tiny tb-grey lighten-2"
                                                 type="button"
                                                 style={{ marginLeft: '4px', marginBottom: '6px', paddingTop: '5px', paddingLeft: '1px'}}
-                                                onClick={() => handleChipDelete(traveler.id)}
+                                                onClick={() => handleUserDelete(traveler.id)}
                                             >
                                                 <span className="material-symbols-outlined text-bold" style={{ fontSize: '0.8rem'}} >
                                                     close
@@ -837,6 +1178,42 @@ const CreateEditTripReport = () => {
                                                     </button>
                                             </div>
                                         </div>
+                                        {/* TODO: add list of .travelers to allow deleting people from segments */}
+                                        {formData.travelers.length > 0 && (
+                                            <div className="row center" style={{ fontSize: '1.2rem'}}>
+                                                <span className="text-bold">Travelers: </span>
+                                                {property.travelers.length > 0 ? (
+                                                    property.travelers.map((traveler, travelerIndex) => (
+                                                        <React.Fragment key={traveler.id}>
+                                                            <span className="text-bold tb-teal-text">
+                                                                {traveler.email.split('@')[0]}
+                                                            </span>
+                                                            <button
+                                                                className="btn btn-floating btn-tiny tb-grey lighten-2"
+                                                                type="button"
+                                                                style={{ marginLeft: '4px', marginBottom: '6px', paddingTop: '5px', paddingLeft: '1px'}}
+                                                                onClick={() => handleUserSegmentActivityRemove('property', index, traveler.id)}
+                                                            >
+                                                                <span className="material-symbols-outlined text-bold" style={{ fontSize: '0.8rem'}}>
+                                                                    close
+                                                                </span>
+                                                            </button>
+                                                            {travelerIndex < property.travelers.length - 1 && ', '}
+                                                        </React.Fragment>
+                                                    ))
+                                                ) : (
+                                                    <button
+                                                        className="btn btn-small btn-floating tb-teal darken-2"
+                                                        type="button"
+                                                        onClick={() => handleRestoreTravelers('property', index)}
+                                                    >
+                                                        <span className="material-symbols-outlined">
+                                                            group_add
+                                                        </span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
                                         <div className="row">
                                             <div className="col s12 l8">
                                                 <div className="row">
@@ -945,14 +1322,14 @@ const CreateEditTripReport = () => {
                                                                         <div className="col s6">
                                                                             <input
                                                                                 type="text"
-                                                                                id={`new_portfolio_name-${index}`}
+                                                                                id={`new_property_name-${index}`}
                                                                                 value={property.new_property_name || ''}
                                                                                 onChange={(e) => handlePropertyItemChange(index, 'new_property_name', e.target.value)}
                                                                                 placeholder="Property Name"
                                                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                                                                 className="input-placeholder-dark"
                                                                             />
-                                                                            <label htmlFor="new_property_name" className="tb-grey-text text-darken-3">
+                                                                            <label htmlFor={`new_property_name-${index}`} className="tb-grey-text text-darken-3">
                                                                                 <span className="material-symbols-outlined">
                                                                                     hotel
                                                                                 </span>
@@ -996,7 +1373,7 @@ const CreateEditTripReport = () => {
                                                                                 }}
                                                                                 menuPortalTarget={document.body}
                                                                             />
-                                                                            <label htmlFor="portfolio_select" className="tb-grey-text text-darken-3">
+                                                                            <label htmlFor={`new_portfolio_select-${index}`} className="tb-grey-text text-darken-3">
                                                                                 <span className="material-symbols-outlined">
                                                                                     store
                                                                                 </span>
@@ -1008,7 +1385,7 @@ const CreateEditTripReport = () => {
                                                                     <div className="col s6">
                                                                             <Select
                                                                                 placeholder="Select location"
-                                                                                inputId="property_select"
+                                                                                inputId={`new_property_location_select-${index}`}
                                                                                 value={locationOptions?.find(prop => prop.value === property.new_property_location) || ''}
                                                                                 onChange={(selectedOption) => {
                                                                                     handlePropertyItemChange(index, 'new_property_location', selectedOption ? selectedOption.value : '');
@@ -1039,7 +1416,7 @@ const CreateEditTripReport = () => {
                                                                                 menuPortalTarget={document.body}
                                                                                 isClearable
                                                                             />
-                                                                            <label htmlFor="portfolio_select" className="tb-grey-text text-darken-3">
+                                                                            <label htmlFor={`new_property_location_select-${index}`} className="tb-grey-text text-darken-3">
                                                                                 <span className="material-symbols-outlined">
                                                                                     near_me
                                                                                 </span>
@@ -1049,7 +1426,7 @@ const CreateEditTripReport = () => {
                                                                         <div className="col s6">
                                                                             <Select
                                                                                 placeholder="Select Country"
-                                                                                id={`new_portfolio_select-${index}`}
+                                                                                id={`new_property_country_select-${index}`}
                                                                                 value={countryOptions.find(cons => cons.value === property.new_property_country_id) || ''}
                                                                                 onChange={(selectedOption) => {
                                                                                     handlePropertyItemChange(index, 'new_property_country_id', selectedOption ? selectedOption.value : '');
@@ -1082,7 +1459,7 @@ const CreateEditTripReport = () => {
                                                                                 }}
                                                                                 menuPortalTarget={document.body}
                                                                             />
-                                                                            <label htmlFor="new_country_select" className="tb-grey-text text-darken-3">
+                                                                            <label htmlFor={`new_property_country_select-${index}`} className="tb-grey-text text-darken-3">
                                                                                 <span className="material-symbols-outlined">
                                                                                     globe
                                                                                 </span>
@@ -1183,8 +1560,8 @@ const CreateEditTripReport = () => {
                                                             <input
                                                                 type="checkbox"
                                                                 // className="filled-in"
-                                                                checked={property.site_inspection_only}
-                                                                onChange={() => handleCheckboxChange('site_inspection_only', index)}
+                                                                checked={property.site_inspection_only || false}
+                                                                onChange={() => handleSiteInspectionChange(index)}
                                                             />
                                                             <span className="tb-grey-text text-darken-2">
                                                                 {/* <span className="material-symbols-outlined">
@@ -1197,7 +1574,6 @@ const CreateEditTripReport = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        {/* TODO: add list of .travelers to allow deleting people from segments */}
                                         {(property.property_id || property.is_new_property) &&
                                         <>
                                             <div className="row">
@@ -1255,9 +1631,9 @@ const CreateEditTripReport = () => {
                                                 </div>
                                                 <div className="center">
                                                     <div
-                                                        className="tb-teal-text text-darken-1 text-bold"
-                                                        style={{ fontSize: '1.4rem', paddingLeft: '20px', paddingBottom: '0px', marginBottom: '0px', cursor: 'pointer'}}
-                                                        onClick={() => toggleHelpers('attribute_updates', index)}
+                                                        className="chip tb-teal darken-2 tb-grey-text text-lighten-4 text-bold"
+                                                        style={{ fontSize: '1.1rem', paddingLeft: '20px', paddingBottom: '10px', marginBottom: '0px', cursor: 'pointer'}}
+                                                        onClick={() => toggleHelpers('attribute_updates_comments', index)}
                                                     >
                                                         {/* <span className="material-symbols-outlined">
                                                             electric_bolt
@@ -1268,13 +1644,13 @@ const CreateEditTripReport = () => {
                                                         </span>
                                                     </div>
                                                 </div>
-                                                {showHelpers[index]?.attribute_updates &&
+                                                {showHelpers[index]?.attribute_updates_comments &&
                                                     <>
                                                         <CommentInput
                                                             key={`${index}-attribute-updates`}
                                                             item="attribute_updates"
                                                             placeholder="Please explain which attributes need updates."
-                                                            comment={property.attribute_updates}
+                                                            comment={property.attribute_updates_comments || ''}
                                                             onCommentChange={(comment) => handleCommentChange(comment, 'attribute_updates', index)}
                                                         />
                                                     </>
@@ -1543,24 +1919,60 @@ const CreateEditTripReport = () => {
                                     </button>
                                 </div>
                                 <h4 className="center report-title" style={{ marginBottom: '40px' }}>Activities</h4>
-                                <div className="container center">
+                                <div className="container" style={{ width: '80%' }}>
                                     {formData.activities.map((activity, index) => {
-                                        // console.log(activity);
                                         return (
                                             <div key={index} className="card potential-trip-card tb-grey lighten-4">
                                                 <div className="card-content">
-                                                    <div className="row container" style={{ width: '80%'}}>
-                                                        <div className="col s11">
+                                                    <div className="row container" style={{ width: '100%'}}>
+                                                        <div className="col s8">
                                                             <input
                                                                 type="text"
-                                                                id="name"
-                                                                value={activity.name}
+                                                                id={`activity-name-${index}`}
+                                                                value={activity.name || ''}
                                                                 onChange={handleActivityNameChange(index)}
-                                                                placeholder="Activity/restaurant name"
-                                                                style={{ marginRight: '20px', flexGrow: '1' }}
+                                                                placeholder="Activity/Restaurant name"
+                                                                style={{ marginRight: '20px', flexGrow: '1', fontSize: '1.25rem' }}
                                                                 className="input-placeholder-dark"
                                                                 autoComplete="off"
                                                             />
+                                                            <label 
+                                                                htmlFor={`activity-name-${index}`} 
+                                                                className="text-bold" 
+                                                            >
+                                                                <span className="material-symbols-outlined">
+                                                                    local_activity
+                                                                </span>
+                                                                Activity/Restaurant Name
+                                                            </label>
+                                                        </div>
+                                                        <div className="col s3">
+                                                            <div>
+                                                                <ReactDatePicker
+                                                                    id={`activity-date-${index}`}
+                                                                    selected={activity.visit_date ? moment(activity.visit_date).toDate() : null}
+                                                                    onChange={(date) => { handleActivityDateChange(index, date) }}
+                                                                    isClearable
+                                                                    name="date_in"
+                                                                    placeholderText='Visit Date'
+                                                                    className="date-input-modal"
+                                                                    dateFormat="MM/dd/yyyy"
+                                                                    style={{ fontSize: '1.25rem', width: '100%' }}
+                                                                    minDate={new Date('2017-01-01')}
+                                                                    maxDate={new Date('2100-12-31')}
+                                                                    autoComplete="off"
+                                                                    openToDate={getOpenToDate()}
+                                                                />
+                                                            </div>
+                                                            <label 
+                                                                htmlFor={`activity-date-${index}`} 
+                                                                className="text-bold" 
+                                                            >
+                                                                <span className="material-symbols-outlined">
+                                                                    event
+                                                                </span>
+                                                                Visit Date
+                                                            </label>
                                                         </div>
                                                         <div className="col s1">
                                                             <button
@@ -1572,6 +1984,41 @@ const CreateEditTripReport = () => {
                                                         </div>
                                                     </div>
                                                     {/* TODO: add list of .travelers to allow deleting people from activities */}
+                                                    {formData.travelers.length > 0 && (
+                                                        <div className="row center" style={{ fontSize: '1.2rem'}}>
+                                                            <span className="text-bold">Travelers: </span>
+                                                            {activity.travelers.length > 0 ? (
+                                                                activity.travelers.map((traveler, travelerIndex) => (
+                                                                    <React.Fragment key={traveler.id}>
+                                                                        <span className="text-bold tb-teal-text">
+                                                                            {traveler.email.split('@')[0]}
+                                                                        </span>
+                                                                        <button
+                                                                            className="btn btn-floating btn-tiny tb-grey lighten-2"
+                                                                            type="button"
+                                                                            style={{ marginLeft: '4px', marginBottom: '6px', paddingTop: '5px', paddingLeft: '1px'}}
+                                                                            onClick={() => handleUserSegmentActivityRemove('activity', index, traveler.id)}
+                                                                        >
+                                                                            <span className="material-symbols-outlined text-bold" style={{ fontSize: '0.8rem'}}>
+                                                                                close
+                                                                            </span>
+                                                                        </button>
+                                                                        {travelerIndex < activity.travelers.length - 1 && ', '}
+                                                                    </React.Fragment>
+                                                                ))
+                                                            ) : (
+                                                                <button
+                                                                    className="btn btn-small btn-floating tb-teal darken-2"
+                                                                    type="button"
+                                                                    onClick={() => handleRestoreTravelers('activity', index)}
+                                                                >
+                                                                    <span className="material-symbols-outlined">
+                                                                        group_add
+                                                                    </span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                     <div className="row">
                                                         <div className="col s6">
                                                             <Select
@@ -1635,7 +2082,7 @@ const CreateEditTripReport = () => {
                                                             />
                                                         </div>
                                                     </div>
-                                                    <div className="row" style={{ marginBottom: '0px', marginTop: '40px'}}>
+                                                    <div className="row rating-row" style={{ marginLeft: '0px', marginBottom: '0px', marginTop: '40px'}}>
                                                         <RatingSelect
                                                             keyId={`activity-${index}-rating`}
                                                             item="Rating"
@@ -1679,7 +2126,7 @@ const CreateEditTripReport = () => {
                                             <span className="material-symbols-outlined">
                                                 save
                                             </span>
-                                            {trip_report_id ? 'Update Report' : 'Save Report'}
+                                            Save Report
                                         </button>
                                     </div>
                                 </div>

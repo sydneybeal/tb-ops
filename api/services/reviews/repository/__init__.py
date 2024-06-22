@@ -17,7 +17,7 @@ import datetime
 from uuid import UUID
 from abc import ABC, abstractmethod
 from typing import Sequence
-from api.services.reviews.models import TripReport, AdminComment
+from api.services.reviews.models import TripReport, TripReportSummary, AdminComment
 
 
 class ReviewsRepository(ABC):
@@ -30,8 +30,8 @@ class ReviewsRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_trip_report(self, trip_report_id: UUID) -> TripReport:
-        """Gets a single TripReport model in the repository by its id."""
+    async def get_trip_report(self, trip_report_id: UUID) -> TripReportSummary:
+        """Gets a single TripReportSummary model in the repository by its id."""
         raise NotImplementedError
 
     @abstractmethod

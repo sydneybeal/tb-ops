@@ -16,6 +16,7 @@
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
+from api.services.auth.models import UserSummary
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -23,19 +24,23 @@ from pydantic import BaseModel, Field, computed_field
 class Activity(BaseModel):
     """Model for an activity/restaurant of a trip report segment."""
 
-    name: str
+    name: Optional[str] = None
+    visit_date: Optional[date] = None
     travelers: Optional[List[UUID]] = None
     type: Optional[str] = None
     location: Optional[str] = None
-    rating: Optional[int] = None
+    rating: Optional[str] = None
     comments: Optional[str] = None
+
+    class Config:
+        json_encoders = {UUID: lambda v: str(v)}
 
 
 class Rating(BaseModel):
     """Model for a rating of a trip report segment."""
 
     attribute: str
-    rating: Optional[int] = None
+    rating: Optional[str] = None
 
 
 class Comment(BaseModel):
@@ -51,17 +56,21 @@ class Segment(BaseModel):
     date_in: Optional[date] = None
     date_out: Optional[date] = None
     site_inspection_only: bool = False
+    attribute_update_comment_id: Optional[UUID] = None
     travelers: Optional[List[UUID]] = None
     property_id: Optional[UUID] = None
     ratings: Optional[List[Rating]] = None
     comments: Optional[List[Comment]] = None
+
+    class Config:
+        json_encoders = {UUID: lambda v: str(v)}
 
 
 class TripReport(BaseModel):
     """Record for a trip report."""
 
     id: UUID = Field(default_factory=uuid4)
-    segments: Optional[List[Segment]] = None
+    properties: Optional[List[Segment]] = None
     travelers: Optional[List[UUID]] = None
     activities: Optional[List[Activity]] = None
     status: str = "draft"
@@ -69,12 +78,16 @@ class TripReport(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
+    class Config:
+        json_encoders = {UUID: lambda v: str(v)}
+
 
 class AdminComment(BaseModel):
     """Record for a comment to be processed by an admin."""
 
     id: UUID = Field(default_factory=uuid4)
     trip_report_id: UUID
+    property_id: Optional[UUID] = None
     comment_type: str
     comment: str
     status: str = "unreviewed"
@@ -86,8 +99,10 @@ class AdminComment(BaseModel):
 class PatchTripReportRequest(BaseModel):
     """Model for updating an existing trip report."""
 
+    trip_report_id: Optional[UUID] = None
     travelers: Optional[List[UUID]] = None
     document_updates: Optional[str] = None
+    document_update_comment_id: Optional[UUID] = None
     properties: Optional[List[dict]]  # Accept any dictionary that represents properties
     activities: Optional[List[dict]]  # Accept any dictionary that represents activities
     status: str = "draft"
@@ -97,5 +112,45 @@ class PatchTripReportRequest(BaseModel):
         extra = "allow"
 
 
+class ActivitySummary(BaseModel):
+    """Model for an activity/restaurant joined with its foreign key fields."""
+
+    name: Optional[str] = None
+    visit_date: Optional[date] = None
+    travelers: Optional[List[UserSummary]] = None
+    type: Optional[str] = None
+    location: Optional[str] = None
+    rating: Optional[str] = None
+    comments: Optional[str] = None
+
+
+# TODO join property with its details, etc
+class SegmentSummary(BaseModel):
+    """Model for a segment joined with its foreign key fields."""
+
+    date_in: Optional[date] = None
+    date_out: Optional[date] = None
+    site_inspection_only: bool = False
+    attribute_update_comment_id: Optional[UUID] = None
+    # TODO join with admin_comments to make this attribute comment string
+    attribute_updates_comments: Optional[str] = None
+    travelers: Optional[List[UserSummary]] = None
+
+    property_id: Optional[UUID] = None
+    ratings: Optional[List[Rating]] = None
+    comments: Optional[List[Comment]] = None
+
+
 class TripReportSummary(BaseModel):
     """Record for a trip report joined with its foreign key fields."""
+
+    id: UUID = Field(default_factory=uuid4)
+    # TODO join with admin_comments to get the document updates string
+    document_updates: Optional[str] = None
+    properties: Optional[List[SegmentSummary]] = None
+    travelers: Optional[List[UserSummary]] = None
+    activities: Optional[List[ActivitySummary]] = None
+    status: str = "draft"
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str

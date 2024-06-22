@@ -21,6 +21,7 @@ from fastapi import FastAPI, Depends, Request, HTTPException, status, Query
 
 # from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.param_functions import Form
@@ -633,20 +634,32 @@ def make_app(
         results = await travel_svc.process_portfolio_request(portfolio_data)
         return JSONResponse(content=results)
 
-    @app.patch(
-        "/v1/trip_reports",
-        operation_id="post_trip_report",
+    @app.get(
+        "/v1/trip_reports/{trip_report_id}",
+        operation_id="patch_trip_report",
         tags=["reviews"],
     )
-    async def post_trip_report(
-        trip_report_data: PatchTripReportRequest,
-        trip_report_id: Optional[UUID] = None,
+    async def get_trip_report(
+        trip_report_id: UUID,
         current_user: User = Depends(get_current_user),
     ) -> JSONResponse:
-        """Add or edit a Portfolio."""
-        results = await review_svc.process_trip_report_request(
-            trip_report_data, trip_report_id
-        )
+        """Get a TripReport by its ID."""
+        results = await review_svc.get_trip_report(trip_report_id)
+        if results:
+            return JSONResponse(content=jsonable_encoder(results))
+        return JSONResponse(content={}, status_code=404)
+
+    @app.patch(
+        "/v1/trip_reports",
+        operation_id="patch_trip_report",
+        tags=["reviews"],
+    )
+    async def patch_trip_report(
+        trip_report_data: PatchTripReportRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a TripReport."""
+        results = await review_svc.process_trip_report_request(trip_report_data)
         return JSONResponse(content=results)
 
     @app.delete(

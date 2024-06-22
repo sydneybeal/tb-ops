@@ -677,6 +677,44 @@ input[type=text]:focus + label {
   color: #47443e !important;
 }
 
+.rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 40px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.rating-item {
+  display: flex;
+  align-items: center;
+  width: 150px; /* Adjust width as needed */
+  flex-shrink: 0; /* Prevent shrinking below 150px */
+  padding-right: 10px; /* Add some padding to ensure space between item and options */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.rating-options {
+  display: flex;
+  justify-content: space-between; /* Distribute space between options */
+  flex-wrap: wrap;
+  flex-grow: 1;
+  gap: 3px; /* Adjust gap as needed */
+  min-width: 0; /* Allow options to shrink appropriately */
+}
+
+.rating-option {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Allow options to grow */
+  flex-basis: 0; /* Ensure equal distribution of space */
+  margin-right: 3px; /* Adjust margin as needed */
+}
+
+.rating-option input {
+  margin-right: 0px; /* Adjust margin as needed */
+}
 
 input {
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
@@ -756,12 +794,12 @@ a.sidenav-trigger.top-nav {
 }
 
 .rating-box {
-  width: 60%; /* No quotes around numerical values */
+  width: 80%; /* No quotes around numerical values */
   margin: 0 auto; /* Centers the box */
-  border: 1px solid #ccc; /* Light gray border */
+  border: 1px solid #d1cdc9; /* Light gray border */
   border-radius: 10px; /* Slightly rounded corners */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* CSS shadow */
-  padding: 20px; /* Optional: add some padding inside the box */
+  padding: 20px 20px 0px 20px; /* Optional: add some padding inside the box */
   background-color: #e8e5e1; /* Light grey background color */
 }
 
@@ -770,6 +808,14 @@ a.sidenav-trigger.top-nav {
 }
 
 .rating-box [type="radio"]:checked+span {
+  padding-left: 24px;
+}
+
+.rating-row [type="radio"]:not(:checked)+span {
+  padding-left: 24px;
+}
+
+.rating-row [type="radio"]:checked+span {
   padding-left: 24px;
 }
 
