@@ -27,7 +27,7 @@ const CreateEditTripReport = () => {
     const [travelerSearchText, setTravelerSearchText] = useState('');
     const [formData, setFormData] = useState({
         trip_report_id: trip_report_id || null,
-        status: 'draft',
+        review_status: 'draft',
         travelers: [],
         document_updates: '',
         properties: [
@@ -140,12 +140,24 @@ const CreateEditTripReport = () => {
             site_inspection_only: property.site_inspection_only || false,
             date_out: property.date_out || '',
             property_id: property.property_id || '',
-            property_name: '', // Assuming these details need to be fetched separately or are empty initially
-            portfolio_name: '',
-            country_name: '',
-            property_type: '',
+            name: property.name,
+            portfolio_id: property.property_details.portfolio_id,
+            portfolio_name: property.property_details.portfolio_name,
+            property_type: property.property_details.property_type,
+            location: property.property_details.location,
+            country_name: property.property_details.country_name,
+            core_destination_name: property.property_details.core_destination_name,
+            num_tents: property.property_details.num_tents,
+            has_trackers: property.property_details.has_trackers,
+            has_wifi_in_room: property.property_details.has_wifi_in_room,
+            has_wifi_in_common_areas: property.property_details.has_wifi_in_common_areas,
+            has_hairdryers: property.property_details.has_hairdryers,
+            has_pool: property.property_details.has_pool,
+            has_heated_pool: property.property_details.has_heated_pool,
+            has_credit_card_tipping: property.property_details.has_credit_card_tipping,
+            is_child_friendly: property.property_details.is_child_friendly,
+            is_handicap_accessible: property.property_details.is_handicap_accessible,
             attribute_updates_comments: property.attribute_updates_comments || '',
-            core_destination_name: '',
             accommodation_rating: (property.ratings.find(r => r.attribute === 'accommodation_rating') || {}).rating || '',
             service_rating: (property.ratings.find(r => r.attribute === 'service_rating') || {}).rating || '',
             food_rating: (property.ratings.find(r => r.attribute === 'food_rating') || {}).rating || '',
@@ -182,7 +194,7 @@ const CreateEditTripReport = () => {
     
         return {
             trip_report_id: data.id || null,
-            status: data.status || 'draft',
+            review_status: data.review_status || 'draft',
             travelers: data.travelers || [],
             document_updates: data.document_updates || '', // Assuming this field is not in the API response and defaulting to empty
             properties: data.properties.map(mapProperty),
@@ -221,8 +233,8 @@ const CreateEditTripReport = () => {
             //     ...data,
             //     trip_report_id: tripReportId,
             // }));
+            // console.log(JSON.stringify(data, 1));
             const mappedData = mapApiToFormData(data);
-            console.log(JSON.stringify(mappedData));
             setFormData(mappedData);
         } catch (error) {
             console.error('Error fetching trip report:', error);
@@ -361,7 +373,7 @@ const CreateEditTripReport = () => {
     };
 
     const prepareFormDataForSubmission = useCallback((formData) => {
-        console.log(JSON.stringify(formData));
+        // console.log(JSON.stringify(formData));
         const convertEmptyToNull = (value) => {
             return value === '' ? null : value;
         };
@@ -425,7 +437,7 @@ const CreateEditTripReport = () => {
         return submissionData;
     }, [userDetails.email]);
 
-    const saveTripReport = useCallback(async (preparedData, status) => {
+    const saveTripReport = useCallback(async (preparedData, review_status) => {
         try {
             const response = await fetch(`${process.env.REACT_APP_API}/v1/trip_reports`, {
                 method: 'PATCH',
@@ -448,17 +460,17 @@ const CreateEditTripReport = () => {
                 toastHtml = data.error;
                 toastColor = 'error-red';
             } else {
-                toastHtml = status === 'draft' ? 'Draft saved.' : 'Trip report has been published.';
+                toastHtml = review_status === 'draft' ? 'Draft saved.' : 'Trip report has been published.';
                 if (!preparedData.trip_report_id && data.trip_report_id) {
                     setFormData(prevState => ({
                         ...prevState,
                         trip_report_id: data.trip_report_id,
-                        status,
+                        review_status,
                     }));
                 } else {
                     setFormData(prevState => ({
                         ...prevState,
-                        status,
+                        review_status,
                     }));
                 }
                 setHasChanged(false); // Reset change flag after successful save
@@ -494,7 +506,7 @@ const CreateEditTripReport = () => {
     const saveDraft = useCallback(() => {
         if (hasChanged) {
             const preparedData = prepareFormDataForSubmission(formData);
-            saveTripReport(preparedData, "draft");
+            saveTripReport(preparedData, formData.review_status);
         }
     }, [hasChanged, formData, saveTripReport, prepareFormDataForSubmission]);
 
@@ -507,12 +519,13 @@ const CreateEditTripReport = () => {
     }, [saveDraft]);
 
     const handleSaveAsDraft = () => {
-        const preparedData = prepareFormDataForSubmission(formData);
+        const updatedFormData = { ...formData, review_status: 'draft' };
+        const preparedData = prepareFormDataForSubmission(updatedFormData);
         saveTripReport(preparedData, "draft");
     };
 
     const handleSaveAsFinal = async () => {
-        const updatedFormData = { ...formData, status: 'final' };
+        const updatedFormData = { ...formData, review_status: 'final' };
         const preparedData = prepareFormDataForSubmission(updatedFormData);
 
         try {
@@ -1005,9 +1018,9 @@ const CreateEditTripReport = () => {
                     )}
                     <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                         <div className="card-content">
-                            <h3 className="center report-title">{formData.status === 'final' ? 'Update' : 'New'} Trip Report</h3>
+                            <h3 className="center report-title">{formData.review_status === 'final' ? 'Update' : 'New'} Trip Report</h3>
                             <div className="center">
-                                {formData.status === 'final' ? (
+                                {formData.review_status === 'final' ? (
                                     <div className="chip success-green tb-off-white-text text-bold">
                                         PUBLISHED
                                     </div>

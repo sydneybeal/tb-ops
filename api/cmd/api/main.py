@@ -59,7 +59,11 @@ from api.services.travel.models import (
     PatchTripRequest,
 )
 from api.services.travel.service import TravelService
-from api.services.reviews.models import PatchTripReportRequest
+from api.services.reviews.models import (
+    PatchTripReportRequest,
+    TripReport,
+    TripReportSummary,
+)
 from api.services.reviews.service import ReviewService
 from api.services.quality.service import QualityService
 from api.services.quality.models import PotentialTrip, MatchingProgress
@@ -636,15 +640,31 @@ def make_app(
 
     @app.get(
         "/v1/trip_reports/{trip_report_id}",
-        operation_id="patch_trip_report",
+        operation_id="get_trip_report",
         tags=["reviews"],
+        response_model=TripReportSummary,
     )
     async def get_trip_report(
         trip_report_id: UUID,
         current_user: User = Depends(get_current_user),
-    ) -> JSONResponse:
+    ) -> TripReportSummary | JSONResponse:
         """Get a TripReport by its ID."""
         results = await review_svc.get_trip_report(trip_report_id)
+        if results:
+            return results
+        return JSONResponse(content={}, status_code=404)
+
+    @app.get(
+        "/v1/trip_reports",
+        operation_id="get_all_trip_reports",
+        tags=["reviews"],
+        response_model=Sequence[TripReportSummary],
+    )
+    async def get_all_trip_reports(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[TripReportSummary] | JSONResponse:
+        """Get all Agency models."""
+        results = await review_svc.get_all_trip_reports()
         if results:
             return JSONResponse(content=jsonable_encoder(results))
         return JSONResponse(content={}, status_code=404)

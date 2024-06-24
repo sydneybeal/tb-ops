@@ -13,12 +13,14 @@
 # limitations under the License.
 
 """Services for interacting with travel entries."""
+import asyncio
 import datetime
 from collections import defaultdict
 from re import S, T
 from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
 from uuid import UUID, uuid4
 from api.services.audit.service import AuditService
+from api.services.summaries.service import SummaryService
 from api.services.audit.models import AuditLog
 from api.services.reviews.models import (
     Activity,
@@ -40,12 +42,58 @@ class ReviewService:
         """Initializes with a configured repository."""
         self._repo = PostgresReviewsRepository()
         self._audit_svc = AuditService()
-        # self._summary_svc = SummaryService()
+        self._summary_svc = SummaryService()
 
     async def get_trip_report(
         self, trip_report_id: UUID
     ) -> Optional[TripReportSummary]:
-        return await self._repo.get_trip_report(trip_report_id)
+        trip_report = await self._repo.get_trip_reports(trip_report_id)
+        if trip_report:
+            trip_report = trip_report[0]  # Assume get_trip_reports returns a list
+            if trip_report.properties:
+                # Collect tasks to fetch property details for each property
+                property_details_tasks = [
+                    self._summary_svc.get_property_details_by_id(prop.property_id)
+                    for prop in trip_report.properties
+                    if prop.property_id
+                ]
+                # Execute tasks concurrently
+                property_details = await asyncio.gather(*property_details_tasks)
+
+                # Update properties with fetched details
+                properties_iterator = iter(property_details)
+                for prop in trip_report.properties:
+                    if prop.property_id:
+                        prop.property_details = next(
+                            properties_iterator
+                        )  # Assuming SegmentSummary has a property_details field
+
+            return trip_report
+        return None
+
+    async def get_all_trip_reports(self) -> Optional[Sequence[TripReportSummary]]:
+        trip_reports = await self._repo.get_trip_reports()  # Fetch all trip reports
+        if trip_reports:
+            # Process each trip report
+            for trip_report in trip_reports:
+                if trip_report.properties:
+                    # Collect tasks to fetch property details for each property in each trip report
+                    property_details_tasks = [
+                        self._summary_svc.get_property_details_by_id(prop.property_id)
+                        for prop in trip_report.properties
+                        if prop.property_id
+                    ]
+                    # Execute tasks concurrently
+                    property_details = await asyncio.gather(*property_details_tasks)
+
+                    # Update properties with fetched details
+                    properties_iterator = iter(property_details)
+                    for prop in trip_report.properties:
+                        if prop.property_id:
+                            prop.property_details = next(
+                                properties_iterator
+                            )  # Update property details
+        return trip_reports
 
     async def process_trip_report_request(
         self,
@@ -125,7 +173,7 @@ class ReviewService:
             travelers=trip_report_request.travelers,
             properties=properties,
             activities=activities,
-            status=trip_report_request.status,
+            review_status=trip_report_request.review_status,
             updated_by=trip_report_request.updated_by,
         )
 

@@ -17,7 +17,7 @@ from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 from api.services.auth.models import UserSummary
-
+from api.services.summaries.models import PropertyDetailSummary
 from pydantic import BaseModel, Field, computed_field
 
 
@@ -73,7 +73,7 @@ class TripReport(BaseModel):
     properties: Optional[List[Segment]] = None
     travelers: Optional[List[UUID]] = None
     activities: Optional[List[Activity]] = None
-    status: str = "draft"
+    review_status: str = "draft"
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -105,7 +105,7 @@ class PatchTripReportRequest(BaseModel):
     document_update_comment_id: Optional[UUID] = None
     properties: Optional[List[dict]]  # Accept any dictionary that represents properties
     activities: Optional[List[dict]]  # Accept any dictionary that represents activities
-    status: str = "draft"
+    review_status: str = "draft"
     updated_by: str
 
     class Config:
@@ -124,7 +124,6 @@ class ActivitySummary(BaseModel):
     comments: Optional[str] = None
 
 
-# TODO join property with its details, etc
 class SegmentSummary(BaseModel):
     """Model for a segment joined with its foreign key fields."""
 
@@ -132,13 +131,13 @@ class SegmentSummary(BaseModel):
     date_out: Optional[date] = None
     site_inspection_only: bool = False
     attribute_update_comment_id: Optional[UUID] = None
-    # TODO join with admin_comments to make this attribute comment string
     attribute_updates_comments: Optional[str] = None
     travelers: Optional[List[UserSummary]] = None
-
     property_id: Optional[UUID] = None
     ratings: Optional[List[Rating]] = None
     comments: Optional[List[Comment]] = None
+    # Embed PropertyDetailSummary directly
+    property_details: Optional[PropertyDetailSummary] = None
 
 
 class TripReportSummary(BaseModel):
@@ -150,7 +149,7 @@ class TripReportSummary(BaseModel):
     properties: Optional[List[SegmentSummary]] = None
     travelers: Optional[List[UserSummary]] = None
     activities: Optional[List[ActivitySummary]] = None
-    status: str = "draft"
+    review_status: str = "draft"
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
