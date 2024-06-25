@@ -42,5 +42,5 @@ CREATE TABLE IF NOT EXISTS public.admin_comments (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX idx_trip_report_property 
-ON public.admin_comments (trip_report_id, COALESCE(property_id, '00000000-0000-0000-0000-000000000000'::uuid));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_trip_report_property 
+ON public.admin_comments (trip_report_id, comment_type, COALESCE(property_id, '00000000-0000-0000-0000-000000000000'::uuid));

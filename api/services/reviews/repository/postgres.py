@@ -188,9 +188,16 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
                         ]
                         prop["ratings"] = prop.get("ratings", [])
                         prop["comments"] = prop.get("comments", [])
-                        prop["attribute_updates_comments"] = " ".join(
-                            comments_by_property.get(str(prop["property_id"]), [])
+                        prop_comments = comments_by_property.get(
+                            str(prop["property_id"]), []
                         )
+                        # Filter out None values and ensure all elements are strings
+                        prop_comments = [
+                            str(comment)
+                            for comment in prop_comments
+                            if comment is not None
+                        ]
+                        prop["attribute_updates_comments"] = " ".join(prop_comments)
                         processed_properties.append(SegmentSummary(**prop))
 
                     for act in activities_json:
@@ -205,9 +212,19 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
                     ]
                     data["properties"] = processed_properties
                     data["activities"] = processed_activities
-                    data["document_updates"] = " ".join(
-                        data.get("document_updates", [])
+
+                    # Ensure document_updates is a list, use empty list if None
+                    document_updates = (
+                        data.get("document_updates")
+                        if data.get("document_updates") is not None
+                        else []
                     )
+
+                    # Join the comments, ensuring none are None
+                    if document_updates:
+                        data["document_updates"] = " ".join(
+                            comment for comment in document_updates
+                        )
 
                     trip_reports.append(TripReportSummary(**data))
 
@@ -224,7 +241,7 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
             INSERT INTO public.admin_comments (
                 id, trip_report_id, property_id, comment_type, comment, status, reported_by, created_at, updated_at
             ) VALUES {}
-            ON CONFLICT (trip_report_id, COALESCE(property_id, '00000000-0000-0000-0000-000000000000')) DO UPDATE SET
+            ON CONFLICT (trip_report_id, comment_type, COALESCE(property_id, '00000000-0000-0000-0000-000000000000')) DO UPDATE SET
                 comment = EXCLUDED.comment,
                 status = EXCLUDED.status,
                 reported_by = EXCLUDED.reported_by,

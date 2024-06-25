@@ -103,23 +103,16 @@ class ReviewService:
         admin_comments = []
         properties = []
         activities = []
-        admin_comment_uuids = {"document_updates": None, "attribute_updates": {}}
 
         # If any document_updates, process them as AdminComment models
-        if trip_report_request.document_updates:
-            document_update_id = (
-                trip_report_request.document_update_comment_id or uuid4()
+        if trip_report_request.document_updates is not None:
+            admin_comment = AdminComment(
+                trip_report_id=trip_report_id,
+                comment_type="document_update",
+                comment=trip_report_request.document_updates,
+                reported_by=trip_report_request.travelers,
             )
-            admin_comment_uuids["document_updates"] = document_update_id
-            admin_comments.append(
-                AdminComment(
-                    id=document_update_id,  # Use the generated UUID here
-                    trip_report_id=trip_report_id,
-                    comment_type="document_update",
-                    comment=trip_report_request.document_updates,
-                    reported_by=trip_report_request.travelers,
-                )
-            )
+            admin_comments.append(admin_comment)
 
         # Process each segment/property of the trip report
         if trip_report_request.properties:
@@ -128,31 +121,22 @@ class ReviewService:
                     segment.values()
                 ):  # Skip if segment has all None or empty values
                     continue
-                property_id = segment.get("property_id")
-                # If any attribute_updates, process them as AdminComment models
-                if segment.get("attribute_updates_comments"):
-                    attribute_update_id = (
-                        segment.get("attribute_update_comment_id") or uuid4()
-                    )
-                    if property_id not in admin_comment_uuids["attribute_updates"]:
-                        admin_comment_uuids["attribute_updates"][property_id] = []
-                    admin_comment_uuids["attribute_updates"][property_id].append(
-                        attribute_update_id
-                    )
-                    admin_comments.append(
-                        AdminComment(
-                            id=attribute_update_id,  # Use the generated UUID here
-                            trip_report_id=trip_report_id,
-                            property_id=property_id,
-                            comment_type="attribute_update",
-                            comment=segment["attribute_updates_comments"],
-                            reported_by=segment.get("travelers"),
-                        )
-                    )
-
                 # TODO if the segment doesn't have property ID
                 ## i.e. it is a new property that needs to go to admin zone
                 ## put it in the properties table with status = "unverified"
+                property_id = segment.get(
+                    "property_id"
+                )  # TODO update the property_id to a new property's ID if applicable
+                # If any attribute_updates, process them as AdminComment models
+                if segment.get("attribute_updates_comments") is not None:
+                    admin_comment = AdminComment(
+                        trip_report_id=trip_report_id,
+                        property_id=property_id,
+                        comment_type="attribute_update",
+                        comment=segment["attribute_updates_comments"],
+                        reported_by=segment.get("travelers"),
+                    )
+                    admin_comments.append(admin_comment)
 
                 # Convert each segment to an Segment model
                 properties.append(self.process_segment(segment))
@@ -177,7 +161,7 @@ class ReviewService:
             updated_by=trip_report_request.updated_by,
         )
 
-        print(trip_report)
+        # print(trip_report)
 
         return_value = await self.upsert_trip_report_and_comments(
             trip_report=trip_report, admin_comments=admin_comments
@@ -185,11 +169,8 @@ class ReviewService:
 
         return_value["trip_report_id"] = str(trip_report_id)
         return_value["admin_comment_uuids"] = {
-            "document_updates": str(admin_comment_uuids["document_updates"]),
-            "attribute_updates": {
-                prop_id: [str(uuid) for uuid in uuids]
-                for prop_id, uuids in admin_comment_uuids["attribute_updates"].items()
-            },
+            "document_updates": None,
+            "attribute_updates": {},
         }
         return return_value
 

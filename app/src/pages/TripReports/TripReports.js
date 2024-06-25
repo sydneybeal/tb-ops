@@ -50,6 +50,7 @@ export const TripReports = () => {
                     setTotalPages(0);
                     setDisplayData([]);
                 }
+                setLoaded(true);
             })
             .catch((err) => {
                 setLoaded(true);
@@ -215,13 +216,13 @@ export const TripReports = () => {
                                                     </span>
                                                 ))}
                                                 {report.properties.map((segment, index) => (
-                                                    <p key={`segment-${report.id}-${index}`}>{segment.property_details.name}</p>
+                                                    <p key={`segment-${report.id}-${index}`}>{segment.property_details?.name}</p>
                                                 ))}
                                             </div>
                                         </div>
                                     ))
                                     ) : (
-                                        <p>No trips available for grouping.</p>
+                                        <p>No trip reports available</p>
                                 )}
                             </div>
                         </>

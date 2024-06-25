@@ -102,7 +102,6 @@ class PatchTripReportRequest(BaseModel):
     trip_report_id: Optional[UUID] = None
     travelers: Optional[List[UUID]] = None
     document_updates: Optional[str] = None
-    document_update_comment_id: Optional[UUID] = None
     properties: Optional[List[dict]]  # Accept any dictionary that represents properties
     activities: Optional[List[dict]]  # Accept any dictionary that represents activities
     review_status: str = "draft"

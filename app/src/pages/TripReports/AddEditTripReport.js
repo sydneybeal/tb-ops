@@ -82,15 +82,17 @@ const CreateEditTripReport = () => {
     const [hasChanged, setHasChanged] = useState(false);
 
     const initializeShowHelpers = (properties) => {
-        return properties.map(() => ({
+        return properties.map((property) => {
+            return ({
             animal_viewing_comments: true,
             seasonality_comments: true,
             clientele_comments: true,
             pairing_comments: true,
             insider_comments: true,
             guiding_comments: true,
-            attribute_updates_comments: false,
-        }));
+            // Set to true if attribute_updates_comments is not an empty string
+            attribute_updates_comments: property.attribute_updates_comments !== ""
+        })});
     };
 
     const [showHelpers, setShowHelpers] = useState(initializeShowHelpers(formData.properties));
@@ -99,13 +101,63 @@ const CreateEditTripReport = () => {
     useEffect(() => {
         const newPropertiesCount = formData.properties.length - prevPropertiesLength.current;
         if (newPropertiesCount > 0) {
-            setShowHelpers(prevShowHelpers => [
-                ...prevShowHelpers,
-                ...initializeShowHelpers(formData.properties.slice(-newPropertiesCount))
-            ]);
+            setShowHelpers(initializeShowHelpers(formData.properties));
         }
         prevPropertiesLength.current = formData.properties.length;
     }, [formData.properties]);
+
+    // useEffect(() => {
+    //     // Reinitialize helpers for all properties whenever there's a change
+    //     setShowHelpers(initializeShowHelpers(formData.properties));
+    //     prevPropertiesLength.current = formData.properties.length;
+    // }, [formData.properties]);
+
+    // const prevPropertiesRef = useRef(formData.properties);
+    // const showHelpersRef = useRef();
+
+    // useEffect(() => {
+    //     setShowHelpers(initializeShowHelpers(formData.properties));  // Initial set for showHelpers.
+    //     showHelpersRef.current = initializeShowHelpers(formData.properties);  // Store the initial state in the ref.
+    // }, [formData]);
+
+    // useEffect(() => {
+    //     const newProperties = formData.properties;
+    //     const prevProperties = prevPropertiesRef.current;
+    
+    // setShowHelpers(prevShowHelpers => {
+    //         const newHelpers = newProperties.map((property, index) => {
+    //             // Check if this is a new property or if attribute_updates_comments has changed
+    //             const prevProperty = prevProperties[index];
+    //             if (!prevProperty || property.attribute_updates_comments !== prevProperty.attribute_updates_comments) {
+    //                 // This is a new property or attribute_updates_comments has changed
+    //                 return {
+    //                     animal_viewing_comments: true,
+    //                     seasonality_comments: true,
+    //                     clientele_comments: true,
+    //                     pairing_comments: true,
+    //                     insider_comments: true,
+    //                     guiding_comments: true,
+    //                     attribute_updates_comments: property.attribute_updates_comments !== "",
+    //                 };
+    //             } else {
+    //                 // Return existing helper for this index if it exists, else initialize new
+    //                 return prevShowHelpers[index] || {
+    //                     animal_viewing_comments: true,
+    //                     seasonality_comments: true,
+    //                     clientele_comments: true,
+    //                     pairing_comments: true,
+    //                     insider_comments: true,
+    //                     guiding_comments: true,
+    //                     attribute_updates_comments: property.attribute_updates_comments !== "",
+    //                 };
+    //             }
+    //         });
+    
+    //         return newHelpers;
+    //     });
+    
+    //     prevPropertiesRef.current = newProperties; // Update previous properties
+    // }, [formData.properties]);
     
     const activityOptions = [
         { label: "Restaurant", value: "restaurant" },
@@ -141,22 +193,22 @@ const CreateEditTripReport = () => {
             date_out: property.date_out || '',
             property_id: property.property_id || '',
             name: property.name,
-            portfolio_id: property.property_details.portfolio_id,
-            portfolio_name: property.property_details.portfolio_name,
-            property_type: property.property_details.property_type,
-            location: property.property_details.location,
-            country_name: property.property_details.country_name,
-            core_destination_name: property.property_details.core_destination_name,
-            num_tents: property.property_details.num_tents,
-            has_trackers: property.property_details.has_trackers,
-            has_wifi_in_room: property.property_details.has_wifi_in_room,
-            has_wifi_in_common_areas: property.property_details.has_wifi_in_common_areas,
-            has_hairdryers: property.property_details.has_hairdryers,
-            has_pool: property.property_details.has_pool,
-            has_heated_pool: property.property_details.has_heated_pool,
-            has_credit_card_tipping: property.property_details.has_credit_card_tipping,
-            is_child_friendly: property.property_details.is_child_friendly,
-            is_handicap_accessible: property.property_details.is_handicap_accessible,
+            portfolio_id: property.property_details?.portfolio_id,
+            portfolio_name: property.property_details?.portfolio_name,
+            property_type: property.property_details?.property_type,
+            location: property.property_details?.location,
+            country_name: property.property_details?.country_name,
+            core_destination_name: property.property_details?.core_destination_name,
+            num_tents: property.property_details?.num_tents,
+            has_trackers: property.property_details?.has_trackers,
+            has_wifi_in_room: property.property_details?.has_wifi_in_room,
+            has_wifi_in_common_areas: property.property_details?.has_wifi_in_common_areas,
+            has_hairdryers: property.property_details?.has_hairdryers,
+            has_pool: property.property_details?.has_pool,
+            has_heated_pool: property.property_details?.has_heated_pool,
+            has_credit_card_tipping: property.property_details?.has_credit_card_tipping,
+            is_child_friendly: property.property_details?.is_child_friendly,
+            is_handicap_accessible: property.property_details?.is_handicap_accessible,
             attribute_updates_comments: property.attribute_updates_comments || '',
             accommodation_rating: (property.ratings.find(r => r.attribute === 'accommodation_rating') || {}).rating || '',
             service_rating: (property.ratings.find(r => r.attribute === 'service_rating') || {}).rating || '',
@@ -196,7 +248,7 @@ const CreateEditTripReport = () => {
             trip_report_id: data.id || null,
             review_status: data.review_status || 'draft',
             travelers: data.travelers || [],
-            document_updates: data.document_updates || '', // Assuming this field is not in the API response and defaulting to empty
+            document_updates: data.document_updates || '',
             properties: data.properties.map(mapProperty),
             activities: data.activities.map(mapActivity)
         };
@@ -233,7 +285,7 @@ const CreateEditTripReport = () => {
             //     ...data,
             //     trip_report_id: tripReportId,
             // }));
-            // console.log(JSON.stringify(data, 1));
+            // console.log(JSON.stringify(data, null, 2));
             const mappedData = mapApiToFormData(data);
             setFormData(mappedData);
         } catch (error) {
@@ -381,6 +433,8 @@ const CreateEditTripReport = () => {
         const submissionData = { ...formData };
         submissionData.trip_report_id = convertEmptyToNull(submissionData.trip_report_id);
         submissionData.travelers = submissionData.travelers.map(traveler => traveler.id);
+        submissionData.document_updates = submissionData.document_updates || '';
+        submissionData.updated_by = userDetails.email || '';
         
         // Process each property
         submissionData.properties = submissionData.properties.map(property => {
@@ -390,16 +444,19 @@ const CreateEditTripReport = () => {
                 site_inspection_only: property.site_inspection_only,
                 date_out: convertEmptyToNull(property.date_out),
                 property_id: convertEmptyToNull(property.property_id),
-                attribute_updates_comments: convertEmptyToNull(property.attribute_updates_comments),
+                attribute_updates_comments: property.attribute_updates_comments || '',
                 accommodation_rating: convertEmptyToNull(property.accommodation_rating),
                 service_rating: convertEmptyToNull(property.service_rating),
                 food_rating: convertEmptyToNull(property.food_rating),
-                guide_rating: convertEmptyToNull(property.guide_rating),
+                // guide_rating: convertEmptyToNull(property.guide_rating),
+                guide_rating: hasAnimals(property) ? convertEmptyToNull(property.guide_rating) : null,
                 overall_rating: convertEmptyToNull(property.overall_rating),
                 food_and_beverage_comments: convertEmptyToNull(property.food_and_beverage_comments),
                 management_comments: convertEmptyToNull(property.management_comments),
-                guiding_comments: convertEmptyToNull(property.guiding_comments),
-                animal_viewing_comments: convertEmptyToNull(property.animal_viewing_comments),
+                // guiding_comments: convertEmptyToNull(property.guiding_comments),
+                // animal_viewing_comments: convertEmptyToNull(property.animal_viewing_comments),
+                guiding_comments: hasAnimals(property) ? convertEmptyToNull(property.guiding_comments) : null,
+                animal_viewing_comments: hasAnimals(property) ? convertEmptyToNull(property.animal_viewing_comments) : null,
                 seasonality_comments: convertEmptyToNull(property.seasonality_comments),
                 clientele_comments: convertEmptyToNull(property.clientele_comments),
                 pairing_comments: convertEmptyToNull(property.pairing_comments),
@@ -431,8 +488,6 @@ const CreateEditTripReport = () => {
             type: convertEmptyToNull(activity.type),
             location: convertEmptyToNull(activity.location)
         }));
-    
-        submissionData.updated_by = userDetails.email || '';
       
         return submissionData;
     }, [userDetails.email]);
@@ -595,18 +650,7 @@ const CreateEditTripReport = () => {
                 properties: [...prevFormData.properties, newProperty],
             };
         });
-        setShowHelpers(prevShowHelpers => [
-            ...prevShowHelpers,
-            {
-                animal_viewing_comments: true,
-                seasonality_comments: true,
-                clientele_comments: true,
-                pairing_comments: true,
-                insider_comments: true,
-                guiding_comments: true,
-                attribute_updates_comments: false,
-            }
-        ]);
+        setShowHelpers(initializeShowHelpers(formData.properties));
         setHasChanged(true);
     };
 
@@ -910,10 +954,6 @@ const CreateEditTripReport = () => {
                         'has_credit_card_tipping': selectedOption ? selectedOption.has_credit_card_tipping : '',
                         'is_child_friendly': selectedOption ? selectedOption.is_child_friendly : '',
                         'is_handicap_accessible': selectedOption ? selectedOption.is_handicap_accessible : '',
-                        // Reset animal/guide ratings/comments if no longer applicable
-                        'guide_rating': hasAnimals(selectedOption) ? property.guide_rating : null,
-                        'guiding_comments': hasAnimals(selectedOption) ? property.guiding_comments : null,
-                        'animal_viewing_comments': hasAnimals(selectedOption) ? property.animal_viewing_comments : null
                     };
                 }
                 return property;
