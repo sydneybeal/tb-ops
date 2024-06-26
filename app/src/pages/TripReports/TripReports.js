@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
 // import Select from 'react-select';
 // import ReactDatePicker from 'react-datepicker';
-import { Link } from 'react-router-dom';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../components/AuthContext';
+import TripReportCard from './TripReportCard';
 // import moment from 'moment';
 
 export const TripReports = () => {
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [apiData, setApiData] = useState([]);
     const [displayData, setDisplayData] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
@@ -38,6 +38,16 @@ export const TripReports = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 if (Array.isArray(data)) {
                     const numberOfPages = Math.ceil(data.length / itemsPerPage);
                     setApiData(data);
@@ -56,7 +66,7 @@ export const TripReports = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, itemsPerPage]);
+    }, [userDetails.token, itemsPerPage, logout]);
 
     useEffect(() => {
         // Calculate the number of pages with the new data
@@ -190,35 +200,8 @@ export const TripReports = () => {
                             <div className="container" style={{ width: '80%'}}>
                                 {displayData.length ? (
                                     displayData.map(report => (
-                                        <div key={report.id} className="card potential-trip-card">
-                                            <div className="card-content">
-                                                <div className="row">
-                                                    {report.review_status === 'final' ? (
-                                                        <div className="chip success-green tb-off-white-text text-bold">
-                                                            PUBLISHED
-                                                        </div>
-                                                    ) : (
-                                                        <div className="chip warning-yellow tb-md-grey-text text-bold">
-                                                            DRAFT
-                                                        </div>
-                                                    )
-                                                    }
-                                                    <Link to={`/trip_reports/edit/${report.id}`} className="btn btn-floating waves-effect waves-light warning-yellow tb-md-black-text">
-                                                        <span class="material-symbols-outlined">
-                                                            edit
-                                                        </span>
-                                                    </Link>
-                                                </div>
-                                                <span className="text-bold">Travelers: </span>
-                                                {report.travelers.map(traveler => (
-                                                    <span style={{ paddingLeft: '12px' }} key={traveler.id} className="chip tb-teal darken-3 tb-off-white-text">
-                                                        <span style={{ fontSize: '1.1rem'}} >{traveler.email.split('@')[0]} </span>
-                                                    </span>
-                                                ))}
-                                                {report.properties.map((segment, index) => (
-                                                    <p key={`segment-${report.id}-${index}`}>{segment.property_details?.name}</p>
-                                                ))}
-                                            </div>
+                                        <div key={report.id}>
+                                            <TripReportCard tripReport={report}/>
                                         </div>
                                     ))
                                     ) : (

@@ -95,6 +95,18 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
 
         return {"inserted": inserted_count, "updated": updated_count}
 
+    def safe_json_loads(self, data):
+        try:
+            if not data or data == "null":
+                return []
+            return json.loads(data)
+        except json.JSONDecodeError:
+            print("Failed to decode JSON:", data)
+            return []
+        except TypeError:
+            print("TypeError with data:", data)
+            return []
+
     async def get_trip_reports(
         self, trip_report_id: Optional[UUID] = None
     ) -> Optional[Sequence[TripReportSummary]]:
@@ -154,20 +166,23 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
                 trip_reports = []
                 for row in res:
                     data = dict(row)
-                    travelers = data["traveler_details"]
+                    raw_travelers = data.get("traveler_details", [])
+                    travelers = [
+                        traveler
+                        for traveler in raw_travelers
+                        if all(
+                            traveler.get(key) is not None
+                            for key in ["id", "email", "role"]
+                        )
+                    ]
 
                     # Map traveler UUIDs to their details
                     traveler_ids = {
                         UUID(traveler["id"]): traveler for traveler in travelers
                     }
 
-                    # Decode JSON for properties and activities
-                    properties_json = (
-                        json.loads(data["properties"]) if data["properties"] else []
-                    )
-                    activities_json = (
-                        json.loads(data["activities"]) if data["activities"] else []
-                    )
+                    properties_json = self.safe_json_loads(data["properties"])
+                    activities_json = self.safe_json_loads(data["activities"])
                     attribute_comments = data["attribute_comments"]
 
                     comments_by_property = {}
@@ -205,6 +220,22 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
                             traveler_ids.get(UUID(tid), {})
                             for tid in act.get("travelers", [])
                         ]
+                        if (
+                            all(
+                                act.get(key) is None
+                                for key in [
+                                    "name",
+                                    "visit_date",
+                                    "type",
+                                    "location",
+                                    "rating",
+                                    "comments",
+                                ]
+                            )
+                            and not act["travelers"]
+                        ):
+                            # Skip appending this activity since it's effectively empty
+                            continue
                         processed_activities.append(ActivitySummary(**act))
 
                     data["travelers"] = [

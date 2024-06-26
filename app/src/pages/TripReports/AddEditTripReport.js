@@ -192,7 +192,7 @@ const CreateEditTripReport = () => {
             site_inspection_only: property.site_inspection_only || false,
             date_out: property.date_out || '',
             property_id: property.property_id || '',
-            name: property.name,
+            name: property.property_details?.name,
             portfolio_id: property.property_details?.portfolio_id,
             portfolio_name: property.property_details?.portfolio_name,
             property_type: property.property_details?.property_type,
@@ -435,7 +435,7 @@ const CreateEditTripReport = () => {
         submissionData.travelers = submissionData.travelers.map(traveler => traveler.id);
         submissionData.document_updates = submissionData.document_updates || '';
         submissionData.updated_by = userDetails.email || '';
-        
+
         // Process each property
         submissionData.properties = submissionData.properties.map(property => {
             const filteredProperty = {
@@ -622,6 +622,7 @@ const CreateEditTripReport = () => {
                 core_destination_name: '',
                 property_type: '',
                 accommodation_rating: '',
+                attribute_updates_comments: '',
                 service_rating: '',
                 food_rating: '',
                 guide_rating: '',
@@ -1272,7 +1273,8 @@ const CreateEditTripReport = () => {
                                                 <div className="row">
                                                     {(!property.property_id && !(property.new_property_name)) && (
                                                         <div className="row" style={{ marginLeft: '5px'}}>
-                                                            <div>
+                                                            <em className="tb-grey-text text-lighten-2">Creation of a new property is unavailable at this time.</em>
+                                                            {/* <div>
                                                                 <em className="tb-grey-text">
                                                                     Please select an&nbsp;
                                                                     <a
@@ -1300,7 +1302,7 @@ const CreateEditTripReport = () => {
                                                                         New Property
                                                                     </a>
                                                                 </em>
-                                                            </div>
+                                                            </div> */}
                                                         </div>
                                                     )}
                                                     {!property.is_new_property ? (
