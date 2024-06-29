@@ -895,6 +895,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
     // };
     const validatePropertyAndBookingChannel = (index) => {
         const log = accommodationLogs[index];
+        const logPortfolioId = log.portfolio_id || log.property_portfolio_id;
 
         // Retrieve the 'Direct' channel ID once at the beginning to improve performance
         const directChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "direct")?.value;
@@ -913,7 +914,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         const thousandHillsChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "thousand hills rwanda")?.value;
 
         // First check for the special case
-        if (log.portfolio_id === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
+        if (logPortfolioId === elewanaPortfolioId && log.booking_channel_id === cheliAndPeacockChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to 'Direct' for Elewana Collection",
@@ -933,7 +934,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 classes: 'success-green',
             });
             handleLogChange(index, 'booking_channel_id', directChannelId);
-        } else if (log.portfolio_id === ecoventuraPortfolioId && log.booking_channel_id === galapagosChannelId) {
+        } else if (logPortfolioId === ecoventuraPortfolioId && log.booking_channel_id === galapagosChannelId) {
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to 'Direct' for Ecoventura",
@@ -943,7 +944,7 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             handleLogChange(index, 'booking_channel_id', directChannelId);
         } else {
             // General case: match booking channel with portfolio name exactly (case-insensitive and trimmed)
-            const portfolioName = portfolios.find(portfolio => portfolio.value === log.portfolio_id)?.label.trim().toLowerCase();
+            const portfolioName = portfolios.find(portfolio => portfolio.value === logPortfolioId)?.label.trim().toLowerCase();
             const bookingChannelName = bookingChannels.find(channel => channel.value === log.booking_channel_id)?.label.trim().toLowerCase();
 
             if (portfolioName && bookingChannelName && portfolioName === bookingChannelName) {

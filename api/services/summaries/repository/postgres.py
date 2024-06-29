@@ -124,7 +124,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.location AS property_location,
                 p.latitude AS property_latitude,
                 p.longitude AS property_longitude,
-                p.id AS property_portfolio_id,
+                pf.id AS property_portfolio_id,
                 pf.name AS property_portfolio,
                 bc.name AS booking_channel_name,
                 a.name AS agency_name,
