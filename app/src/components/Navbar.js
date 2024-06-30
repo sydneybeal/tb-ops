@@ -152,8 +152,8 @@ const Navbar = ({ title }) => {
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/maps'} className="text-bold">
-                            Maps
+                        <Link to={'/overview'} className="text-bold">
+                            Weekly Overview
                         </Link>
                     </li>
                 </div>

@@ -326,7 +326,8 @@ export const BedNightReports = () => {
 
 
         // Maps for creating filter options from filtered data
-        const coreDestMap = {}, countryMap = {}, consultantMap = {}, propertyMap = {}, portfolioMap = {}, agencyMap = {}, bookingChannelMap = {}, propertyTypeMap = {}, propertyLocationMap = {};
+        const coreDestMap = {}, countryMap = {}, consultantMap = {}, propertyMap = {}, portfolioMap = {}, agencyMap = {}, bookingChannelMap = {}, propertyTypeMap = {};
+        // const propertyLocationMap = {};
 
         // Populate maps with options from filteredData
         filteredData.forEach(item => {

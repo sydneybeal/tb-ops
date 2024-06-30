@@ -1,8 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import Navbar from '../../components/Navbar';
-import ReactDatePicker from 'react-datepicker';
-import Select from 'react-select';
+import React from 'react';
 
 const RatingSelect = ({ keyId, item, icon, rating, onRatingChange }) => {
     const handleChange = (e) => {

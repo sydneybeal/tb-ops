@@ -55,12 +55,14 @@ const TravelMap = ({ data }) => {
             }
 
             // Set markers for all valid data
+            // TODO make this pop up nicer
             const markerElements = validData.map((item, index) => (
                 <Marker key={index} position={[item.latitude, item.longitude]}>
                     <Popup>
                         {item.primary_traveler} x{item.num_pax}<br />
-                        {item.property_name}<br />
+                        <span className="text-bold">{item.property_name}</span><br />
                         {item.country_name}<br />
+                        {item.consultant_display_name}<br />
                         {moment(item.date_in).format('MMM Do YYYY')} - {moment(item.date_out).format('MMM Do YYYY')}
                     </Popup>
                 </Marker>
@@ -79,7 +81,7 @@ const TravelMap = ({ data }) => {
     }, [position, map]);
 
     return (
-        <div style={{ height: '700px' }}>
+        <div style={{ height: '400px' }}>
             <MapContainer
                 center={position || [0, 0]}
                 zoom={2}

@@ -89,17 +89,19 @@ async def main() -> None:
 
     # Ingest from the following tables in prod into corresponding in UAT
     tables = [
-        # "public.core_destinations",
-        # "public.countries",
-        # "public.agencies",
-        # "public.booking_channels",
-        # "public.portfolios",
-        # "public.consultants",
-        # "public.properties",
+        "public.core_destinations",
+        "public.countries",
+        "public.agencies",
+        "public.booking_channels",
+        "public.portfolios",
+        "public.consultants",
+        "public.properties",
+        "public.trips",
         "public.accommodation_logs",
-        # "public.property_details",
-        # "public.users",
-        # "public.trips",
+        "public.property_details",
+        "public.users",
+        "public.potential_trips",
+        "public.audit_logs",
     ]
 
     for table in tables:

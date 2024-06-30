@@ -184,7 +184,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/maps/',
+    path: '/overview/',
     element: (
       <ProtectedRoute>
         <Maps />

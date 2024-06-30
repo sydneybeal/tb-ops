@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Chart from 'react-apexcharts';
 import M from 'materialize-css';
 import moment from 'moment';
