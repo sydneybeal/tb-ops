@@ -121,7 +121,6 @@ export const Maps = () => {
 
             <main className="tb-grey lighten-6">
                 <div className="container center" style={{ width: '90%' }}>
-                <div className="container center" style={{ width: '100%' }}>
                     <div className="sticky-container">
                         <WeekSelector onWeekChange={handleWeekChange} initialDate={startDate} />
                         <div style={{ fontSize: '1.4rem' }}>
@@ -134,8 +133,6 @@ export const Maps = () => {
                                 {moment(startDate).endOf('week').format("M/D/YY")}
                             </span>
                         </div>
-                        {/* Rest of your component */}
-                    </div>
                 </div>
                 {loaded ? (
                     <>

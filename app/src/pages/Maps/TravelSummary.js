@@ -123,7 +123,7 @@ const TravelSummary = ({ data }) => {
                             <br />
                             <em className="tb-grey-text text-darken-2" style={{ fontSize: '1.2rem' }}>
                                 <span className="material-symbols-outlined">
-                                    contact_mail
+                                    group
                                 </span>
                                 # Travelers
                             </em>
@@ -135,7 +135,7 @@ const TravelSummary = ({ data }) => {
                             <br />
                             <em className="tb-grey-text text-darken-2" style={{ fontSize: '1.2em' }}>
                                 <span className="material-symbols-outlined">
-                                    contact_mail
+                                    hotel
                                 </span>
                                 # Segments
                             </em>
@@ -154,7 +154,7 @@ const TravelSummary = ({ data }) => {
                         </div>
                         <div className="col s6 l4">
                             <span className="text-bold" style={{ fontSize: '1.6rem' }}>
-                                {moment(stats.dayWithMostCheckIns[0]).format("ddd, MMM D")} ({stats.dayWithMostCheckIns[1]} check-ins)
+                                {moment(stats.dayWithMostCheckIns[0]).format("ddd, MMM D")} ({stats.dayWithMostCheckIns[1]} Check-ins)
                             </span>
                             <br />
                             <em className="tb-grey-text text-darken-2" style={{ fontSize: '1.2rem' }}>
@@ -176,7 +176,7 @@ const TravelSummary = ({ data }) => {
                             ))}
                             {Object.keys(stats.consultantBedNights).length > 3 &&
                                 <button className="btn btn-small btn-floating tb-teal darken-2" onClick={() => setExpandConsultants(!expandConsultants)}>
-                                    <span className="material-symbols-outlined">
+                                    <span className="material-symbols-outlined" style={{marginLeft: '2px'}}>
                                         {expandConsultants ? 'collapse_all' : 'expand_all'}
                                     </span>
                                 </button>
@@ -192,7 +192,7 @@ const TravelSummary = ({ data }) => {
                             ))}
                             {Object.keys(stats.coreDestinationCount).length > 3 &&
                                 <button className="btn btn-small btn-floating tb-teal darken-2" onClick={() => setExpandCoreDestinations(!expandCoreDestinations)}>
-                                    <span className="material-symbols-outlined">
+                                    <span className="material-symbols-outlined" style={{marginLeft: '2px'}}>
                                         {expandCoreDestinations ? 'collapse_all' : 'expand_all'}
                                     </span>
                                 </button>
@@ -208,7 +208,7 @@ const TravelSummary = ({ data }) => {
                             ))}
                             {Object.keys(stats.locationCount).length > 3 &&
                                 <button className="btn btn-small btn-floating tb-teal darken-2" onClick={() => setExpandLocations(!expandLocations)}>
-                                    <span className="material-symbols-outlined">
+                                    <span className="material-symbols-outlined" style={{marginLeft: '2px'}}>
                                         {expandCoreDestinations ? 'collapse_all' : 'expand_all'}
                                     </span>
                                 </button>

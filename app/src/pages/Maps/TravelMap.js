@@ -71,21 +71,22 @@ const TravelMap = ({ data }) => {
         }
     }, [data]);
 
-    useEffect(() => {
-        if (map) {
-            map.flyTo(position, 5, {
-                animate: true,
-                duration: 2
-            });
-        }
-    }, [position, map]);
+    // function to fly to most populated cluster
+    // useEffect(() => {
+    //     if (map) {
+    //         map.flyTo(position, 5, {
+    //             animate: true,
+    //             duration: 2
+    //         });
+    //     }
+    // }, [position, map]);
 
     return (
-        <div style={{ height: '400px' }}>
+        <div className="travel-map" style={{ height: '400px' }}>
             <MapContainer
                 center={position || [0, 0]}
                 zoom={2}
-                style={{ height: '100%', width: '100%' }}
+                style={{ height: '100%', width: '100%', borderRadius: '5px' }}
                 ref={setMap}
             >
                 <TileLayer
