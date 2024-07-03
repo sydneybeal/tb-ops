@@ -21,6 +21,7 @@ import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
+import DailyRates from './pages/DailyRates/DailyRates';
 import FaqPage from './pages/FAQ/FAQ';
 
 
@@ -162,6 +163,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <TripLanding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/daily_rates/',
+    element: (
+      <ProtectedRoute>
+        <DailyRates />
       </ProtectedRoute>
     ),
   },

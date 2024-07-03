@@ -136,6 +136,13 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                <div className="container" style={{ width: '100%' }}>
+                    <li>
+                        <Link to={'/daily_rates'} className="text-bold">
+                            Daily Rates
+                        </Link>
+                    </li>
+                </div>
                 {/* <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/trip_reports'} className="text-bold">
