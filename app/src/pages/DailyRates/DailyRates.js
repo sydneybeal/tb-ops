@@ -71,7 +71,7 @@ export const DailyRates = () => {
         }
     }, [inputAmount, currency, apiData]);       
 
-    const displayDate = moment(rateDate).format('MMMM D, YYYY');
+    const displayDate = moment(rateDate).format('dddd, MMMM D, YYYY');
 
     function formatAmount(amount) {
         if (amount === null || amount === undefined) return "0.00";
@@ -126,7 +126,7 @@ export const DailyRates = () => {
             <main className="tb-grey lighten-6">
                 <div className="container" style={{ width: '70%' }}>
                     <div className="row" style={{ margin: '20px' }}>
-                        <h5 style={{ marginBottom: '30px' }} className="center">Currency Conversion</h5>
+                        <h4 style={{ marginBottom: '30px' }} className="center">Currency Calculator</h4>
                         <div className="card potential-trip-card">
                             <div className="card-content" style={{paddingBottom: '2px'}}>
                                 <div className="row">
