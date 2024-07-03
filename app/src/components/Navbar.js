@@ -175,43 +175,8 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/properties'} className="text-bold">
-                                    Properties
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/consultants'} className="text-bold">
-                                    Consultants
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/agencies'} className="text-bold">
-                                    Agencies
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/booking_channels'} className="text-bold">
-                                    Booking Channels
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/portfolios'} className="text-bold">
-                                    Portfolios
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/countries'} className="text-bold">
-                                    Countries
+                                <Link to={'/backoffice'} className="text-bold">
+                                    Back Office
                                 </Link>
                             </li>
                         </div>

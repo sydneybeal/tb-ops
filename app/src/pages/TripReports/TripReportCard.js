@@ -5,8 +5,23 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
         /\w\S*/g,
         txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
     ) : '';
+
+    const getRatingAverage = (segment) => {
+        if (!segment.ratings) {
+            return "n/a";
+        }
+        
+        const overallRating = segment.ratings.find(rating => rating.attribute === "overall_rating");
+        
+        if (overallRating && overallRating.rating !== "n/a") {
+            console.log("Overall rating: " + overallRating.rating);
+            return overallRating.rating;
+        } else {
+            return "n/a";
+        }
+    };
     
-    console.log(tripReport);
+    // console.log(tripReport);
     return (
         <div
             key={tripReport.id}
@@ -53,24 +68,29 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                             <thead>
                                 <tr>
                                     <th>Property Name</th>
+                                    <th>Rating</th>
                                     <th>Date In</th>
-                                    <th>Country</th>
                                 </tr>
                             </thead>
                             <tbody>
-                            {tripReport.properties.map((segment) => (
-                                <tr key={`segment-${tripReport.id}-${segment.property_id}`}>
-                                    <td>
-                                        {segment.property_details?.name || segment.name}
-                                    </td>
-                                    <td>
-                                        {segment.date_in}
-                                    </td>
-                                    <td>
-                                        {segment.property_details?.country_name || segment.country_name}
-                                    </td>
-                                </tr>
-                            ))}
+                            {tripReport.properties.map((segment) => {
+                                const rating = getRatingAverage(segment);  // Call the function once per iteration
+                                return (
+                                    <tr key={`segment-${tripReport.id}-${segment.property_id}`}>
+                                        <td>
+                                            {segment.property_details?.name || segment.name}
+                                            <br/>
+                                            <span className="chip tb-grey lighten-3">{segment.property_details?.country_name || segment.country_name}</span>
+                                        </td>
+                                        <td>
+                                            {rating !== "n/a" ? `${rating} / 10` : "n/a"}
+                                        </td>
+                                        <td>
+                                            {segment.date_in}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             </tbody>
                         </table>
                     </div>
@@ -82,7 +102,7 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                             <thead>
                                 <tr>
                                     <th>Activity Name</th>
-                                    <th>Type</th>
+                                    <th>Rating</th>
                                     <th>Date</th>
                                     <th>Location</th>
                                 </tr>
@@ -92,9 +112,11 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                                 <tr key={`activity-${tripReport.id}-${activity.name}`}>
                                     <td>
                                         {activity.name}
+                                        <br/>
+                                        <span className="chip tb-grey lighten-3">{toTitleCase(activity.type)}</span>
                                     </td>
                                     <td>
-                                        {toTitleCase(activity.type)}
+                                        {activity.rating && activity.rating !== "n/a" ? `${activity.rating} / 10` : "n/a"}
                                     </td>
                                     <td>
                                         {activity.visit_date}

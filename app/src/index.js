@@ -7,6 +7,7 @@ import { AuthProvider } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
+import BackOffice from './pages/BackOffice/BackOffice';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
@@ -68,6 +69,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <FaqPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/backoffice/',
+    element: (
+      <ProtectedRoute>
+        <BackOffice />
       </ProtectedRoute>
     ),
   },
