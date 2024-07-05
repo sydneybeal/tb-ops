@@ -32,6 +32,10 @@ class CurrencyService:
         """Returns DailyRate objects for a given date."""
         return await self._repo.get_rates_date(rate_date)
 
+    async def add_rates(self, daily_rates: Sequence[DailyRate]) -> int:
+        """Inserts DailyRate objects."""
+        return await self._repo.add_rates(daily_rates)
+
     async def get_currency_for_date(
         self, target_currency: str, rate_date: date, base_currency: str = "USD"
     ) -> Optional[DailyRate]:

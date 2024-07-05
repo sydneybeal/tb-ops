@@ -47,6 +47,21 @@ class PostgresCurrencyRepository(PostgresMixin, CurrencyRepository):
 
         return daily_rates
 
+    async def add_rates(self, daily_rates: Sequence[DailyRate]) -> int:
+        """Gets all DailyRate objects for a given date."""
+        # TODO fix this pseudocode to implement insertion
+        pool = await self._get_pool()
+        query = """
+        INSERT INTO public.daily_rates
+        base_currency, target_currency, currency_name, conversion_rate, rate_date, rate_time
+        ($1)
+        """
+        async with pool.acquire() as con:
+            async with con.transaction():
+                rows = await con.execute(query, daily_rates)
+
+        return len(daily_rates)
+
     async def get_currency_for_date(
         self, rate_date: date, target_currency: str, base_currency: str
     ) -> Optional[DailyRate]:
