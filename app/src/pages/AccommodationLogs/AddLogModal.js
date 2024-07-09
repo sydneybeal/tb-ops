@@ -35,6 +35,12 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         agency: false
     });
 
+    const skipBookingChannelAllowedEmails = [
+        'annb@travelbeyond.com',
+        'amandab@travelbeyond.com',
+        'samanthae@travelbeyond.com',
+    ];
+
     useEffect(() => {
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
@@ -572,14 +578,17 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 logError.new_property_country_id = 'Missing new property country';
             }
         }
-
-
+        console.log(userDetails.email);
+        console.log(skipBookingChannelAllowedEmails.includes(userDetails.email));
         if (!log.booking_channel_id && !log.new_booking_channel_name) {
-            if (userDetails.role !== 'admin') {
+            // allow to skip BC if admin or in the allowed list
+            if (
+                !(userDetails.role === 'admin' ||
+                skipBookingChannelAllowedEmails.includes(userDetails.email))
+            ) {
                 logError.property = 'Missing booking channel';
             }
         }
-
 
         return logError;
     };
