@@ -7,7 +7,8 @@ import { AuthProvider } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
-import BackOffice from './pages/BackOffice/BackOffice';
+import AdminHub from './pages/AdminHub/AdminHub';
+import EntryElements from './pages/EntryElements/EntryElements';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
@@ -73,10 +74,18 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/backoffice/',
+    path: '/entry_elements/',
     element: (
       <ProtectedRoute>
-        <BackOffice />
+        <EntryElements />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/admin_hub/',
+    element: (
+      <ProtectedRoute>
+        <AdminHub />
       </ProtectedRoute>
     ),
   },

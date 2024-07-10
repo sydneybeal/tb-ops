@@ -20,10 +20,10 @@ from uuid import UUID
 from textwrap import dedent
 from typing import Sequence
 from api.adapters.repository import PostgresMixin
+from api.services.admin.models import AdminComment
 from api.services.reviews.models import (
     TripReport,
     TripReportSummary,
-    AdminComment,
     SegmentSummary,
     ActivitySummary,
 )
@@ -260,73 +260,3 @@ class PostgresReviewsRepository(PostgresMixin, ReviewsRepository):
                     trip_reports.append(TripReportSummary(**data))
 
                 return trip_reports if trip_reports else None
-
-    # AdminComment
-    async def upsert_admin_comments(
-        self, admin_comments: Sequence[AdminComment]
-    ) -> dict:
-        """Adds a sequence of AdminComment models to the repository."""
-        pool = await self._get_pool()
-        query = dedent(
-            """
-            INSERT INTO public.admin_comments (
-                id, trip_report_id, property_id, comment_type, comment, status, reported_by, created_at, updated_at
-            ) VALUES {}
-            ON CONFLICT (trip_report_id, comment_type, COALESCE(property_id, '00000000-0000-0000-0000-000000000000')) DO UPDATE SET
-                comment = EXCLUDED.comment,
-                status = EXCLUDED.status,
-                reported_by = EXCLUDED.reported_by,
-                updated_at = EXCLUDED.updated_at
-            RETURNING (xmax = 0) AS inserted;
-            """
-        )
-
-        values = [
-            (
-                str(admin_comment.id),
-                (
-                    str(admin_comment.trip_report_id)
-                    if admin_comment.trip_report_id
-                    else None
-                ),
-                str(admin_comment.property_id) if admin_comment.property_id else None,
-                admin_comment.comment_type,
-                admin_comment.comment,
-                admin_comment.status,
-                (
-                    json.dumps(
-                        [str(reporter) for reporter in admin_comment.reported_by]
-                    )
-                    if admin_comment.reported_by
-                    else None
-                ),
-                admin_comment.created_at,
-                admin_comment.updated_at,
-            )
-            for admin_comment in admin_comments
-        ]
-
-        async with pool.acquire() as con:
-            await con.set_type_codec(
-                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
-            )
-            async with con.transaction():
-                value_str = ", ".join(
-                    f"(${i * 9 + 1}, ${i * 9 + 2}, ${i * 9 + 3}, ${i * 9 + 4}, ${i * 9 + 5}, ${i * 9 + 6}, ${i * 9 + 7}, ${i * 9 + 8}, ${i * 9 + 9})"
-                    for i in range(len(values))
-                )
-                query = query.format(value_str)
-                flat_values = [item for sublist in values for item in sublist]
-                result = await con.fetch(query, *flat_values)
-                inserted_count = sum(1 for row in result if row["inserted"])
-                updated_count = len(result) - inserted_count
-
-        return {"inserted": inserted_count, "updated": updated_count}
-
-    async def get_admin_comment(self, admin_comment_id: UUID) -> AdminComment:
-        """Gets a single AdminComment model in the repository by its id."""
-        raise NotImplementedError
-
-    async def get_admin_comments(self) -> Sequence[AdminComment]:
-        """Gets all AdminComment models in the repository."""
-        raise NotImplementedError

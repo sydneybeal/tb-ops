@@ -27,6 +27,8 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.param_functions import Form
 
 from jose import JWTError, jwt
+from api.services.admin.models import AdminComment
+from api.services.admin.service import AdminService
 from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
@@ -80,6 +82,7 @@ def make_app(
     audit_svc: AuditService,
     review_svc: ReviewService,
     quality_svc: QualityService,
+    admin_svc: AdminService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -682,6 +685,22 @@ def make_app(
         results = await review_svc.process_trip_report_request(trip_report_data)
         return JSONResponse(content=results)
 
+    @app.get(
+        "/v1/admin_comments",
+        operation_id="get_all_admin_comments",
+        tags=["admin"],
+        response_model=Sequence[AdminComment],
+    )
+    async def get_all_admin_comments(
+        current_user: User = Depends(get_current_user),
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminComment] | JSONResponse:
+        """Get all Agency models."""
+        results = await admin_svc.get_admin_comments()
+        if results:
+            return JSONResponse(content=jsonable_encoder(results))
+        return JSONResponse(content={}, status_code=404)
+
     @app.delete(
         "/v1/portfolios/{portfolio_id}",
         operation_id="delete_portfolio",
@@ -958,9 +977,10 @@ if __name__ == "__main__":
     audit_svc = AuditService()
     review_svc = ReviewService()
     quality_svc = QualityService()
+    admin_svc = AdminService()
 
     app = make_app(
-        travel_svc, summary_svc, auth_svc, audit_svc, review_svc, quality_svc
+        travel_svc, summary_svc, auth_svc, audit_svc, review_svc, quality_svc, admin_svc
     )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

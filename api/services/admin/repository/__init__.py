@@ -12,31 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Repository for data related to travel reviews/trip reports."""
-import datetime
-from uuid import UUID
+"""Repositories for admin-related data."""
 from abc import ABC, abstractmethod
 from typing import Sequence, Optional
-from api.services.reviews.models import TripReport, TripReportSummary
+from uuid import UUID
+
+from api.services.admin.models import AdminComment
 
 
-class ReviewsRepository(ABC):
+class AdminRepository(ABC):
     """Abstract repository for travel-related models."""
 
-    # TripReport
+    # AdminComment
     @abstractmethod
-    async def upsert_trip_report(self, trip_report: TripReport) -> dict:
-        """Adds a TripReport model to the repository."""
+    async def upsert(self, admin_comments: Sequence[AdminComment]) -> dict:
+        """Adds a sequence of AdminComment models to the repository."""
         raise NotImplementedError
 
     @abstractmethod
-    async def get_trip_reports(
-        self, trip_report_id: Optional[UUID] = None
-    ) -> Optional[Sequence[TripReportSummary]]:
-        """Gets a single TripReportSummary model in the repository by its id."""
+    async def get(
+        self, admin_comment_id: Optional[UUID] = None
+    ) -> Sequence[AdminComment]:
+        """Gets AdminComment models from the repository, optionally by its id."""
         raise NotImplementedError
-
-    # @abstractmethod
-    # async def get_trip_reports(self) -> Sequence[TripReport]:
-    #     """Gets all TripReport models in the repository."""
-    #     raise NotImplementedError

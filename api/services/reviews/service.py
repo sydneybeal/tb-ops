@@ -14,17 +14,16 @@
 
 """Services for interacting with travel entries."""
 import asyncio
-import datetime
-from collections import defaultdict
 from re import S, T
-from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
+from typing import Optional, Sequence, List
 from uuid import UUID, uuid4
+from api.services.admin.service import AdminService
 from api.services.audit.service import AuditService
 from api.services.summaries.service import SummaryService
+from api.services.admin.models import AdminComment
 from api.services.audit.models import AuditLog
 from api.services.reviews.models import (
     Activity,
-    AdminComment,
     Comment,
     PatchTripReportRequest,
     Segment,
@@ -42,6 +41,7 @@ class ReviewService:
         """Initializes with a configured repository."""
         self._repo = PostgresReviewsRepository()
         self._audit_svc = AuditService()
+        self._admin_svc = AdminService()
         self._summary_svc = SummaryService()
 
     async def get_trip_report(
@@ -262,7 +262,7 @@ class ReviewService:
         # Insert or update admin comments in the database if there are any
         if admin_comments:
             try:
-                admin_comments_result = await self._repo.upsert_admin_comments(
+                admin_comments_result = await self._admin_svc.add_admin_comments(
                     admin_comments
                 )
                 return_value["admin_comments"]["success"] = (

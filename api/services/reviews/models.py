@@ -82,20 +82,6 @@ class TripReport(BaseModel):
         json_encoders = {UUID: lambda v: str(v)}
 
 
-class AdminComment(BaseModel):
-    """Record for a comment to be processed by an admin."""
-
-    id: UUID = Field(default_factory=uuid4)
-    trip_report_id: UUID
-    property_id: Optional[UUID] = None
-    comment_type: str
-    comment: str
-    status: str = "unreviewed"
-    reported_by: Optional[List[UUID]] = None
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-
-
 class PatchTripReportRequest(BaseModel):
     """Model for updating an existing trip report."""
 

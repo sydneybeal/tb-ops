@@ -175,8 +175,15 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/backoffice'} className="text-bold">
-                                    Back Office
+                                <Link to={'/entry_elements'} className="text-bold">
+                                    Entry Elements
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/admin_hub'} className="text-bold">
+                                    Admin Hub
                                 </Link>
                             </li>
                         </div>
