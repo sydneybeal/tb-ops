@@ -11,7 +11,7 @@ import BookingChannels from '../BookingChannels/BookingChannels';
 import Portfolios from '../Portfolios/Portfolios';
 import Countries from '../Countries/Countries';
 
-export const BackOffice = () => {
+export const EntryElements = () => {
     const { userDetails } = useAuth();
     const [pageSelection, setPageSelection] = useState('properties');
 
@@ -34,7 +34,7 @@ export const BackOffice = () => {
     return (
         <>
             <header>
-                <Navbar title={`Back Office: ${toTitleCase(pageSelection)}`} />
+                <Navbar title={`Entry Elements: ${toTitleCase(pageSelection)}`} />
             </header>
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="center">
@@ -115,4 +115,4 @@ export const BackOffice = () => {
     )
 }
 
-export default BackOffice;
+export default EntryElements;
