@@ -18,8 +18,9 @@ from typing import Optional, Sequence
 from uuid import UUID
 
 from api.adapters.repository import PostgresMixin
-from api.services.admin.models import AdminComment
+from api.services.admin.models import AdminComment, AdminCommentSummary
 from api.services.admin.repository import AdminRepository
+from api.services.auth.models import UserSummary
 
 
 class PostgresAdminRepository(PostgresMixin, AdminRepository):
@@ -82,25 +83,59 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
 
         return {"inserted": inserted_count, "updated": updated_count}
 
-    async def get(self, comment_id: Optional[UUID] = None) -> Sequence[AdminComment]:
-        """Gets AdminComment models from the repository, optionally by its id."""
+    async def get(
+        self, comment_id: Optional[UUID] = None
+    ) -> Sequence[AdminCommentSummary]:
+        """Gets AdminCommentSummary models from the repository, optionally by its id."""
         pool = await self._get_pool()
         base_query = """
-        SELECT *
-        FROM public.admin_comments
+            SELECT
+                ac.id,
+                ac.trip_report_id,
+                ac.property_id,
+                p.name AS property_name,
+                c.name AS property_country,
+                cd.name AS property_core_destination,
+                ac.comment_type,
+                ac.comment,
+                ac.status,
+                ac.created_at,
+                ac.updated_at,
+                array_agg(u.email) AS reported_by_emails,
+                array_agg(u.role) AS reported_by_roles
+            FROM
+                public.admin_comments ac
+            LEFT JOIN
+                public.properties p ON ac.property_id = p.id
+            LEFT JOIN
+                public.countries c ON p.country_id = c.id
+            LEFT JOIN
+                public.core_destinations cd ON p.core_destination_id = cd.id
+            LEFT JOIN LATERAL (
+                SELECT
+                    u.id, u.email, u.role
+                FROM
+                    public.users u
+                WHERE
+                    u.id = ANY (
+                        SELECT jsonb_array_elements_text(ac.reported_by)::uuid
+                    )
+            ) u ON true
+            GROUP BY
+                ac.id, ac.trip_report_id, ac.property_id, p.name, c.name, cd.name
+            ORDER BY
+                ac.updated_at DESC
         """
         values = []
         conditions = []
 
-        # TODO: change this to trip report ID & property ID
         if comment_id:
-            conditions.append("id = ${}".format(len(values) + 1))
+            conditions.append("ac.id = ${}".format(len(values) + 1))
             values.append(comment_id)
 
         if conditions:
             base_query += " WHERE " + " AND ".join(conditions)
 
-        base_query += " ORDER BY updated_at DESC;"
         print("Admin comments query:")
         print(values)
 
@@ -113,7 +148,21 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
 
         admin_comments = []
         for record in rows:
-            admin_comments.append(AdminComment(**record))
+            reported_by_users = []
+            for email, role in zip(
+                record["reported_by_emails"], record["reported_by_roles"]
+            ):
+                reported_by_users.append(UserSummary(email=email, role=role))
+            admin_comments.append(
+                AdminCommentSummary(
+                    **{
+                        k: v
+                        for k, v in record.items()
+                        if k not in ["reported_by_emails", "reported_by_roles"]
+                    },
+                    reported_by=reported_by_users,
+                )
+            )
 
         return admin_comments
 

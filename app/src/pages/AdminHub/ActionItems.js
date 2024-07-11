@@ -79,7 +79,7 @@ export const ActionItems = () => {
                                         Update Type
                                     </th>
                                     <th>
-                                        Property Name
+                                        Property
                                     </th>
                                     <th>
                                         Comment
@@ -108,16 +108,42 @@ export const ActionItems = () => {
                                                     </p>
                                                 </td>
                                                 <td style={{ verticalAlign: 'top' }}>
-                                                    (property name)
+                                                    {item.property_name ? (
+                                                        <>
+                                                        <span className="text-bold">{item.property_name}</span>
+                                                        <br/>
+                                                        {item.property_country}
+                                                        <br/>
+                                                        {item.property_core_destination}
+                                                        </>
+                                                    ) : (
+                                                        <span className="chip tb-grey lighten-3">n/a</span>
+                                                    )}
                                                 </td>
                                                 <td style={{ verticalAlign: 'top' }}>
-                                                    {item.comment}
+                                                    {item.comment.split('\n').map((line, index) => (
+                                                        <div key={index}>{line}</div>
+                                                    ))}
                                                 </td>
                                                 <td style={{ verticalAlign: 'top' }}>
-                                                    (reported by)
+                                                    {item.reported_by && item.reported_by.map(user => {
+                                                        const emailName = user.email.split('@')[0];
+                                                        return (
+                                                        <div key={user.id}>
+                                                            {emailName}
+                                                        </div>
+                                                        );
+                                                    })}
                                                 </td>
                                                 <td style={{ verticalAlign: 'top' }}>
-                                                    (trip report link)
+                                                    <button
+                                                        className="btn-floating btn-small waves-effect waves-light tb-teal darken-2"
+                                                        onClick={() => window.open(`/trip_reports/edit/${item.trip_report_id}`, '_blank')} style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <span className="material-symbols-outlined tb-grey-text text-lighten-5" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                        open_in_new
+                                                        </span>
+                                                    </button>
                                                 </td>
                                                 <td style={{ verticalAlign: 'top' }}>
                                                     <span className={`chip ${item.status === 'unreviewed' ? 'indigo lighten-3' : 'success-green'}`}>
