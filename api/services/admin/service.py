@@ -16,7 +16,7 @@
 from typing import Optional, Sequence
 from uuid import UUID
 
-from api.services.admin.models import AdminComment
+from api.services.admin.models import AdminComment, AdminCommentSummary
 from api.services.admin.repository.postgres import PostgresAdminRepository
 
 
@@ -31,26 +31,24 @@ class AdminService:
         """Inserts a sequence of admin comments."""
         return await self._repo.upsert(admin_comments)
 
-    async def get_admin_comments(
-        self, comment_id: Optional[UUID] = None
+    async def get_summaries(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminCommentSummary]:
+        """Gets a sequence of admin comments."""
+        return await self._repo.get_summaries(trip_report_id, property_id, comment_id)
+
+    async def get(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
     ) -> Sequence[AdminComment]:
         """Gets a sequence of admin comments."""
-        return await self._repo.get(comment_id)
+        return await self._repo.get(trip_report_id, property_id, comment_id)
 
-    # async def add_audit_logs(
-    #     self, audit_logs: Union[AuditLog, Iterable[AuditLog]]
-    # ) -> None:
-    #     """Adds new AuditLog to the repository."""
-    #     if isinstance(audit_logs, AuditLog):
-    #         audit_logs = [audit_logs]
-    #     audit_logs_to_insert = [log.to_json() for log in audit_logs]
-    #     await self._repo.add(audit_logs_to_insert)
-
-    # async def get_audit_logs(
-    #     self,
-    #     action_timestamp: Optional[datetime] = None,
-    #     table_name: Optional[str] = None,
-    #     record_id: Optional[str] = None,
-    # ) -> Iterable[AuditLog]:
-    #     """Returns AuditLogs from the repository given a timestamp filter."""
-    #     return await self._repo.get(action_timestamp, table_name, record_id)
+    async def delete(self, comment_ids: Sequence[UUID]) -> bool:
+        """Deletes a sequence of admin comments."""
+        return await self._repo.delete(comment_ids)

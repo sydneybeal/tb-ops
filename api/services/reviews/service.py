@@ -117,9 +117,7 @@ class ReviewService:
         # Process each segment/property of the trip report
         if trip_report_request.properties:
             for segment in trip_report_request.properties:
-                if not any(
-                    segment.values()
-                ):  # Skip if segment has all None or empty values
+                if not any(segment.values()):
                     continue
                 # TODO if the segment doesn't have property ID
                 ## i.e. it is a new property that needs to go to admin zone
@@ -258,6 +256,35 @@ class ReviewService:
             print(f"Failed to upsert trip report: {e}")
             return_value["trip_report"]["success"] = False
             return_value["success"] = False
+
+        # Get current admin comments associated with the trip report
+        existing_comments = await self._admin_svc.get(trip_report_id=trip_report.id)
+
+        # Map existing comments property_id for easy lookup
+        existing_comment_property_map = {
+            comment.property_id: comment.id for comment in existing_comments
+        }
+
+        # Convert new comments to a set of property IDs
+        new_comment_property_ids = {comment.property_id for comment in admin_comments}
+
+        # Identify comments to delete based on properties no longer in the new comments
+        comments_to_delete = {
+            comment_id
+            for property_id, comment_id in existing_comment_property_map.items()
+            if property_id not in new_comment_property_ids
+        }
+
+        # Delete comments that are no longer relevant
+        if comments_to_delete:
+            try:
+                deleted = await self._admin_svc.delete(list(comments_to_delete))
+                if not deleted:
+                    print(f"Failed to delete admin comments: {comments_to_delete}")
+                    return_value["success"] = False
+            except Exception as e:
+                print(f"Error deleting admin comments: {e}")
+                return_value["success"] = False
 
         # Insert or update admin comments in the database if there are any
         if admin_comments:

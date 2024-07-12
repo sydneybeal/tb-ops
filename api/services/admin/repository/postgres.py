@@ -83,10 +83,13 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
 
         return {"inserted": inserted_count, "updated": updated_count}
 
-    async def get(
-        self, comment_id: Optional[UUID] = None
+    async def get_summaries(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
     ) -> Sequence[AdminCommentSummary]:
-        """Gets AdminCommentSummary models from the repository, optionally by its id."""
+        """Gets AdminCommentSummary models from the repository, optionally by IDs."""
         pool = await self._get_pool()
         base_query = """
             SELECT
@@ -121,6 +124,7 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
                         SELECT jsonb_array_elements_text(ac.reported_by)::uuid
                     )
             ) u ON true
+            WHERE ac.comment <> ''
             GROUP BY
                 ac.id, ac.trip_report_id, ac.property_id, p.name, c.name, cd.name
             ORDER BY
@@ -133,11 +137,16 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
             conditions.append("ac.id = ${}".format(len(values) + 1))
             values.append(comment_id)
 
-        if conditions:
-            base_query += " WHERE " + " AND ".join(conditions)
+        if trip_report_id:
+            conditions.append("ac.trip_report_id = ${}".format(len(values) + 1))
+            values.append(comment_id)
 
-        print("Admin comments query:")
-        print(values)
+        if property_id:
+            conditions.append("ac.property_id = ${}".format(len(values) + 1))
+            values.append(comment_id)
+
+        if conditions:
+            base_query += " AND ".join(conditions)
 
         async with pool.acquire() as con:
             await con.set_type_codec(
@@ -166,65 +175,87 @@ class PostgresAdminRepository(PostgresMixin, AdminRepository):
 
         return admin_comments
 
-    # async def get(
-    #     self,
-    #     action_timestamp: Optional[datetime] = None,
-    #     table_name: Optional[str] = None,
-    #     record_id: Optional[str] = None,
-    # ) -> Iterable[AuditLog]:
-    #     """Returns AuditLogs for all actions in the repository after a given date.
+    async def get(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminComment]:
+        """Gets AdminComment models from the repository, optionally by IDs."""
+        pool = await self._get_pool()
+        base_query = """
+            SELECT
+            *
+            FROM
+            public.admin_comments
+        """
+        values = []
+        conditions = []
 
-    #     Args:
-    #         action_timestamp (datetime): date/time to be filtered on
+        if comment_id:
+            conditions.append("id = ${}".format(len(values) + 1))
+            values.append(comment_id)
 
-    #     Returns:
-    #         List[AuditLog]
-    #     """
-    #     pool = await self._get_pool()
-    #     base_query = """
-    #     SELECT *
-    #     FROM public.audit_logs
-    #     """
-    #     values = []
-    #     conditions = []
+        if trip_report_id:
+            conditions.append("trip_report_id = ${}".format(len(values) + 1))
+            values.append(trip_report_id)
 
-    #     if action_timestamp and not (table_name and record_id):
-    #         conditions.append("action_timestamp >= $1")
-    #         values.append(action_timestamp)
+        if property_id:
+            conditions.append("property_id = ${}".format(len(values) + 1))
+            values.append(property_id)
 
-    #     if table_name:
-    #         conditions.append("table_name = ${}".format(len(values) + 1))
-    #         values.append(table_name)
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
 
-    #     if record_id:
-    #         conditions.append("record_id = ${}".format(len(values) + 1))
-    #         values.append(record_id)
+        print("Admin comments query:")
+        print(values)
 
-    #     if conditions:
-    #         base_query += " WHERE " + " AND ".join(conditions)
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                rows = await con.fetch(base_query, *values)
 
-    #     base_query += " ORDER BY action_timestamp DESC;"
-    #     print("Audit logs query:")
-    #     print(values)
+        admin_comments = []
+        for record in rows:
+            admin_comments.append(AdminComment(**record))
 
-    #     async with pool.acquire() as con:
-    #         async with con.transaction():
-    #             rows = await con.fetch(base_query, *values)
+        return admin_comments
 
-    #     # Process each record to handle JSON fields correctly
-    #     audit_logs = []
-    #     for record in rows:
-    #         # Convert asyncpg.Record to dict to allow modifications
-    #         record_dict = dict(record)
+    async def delete(
+        self,
+        comment_ids: Sequence[UUID],
+    ) -> bool:
+        """Deletes AdminComment models from the repository by IDs."""
+        if not comment_ids:
+            print("No comment IDs provided, nothing to delete.")
+            return False
 
-    #         # Deserialize JSON fields
-    #         for field in ["before_value", "after_value"]:
-    #             if record_dict[field] is not None and isinstance(
-    #                 record_dict[field], str
-    #             ):
-    #                 record_dict[field] = json.loads(record_dict[field])
+        pool = await self._get_pool()
+        # Convert UUIDs to strings that can be used in SQL query
+        ids = tuple(str(id) for id in comment_ids)
 
-    #         # Create AuditLog instances
-    #         audit_logs.append(AuditLog(**record_dict))
+        query = dedent(
+            f"""
+            DELETE FROM public.admin_comments
+            WHERE id = ANY($1::uuid[])
+            """
+        )
 
-    #     return audit_logs
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                # Execute the delete query with parameterized input to prevent SQL injection
+                result = await con.execute(query, ids)
+                # `execute` returns a string like 'DELETE 1' if a row was deleted successfully
+                deleted_rows = int(result.split()[1])
+                if deleted_rows == 0:
+                    print(
+                        f"No comments found with IDs: {comment_ids}, nothing was deleted."
+                    )
+                    return False
+                print(f"Successfully deleted {deleted_rows} admin comments.")
+                return True

@@ -696,7 +696,7 @@ def make_app(
         comment_id: Optional[UUID] = None,
     ) -> Sequence[AdminComment] | JSONResponse:
         """Get all Agency models."""
-        results = await admin_svc.get_admin_comments()
+        results = await admin_svc.get_summaries()
         if results:
             return JSONResponse(content=jsonable_encoder(results))
         return JSONResponse(content={}, status_code=404)

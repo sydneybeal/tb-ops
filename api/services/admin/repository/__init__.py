@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from typing import Sequence, Optional
 from uuid import UUID
 
-from api.services.admin.models import AdminComment
+from api.services.admin.models import AdminComment, AdminCommentSummary
 
 
 class AdminRepository(ABC):
@@ -30,8 +30,28 @@ class AdminRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get(
-        self, admin_comment_id: Optional[UUID] = None
-    ) -> Sequence[AdminComment]:
+    async def get_summaries(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminCommentSummary]:
         """Gets AdminComment models from the repository, optionally by its id."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get(
+        self,
+        trip_report_id: Optional[UUID] = None,
+        property_id: Optional[UUID] = None,
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminComment]:
+        """Gets AdminComment models from the repository, optionally by IDs."""
+        raise NotImplementedError
+
+    async def delete(
+        self,
+        comment_ids: Sequence[UUID],
+    ) -> bool:
+        """Deletes AdminComment models from the repository by IDs."""
         raise NotImplementedError

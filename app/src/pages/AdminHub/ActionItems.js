@@ -6,17 +6,17 @@ import CircularPreloader from '../../components/CircularPreloader';
 import moment from 'moment';
 
 export const ActionItems = () => {
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [apiData, setApiData] = useState([]);
     const [displayData, setDisplayData] = useState([]);
     const [loaded, setLoaded] = useState(false);
     const [sorting, setSorting] = useState({ field: 'is_active', ascending: false });
     const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1400);
 
-    const toTitleCase = str => str ? str.replace(
-        /\w\S*/g, 
-        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-    ) : '';
+    // const toTitleCase = str => str ? str.replace(
+    //     /\w\S*/g, 
+    //     txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    // ) : '';
 
     useEffect(() => {
         const handleResize = () => {
@@ -57,7 +57,21 @@ export const ActionItems = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 console.log(data);
+                if (!Array.isArray(data)) {
+                    console.error("Expected an array but got:", data);
+                    data = []; // Set data to an empty array if it's not an array
+                }
                 setApiData(data);
                 setLoaded(true);
             })
@@ -65,7 +79,7 @@ export const ActionItems = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token]);
+    }, [userDetails.token, logout]);
 
     return (
         <>
@@ -155,7 +169,7 @@ export const ActionItems = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="1" style={{ textAlign: 'center' }}>No results.</td>
+                                        <td colSpan="6" style={{ textAlign: 'center' }}>No action items.</td>
                                     </tr>
                                 )}
                             </tbody>
