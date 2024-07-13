@@ -30,6 +30,10 @@ from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
+from api.services.clients.service import ClientService
+from api.services.clients.models import Client
+from api.services.reservations.service import ReservationService
+from api.services.reservations.models import Reservation
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -71,6 +75,8 @@ def make_app(
     auth_svc: AuthService,
     audit_svc: AuditService,
     quality_svc: QualityService,
+    client_svc: ClientService,
+    reservation_svc: ReservationService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -880,6 +886,30 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return progress
 
+    @app.get(
+        "/v1/clients",
+        operation_id="get_clients",
+        response_model=Sequence[Client],
+        tags=["clients"],
+    )
+    async def get_clients(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[Client] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get()
+
+    @app.get(
+        "/v1/reservations",
+        operation_id="get_reservations",
+        response_model=Sequence[Reservation],
+        tags=["reservations"],
+    )
+    async def get_reservations(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[Reservation] | JSONResponse:
+        """Get all Reservation models."""
+        return await reservation_svc.get()
+
     return app
 
 
@@ -891,7 +921,17 @@ if __name__ == "__main__":
     auth_svc = AuthService()
     audit_svc = AuditService()
     quality_svc = QualityService()
+    client_svc = ClientService()
+    reservation_svc = ReservationService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc, quality_svc)
+    app = make_app(
+        travel_svc,
+        summary_svc,
+        auth_svc,
+        audit_svc,
+        quality_svc,
+        client_svc,
+        reservation_svc,
+    )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)
