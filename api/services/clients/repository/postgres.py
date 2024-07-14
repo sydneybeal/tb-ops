@@ -17,8 +17,8 @@ import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 from textwrap import dedent
-from typing import Iterable
-from api.services.clients.models import Client
+from typing import Iterable, Sequence
+from api.services.clients.models import Client, ClientSummary
 
 from api.adapters.repository import PostgresMixin
 from api.services.clients.repository import ClientRepository
@@ -90,7 +90,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 await con.executemany(query, args)
         print(f"Successfully added {len(args)} new Client record(s) to the repository.")
 
-    async def get(self) -> Iterable[Client]:
+    async def get(self) -> Sequence[Client]:
         """Returns Clients in the repository."""
         pool = await self._get_pool()  # Assuming this retrieves an asyncpg pool
         query = dedent(
@@ -106,3 +106,59 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 records = await con.fetch(query)
                 clients = [Client(**record) for record in records]
                 return clients
+
+    async def get_summaries(self) -> Sequence[ClientSummary]:
+        """Returns ClientSummary instances in the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT 
+                c.id,
+                c.first_name,
+                c.last_name,
+                c.address_line_1,
+                c.address_line_2,
+                c.address_city,
+                c.address_state,
+                c.address_zip,
+                c.subjective_score,
+                c.birth_date,
+                c.referred_by_id,
+                r.first_name AS referred_by_first_name,
+                r.last_name AS referred_by_last_name,
+                c.created_at,
+                c.updated_at,
+                c.updated_by,
+                COUNT(distinct ref.id) AS referrals_count
+            FROM public.clients AS c
+            LEFT JOIN public.clients AS r ON c.referred_by_id = r.id
+            LEFT JOIN public.clients AS ref ON ref.referred_by_id = c.id
+            GROUP BY c.id, r.first_name, r.last_name
+            """
+        )
+        async with pool.acquire() as con:
+            async with con.transaction():
+                records = await con.fetch(query)
+                client_summaries = [
+                    ClientSummary(
+                        id=record["id"],
+                        first_name=record["first_name"],
+                        last_name=record["last_name"],
+                        address_line_1=record["address_line_1"],
+                        address_line_2=record["address_line_2"],
+                        address_city=record["address_city"],
+                        address_state=record["address_state"],
+                        address_zip=record["address_zip"],
+                        subjective_score=record["subjective_score"],
+                        birth_date=record["birth_date"],
+                        referred_by_id=record["referred_by_id"],
+                        referred_by_first_name=record["referred_by_first_name"],
+                        referred_by_last_name=record["referred_by_last_name"],
+                        created_at=record["created_at"],
+                        updated_at=record["updated_at"],
+                        updated_by=record["updated_by"],
+                        referrals_count=record["referrals_count"],
+                    )
+                    for record in records
+                ]
+                return client_summaries

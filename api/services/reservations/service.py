@@ -16,7 +16,7 @@
 # from typing import Optional, Sequence, Union
 # from uuid import UUID
 from datetime import datetime
-from typing import Iterable, Union, Optional
+from typing import Iterable, Union, Optional, Sequence
 from api.services.reservations.models import Reservation
 from api.services.reservations.repository.postgres import PostgresReservationRepository
 
@@ -38,6 +38,6 @@ class ReservationService:
 
     async def get(
         self,
-    ) -> Iterable[Reservation]:
+    ) -> Sequence[Reservation]:
         """Returns Reservations from the repository."""
         return await self._repo.get()

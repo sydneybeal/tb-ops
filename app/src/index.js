@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
+import Clients from './pages/Clients/Clients';
 import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
 import BookingChannels from './pages/BookingChannels/BookingChannels';
@@ -162,6 +163,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <TripLanding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/clients/',
+    element: (
+      <ProtectedRoute>
+        <Clients />
       </ProtectedRoute>
     ),
   },

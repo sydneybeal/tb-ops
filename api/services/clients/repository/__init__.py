@@ -16,7 +16,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Iterable
-from api.services.clients.models import Client
+from api.services.clients.models import Client, ClientSummary
 
 
 class ClientRepository(ABC):
@@ -30,4 +30,9 @@ class ClientRepository(ABC):
     @abstractmethod
     async def get(self) -> Iterable[Client]:
         """Returns Clients in the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_summaries(self) -> Iterable[ClientSummary]:
+        """Returns ClientSummary instances in the repository."""
         raise NotImplementedError

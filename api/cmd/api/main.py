@@ -31,7 +31,7 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.clients.service import ClientService
-from api.services.clients.models import Client
+from api.services.clients.models import ClientSummary
 from api.services.reservations.service import ReservationService
 from api.services.reservations.models import Reservation
 from api.services.summaries.models import (
@@ -889,14 +889,14 @@ def make_app(
     @app.get(
         "/v1/clients",
         operation_id="get_clients",
-        response_model=Sequence[Client],
+        response_model=Sequence[ClientSummary],
         tags=["clients"],
     )
     async def get_clients(
         current_user: User = Depends(get_current_user),
-    ) -> Sequence[Client] | JSONResponse:
+    ) -> Sequence[ClientSummary] | JSONResponse:
         """Get all Client models."""
-        return await client_svc.get()
+        return await client_svc.get_summaries()
 
     @app.get(
         "/v1/reservations",

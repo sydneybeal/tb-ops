@@ -15,7 +15,7 @@
 """Repositories for client-related data."""
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Sequence
 from textwrap import dedent
 
 from api.adapters.repository import PostgresMixin
@@ -62,7 +62,7 @@ class PostgresReservationRepository(PostgresMixin, ReservationRepository):
             f"Successfully added {len(args)} new Reservation record(s) to the repository."
         )
 
-    async def get(self) -> Iterable[Reservation]:
+    async def get(self) -> Sequence[Reservation]:
         """Returns all Reservation models in the repository."""
         pool = await self._get_pool()
         query = dedent(

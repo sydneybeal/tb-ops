@@ -16,9 +16,10 @@
 # from typing import Optional, Sequence, Union
 # from uuid import UUID
 from datetime import datetime
-from typing import Iterable, Union, Optional
-from api.services.clients.models import Client
+from typing import Iterable, Union, Sequence
+from api.services.clients.models import Client, ClientSummary
 from api.services.clients.repository.postgres import PostgresClientRepository
+from api.services.reservations.service import ReservationService
 
 
 class ClientService:
@@ -27,6 +28,7 @@ class ClientService:
     def __init__(self):
         """Initializes with a configured repository."""
         self._repo = PostgresClientRepository()
+        self._reservation_service = ReservationService()
 
     async def add(self, reservations: Union[Client, Iterable[Client]]) -> None:
         """Adds new Client to the repository."""
@@ -36,6 +38,28 @@ class ClientService:
 
     async def get(
         self,
-    ) -> Iterable[Client]:
+    ) -> Sequence[Client]:
         """Returns Clients from the repository."""
         return await self._repo.get()
+
+    async def get_summaries(
+        self,
+    ) -> Sequence[ClientSummary]:
+        """Returns ClientSummary instances from the repository."""
+        client_summaries = await self._repo.get_summaries()
+        reservations = await self._reservation_service.get()
+        # Create a dictionary to map client_id to reservations
+        reservations_by_client_id = {}
+        for res in reservations:
+            if res.client_id not in reservations_by_client_id:
+                reservations_by_client_id[res.client_id] = []
+            reservations_by_client_id[res.client_id].append(res)
+
+        # Attach reservations to their respective client summaries
+        for summary in client_summaries:
+            if summary.id in reservations_by_client_id:
+                summary.reservations = reservations_by_client_id[summary.id]
+            else:
+                summary.reservations = []
+
+        return client_summaries
