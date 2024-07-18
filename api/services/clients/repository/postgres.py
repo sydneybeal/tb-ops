@@ -29,30 +29,47 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
     """Implementation of the ClientRepository ABC for Postgres."""
 
     async def add(self, clients: Iterable[Client]) -> None:
-        """Adds an iterable of Client models to the repository."""
+        """Adds or updates an iterable of Client models in the repository."""
         pool = await self._get_pool()  # Assuming this retrieves an asyncpg pool
         query = dedent(
             """
             INSERT INTO public.clients (
-                id,
-                first_name,
-                last_name,
-                address_line_1,
-                address_line_2,
-                address_city,
-                address_state,
-                address_zip,
-                subjective_score,
-                birth_date,
-                referred_by_id,
-                created_at,
-                updated_at,
-                updated_by
+                id, first_name, last_name, middle_name, address_line_1, address_line_2,
+                address_apt_suite, address_city, address_state, address_zip, address_country,
+                cb_name, cb_interface_id, cb_profile_no, cb_relationship, cb_active,
+                cb_passport_expire, cb_gender, cb_created_date, cb_modified_date, cb_referred_by,
+                subjective_score, birth_date, referred_by_id, created_at, updated_at, updated_by
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+                $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
             )
-            ON CONFLICT (id) DO NOTHING;
+            ON CONFLICT (id) DO UPDATE SET
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
+                middle_name = EXCLUDED.middle_name,
+                address_line_1 = EXCLUDED.address_line_1,
+                address_line_2 = EXCLUDED.address_line_2,
+                address_apt_suite = EXCLUDED.address_apt_suite,
+                address_city = EXCLUDED.address_city,
+                address_state = EXCLUDED.address_state,
+                address_zip = EXCLUDED.address_zip,
+                address_country = EXCLUDED.address_country,
+                cb_name = EXCLUDED.cb_name,
+                cb_interface_id = EXCLUDED.cb_interface_id,
+                cb_profile_no = EXCLUDED.cb_profile_no,
+                cb_relationship = EXCLUDED.cb_relationship,
+                cb_active = EXCLUDED.cb_active,
+                cb_passport_expire = EXCLUDED.cb_passport_expire,
+                cb_gender = EXCLUDED.cb_gender,
+                cb_created_date = EXCLUDED.cb_created_date,
+                cb_modified_date = EXCLUDED.cb_modified_date,
+                cb_referred_by = EXCLUDED.cb_referred_by,
+                subjective_score = EXCLUDED.subjective_score,
+                birth_date = EXCLUDED.birth_date,
+                referred_by_id = EXCLUDED.referred_by_id,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
             """
         )
         async with pool.acquire() as con:
@@ -65,6 +82,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                         client.id,
                         client.first_name.strip(),
                         client.last_name.strip(),
+                        client.middle_name.strip() if client.middle_name else None,
                         (
                             client.address_line_1.strip()
                             if client.address_line_1
@@ -75,9 +93,45 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                             if client.address_line_2
                             else None
                         ),
+                        (
+                            client.address_apt_suite.strip()
+                            if client.address_apt_suite
+                            else None
+                        ),
                         client.address_city.strip() if client.address_city else None,
                         client.address_state.strip() if client.address_state else None,
                         client.address_zip.strip() if client.address_zip else None,
+                        (
+                            client.address_country.strip()
+                            if client.address_country
+                            else None
+                        ),
+                        client.cb_name.strip() if client.cb_name else None,
+                        (
+                            client.cb_interface_id.strip()
+                            if client.cb_interface_id
+                            else None
+                        ),
+                        client.cb_profile_no.strip() if client.cb_profile_no else None,
+                        (
+                            client.cb_relationship.strip()
+                            if client.cb_relationship
+                            else None
+                        ),
+                        client.cb_active.strip() if client.cb_active else None,
+                        (
+                            client.cb_passport_expire.strip()
+                            if client.cb_passport_expire
+                            else None
+                        ),
+                        client.cb_gender.strip() if client.cb_gender else None,
+                        client.cb_created_date,
+                        client.cb_modified_date,
+                        (
+                            client.cb_referred_by.strip()
+                            if client.cb_referred_by
+                            else None
+                        ),
                         client.subjective_score,
                         client.birth_date,
                         client.referred_by_id,
@@ -88,7 +142,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                     for client in clients
                 ]
                 await con.executemany(query, args)
-        print(f"Successfully added {len(args)} new Client record(s) to the repository.")
+        print(f"Successfully processed {len(args)} Client record(s) in the repository.")
 
     async def get(self) -> Sequence[Client]:
         """Returns Clients in the repository."""

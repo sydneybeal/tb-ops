@@ -4,12 +4,15 @@ import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
+import Select from 'react-select';
 import moment from 'moment';
 
 export const Clients = () => {
     const { userDetails, logout } = useAuth();
     const [apiData, setApiData] = useState([]);
+    const [showReservations, setShowReservations] = useState({});
     const [displayData, setDisplayData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'display_name', ascending: true });
     const [loaded, setLoaded] = useState(false);
 
@@ -78,6 +81,14 @@ export const Clients = () => {
         }));
     };
 
+    // Toggle the display of reservations for a given client
+    const toggleReservations = (clientId) => {
+        setShowReservations(prev => ({
+            ...prev,
+            [clientId]: !prev[clientId]
+        }));
+    };
+
     function formatAmount(amount) {
         if (amount === null || amount === undefined) return "0.00";
     
@@ -107,6 +118,132 @@ export const Clients = () => {
                         <>
                             {loaded ? (
                                 <>
+                                    <div className="row center">
+                                        <div>
+                                            <div className="col s12 l4">
+                                                <Select
+                                                    placeholder="State"
+                                                    value={null}
+                                                    // onChange={}
+                                                    // options={}
+                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                                    globe
+                                                </span>
+                                            </div>
+                                            <div className="col s12 l4">
+                                                <Select
+                                                    placeholder="Referred By"
+                                                    value={null}
+                                                    // onChange={}
+                                                    // options={}
+                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                                    group
+                                                </span>
+                                            </div>
+                                            <div className="col s12 l4">
+                                                <Select
+                                                    placeholder="Core Destination"
+                                                    value={null}
+                                                    // onChange={}
+                                                    // options={}
+                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    classNamePrefix="select"
+                                                    styles={{
+                                                        control: (provided, state) => ({
+                                                            ...provided,
+                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                            '&:hover': {
+                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                            },
+                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                                        }),
+                                                        option: (provided, state) => ({
+                                                            ...provided,
+                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                            backgroundColor: state.isSelected
+                                                                ? '#0e9bac'
+                                                                : state.isFocused
+                                                                    ? '#e8e5e1'
+                                                                    : '#ffffff',
+                                                            ':active': {
+                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                            },
+                                                        }),
+                                                    }}
+                                                    isClearable
+                                                />
+                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                                    travel_explore
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="row center">
+                                        <div className="input-field col s12 l6 offset-l3">
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                search
+                                            </span>
+                                            <input
+                                                type="text"
+                                                placeholder="Search..."
+                                                // value={}
+                                                // onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="search-input" // Apply any styling as needed
+                                            />
+                                        </div>
+                                    </div>
                                     <div style={{ marginBottom: '20px' }}>
                                         <em className="tb-grey-text">
                                             <span className="text-bold tb-teal-text">{displayData?.length?.toLocaleString()}</span> clients
@@ -124,6 +261,16 @@ export const Clients = () => {
                                                         Name
                                                         <span className="material-symbols-outlined tb-teal-text text-lighten-4">
                                                             {sorting.field === 'display_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                        </span>
+                                                    </th>
+                                                    <th
+                                                        onClick={() =>
+                                                            applySorting('birth_date')
+                                                        }
+                                                    >
+                                                        Age
+                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                            {sorting.field === 'birth_date' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
                                                     <th
@@ -200,14 +347,20 @@ export const Clients = () => {
                                                                     </span>
                                                                 </td>
                                                                 <td>
+                                                                    {moment().diff(moment(client.birth_date), 'years')}
+                                                                </td>
+                                                                <td>
                                                                     ${formatAmount(client.lifetime_spend)}
                                                                 </td>
                                                                 <td>
                                                                     {client.referred_by_display_name}
                                                                 </td>
                                                                 <td>
-                                                                    <span className="chip tb-teal lighten-2">{client.reservations.length}</span>
-                                                                    {Array.isArray(client.reservations) && client.reservations.length > 0 && (
+                                                                    <span className="chip tb-teal lighten-2" onClick={() => toggleReservations(client.id)}>
+                                                                        {client.reservations.length}
+                                                                        <span className="material-symbols-outlined text-bold">expand_more</span>
+                                                                    </span>
+                                                                    {showReservations[client.id] && Array.isArray(client.reservations) && client.reservations.length > 0 && (
                                                                         <>
                                                                             <br />
                                                                             {client.reservations.sort((a, b) => {

@@ -14,24 +14,37 @@
 
 """Models for client entries."""
 from datetime import datetime, date
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import Optional, Sequence
 from api.services.reservations.models import Reservation
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
 
 class Client(BaseModel):
     """Data model for a client."""
 
-    id: UUID
+    id: UUID = Field(default_factory=uuid4)
     first_name: str
     last_name: str
+    middle_name: Optional[str] = None
     address_line_1: Optional[str] = None
     address_line_2: Optional[str] = None
+    address_apt_suite: Optional[str] = None
     address_city: Optional[str] = None
     address_state: Optional[str] = None
     address_zip: Optional[str] = None
+    address_country: Optional[str] = None
+    cb_name: Optional[str] = None
+    cb_interface_id: Optional[str] = None
+    cb_profile_no: Optional[str] = None
+    cb_relationship: Optional[str] = None
+    cb_active: Optional[str] = None
+    cb_passport_expire: Optional[str] = None
+    cb_gender: Optional[str] = None
+    cb_created_date: Optional[date] = None
+    cb_modified_date: Optional[date] = None
+    cb_referred_by: Optional[str] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
@@ -46,12 +59,24 @@ class ClientSummary(BaseModel):
     id: UUID
     first_name: str
     last_name: str
-    last_name: str
+    middle_name: Optional[str] = None
     address_line_1: Optional[str] = None
     address_line_2: Optional[str] = None
     address_city: Optional[str] = None
     address_state: Optional[str] = None
     address_zip: Optional[str] = None
+    address_country: Optional[str] = None
+    address_apt_suite: Optional[str] = None
+    cb_name: Optional[str] = None
+    cb_interface_id: Optional[str] = None
+    cb_profile_no: Optional[str] = None
+    cb_relationship: Optional[str] = None
+    cb_active: Optional[str] = None
+    cb_passport_expire: Optional[str] = None
+    cb_gender: Optional[str] = None
+    cb_created_date: Optional[date] = None
+    cb_modified_date: Optional[date] = None
+    cb_referred_by: Optional[str] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
