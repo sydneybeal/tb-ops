@@ -3,7 +3,6 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
-import Navbar from '../../components/Navbar';
 import AddEditConsultantModal from './AddEditModal';
 import moment from 'moment';
 
@@ -159,199 +158,185 @@ export const Consultants = () => {
 
     return (
         <>
-            <header>
-                <Navbar title="Consultant Management" />
-            </header>
-
-            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
-                    {(userDetails.role !== 'admin') ? (
-                        <div>
-                            You do not have permission to view this page.
-                        </div>
-                    ) : (
-                        <>
-                            <AddEditConsultantModal
-                                isOpen={isModalOpen}
-                                onClose={closeModal}
-                                onRefresh={triggerRefresh}
-                                editConsultantData={currentEditConsultant}
-                                isEditMode={isEditMode}
-                            />
-                            {loaded ? (
-                                <>
-                                    <div className="container center">
-                                        <div className="row center">
-                                            <div className="col s2 offset-s10">
-                                                <button
-                                                    href=""
-                                                    className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
-                                                    onClick={openModal}
-                                                >
-                                                    <span className="material-symbols-outlined">
-                                                        add
-                                                    </span>
-                                                    Add New
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <em className="tb-grey-text">
-                                                <span className="text-bold tb-teal-text">{displayData?.length?.toLocaleString()}</span> consultants
-                                            </em>
-                                        </div>
-                                        <table className="accommodation-logs-table center">
-                                            <thead>
-                                                <tr className="tb-md-black-text text-bold">
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('last_name')
-                                                        }
-                                                    >
-                                                        Last Name
-                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                            {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('first_name')
-                                                        }
-                                                    >
-                                                        First Name
-                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                            {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('is_active')
-                                                        }
-                                                    >
-                                                        Active?
-                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                            {sorting.field === 'is_active' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('updated_at')
-                                                        }
-                                                        style={{ width: '200px', textAlign: 'right' }}
-                                                    >
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Last updated"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined tb-md-black-text text-bold">
-                                                                update
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(displayData) && displayData.length > 0 ? (
-                                                    displayData.map((item, index) => (
-                                                        <React.Fragment key={item.id}>
-                                                            <tr>
-                                                                <td style={{ verticalAlign: 'top' }}>
-                                                                    <p>{item.last_name}</p>
-                                                                </td>
-                                                                <td style={{ verticalAlign: 'top' }}>
-                                                                    <p className="text-bold">{item.first_name}</p>
-                                                                </td>
-                                                                <td>{item.is_active ? (
-                                                                    <span className="chip success-green-light">YES</span>
-                                                                ) : (
-                                                                    <span className="chip tb-grey lighten-2">NO</span>
-                                                                )}
-                                                                </td>
-                                                                <td style={{ width: '200px' }}>
-                                                                    <div style={{ textAlign: 'right', padding: '0px' }}>
-                                                                        <span
-                                                                            className={`tooltipped`}
-                                                                            data-position="left"
-                                                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                                                            data-tooltip-class="tooltip-updated-by"
-                                                                        >
-                                                                            <button
-                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
-                                                                                onClick={() => openEditModal(item)}
-                                                                            >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit
-                                                                                </span>
-                                                                            </button>
-                                                                            <br />
-                                                                            <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
-                                                                                <span className="material-symbols-outlined">
-                                                                                    update
-                                                                                </span>
-                                                                                {moment.utc(item.updated_at).local().fromNow()}
-                                                                            </em>
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </React.Fragment>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                        {isMobileView && (
-                                            <div className="mobile-friendly-table">
-                                                {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
-                                                    <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
-                                                        <div className="card-content">
-                                                            <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
-                                                                <div className="col s10">
-                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>
-                                                                        <span className="text-bold">{item.display_name}</span>
-                                                                        {!item.is_active &&
-                                                                            <span>&nbsp;<span className="chip tb-grey lighten-3">INACTIVE</span></span>
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col s2">
-                                                                    <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                                        <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="card-footer">
-                                                            <div className="row">
-                                                                <div className="col s12" style={{ textAlign: 'right' }}>
-                                                                    <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
-                                                                    <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div >
-                                                ))}
-                                            </div >
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <CircularPreloader show={true} />
+            <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
+                <AddEditConsultantModal
+                    isOpen={isModalOpen}
+                    onClose={closeModal}
+                    onRefresh={triggerRefresh}
+                    editConsultantData={currentEditConsultant}
+                    isEditMode={isEditMode}
+                />
+                {loaded ? (
+                    <>
+                        <div className="container center">
+                            <div className="row center">
+                                <div className="col s2 offset-s10">
+                                    <button
+                                        href=""
+                                        className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
+                                        onClick={openModal}
+                                    >
+                                        <span className="material-symbols-outlined">
+                                            add
+                                        </span>
+                                        Add New
+                                    </button>
                                 </div>
+                            </div>
+                            <div style={{ marginBottom: '20px' }}>
+                                <em className="tb-grey-text">
+                                    <span className="text-bold tb-teal-text">{displayData?.length?.toLocaleString()}</span> consultants
+                                </em>
+                            </div>
+                            <table className="accommodation-logs-table center">
+                                <thead>
+                                    <tr className="tb-md-black-text text-bold">
+                                        <th
+                                            onClick={() =>
+                                                applySorting('last_name')
+                                            }
+                                        >
+                                            Last Name
+                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                {sorting.field === 'last_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('first_name')
+                                            }
+                                        >
+                                            First Name
+                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                {sorting.field === 'first_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('is_active')
+                                            }
+                                        >
+                                            Active?
+                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                {sorting.field === 'is_active' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('updated_at')
+                                            }
+                                            style={{ width: '200px', textAlign: 'right' }}
+                                        >
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Last updated"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
+                                                    update
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.isArray(displayData) && displayData.length > 0 ? (
+                                        displayData.map((item, index) => (
+                                            <React.Fragment key={item.id}>
+                                                <tr>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p>{item.last_name}</p>
+                                                    </td>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p className="text-bold">{item.first_name}</p>
+                                                    </td>
+                                                    <td>{item.is_active ? (
+                                                        <span className="chip success-green-light">YES</span>
+                                                    ) : (
+                                                        <span className="chip tb-grey lighten-2">NO</span>
+                                                    )}
+                                                    </td>
+                                                    <td style={{ width: '200px' }}>
+                                                        <div style={{ textAlign: 'right', padding: '0px' }}>
+                                                            <span
+                                                                className={`tooltipped`}
+                                                                data-position="left"
+                                                                data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                data-tooltip-class="tooltip-updated-by"
+                                                            >
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit
+                                                                    </span>
+                                                                </button>
+                                                                <br />
+                                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                                    <span className="material-symbols-outlined">
+                                                                        update
+                                                                    </span>
+                                                                    {moment.utc(item.updated_at).local().fromNow()}
+                                                                </em>
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </React.Fragment>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            {isMobileView && (
+                                <div className="mobile-friendly-table">
+                                    {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
+                                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                                            <div className="card-content">
+                                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                                    <div className="col s10">
+                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">badge</i>
+                                                            <span className="text-bold">{item.display_name}</span>
+                                                            {!item.is_active &&
+                                                                <span>&nbsp;<span className="chip tb-grey lighten-3">INACTIVE</span></span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div className="col s2">
+                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="card-footer">
+                                                <div className="row">
+                                                    <div className="col s12" style={{ textAlign: 'right' }}>
+                                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div >
+                                    ))}
+                                </div >
                             )}
-                        </>
-                    )}
-                </div>
-            </main>
+                        </div>
+                    </>
+                ) : (
+                    <div>
+                        <CircularPreloader show={true} />
+                    </div>
+                )}
+            </div>
         </>
     )
 }

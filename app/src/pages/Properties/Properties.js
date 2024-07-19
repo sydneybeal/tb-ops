@@ -4,7 +4,6 @@ import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
-import Navbar from '../../components/Navbar';
 import AddEditPropertyModal from './AddEditModal';
 import moment from 'moment';
 
@@ -385,582 +384,568 @@ export const Properties = () => {
 
     return (
         <>
-            <header>
-                <Navbar title="Property Management" />
-            </header>
-
-            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center properties" style={{ width: '90%', paddingBottom: '100px' }}>
-                    {(userDetails.role !== 'admin') ? (
-                        <div>
-                            You do not have permission to view this page.
+            <div className="container center properties" style={{ width: '90%', paddingBottom: '100px' }}>
+                <AddEditPropertyModal
+                    isOpen={isModalOpen}
+                    onClose={closeModal}
+                    onRefresh={triggerRefresh}
+                    editPropertyData={currentEditProperty}
+                    isEditMode={isEditMode}
+                />
+                {loaded ? (
+                    <>
+                        <div className="row center">
+                            <div className="col s10">
+                                <ul className="pagination">
+                                    <li className={currentPage === 0 ? 'disabled' : ''}>
+                                        <a
+                                            onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                            href="#!"
+                                        >
+                                            <i className="material-icons">chevron_left</i>
+                                        </a>
+                                    </li>
+                                    {Array.from({ length: totalPages }, (_, idx) => (
+                                        <li
+                                            className={
+                                                `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
+                                                }`
+                                            }
+                                            key={idx}
+                                            onClick={() => changePage(idx)}
+                                        >
+                                            <a onClick={(e) => e.preventDefault()} className="tb-grey-text text-darken-1" href="#!">{idx + 1}</a>
+                                        </li>
+                                    ))}
+                                    <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                                        <a
+                                            onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
+                                            href="#!"
+                                        >
+                                            <i className="material-icons">chevron_right</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="col s2">
+                                <button
+                                    href=""
+                                    className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
+                                    onClick={openModal}
+                                >
+                                    <span className="material-symbols-outlined">
+                                        add
+                                    </span>
+                                    Add New
+                                </button>
+                            </div>
                         </div>
-                    ) : (
-                        <>
-                            <AddEditPropertyModal
-                                isOpen={isModalOpen}
-                                onClose={closeModal}
-                                onRefresh={triggerRefresh}
-                                editPropertyData={currentEditProperty}
-                                isEditMode={isEditMode}
-                            />
-                            {loaded ? (
-                                <>
-                                    <div className="row center">
-                                        <div className="col s10">
-                                            <ul className="pagination">
-                                                <li className={currentPage === 0 ? 'disabled' : ''}>
-                                                    <a
-                                                        onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
-                                                        href="#!"
-                                                    >
-                                                        <i className="material-icons">chevron_left</i>
-                                                    </a>
-                                                </li>
-                                                {Array.from({ length: totalPages }, (_, idx) => (
-                                                    <li
-                                                        className={
-                                                            `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
-                                                            }`
-                                                        }
-                                                        key={idx}
-                                                        onClick={() => changePage(idx)}
-                                                    >
-                                                        <a onClick={(e) => e.preventDefault()} className="tb-grey-text text-darken-1" href="#!">{idx + 1}</a>
-                                                    </li>
-                                                ))}
-                                                <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
-                                                    <a
-                                                        onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
-                                                        href="#!"
-                                                    >
-                                                        <i className="material-icons">chevron_right</i>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div className="col s2">
-                                            <button
-                                                href=""
-                                                className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
-                                                onClick={openModal}
+                        <div className="row center">
+                            <div>
+                                <div className="col s12 l2">
+                                    <Select
+                                        placeholder="Core Destination"
+                                        value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
+                                        onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
+                                        options={filterOptions.core_destination}
+                                        className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                        }}
+                                        isClearable
+                                    />
+                                    <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                        explore
+                                    </span>
+                                </div>
+                                {/* TODO: change filters to drill down on other selections*/}
+                                <div className="col s12 l2">
+                                    <Select
+                                        placeholder="Country"
+                                        value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
+                                        onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
+                                        options={filterOptions.country}
+                                        className={`select ${filters.country ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                        }}
+                                        isClearable
+                                    />
+                                    <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                        globe
+                                    </span>
+                                </div>
+
+                                <div className="col s12 l4">
+                                    <Select
+                                        placeholder="Locations"
+                                        options={filterOptions.property_locations}
+                                        className={`select ${filters.property_locations?.length > 0 ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        isClearable
+                                        isMulti
+                                        value={filterOptions.property_locations.filter(option => filters.property_locations.includes(option.label))}
+                                        onChange={(selectedOptions) => setFilters({
+                                            ...filters,
+                                            property_locations: selectedOptions ? selectedOptions.map(option => option.label) : []
+                                        })}
+                                    />
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
+                                        near_me
+                                    </span>
+                                    {/*  */}
+                                </div>
+                                <div className="col s12 l2">
+                                    <Select
+                                        placeholder="Portfolio"
+                                        value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
+                                        onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
+                                        options={filterOptions.portfolio}
+                                        className={`select ${filters.portfolio ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                        }}
+                                        isClearable
+                                    />
+                                    <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                        store
+                                    </span>
+                                </div>
+                                <div className="col s12 l2">
+                                    <Select
+                                        placeholder="Property Type"
+                                        // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
+                                        value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
+                                        onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
+                                        options={filterOptions.property_type}
+                                        className={`select ${filters.property_type ? 'select--has-value' : ''}`}
+                                        classNamePrefix="select"
+                                        styles={{
+                                            control: (provided, state) => ({
+                                                ...provided,
+                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                '&:hover': {
+                                                    borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
+                                                },
+                                                boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
+                                            }),
+                                            option: (provided, state) => ({
+                                                ...provided,
+                                                fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                backgroundColor: state.isSelected
+                                                    ? '#0e9bac'
+                                                    : state.isFocused
+                                                        ? '#e8e5e1'
+                                                        : '#ffffff',
+                                                ':active': {
+                                                    backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
+                                                },
+                                            }),
+                                            menuPortal: base => ({ ...base, zIndex: 9999 })
+                                        }}
+                                        menuPortalTarget={document.body}
+                                        isClearable
+                                    />
+                                    <span className="material-symbols-outlined grey-text text-darken-1">
+                                        camping
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row center">
+                            <div className="input-field col s12 l6 offset-l3">
+                                <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                    search
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="search-input" // Apply any styling as needed
+                                />
+                            </div>
+                        </div>
+                        <div className="row center">
+                            <div>
+                                <button className="btn tb-grey lighten-2" onClick={() => {
+                                    setFilters({ core_destination: '', country: '', portfolio: '' });
+                                    setSearchQuery('');
+                                }}>
+                                    Reset Filters
+                                    <span className="material-symbols-outlined">
+                                        refresh
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <em className="tb-grey-text">
+                                <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> properties
+                            </em>
+                        </div>
+                        <div className="container center" style={{ width: '85%' }}>
+                            <table className="accommodation-logs-table">
+                                <thead>
+                                    <tr className="tb-md-black-text text-bold">
+                                        <th
+                                            onClick={() =>
+                                                applySorting('name')
+                                            }
+                                        >
+                                            {/* Property */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Property"
+                                                data-tooltip-class="tooltip-light"
                                             >
                                                 <span className="material-symbols-outlined">
-                                                    add
+                                                    hotel
                                                 </span>
-                                                Add New
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="row center">
-                                        <div>
-                                            <div className="col s12 l2">
-                                                <Select
-                                                    placeholder="Core Destination"
-                                                    value={filterOptions.core_destination.find(core_dest => core_dest.label === filters.core_destination) ? { value: filters.core_destination, label: filters.core_destination } : null}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, core_destination: selectedOption ? selectedOption.label : '' })}
-                                                    options={filterOptions.core_destination}
-                                                    className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                    }}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                    explore
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
-                                            </div>
-                                            {/* TODO: change filters to drill down on other selections*/}
-                                            <div className="col s12 l2">
-                                                <Select
-                                                    placeholder="Country"
-                                                    value={filterOptions.country.find(country => country.label === filters.country) ? { value: filters.country, label: filters.country } : null}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, country: selectedOption ? selectedOption.label : '' })}
-                                                    options={filterOptions.country}
-                                                    className={`select ${filters.country ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                    }}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
-                                                    globe
-                                                </span>
-                                            </div>
-
-                                            <div className="col s12 l4">
-                                                <Select
-                                                    placeholder="Locations"
-                                                    options={filterOptions.property_locations}
-                                                    className={`select ${filters.property_locations?.length > 0 ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                        menuPortal: base => ({ ...base, zIndex: 9999 })
-                                                    }}
-                                                    menuPortalTarget={document.body}
-                                                    isClearable
-                                                    isMulti
-                                                    value={filterOptions.property_locations.filter(option => filters.property_locations.includes(option.label))}
-                                                    onChange={(selectedOptions) => setFilters({
-                                                        ...filters,
-                                                        property_locations: selectedOptions ? selectedOptions.map(option => option.label) : []
-                                                    })}
-                                                />
-                                                <span className="material-symbols-outlined grey-text text-darken-1">
-                                                    near_me
-                                                </span>
-                                                {/*  */}
-                                            </div>
-                                            <div className="col s12 l2">
-                                                <Select
-                                                    placeholder="Portfolio"
-                                                    value={filterOptions.portfolio.find(portfolio => portfolio.label === filters.portfolio) ? { value: filters.portfolio, label: filters.portfolio } : null}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, portfolio: selectedOption ? selectedOption.label : '' })}
-                                                    options={filterOptions.portfolio}
-                                                    className={`select ${filters.portfolio ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Change 'pink' to your preferred border color
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor, // Adjust hover state as well
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none', // Optional: Add a boxShadow for focus
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                    }}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined tb-grey-text text-darken-1">
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('portfolio_name')
+                                            }
+                                        >
+                                            {/* Portfolio */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Portfolio Name"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
                                                     store
                                                 </span>
-                                            </div>
-                                            <div className="col s12 l2">
-                                                <Select
-                                                    placeholder="Property Type"
-                                                    // value={filterOptions.property_type.find(option => option.label === filters.property_type) ? { value: filters.property_type, label: filters.property_type } : null}
-                                                    value={filterOptions.property_type.find(option => option.value === filters.property_type) || ''}
-                                                    onChange={(selectedOption) => setFilters({ ...filters, property_type: selectedOption ? selectedOption.value : '' })}
-                                                    options={filterOptions.property_type}
-                                                    className={`select ${filters.property_type ? 'select--has-value' : ''}`}
-                                                    classNamePrefix="select"
-                                                    styles={{
-                                                        control: (provided, state) => ({
-                                                            ...provided,
-                                                            borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                            '&:hover': {
-                                                                borderColor: state.isFocused ? '#0e9bac' : provided.borderColor,
-                                                            },
-                                                            boxShadow: state.isFocused ? '0 0 0 1px #0e9bac' : 'none',
-                                                        }),
-                                                        option: (provided, state) => ({
-                                                            ...provided,
-                                                            fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
-                                                            backgroundColor: state.isSelected
-                                                                ? '#0e9bac'
-                                                                : state.isFocused
-                                                                    ? '#e8e5e1'
-                                                                    : '#ffffff',
-                                                            ':active': {
-                                                                backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
-                                                            },
-                                                        }),
-                                                        menuPortal: base => ({ ...base, zIndex: 9999 })
-                                                    }}
-                                                    menuPortalTarget={document.body}
-                                                    isClearable
-                                                />
-                                                <span className="material-symbols-outlined grey-text text-darken-1">
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'portfolio_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('location')
+                                            }
+                                        >
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Location (City/Park/Region)"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    near_me
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'location' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('country_name')
+                                            }
+                                        >
+                                            {/* Country */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Country Name"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    globe
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('core_destination_name')
+                                            }
+                                        >
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Core Destination"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    explore
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('property_type')
+                                            }
+                                        >
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Property Type (Hotel/Accommodation, Luxury/Standard)"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
                                                     camping
                                                 </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="row center">
-                                        <div className="input-field col s12 l6 offset-l3">
-                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                                search
-                                            </span>
-                                            <input
-                                                type="text"
-                                                placeholder="Search..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="search-input" // Apply any styling as needed
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="row center">
-                                        <div>
-                                            <button className="btn tb-grey lighten-2" onClick={() => {
-                                                setFilters({ core_destination: '', country: '', portfolio: '' });
-                                                setSearchQuery('');
-                                            }}>
-                                                Reset Filters
-                                                <span className="material-symbols-outlined">
-                                                    refresh
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'property_type' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                 </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <em className="tb-grey-text">
-                                            <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> properties
-                                        </em>
-                                    </div>
-                                    <div className="container center" style={{ width: '85%' }}>
-                                        <table className="accommodation-logs-table">
-                                            <thead>
-                                                <tr className="tb-md-black-text text-bold">
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('name')
-                                                        }
-                                                    >
-                                                        {/* Property */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Property"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('num_related')
+                                            }
+                                        >
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Number of Related Entries"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    tag
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('updated_at')
+                                            }
+                                            style={{ width: '150px', textAlign: 'right' }}
+                                        >
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Last updated"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    update
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.isArray(displayData) && displayData.length > 0 ? (
+                                        displayData.map((item, index) => (
+                                            <React.Fragment key={item.id}>
+                                                <tr>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p className="text-bold">{item.name}</p>
+                                                    </td>
+                                                    <td>{item.portfolio_name}</td>
+                                                    <td>
+                                                        {!item.location
+                                                        ?
+                                                        <span className="chip tb-grey lighten-2 text-bold">
                                                             <span className="material-symbols-outlined">
-                                                                hotel
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                                live_help
                                                             </span>
                                                         </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('portfolio_name')
-                                                        }
-                                                    >
-                                                        {/* Portfolio */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Portfolio Name"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
+                                                        : item.location}
+                                                    </td>
+                                                    <td>{item.country_name}</td>
+                                                    <td>{item.core_destination_name}</td>
+                                                    <td>
+                                                        {!item.property_type
+                                                        ?
+                                                        <span className="chip tb-grey lighten-2 text-bold">
                                                             <span className="material-symbols-outlined">
-                                                                store
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'portfolio_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                                live_help
                                                             </span>
                                                         </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('location')
-                                                        }
-                                                    >
-                                                        {/* Dates */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Location (City/Park/Region)"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                near_me
+                                                        : toTitleCase(item.property_type)}
+                                                    </td>
+                                                    <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
+                                                    <td style={{ width: '150px' }}>
+                                                        <div style={{ textAlign: 'right', padding: '0px' }}>
+                                                            <span
+                                                                className={`tooltipped`}
+                                                                data-position="left"
+                                                                data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                data-tooltip-class="tooltip-updated-by"
+                                                            >
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit
+                                                                    </span>
+                                                                </button>
+                                                                <br />
+                                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                                    <span className="material-symbols-outlined">
+                                                                        update
+                                                                    </span>
+                                                                    {moment.utc(item.updated_at).local().fromNow()}
+                                                                </em>
                                                             </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'location' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('country_name')
-                                                        }
-                                                    >
-                                                        {/* Country */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Country Name"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                globe
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'country_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('core_destination_name')
-                                                        }
-                                                    >
-                                                        {/* Dates */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Core Destination"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                explore
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'core_destination_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('property_type')
-                                                        }
-                                                    >
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Property Type (Hotel/Accommodation, Luxury/Standard)"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                camping
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'property_type' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('num_related')
-                                                        }
-                                                    >
-                                                        {/* Dates */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Number of Related Entries"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                tag
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('updated_at')
-                                                        }
-                                                        style={{ width: '150px', textAlign: 'right' }}
-                                                    >
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Last updated"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                update
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(displayData) && displayData.length > 0 ? (
-                                                    displayData.map((item, index) => (
-                                                        <React.Fragment key={item.id}>
-                                                            <tr>
-                                                                <td style={{ verticalAlign: 'top' }}>
-                                                                    <p className="text-bold">{item.name}</p>
-                                                                </td>
-                                                                <td>{item.portfolio_name}</td>
-                                                                <td>
-                                                                    {!item.location
-                                                                    ?
-                                                                    <span className="chip tb-grey lighten-2 text-bold">
-                                                                        <span className="material-symbols-outlined">
-                                                                            live_help
-                                                                        </span>
-                                                                    </span>
-                                                                    : item.location}
-                                                                </td>
-                                                                <td>{item.country_name}</td>
-                                                                <td>{item.core_destination_name}</td>
-                                                                <td>
-                                                                    {!item.property_type
-                                                                    ?
-                                                                    <span className="chip tb-grey lighten-2 text-bold">
-                                                                        <span className="material-symbols-outlined">
-                                                                            live_help
-                                                                        </span>
-                                                                    </span>
-                                                                    : toTitleCase(item.property_type)}
-                                                                </td>
-                                                                <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
-                                                                <td style={{ width: '150px' }}>
-                                                                    <div style={{ textAlign: 'right', padding: '0px' }}>
-                                                                        <span
-                                                                            className={`tooltipped`}
-                                                                            data-position="left"
-                                                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                                                            data-tooltip-class="tooltip-updated-by"
-                                                                        >
-                                                                            <button
-                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
-                                                                                onClick={() => openEditModal(item)}
-                                                                            >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit
-                                                                                </span>
-                                                                            </button>
-                                                                            <br />
-                                                                            <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
-                                                                                <span className="material-symbols-outlined">
-                                                                                    update
-                                                                                </span>
-                                                                                {moment.utc(item.updated_at).local().fromNow()}
-                                                                            </em>
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </React.Fragment>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>No results.</td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                        {isMobileView && (
-                                            <div className="mobile-friendly-table">
-                                                {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
-                                                    <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
-                                                        <div className="card-content">
-                                                            <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
-                                                                <div className="col s10">
-                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i>
-                                                                        <span className="text-bold">{item.name}</span>
-                                                                    </div>
-                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i>
-                                                                        <span>{item.portfolio_name}</span>
-                                                                    </div>
-                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
-                                                                        ? item.country_name
-                                                                        : <span>n/a</span>}</span></div>
-                                                                    <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
-                                                                </div>
-                                                                <div className="col s2">
-                                                                    <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                                        <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
+                                            </React.Fragment>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="8" style={{ textAlign: 'center' }}>No results.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            {isMobileView && (
+                                <div className="mobile-friendly-table">
+                                    {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
+                                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                                            <div className="card-content">
+                                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                                    <div className="col s10">
+                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">hotel</i>
+                                                            <span className="text-bold">{item.name}</span>
                                                         </div>
-                                                        <div className="card-footer">
-                                                            <div className="row">
-                                                                <div className="col s12" style={{ textAlign: 'right' }}>
-                                                                    <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
-                                                                    <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
-                                                                </div>
-                                                            </div>
+                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">store</i>
+                                                            <span>{item.portfolio_name}</span>
                                                         </div>
-                                                    </div >
-                                                ))}
-                                            </div >
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <CircularPreloader show={true} />
-                                </div>
+                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">globe</i><span>{item.country_name && item.country_name.trim().toLowerCase() !== "n/a"
+                                                            ? item.country_name
+                                                            : <span>n/a</span>}</span></div>
+                                                        <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
+                                                    </div>
+                                                    <div className="col s2">
+                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="card-footer">
+                                                <div className="row">
+                                                    <div className="col s12" style={{ textAlign: 'right' }}>
+                                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div >
+                                    ))}
+                                </div >
                             )}
-                        </>
-                    )}
-                </div>
-            </main>
+                        </div>
+                    </>
+                ) : (
+                    <div>
+                        <CircularPreloader show={true} />
+                    </div>
+                )}
+            </div>
         </>
     )
 }

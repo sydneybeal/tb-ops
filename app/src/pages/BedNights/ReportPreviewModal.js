@@ -11,23 +11,30 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
     const [propertyGranularity, setPropertyGranularity] = useState('property_name');
     const [calculationType, setCalculationType] = useState('bed_nights');
     const [maxEntries, setMaxEntries] = useState(10);
-    const [excludeFields, setExcludeFields] = useState(["booking_channel_name"]);
+    const [excludeFields, setExcludeFields] = useState([
+        "booking_channel_name",
+        "core_destination_name",
+        "country_name",
+        "agency_name",
+        "num_pax",
+        "consultant_name",
+    ]);
     const [fileNamePrefix, setFileNamePrefix] = useState("Report");
     const [reportTitle, setReportTitle] = useState("Report");
     const [combinedQueryString, setCombinedQueryString] = useState('');
 
     const defaultFields = {
         primary_traveler: { name: "Primary Traveler Name", canExclude: true },
-        core_destination_name: { name: "Core Destination", canExclude: true },
-        date_in: { name: "Date In", canExclude: false },
-        country_name: { name: "Country", canExclude: true },
-        date_out: { name: "Date Out", canExclude: false },
-        agency_name: { name: "Agency Name", canExclude: true },
-        num_pax: { name: "# Pax", canExclude: false },
-        property_portfolio: { name: "Property Portfolio", canExclude: true },
-        bed_nights: { name: "Bed Nights", canExclude: false },
-        booking_channel_name: { name: "Booking Channel", canExclude: true },
+        num_pax: { name: "# Pax", canExclude: true },
         property_name: { name: "Property Name", canExclude: true },
+        country_name: { name: "Country", canExclude: true },
+        property_portfolio: { name: "Property Portfolio", canExclude: true },
+        agency_name: { name: "Agency Name", canExclude: true },
+        date_in: { name: "Date In", canExclude: false },
+        core_destination_name: { name: "Core Destination", canExclude: true },
+        date_out: { name: "Date Out", canExclude: false },
+        booking_channel_name: { name: "Booking Channel", canExclude: true },
+        bed_nights: { name: "Bed Nights", canExclude: false },
         consultant_name: { name: "Consultant Name", canExclude: true },
     };
 

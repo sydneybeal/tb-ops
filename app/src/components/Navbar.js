@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.2.4';
+    const version = 'v0.2.5';
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -168,43 +168,8 @@ const Navbar = ({ title }) => {
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/properties'} className="text-bold">
-                                    Properties
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/consultants'} className="text-bold">
-                                    Consultants
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/agencies'} className="text-bold">
-                                    Agencies
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/booking_channels'} className="text-bold">
-                                    Booking Channels
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/portfolios'} className="text-bold">
-                                    Portfolios
-                                </Link>
-                            </li>
-                        </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/countries'} className="text-bold">
-                                    Countries
+                                <Link to={'/entry_elements'} className="text-bold">
+                                    Entry Elements
                                 </Link>
                             </li>
                         </div>

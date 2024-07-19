@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
+import EntryElements from './pages/EntryElements/EntryElements';
 import LookerReports from './pages/BedNights/LookerReports';
 import Agencies from './pages/Agencies/Agencies';
 import BookingChannels from './pages/BookingChannels/BookingChannels';
@@ -70,10 +71,10 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/properties/',
+    path: '/entry_elements/',
     element: (
       <ProtectedRoute>
-        <Properties />
+        <EntryElements />
       </ProtectedRoute>
     ),
   },
@@ -90,46 +91,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <LookerReports />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/consultants/',
-    element: (
-      <ProtectedRoute>
-        <Consultants />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/agencies/',
-    element: (
-      <ProtectedRoute>
-        <Agencies />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/booking_channels/',
-    element: (
-      <ProtectedRoute>
-        <BookingChannels />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/portfolios/',
-    element: (
-      <ProtectedRoute>
-        <Portfolios />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/countries/',
-    element: (
-      <ProtectedRoute>
-        <Countries />
       </ProtectedRoute>
     ),
   },
