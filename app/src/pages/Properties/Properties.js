@@ -8,7 +8,7 @@ import AddEditPropertyModal from './AddEditModal';
 import moment from 'moment';
 
 export const Properties = () => {
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [apiData, setApiData] = useState([]);
     const [refreshData, setRefreshData] = useState(false);
     const [displayData, setDisplayData] = useState([]);
@@ -63,6 +63,16 @@ export const Properties = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 const numberOfPages = Math.ceil(data.length / itemsPerPage);
                 setApiData(data);
                 setTotalPages(numberOfPages);
@@ -74,7 +84,7 @@ export const Properties = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, refreshData]);
+    }, [userDetails.token, refreshData, logout]);
 
     useEffect(() => {
         M.AutoInit();

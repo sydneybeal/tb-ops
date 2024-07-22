@@ -7,7 +7,7 @@ import AddEditConsultantModal from './AddEditModal';
 import moment from 'moment';
 
 export const Consultants = () => {
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
     const [displayData, setDisplayData] = useState([]);
@@ -37,6 +37,16 @@ export const Consultants = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 setApiData(data);
                 setLoaded(true);
             })
@@ -44,7 +54,7 @@ export const Consultants = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, refreshData]);
+    }, [userDetails.token, refreshData, logout]);
 
     /**
   * Sets sorting criteria.

@@ -9,7 +9,7 @@ import moment from 'moment';
 export const Portfolios = () => {
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'name', ascending: true });
@@ -43,6 +43,16 @@ export const Portfolios = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 const numberOfPages = Math.ceil(data.length / itemsPerPage);
                 setApiData(data);
                 setTotalPages(numberOfPages);
@@ -54,7 +64,7 @@ export const Portfolios = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, refreshData]);
+    }, [userDetails.token, refreshData, logout]);
 
     /**
   * Sets sorting criteria.
