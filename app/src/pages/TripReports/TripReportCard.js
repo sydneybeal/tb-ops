@@ -1,10 +1,24 @@
 import { Link } from 'react-router-dom';
+import moment from 'moment';
+
 export const TripReportCard = ({ tripReport, summary = false }) => {
     const uniqueCountries = new Set();
 
+    const sortedProperties = tripReport.properties?.sort((a, b) => {
+        const dateA = a.date_in ? new Date(a.date_in) : new Date(0); // Use epoch as fallback
+        const dateB = b.date_in ? new Date(b.date_in) : new Date(0);
+        return dateA - dateB;
+    }) || [];
+
+    const sortedActivities = tripReport.activities?.sort((a, b) => {
+        const dateA = a.visit_date ? new Date(a.visit_date) : new Date(0); // Use epoch as fallback
+        const dateB = b.visit_date ? new Date(b.visit_date) : new Date(0);
+        return dateA - dateB;
+    }) || [];
+
     // Check if tripReport.properties exists and has length before iterating
-    if (tripReport.properties && tripReport.properties.length > 0) {
-        tripReport.properties.forEach(segment => {
+    if (sortedProperties && sortedProperties.length > 0) {
+        sortedProperties.forEach(segment => {
             const countryName = segment.property_details?.country_name || segment.country_name;
             if (countryName) {
                 uniqueCountries.add(countryName);
@@ -87,15 +101,15 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                         ))}
                     </div>
                 </div>
-                {(tripReport.properties.length > 0 | tripReport.activities.length > 0) && 
+                {(tripReport.properties?.length > 0 || tripReport.activities?.length > 0) && 
                     <hr
-                    style={{
-                        border: '1px solid #8c8782',
-                        borderRadius: '1px',
-                        width: '80%',
-                        margin: '30px auto'
-                    }}
-                />
+                        style={{
+                            border: '1px solid #8c8782',
+                            borderRadius: '1px',
+                            width: '80%',
+                            margin: '30px auto'
+                        }}
+                    />
                 }
                 {tripReport.properties.length > 0 &&
                 <>
@@ -111,7 +125,7 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                            {tripReport.properties.map((segment) => {
+                            {sortedProperties.map((segment) => {
                                 const rating = getRatingAverage(segment);  // Call the function once per iteration
                                 return (
                                     <tr key={`segment-${tripReport.id}-${segment.property_id}`}>
@@ -124,11 +138,11 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                                             {segment.property_details?.location ?
                                                 segment.property_details.location
                                                 :
-                                                "unknown"
+                                                <em>unknown</em>
                                             }
                                         </td>
                                         <td>
-                                            {segment.date_in}
+                                            {segment.date_in && moment(segment.date_in).format('MMMM DD, YYYY')}
                                         </td>
                                         <td>
                                             {rating !== "n/a" ? `${rating} / 10` : "n/a"}
@@ -141,7 +155,7 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                     </div>
                 </>
                 }
-                {tripReport.activities.length > 0 &&
+                {sortedActivities.length > 0 &&
                     <div style={{ marginTop: '50px'}}>
                         <h5>Activities</h5>
                         <table>
@@ -165,7 +179,7 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                                         {activity.rating && activity.rating !== "n/a" ? `${activity.rating} / 10` : "n/a"}
                                     </td>
                                     <td>
-                                        {activity.visit_date}
+                                        {activity.visit_date && moment(activity.visit_date).format('MMMM DD, YYYY')}
                                     </td>
                                     <td>
                                         {activity.location}
