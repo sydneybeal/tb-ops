@@ -50,6 +50,7 @@ export const TripReports = () => {
                 }
                 if (Array.isArray(data)) {
                     const numberOfPages = Math.ceil(data.length / itemsPerPage);
+                    console.log(data);
                     setApiData(data);
                     setTotalPages(numberOfPages);
                     setCurrentPage(0);

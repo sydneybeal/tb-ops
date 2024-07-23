@@ -27,18 +27,19 @@ const SaveModal = ({ onClose, isOpen, formData, onSaveAsDraft, onSaveAsFinal }) 
 
         <div id="save-report-modal" className="modal add-edit-modal center" style={{ zIndex: '1000', position: 'fixed' }}>
                 <div className="modal-content" style={{ zIndex: '1000' }}>
-                    <h4>Save Trip Report</h4>
-                    <button className="btn btn-small modal-close waves-effect waves-light error-red" onClick={onClose}>
-                        Cancel
-                    </button>
                     <TripReportCard tripReport={formData} summary={true}/>
                     <div className="row" style={{marginTop: '40px'}}>
-                        <div className="col l6">
+                        <div className="col l4">
+                            <button className="btn btn-large modal-close waves-effect waves-light error-red" onClick={onClose}>
+                                Cancel
+                            </button>
+                        </div>
+                        <div className="col l4">
                             <button className="btn btn-large modal-close waves-effect waves-light tb-teal lighten-2" onClick={onSaveAsDraft}>
                                 Save as Draft
                             </button>
                         </div>
-                        <div className="col l6">
+                        <div className="col l4">
                             <button className="btn btn-large modal-close waves-effect waves-light tb-teal darken-2" onClick={onSaveAsFinal}>
                                 Publish Report
                             </button>

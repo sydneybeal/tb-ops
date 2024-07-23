@@ -246,6 +246,7 @@ const CreateEditTripReport = () => {
     
         return {
             trip_report_id: data.id || null,
+            trip_name: data.trip_name || '',
             review_status: data.review_status || 'draft',
             travelers: data.travelers || [],
             document_updates: data.document_updates || '',
@@ -1060,7 +1061,11 @@ const CreateEditTripReport = () => {
                     <div className="card potential-trip-card" style={{ marginTop: '20px', paddingTop: '10px'}}>
                         <div className="card-content">
                             <h3 className="center report-title">{formData.review_status === 'final' ? 'Update' : 'New'} Trip Report</h3>
+                            {/* <div className="row">
+                                
+                            </div> */}
                             <div className="center">
+                                <h5 className="tb-grey-text text-darken-3">{formData.trip_name}</h5>
                                 {formData.review_status === 'final' ? (
                                     <div className="chip success-green tb-off-white-text text-bold">
                                         PUBLISHED
@@ -2160,7 +2165,7 @@ const CreateEditTripReport = () => {
                                             </div>
                                         );
                                     })}
-                                    <div className="row">
+                                    <div className="row center">
                                         <button
                                             type="button"
                                             onClick={() => {addActivity()}}

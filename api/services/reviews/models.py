@@ -138,3 +138,129 @@ class TripReportSummary(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def trip_name(self) -> Optional[str]:
+        """Uses the accommodation logs to assemble the suggested trip name."""
+        generic_title = "TBD"
+        if not self.properties:
+            return generic_title
+
+        # Future: use travelers to get names like "Kota, Joleen" instead of "kotat, joleens"
+        # traveler_names = ""
+        max_pax = len(self.travelers) if self.travelers else None
+
+        countries_in_logs = set(
+            log.property_details.country_name
+            for log in self.properties
+            if log.property_details
+        )
+        core_destinations = set(
+            log.property_details.core_destination_name
+            for log in self.properties
+            if log.property_details
+        )
+
+        # Determine the destination based on the count of core destinations and countries
+        if len(countries_in_logs) == 1:
+            destination = next(iter(countries_in_logs))
+        elif countries_in_logs == {"Australia", "New Zealand"}:
+            destination = "Australia & New Zealand"
+        else:
+            # If there are no specific core destinations mentioned, fall back to countries or special cases
+            if len(countries_in_logs) == 1:
+                destination = next(iter(countries_in_logs))
+            else:
+                destination = self._handle_special_cases(
+                    countries_in_logs, core_destinations
+                )
+
+        earliest_date = self._earliest_date_in()
+        print(f"{earliest_date=}")
+        if earliest_date:
+            date_title = earliest_date.strftime("%B %Y")
+        else:
+            date_title = None
+
+        parts = []
+        if destination:
+            parts.append(destination)
+        if max_pax:
+            parts.append(f"x{max_pax}")
+        if date_title:
+            parts.append(date_title)
+
+        return " ".join(parts) if parts else "TBD"
+
+    def _earliest_date_in(self) -> Optional[date]:
+        """Finds the earliest date_in across all properties, handling None values."""
+        if not self.properties:
+            return None
+        dates = [
+            segment.date_in
+            for segment in self.properties
+            if segment.date_in is not None
+        ]
+        return min(dates) if dates else None
+
+    def _handle_special_cases(self, countries, core_destinations):
+        # Special handling for regions within Asia and Africa
+        asia_lookup = {
+            "Southeast Asia": {"Thailand", "Vietnam", "Malaysia", "Singapore"}
+        }
+        south_america_lookup = {
+            "South America": {
+                "Argentina",
+                "Bolivia",
+                "Brazil",
+                "Chile",
+                "Colombia",
+                "Ecuador",
+                "Peru",
+                "Uruguay",
+            }
+        }
+        africa_lookup = {
+            "East Africa": {
+                "Kenya",
+                "Tanzania",
+                "Rwanda",
+                "Uganda",
+                "Mauritius",
+                "Seychelles",
+                "Madagascar",
+            },
+            "Southern Africa": {
+                "South Africa",
+                "Botswana",
+                "Namibia",
+                "Zambia",
+                "Zimbabwe",
+                "Mozambique",
+                "Malawi",
+            },
+            "North Africa": {"Egypt", "Jordan", "Morocco"},
+        }
+
+        for region, countries_set in asia_lookup.items():
+            if countries_set.intersection(countries):
+                return region
+
+        for region, countries_set in south_america_lookup.items():
+            if countries_set.intersection(countries):
+                return region
+
+        africa_regions = [
+            region
+            for region, countries_set in africa_lookup.items()
+            if countries_set.intersection(countries)
+        ]
+        if len(africa_regions) == 1:
+            return africa_regions[0]
+        # If no specific region fits, use a general core destination if one exists
+        if len(core_destinations) == 1:
+            return next(iter(core_destinations))
+
+        # Default to "Multiple Countries" only if no better label is available
+        return "Multiple Countries"
