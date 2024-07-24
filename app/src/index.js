@@ -16,6 +16,7 @@ import Maps from './pages/Maps/Maps';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
+import TripReportDetails from './pages/TripReports/Details';
 import AddEditTripReport from './pages/TripReports/AddEditTripReport';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
@@ -120,6 +121,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AddEditTripReport />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip_reports/:trip_report_id',
+    element: (
+      <ProtectedRoute>
+        <TripReportDetails />
       </ProtectedRoute>
     ),
   },

@@ -799,6 +799,19 @@ a.sidenav-trigger.top-nav {
   font-style: 'italics';
 }
 
+.trip-report-summary-cell {
+  font-size: 1.4rem;
+}
+
+.trip-report-display-header {
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.trip-report-property-row {
+  margin: 20px 0px;
+}
+
 .rating-box {
   width: 80%; /* No quotes around numerical values */
   margin: 0 auto; /* Centers the box */

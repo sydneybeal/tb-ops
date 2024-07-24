@@ -162,9 +162,9 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                             <thead>
                                 <tr>
                                     <th>Activity Name</th>
-                                    <th>Rating</th>
-                                    <th>Date</th>
                                     <th>Location</th>
+                                    <th>Date</th>
+                                    <th>Rating</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -176,13 +176,13 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                                         <span className="chip tb-grey lighten-3">{toTitleCase(activity.type)}</span>
                                     </td>
                                     <td>
-                                        {activity.rating && activity.rating !== "n/a" ? `${activity.rating} / 10` : "n/a"}
-                                    </td>
-                                    <td>
                                         {activity.visit_date && moment(activity.visit_date).format('MMMM DD, YYYY')}
                                     </td>
                                     <td>
                                         {activity.location}
+                                    </td>
+                                    <td>
+                                        {activity.rating && activity.rating !== "n/a" ? `${activity.rating} / 10` : "n/a"}
                                     </td>
                                 </tr>
                             ))}
@@ -192,15 +192,28 @@ export const TripReportCard = ({ tripReport, summary = false }) => {
                 }
                 {!summary &&
                     <div className="row" style={{ marginTop: '30px'}}>
-                        <Link
-                            to={`/trip_reports/edit/${tripReport.id}`}
-                            className="btn waves-effect waves-light warning-yellow tb-md-black-text"
-                        >
-                            <span className="material-symbols-outlined">
-                                edit
-                            </span>
-                            Edit Report
-                        </Link>
+                        <div className="col s6">
+                            <Link
+                                to={`/trip_reports/edit/${tripReport.id}`}
+                                className="btn waves-effect waves-light warning-yellow tb-md-black-text"
+                            >
+                                <span className="material-symbols-outlined">
+                                    edit
+                                </span>
+                                Edit Report
+                            </Link>
+                        </div>
+                        <div className="col s6">
+                            <Link
+                                to={`/trip_reports/${tripReport.id}`}
+                                className="btn waves-effect waves-light tb-teal darken-2 tb-off-white-text"
+                            >
+                                <span className="material-symbols-outlined">
+                                    visibility
+                                </span>
+                                View Report
+                            </Link>
+                        </div>
                     </div>
                 }
             </div>
