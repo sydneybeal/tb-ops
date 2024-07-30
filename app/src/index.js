@@ -10,19 +10,14 @@ import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import EntryElements from './pages/EntryElements/EntryElements';
 import LookerReports from './pages/BedNights/LookerReports';
-import Agencies from './pages/Agencies/Agencies';
-import BookingChannels from './pages/BookingChannels/BookingChannels';
-import Portfolios from './pages/Portfolios/Portfolios';
-import Consultants from './pages/Consultants/Consultants';
-import Properties from './pages/Properties/Properties';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
-import Countries from './pages/Countries/Countries';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
 import DailyRates from './pages/DailyRates/DailyRates';
+import AddRates from './pages/DailyRates/AddRates';
 import FaqPage from './pages/FAQ/FAQ';
 
 
@@ -132,6 +127,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <DailyRates />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/daily_rates/add',
+    element: (
+      <ProtectedRoute>
+        <AddRates />
       </ProtectedRoute>
     ),
   },

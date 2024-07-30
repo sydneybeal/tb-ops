@@ -4,6 +4,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
+import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 const currenciesToMultiply = ["AUD", "EUR", "GBP", "NZD", "ZAR"];
@@ -12,7 +13,7 @@ export const DailyRates = () => {
     const [apiData, setApiData] = useState({});
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
-    const [rateDate, setRateDate] = useState('2024-05-16');
+    const [rateDate, setRateDate] = useState('2024-05-17');
     const [inputAmount, setInputAmount] = useState();
     const [currency, setCurrency] = useState('ZAR');
     const [convertedAmount, setConvertedAmount] = useState('');
@@ -186,6 +187,15 @@ export const DailyRates = () => {
                             </div>
                         </div>
                     </div>
+                    {userDetails.role === 'admin' &&
+                        <div className="row center" style={{ marginBottom: '40px'}}>
+                                <Link to={'/daily_rates/add'} className="text-bold">
+                                    <div className="btn btn-large tb-teal lighten-2">
+                                        + Add Rates
+                                    </div>
+                                </Link>
+                        </div>
+                    }
                     <div className="row" style={{ marginTop: '10px', width: '80%' }}>
                         <h5 className="center" style={{ marginBottom: '3px' }}>Rates for <span className="text-bold">{displayDate}</span></h5>
                         <p className="center tb-grey-text" style={{ marginTop: '1px' }}>

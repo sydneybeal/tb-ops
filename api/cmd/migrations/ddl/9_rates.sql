@@ -11,12 +11,17 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
+DROP TABLE IF EXISTS public.daily_rates;
+
 CREATE TABLE IF NOT EXISTS public.daily_rates (
+    id UUID PRIMARY KEY NOT NULL,
     base_currency CHAR(3) NOT NULL,
     target_currency CHAR(3) NOT NULL,
     currency_name VARCHAR(255),
     conversion_rate NUMERIC(10, 6),
     rate_date DATE,
     rate_time TIME,
-    PRIMARY KEY (base_currency, target_currency, rate_date)
+    updated_by VARCHAR(255),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -12,9 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Postgres Repository for travel-related data."""
-from datetime import date
-from typing import Sequence, Optional
+from datetime import date, datetime
+from typing import Sequence, Optional, Tuple
 from textwrap import dedent
+from uuid import UUID
+import json
+from asyncpg import UniqueViolationError
+
 
 # from asyncpg.connection import inspect
 
@@ -34,7 +38,7 @@ class PostgresCurrencyRepository(PostgresMixin, CurrencyRepository):
         """Gets all DailyRate objects for a given date."""
         pool = await self._get_pool()
         query = """
-        SELECT base_currency, target_currency, currency_name, conversion_rate, rate_date, rate_time
+        SELECT *
         FROM public.daily_rates
         WHERE rate_date = $1;
         """
@@ -62,8 +66,83 @@ class PostgresCurrencyRepository(PostgresMixin, CurrencyRepository):
 
         return len(daily_rates)
 
+    async def upsert_daily_rates(
+        self, daily_rates: Sequence[DailyRate]
+    ) -> list[Tuple[UUID, bool, str]]:
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            INSERT INTO public.daily_rates (
+                id,
+                base_currency,
+                target_currency,
+                currency_name,
+                conversion_rate,
+                rate_date,
+                rate_time,
+                updated_by,
+                updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                base_currency = EXCLUDED.base_currency,
+                target_currency = EXCLUDED.target_currency,
+                currency_name = EXCLUDED.currency_name,
+                conversion_rate = EXCLUDED.conversion_rate,
+                rate_date = EXCLUDED.rate_date,
+                rate_time = EXCLUDED.rate_time,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                for rate in daily_rates:
+                    try:
+                        args = (
+                            rate.id,
+                            rate.base_currency,
+                            rate.target_currency,
+                            rate.currency_name.strip(),
+                            rate.conversion_rate,
+                            rate.rate_date,
+                            rate.rate_time,
+                            rate.updated_by,
+                            datetime.now(),
+                        )
+                        row = await con.fetchrow(query, *args)
+                        if row:
+                            # Append log ID and whether it was an insert (True) or an update (False)
+                            results.append((row["id"], row["was_inserted"], ""))
+                    except UniqueViolationError:
+                        # Construct a more user-friendly error message
+                        error_message = (
+                            f"A record for {rate.target_currency} from date"
+                            f"{rate.rate_date} already exists."
+                        )
+                        results.append((rate.id, False, error_message))
+        return results
+
     async def get_currency_for_date(
         self, rate_date: date, target_currency: str, base_currency: str
     ) -> Optional[DailyRate]:
         """Gets a DailyRate object for given base and target currencies on a specific date."""
-        raise NotImplementedError
+        pool = await self._get_pool()
+        query = """
+        SELECT *
+        FROM public.daily_rates
+        WHERE rate_date = $1 AND target_currency = $2 AND base_currency = $3;
+        """
+        async with pool.acquire() as con:
+            async with con.transaction():
+                res = await con.fetchrow(
+                    query, rate_date, target_currency, base_currency
+                )
+                if res:
+                    return DailyRate(**res)

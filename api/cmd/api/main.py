@@ -31,7 +31,7 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.currency.service import CurrencyService
-from api.services.currency.models import DailyRate
+from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -899,20 +899,16 @@ def make_app(
         return daily_rates
 
     @app.patch(
-        "/v1/accommodation_logs",
-        operation_id="post_accommodation_logs",
-        tags=["accommodation_logs"],
+        "/v1/daily_rates",
+        operation_id="post_daily_rates",
+        tags=["daily_rates"],
     )
     async def post_daily_rates(
-        daily_rates: list[DailyRate],
+        daily_rate_requests: list[PatchDailyRateRequest],
         current_user: User = Depends(get_current_user),
     ) -> JSONResponse:
-        num_inserted = await currency_svc.add_rates(daily_rates)
-        if num_inserted == 0:
-            raise HTTPException(
-                status_code=404, detail="Daily Rates could not be inserted"
-            )
-        return JSONResponse(content={"inserted": num_inserted})
+        results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
+        return JSONResponse(content=results)
 
     return app
 

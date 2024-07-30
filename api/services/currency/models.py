@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """Models for currency conversion entries."""
-# from uuid import UUID, uuid4
-from datetime import date, time
+from uuid import UUID, uuid4
+from datetime import date, time, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
@@ -23,9 +23,25 @@ from pydantic import BaseModel, Field
 class DailyRate(BaseModel):
     """Data model for currency conversion rates."""
 
+    id: UUID = Field(default_factory=uuid4)
     base_currency: str = Field(..., min_length=3, max_length=3)
     target_currency: str = Field(..., min_length=3, max_length=3)
     currency_name: str
     conversion_rate: Decimal
     rate_date: date
     rate_time: time
+    updated_at: datetime = Field(default_factory=datetime.now)
+    updated_by: str
+
+
+class PatchDailyRateRequest(BaseModel):
+    """Data model for adding or updating currency conversion rates."""
+
+    id: UUID = Field(default_factory=uuid4)
+    base_currency: str = Field(..., min_length=3, max_length=3)
+    target_currency: str = Field(..., min_length=3, max_length=3)
+    currency_name: str
+    conversion_rate: Decimal
+    rate_date: date
+    rate_time: time
+    updated_by: str
