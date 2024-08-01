@@ -32,10 +32,10 @@ class PostgresReservationRepository(PostgresMixin, ReservationRepository):
         query = dedent(
             """
             INSERT INTO public.reservations (
-                id, client_id, num_pax, core_destination_id, cost,
+                id, client_id, trip_name, num_pax, core_destination_id, cost,
                 start_date, end_date, created_at, updated_at, updated_by
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
             )
             ON CONFLICT (id) DO NOTHING;
             """
@@ -46,6 +46,7 @@ class PostgresReservationRepository(PostgresMixin, ReservationRepository):
                     (
                         res.id,
                         res.client_id,
+                        res.trip_name,
                         res.num_pax,
                         res.core_destination_id,
                         res.cost,

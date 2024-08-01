@@ -25,6 +25,7 @@ class Reservation(BaseModel):
 
     id: UUID
     client_id: UUID
+    trip_name: Optional[str] = None
     num_pax: Optional[int] = None
     core_destination_id: Optional[UUID] = None
     cost: Optional[float] = None

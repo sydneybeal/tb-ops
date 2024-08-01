@@ -38,6 +38,12 @@ class Client(BaseModel):
     cb_name: Optional[str] = None
     cb_interface_id: Optional[str] = None
     cb_profile_no: Optional[str] = None
+    cb_notes: Optional[str] = None
+    cb_profile_type: Optional[str] = None
+    cb_courtesy_title: Optional[str] = None
+    cb_primary_agent_name: Optional[str] = None
+    cb_salutation: Optional[str] = None
+    cb_issue_country: Optional[str] = None
     cb_relationship: Optional[str] = None
     cb_active: Optional[str] = None
     cb_passport_expire: Optional[str] = None
@@ -70,6 +76,12 @@ class ClientSummary(BaseModel):
     cb_name: Optional[str] = None
     cb_interface_id: Optional[str] = None
     cb_profile_no: Optional[str] = None
+    cb_notes: Optional[str] = None
+    cb_profile_no: Optional[str] = None
+    cb_profile_type: Optional[str] = None
+    cb_courtesy_title: Optional[str] = None
+    cb_primary_agent_name: Optional[str] = None
+    cb_salutation: Optional[str] = None
     cb_relationship: Optional[str] = None
     cb_active: Optional[str] = None
     cb_passport_expire: Optional[str] = None

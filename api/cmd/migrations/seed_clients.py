@@ -16,6 +16,7 @@
 
 import csv
 from datetime import datetime, timedelta, date
+import profile
 from uuid import uuid4, UUID
 from faker import Faker
 from random import randint, uniform, choice
@@ -39,8 +40,9 @@ class ClientImporter:
         self._reservation_service = ReservationService()
         self.fake = Faker()
         self.raw_data = {
-            "clients": self.read_csv("clients", "20k list"),
-            "client_profile_nums": self.read_csv("clients", "profiles 20k+"),
+            "profile_data": self.read_csv("clients", "combined_traveler_profile"),
+            "rescard_data": self.read_csv("clients", "rescard_with_profile_no"),
+            "activity_data": self.read_csv("clients", "activities"),
         }
 
     def parse_date(self, date_str):
@@ -51,7 +53,9 @@ class ClientImporter:
         # List of possible date formats
         date_formats = [
             "%B %d, %Y",  # 'September 29, 1948'
+            "%B %d %Y",
             "%Y",  # '2007'
+            "%m/%d/%Y",
             # Add more formats here if necessary
         ]
 
@@ -69,232 +73,257 @@ class ClientImporter:
     async def seed_clientbase_export_clients(self):
         print("Seeding clients from ClientBase export file...")
         records_to_add = []
-        for row in self.raw_data["clients"]:
-            birthday_str = row.get("TRAVELER/CONTACT.Birthday")
-            birth_date = self.parse_date(birthday_str)
-            if not row.get("PROFILE.Interface ID"):
-                print(f"{row.get('TRAVELER/CONTACT.Name')}: InterfaceID is none")
-            try:
-                client = Client(
-                    first_name=row.get("TRAVELER/CONTACT.First Name", ""),
-                    last_name=row.get("TRAVELER/CONTACT.Last Name", ""),
-                    middle_name=row.get("TRAVELER/CONTACT.Middle Name"),
-                    address_line_1=row.get("TRAVELER/CONTACTADDRTABLE.Address Line 1"),
-                    address_line_2=row.get("TRAVELER/CONTACTADDRTABLE.Address Line 2"),
-                    address_apt_suite=row.get("TRAVELER/CONTACTADDRTABLE.Apt/Suite"),
-                    address_city=row.get("TRAVELER/CONTACTADDRTABLE.City"),
-                    address_state=row.get("TRAVELER/CONTACTADDRTABLE.State"),
-                    address_zip=row.get("TRAVELER/CONTACTADDRTABLE.Zip Code"),
-                    address_country=row.get("TRAVELER/CONTACTADDRTABLE.Country"),
-                    cb_name=row.get("TRAVELER/CONTACT.Name"),
-                    cb_interface_id=row.get("PROFILE.Interface ID"),
-                    cb_profile_no=None,
-                    cb_relationship=row.get("PROFILE TRAVELER/CONTACT.Relationship"),
-                    cb_active=row.get("PROFILE.Active"),
-                    cb_passport_expire=row.get("TRAVELER/CONTACT.Passport Expire"),
-                    cb_gender=row.get("TRAVELER/CONTACT.Gender"),
-                    subjective_score=randint(1, 100),
-                    birth_date=birth_date,
-                    referred_by_id=None,
+        profiles = self.raw_data["profile_data"]
+        for row in profiles:
+            if row.get("PROFILE TRAVELER/CONTACT.Relationship", "") == "Primary" or (
+                row.get("TRAVELER/CONTACT.Name") == row.get("PROFILE.Primary Traveler")
+            ):
+                birthday_str = row.get("TRAVELER/CONTACT.Birthday")
+                birth_date = self.parse_date(birthday_str)
+                created_str = row.get("PROFILE.Creation Date")
+                created_date = self.parse_date(created_str)
+                try:
+                    client = Client(
+                        first_name=row.get(
+                            "PROFILE.First Name", row.get("TRAVELER/CONTACT.First Name")
+                        ),
+                        last_name=row.get(
+                            "PROFILE.Last Name", row.get("TRAVELER/CONTACT.Middle Name")
+                        ),
+                        middle_name=row.get(
+                            "PROFILE.Middle Name",
+                            row.get("TRAVELER/CONTACT.Middle Name"),
+                        ),
+                        address_line_1=row.get("PRIMARYADDRTABLE.Address Line 1"),
+                        address_line_2=row.get("PRIMARYADDRTABLE.Address Line 2"),
+                        address_apt_suite=row.get("PRIMARYADDRTABLE.Apt/Suite"),
+                        address_city=row.get("PRIMARYADDRTABLE.City"),
+                        address_state=row.get("PRIMARYADDRTABLE.State"),
+                        address_zip=row.get("PRIMARYADDRTABLE.Zip Code"),
+                        address_country=row.get("PRIMARYADDRTABLE.Country"),
+                        cb_name=row.get("PROFILE.Name"),
+                        cb_interface_id=row.get("PROFILE.Interface ID"),
+                        cb_profile_no=row.get("PROFILE.Profile No"),
+                        # TODO cb_notes in a future CSV (corrupted af)
+                        cb_profile_type=row.get("PROFILE.Profile Type"),
+                        # TODO remove courtesy_title/cb_salutation or add it in later
+                        cb_primary_agent_name=row.get("PROFILE.Primary Agent"),
+                        cb_issue_country=row.get(
+                            "TRAVELER/CONTACT.Passport Issuing Country"
+                        ),
+                        cb_relationship=row.get(
+                            "PROFILE TRAVELER/CONTACT.Relationship"
+                        ),
+                        cb_active=row.get("PROFILE.Active"),
+                        cb_passport_expire=row.get("TRAVELER/CONTACT.Passport Expire"),
+                        cb_gender=row.get("TRAVELER/CONTACT.Gender"),
+                        cb_created_date=created_date,
+                        # TODO get cb_modified_date in a future CSV
+                        cb_referred_by=row.get("PROFILE.Referred By"),
+                        birth_date=birth_date,
+                        created_at=datetime.now(),
+                        updated_at=datetime.now(),
+                        updated_by="admin@travelbeyond.com",
+                    )
+                except ValidationError as e:
+                    print(e)
+                    print(row)
+                print(client.first_name)
+                records_to_add.append(client)
+        print(f"{len(records_to_add)} primaries out of of {len(profiles)} profiles")
+        await self._client_service.add(records_to_add)
+
+    async def seed_clientbase_export_rescards(self, clients: Sequence[Client]):
+        print("Seeding rescards from ClientBase export file...")
+        records_to_add = []
+        rescards = self.raw_data["rescard_data"]
+        unique_rescards = {tuple(sorted(d.items())) for d in rescards}
+        unique_rescards = [dict(t) for t in unique_rescards]
+        print(f"Number of unique rescards: {len(unique_rescards)}")
+        for row in unique_rescards:
+            client = next(
+                (
+                    c
+                    for c in clients
+                    if c.cb_profile_no == row.get("PROFILE.Profile No")
+                ),
+                None,
+            )
+
+            if client:
+                res = Reservation(
+                    id=uuid4(),
+                    client_id=client.id,
+                    trip_name=row.get("RESCARD.Trip Name"),
+                    # TODO how to get num_pax and core_destination_id...
+                    cost=row.get("RESCARD.Res Total"),
+                    start_date=self.parse_date(row.get("RESCARD.Trip Start Date")),
+                    end_date=self.parse_date(row.get("RESCARD.Trip End Date")),
                     created_at=datetime.now(),
                     updated_at=datetime.now(),
                     updated_by="admin@travelbeyond.com",
                 )
-            except ValidationError as e:
-                print(e)
-                print(row)
-                return
-            records_to_add.append(client)
-        await self._client_service.add(records_to_add)
-        # print(records_to_add)
+                records_to_add.append(res)
+        print(f"Found clients for {len(records_to_add)} trips")
+        await self._reservation_service.add(records_to_add)
 
-    async def seed_clientbase_profile_numbers(self, clients: Sequence[Client]):
-        print("Seeding client profile numbers from ClientBase export file...")
-        profile_nums = self.raw_data["client_profile_nums"]
+    def get_referral_from_field(self, referred_by: str | None):
+        ignore_referred_by = [
+            "Client",
+            "Referral from happy customer",
+            "R. & L. Bahnson",
+            "Internet",
+            "Wilderness Safaris",
+            "Suzanne Zapolski",
+            "Audrey",
+            "Craig",
+            "Matt Bracken",
+            "Walk-In",
+            "Trip Advisor",
+            "ITN",
+            "Kelly RItter",
+            "Newspaper story",
+        ]
+        if referred_by and referred_by not in ignore_referred_by:
+            return referred_by
 
-        for profile_num_detail in profile_nums:
-            first_name = profile_num_detail["PROFILE.First Name"]
-            last_name = profile_num_detail["PROFILE.Last Name"]
-            interface_id = profile_num_detail["PROFILE.Interface ID"]
-            cb_profile_no = profile_num_detail["PROFILE.Profile No"]
-            cb_created_date = profile_num_detail["PROFILE.Creation Date"]
-            cb_modified_date = profile_num_detail["PROFILE.Modified Date"]
-            cb_referred_by = profile_num_detail["PROFILE.Creation Date"]
+    def match_names(self, name_1, name_2, middle_name) -> bool:
+        name_1 = name_1.lower().strip()
+        name_2 = name_2.lower().strip()
+        middle_name = middle_name.lower().strip().split(" ")[0]
+        name_variations = {
+            "heidi": "hillary",
+            "betty": "elizabeth",
+            "dave": "david",
+            "harold": "richard",
+            "tom": "thomas",
+            "evangela": "angela",
+            "ken": "kenneth",
+            "kimberley": "kim",
+            "mike": "michael",
+            "kimberly": "kim",
+            "fred": "frederick",
+            "fredrick": "fred",
+            "tammy": "tamara",
+            "katherine": "kathy",
+            "louis": "lou",
+            "robert": "bob",
+            "judy": "judith",
+            "curtis": "curt",
+            "samantha": "mandy",
+            "debra": "debbie",
+            "deb": "debra",
+            "stephen": "steve",
+            "sandy": "sandra",
+            "dominic": "nick",
+            "joe": "joseph",
+            "jim": "james",
+            "jeff": "jeffrey",
+            "jan": "janet",
+        }
+        if name_1 == name_2 or name_1 == middle_name or name_2 == middle_name:
+            return True
 
-            # Filter matching profiles from raw data
-            matches = [
-                client
-                for client in clients
-                if client.last_name == last_name
-                and client.first_name[:2].lower() == first_name[:2].lower()
-                and client.cb_interface_id == interface_id
-            ]
+        # Check variations for both primary names
+        if (
+            name_variations.get(name_1) == name_2
+            or name_variations.get(name_2) == name_1
+        ):
+            return True
 
-            # Handling different cases based on the number of matches found
-            if len(matches) == 1:
-                # Update the client's details if exactly one match is found
-                client = matches[0]
-                client.cb_profile_no = cb_profile_no
-                client.cb_created_date = cb_created_date
-                client.cb_modified_date = cb_modified_date
-                client.cb_referred_by = cb_referred_by
-                # print(
-                #     f"Match found: {client.first_name} {client.last_name} now has profile number {client.cb_profile_no}"
-                # )
-            elif len(matches) > 1:
-                # Print details and handle multiple matches
-                print(
-                    f"Multiple matches found for {first_name} {last_name} with ID {interface_id}:"
-                )
-                primary_matches = [m for m in matches if m.cb_relationship == "Primary"]
-                if len(primary_matches) == 1:
-                    # Update the client's details if there is exactly one primary match
-                    client = primary_matches[0]
-                    client.cb_profile_no = cb_profile_no
-                    client.cb_created_date = cb_created_date
-                    client.cb_modified_date = cb_modified_date
-                    client.cb_referred_by = cb_referred_by
-                    print(
-                        f"Primary match used for update: {client.first_name} {client.last_name}"
-                    )
-                else:
-                    for i, match in enumerate(matches, start=1):
-                        print(
-                            f"Option {i}: Profile Number {cb_profile_no} {match.last_name}/{match.first_name} "
-                            f"({match.cb_relationship}), DOB {match.birth_date.strftime('%Y-%m-%d') if match.birth_date else 'Unknown'}"
+        # Check variations involving middle name
+        if (
+            name_variations.get(name_1) == middle_name
+            or name_variations.get(name_2) == middle_name
+            or name_variations.get(middle_name) in [name_1, name_2]
+        ):
+            return True
+
+        return False
+
+    async def seed_cb_referrred_by(self, clients: Sequence[Client]):
+        print("Seeding Referred By field from Clientbase export")
+        referred_by_completed = 0
+        for client in clients:
+            referred_by_cb = self.get_referral_from_field(client.cb_referred_by)
+            if referred_by_cb:
+                print(referred_by_cb)
+                referred_by_completed += 1
+                # TODO: match free-typed name to client ID
+                # TODO: add referred_by_id to client object and upsert
+
+        print(f"{referred_by_completed} referrals filled in out of {len(clients)}")
+
+    async def seed_cb_activity_referrals(self, clients: Sequence[Client]):
+        print("Seeding activity referrals from Clientbase export")
+        activities = self.raw_data["activity_data"]
+        referral_count = 0
+        referrals_matched_count = 0
+        for activity in activities:
+            activity_body = activity.get("Subject  (ACTIVITY)", "").lower()
+            referring_client = next(
+                (
+                    c
+                    for c in clients
+                    if c.cb_profile_no == activity.get("Profile No  (PROFILE)")
+                ),
+                None,
+            )
+            # TODO remove referring_client from clients_effective bc their name might be mentioned
+            if referring_client:
+                referral_count += 1
+                # print(f"+1 referral for {client.cb_name}")
+                # TODO parse string from activity.get("Subject  (ACTIVITY)")
+
+                referred_client = next(
+                    (
+                        c
+                        for c in clients
+                        if (
+                            (
+                                c.first_name.strip().lower() in activity_body
+                                and c.last_name.strip().lower() in activity_body
+                            )
+                            or (c.cb_name in activity_body)
                         )
-
-                    # Prompt the user to select an option or decline
-                    response = input(
-                        "Select an option number to update the record or type 'no' to skip: "
-                    )
-                    if response.lower() == "no":
-                        print("No action taken, skipping...")
-                        return  # Exit the function if the user declines to make a selection
-                    else:
-                        try:
-                            # Convert the response to an integer and get the selected match
-                            selected_index = int(response) - 1
-                            if 0 <= selected_index < len(matches):
-                                selected_match = matches[selected_index]
-                                # Set the client's details based on the selected match
-                                selected_match.cb_profile_no = cb_profile_no
-                                selected_match.cb_created_date = cb_created_date
-                                selected_match.cb_modified_date = cb_modified_date
-                                selected_match.cb_referred_by = cb_referred_by
-                                print(
-                                    f"Updated record for {selected_match.first_name} {selected_match.last_name}."
-                                )
-                            else:
-                                print("Invalid option, no action taken.")
-                        except ValueError:
-                            print("Invalid input, expected a number. No action taken.")
-            else:
-                # Print a message if no matches are found
-                print(
-                    f"Could not find match for {last_name}/{first_name} with {interface_id}"
+                    ),
+                    None,
                 )
+                if referred_client:
+                    print(
+                        f"{referring_client.cb_name} referred {referred_client.cb_name}"
+                    )
+                    print(f"according to activity: {activity_body}")
+                    referrals_matched_count += 1
 
-        # join `profile_num` with `clients` on matching criteria to get `PROFILE.Profile No`
-        ## clients.`first_name` = profile_num.`PROFILE.First Name`
-        ## clients.`last_name` = profile_num.`PROFILE.Last Name`
-        ## clients.`cb_interface_id` = profile_num.`PROFILE.Interface ID`
-
-        # if 1 match, continue
-        # if > 1 match print the matches and return
-        # if 0 matches print "could not find match for {last_name}/{first_name} with {cb_interface_id}"
-
-        # enhance the Client records with the following from `profile_num`:
-        # get `cb_profile_no` from `PROFILE.Profile No`
-        # get `cb_created_date` from `PROFILE.Creation Date`
-        # get `cb_modified_date` from `PROFILE.Modified Date`
-        # get `cb_referred_by` from `PROFILE.Referred By`
+        print(
+            f"{referral_count} valid referrals out of {len(activities)} ({referrals_matched_count} matched to referred client)"
+        )
 
     def read_csv(self, genre, file_name) -> list[dict]:
         """Parses a CSV given a file name."""
         data = []
-        encoding = "utf-8" if "20k+" in file_name else "utf-8-sig"
-        with open(
-            f"/Users/sydney-horan/tb-ops/seed/{genre}/{file_name}.csv",
-            encoding=encoding,
-        ) as csv_file:
-            reader = csv.DictReader(csv_file)
-            for row in reader:
-                if None in row.keys():
-                    row.pop(None, None)
-                data.append(row)
+        encoding = "utf-8" if "blah" in file_name else "utf-8-sig"
+        line_number = 0
+        last_row = ""
+        try:
+            with open(
+                f"/Users/sydney-horan/tb-ops/seed/{genre}/{file_name}.csv",
+                encoding=encoding,
+            ) as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    line_number += 1  # Increment line counter
+                    last_row = row
+                    if None in row.keys():
+                        row.pop(None, None)
+                    data.append(row)
+        except UnicodeDecodeError as e:
+            print(f"Error decoding file {file_name}.csv at line {line_number}: {e}")
+            print(f"Last row: {last_row}")
+            # Optionally, return data collected so far or handle the error differently
+            raise
         return data
-
-    async def seed_mock_clients(self, num: int, existing_client_ids: list[UUID]):
-        print("Seeding mock clients...")
-        clients_to_insert = []
-        client_ids = existing_client_ids
-        # generate sample data for `num` number of clients
-        for i in range(num):
-            client_id = uuid4()
-            # Store the new client's UUID
-            client_ids.append(client_id)
-
-            referred_by_id = None
-            # Only assign referred_by_id after the first client and randomly
-            if i > 0 and randint(0, 10) > 5:
-                # Pick a random UUID from previously added clients
-                referred_by_id = choice(client_ids[:-1])
-
-            sample_client = {
-                "id": client_id,
-                "first_name": self.fake.first_name(),
-                "last_name": self.fake.last_name(),
-                "address_line_1": self.fake.street_address(),
-                "address_line_2": (
-                    self.fake.secondary_address() if randint(0, 1) else None
-                ),
-                "address_city": self.fake.city(),
-                "address_state": self.fake.state_abbr(
-                    include_territories=False, include_freely_associated_states=False
-                ),
-                "address_zip": self.fake.zipcode(),
-                "subjective_score": randint(1, 100),
-                "birth_date": self.fake.date_of_birth(minimum_age=28, maximum_age=90),
-                "referred_by_id": referred_by_id,
-                "created_at": datetime.now(),
-                "updated_at": datetime.now(),
-                "updated_by": "admin@travelbeyond.com",
-            }
-            clients_to_insert.append(Client(**sample_client))
-        # for record in clients_to_insert:
-        #     print(record)
-        #     print("\n")
-        await self._client_service.add(clients_to_insert)
-        return client_ids
-
-    async def seed_reservations(self, num: int, client_ids: list[UUID]):
-        print("Seeding reservations...")
-        reservations_to_insert = []
-        # generate sample data for `num` number of reservations
-        for i in range(num):
-            start_date = self.fake.date_between(
-                start_date=date(2017, 1, 1), end_date=date(2026, 12, 31)
-            )
-            num_pax = 2 if randint(1, 10) > 5 else randint(1, 12)
-            sample_res = {
-                "id": uuid4(),
-                "client_id": choice(client_ids),
-                "num_pax": num_pax,
-                "core_destination_id": UUID("6f7d832c-63e8-46f8-ba01-cb6b9ac01c6e"),
-                # Multiplies the number of pax by a random value between 10,000 and 30,000
-                "cost": num_pax * randint(10000, 30000),
-                "start_date": start_date,
-                "end_date": start_date + timedelta(days=randint(7, 20)),
-                "created_at": datetime.now(),
-                "updated_at": datetime.now(),
-                "updated_by": "admin@travelbeyond.com",
-            }
-            reservations_to_insert.append(Reservation(**sample_res))
-        # for record in reservations_to_insert:
-        #     print(record)
-        #     print("\n")
-        await self._reservation_service.add(reservations_to_insert)
 
     async def get_existing_clients(self):
         return await self._client_service.get()
@@ -304,14 +333,14 @@ class ClientImporter:
         existing_clients = await self.get_existing_clients()
         existing_client_ids = [client.id for client in existing_clients]
         print(f"{len(existing_clients)} clients found in repository")
-        # await self.seed_mock_clients(100, existing_client_ids)
         # await self.seed_clientbase_export_clients()
-        # existing_clients = await self.get_existing_clients()
-        await self.seed_clientbase_profile_numbers(existing_clients)
 
         existing_clients = await self.get_existing_clients()
         existing_client_ids = [client.id for client in existing_clients]
         print(f"{len(existing_client_ids)} clients found in repository")
+        # await self.seed_clientbase_export_rescards(existing_clients)
+        # await self.seed_cb_referrred_by(existing_clients)
+        await self.seed_cb_activity_referrals(existing_clients)
         # await self.seed_reservations(len(existing_client_ids) * 3, existing_client_ids)
 
 

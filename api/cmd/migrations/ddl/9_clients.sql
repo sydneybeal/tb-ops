@@ -30,6 +30,12 @@ CREATE TABLE IF NOT EXISTS public.clients (
     cb_name VARCHAR(255),
     cb_interface_id VARCHAR(255),
     cb_profile_no VARCHAR(255),
+    cb_notes TEXT,
+    cb_profile_type VARCHAR(20),
+    cb_courtesy_title VARCHAR(20),
+    cb_primary_agent_name VARCHAR(255),
+    cb_salutation VARCHAR(255),
+    cb_issue_country VARCHAR(255),
     cb_relationship VARCHAR(255),
     cb_active VARCHAR(255),
     cb_passport_expire VARCHAR(255),
@@ -47,6 +53,7 @@ CREATE TABLE IF NOT EXISTS public.clients (
 
 CREATE TABLE IF NOT EXISTS public.reservations (
     id UUID PRIMARY KEY NOT NULL,
+    trip_name VARCHAR(255),
     client_id UUID NOT NULL,
     num_pax INT,
     core_destination_id UUID,

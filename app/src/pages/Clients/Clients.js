@@ -369,7 +369,7 @@ export const Clients = () => {
                                                                                 <React.Fragment key={trip.id}>
                                                                                     <p>
                                                                                         <span className="text-bold">{moment(trip.start_date).format("MMM 'YY")}</span>
-                                                                                        <span>- Africa x{trip.num_pax}</span>
+                                                                                        <span>- {trip.trip_name}</span>
                                                                                     </p>
                                                                                 </React.Fragment>
                                                                             ))}
