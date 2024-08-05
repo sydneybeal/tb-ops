@@ -333,12 +333,12 @@ class ClientImporter:
         existing_clients = await self.get_existing_clients()
         existing_client_ids = [client.id for client in existing_clients]
         print(f"{len(existing_clients)} clients found in repository")
-        # await self.seed_clientbase_export_clients()
+        await self.seed_clientbase_export_clients()
 
         existing_clients = await self.get_existing_clients()
         existing_client_ids = [client.id for client in existing_clients]
         print(f"{len(existing_client_ids)} clients found in repository")
-        # await self.seed_clientbase_export_rescards(existing_clients)
+        await self.seed_clientbase_export_rescards(existing_clients)
         # await self.seed_cb_referrred_by(existing_clients)
         await self.seed_cb_activity_referrals(existing_clients)
         # await self.seed_reservations(len(existing_client_ids) * 3, existing_client_ids)

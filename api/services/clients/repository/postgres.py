@@ -36,13 +36,17 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
             INSERT INTO public.clients (
                 id, first_name, last_name, middle_name, address_line_1, address_line_2,
                 address_apt_suite, address_city, address_state, address_zip, address_country,
-                cb_name, cb_interface_id, cb_profile_no, cb_relationship, cb_active,
+                cb_name, cb_interface_id, cb_profile_no,
+                cb_notes, cb_profile_type, cb_courtesy_title, cb_primary_agent_name, cb_salutation,
+                cb_issue_country,
+                cb_relationship, cb_active,
                 cb_passport_expire, cb_gender, cb_created_date, cb_modified_date, cb_referred_by,
                 subjective_score, birth_date, referred_by_id, created_at, updated_at, updated_by
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27
+                $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31,
+                $32, $33
             )
             ON CONFLICT (id) DO UPDATE SET
                 first_name = EXCLUDED.first_name,
@@ -58,7 +62,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 cb_name = EXCLUDED.cb_name,
                 cb_interface_id = EXCLUDED.cb_interface_id,
                 cb_profile_no = EXCLUDED.cb_profile_no,
-                cb_relationship = EXCLUDED.cb_relationship,
+                cb_notes = EXCLUDED.cb_profile_no,
+                cb_profile_type = EXCLUDED.cb_profile_type,
+                cb_courtesy_title = EXCLUDED.cb_courtesy_title,
+                cb_primary_agent_name = EXCLUDED.cb_primary_agent_name,
+                cb_salutation = EXCLUDED.cb_salutation,
+                cb_issue_country = EXCLUDED.cb_issue_country,
                 cb_active = EXCLUDED.cb_active,
                 cb_passport_expire = EXCLUDED.cb_passport_expire,
                 cb_gender = EXCLUDED.cb_gender,
@@ -113,6 +122,28 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                             else None
                         ),
                         client.cb_profile_no.strip() if client.cb_profile_no else None,
+                        client.cb_notes.strip() if client.cb_notes else None,
+                        (
+                            client.cb_profile_type.strip()
+                            if client.cb_profile_type
+                            else None
+                        ),
+                        (
+                            client.cb_courtesy_title.strip()
+                            if client.cb_courtesy_title
+                            else None
+                        ),
+                        (
+                            client.cb_primary_agent_name.strip()
+                            if client.cb_primary_agent_name
+                            else None
+                        ),
+                        client.cb_salutation.strip() if client.cb_salutation else None,
+                        (
+                            client.cb_issue_country.strip()
+                            if client.cb_issue_country
+                            else None
+                        ),
                         (
                             client.cb_relationship.strip()
                             if client.cb_relationship

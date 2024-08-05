@@ -12,8 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- drop table if exists public.clients cascade;
--- drop table if exists public.reservations cascade;
+drop table if exists public.clients cascade;
+drop table if exists public.reservations cascade;
 
 CREATE TABLE IF NOT EXISTS public.clients (
     id UUID PRIMARY KEY NOT NULL,
