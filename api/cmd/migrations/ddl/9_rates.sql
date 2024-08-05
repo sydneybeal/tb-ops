@@ -23,5 +23,6 @@ CREATE TABLE IF NOT EXISTS public.daily_rates (
     rate_date DATE,
     rate_time TIME,
     updated_by VARCHAR(255),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (base_currency, target_currency, rate_date)
 );

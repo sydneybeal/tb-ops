@@ -85,12 +85,9 @@ class PostgresCurrencyRepository(PostgresMixin, CurrencyRepository):
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9
             )
-            ON CONFLICT (id) DO UPDATE SET
-                base_currency = EXCLUDED.base_currency,
-                target_currency = EXCLUDED.target_currency,
+            ON CONFLICT (base_currency, target_currency, rate_date) DO UPDATE SET
                 currency_name = EXCLUDED.currency_name,
                 conversion_rate = EXCLUDED.conversion_rate,
-                rate_date = EXCLUDED.rate_date,
                 rate_time = EXCLUDED.rate_time,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
@@ -107,8 +104,8 @@ class PostgresCurrencyRepository(PostgresMixin, CurrencyRepository):
                     try:
                         args = (
                             rate.id,
-                            rate.base_currency,
-                            rate.target_currency,
+                            rate.base_currency.strip(),
+                            rate.target_currency.strip(),
                             rate.currency_name.strip(),
                             rate.conversion_rate,
                             rate.rate_date,

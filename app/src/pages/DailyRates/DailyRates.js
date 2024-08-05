@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import M from 'materialize-css/dist/js/materialize';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
+import ReactDatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { useAuth } from '../../components/AuthContext';
 import Navbar from '../../components/Navbar';
 import { Link } from 'react-router-dom';
@@ -13,7 +15,7 @@ export const DailyRates = () => {
     const [apiData, setApiData] = useState({});
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
-    const [rateDate, setRateDate] = useState('2024-05-17');
+    const [rateDate, setRateDate] = useState('2024-05-16');
     const [inputAmount, setInputAmount] = useState();
     const [currency, setCurrency] = useState('ZAR');
     const [convertedAmount, setConvertedAmount] = useState('');
@@ -197,7 +199,23 @@ export const DailyRates = () => {
                         </div>
                     }
                     <div className="row" style={{ marginTop: '10px', width: '80%' }}>
-                        <h5 className="center" style={{ marginBottom: '3px' }}>Rates for <span className="text-bold">{displayDate}</span></h5>
+                        <h5 className="center" style={{ marginBottom: '3px' }}>Rates for <span className="text-bold">
+                            {displayDate}
+                        </span></h5>
+                        <div className="center">
+                            <ReactDatePicker
+                                selected={rateDate ? rateDate : ''}
+                                onChange={setRateDate}
+                                // onBlur={confirmStartDateSelection}
+                                // onCalendarClose={confirmStartDateSelection}
+                                isClearable
+                                placeholderText="mm/dd/yyyy"
+                                className="date-input"
+                                dateFormat="MM/dd/yyyy"
+                                autoComplete="off"
+                                openToDate={rateDate ? rateDate : new Date()}
+                            />
+                        </div>
                         <p className="center tb-grey-text" style={{ marginTop: '1px' }}>
                             <em>Rates posted at {displayTime}</em>
                         </p>
@@ -206,8 +224,7 @@ export const DailyRates = () => {
                                 <tr>
                                     <th>Currency</th>
                                     <th>Currency Name</th>
-                                    <th>Conversion Rate</th>
-                                    <th>Markup Rate</th>
+                                    <th>Rate</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -224,16 +241,11 @@ export const DailyRates = () => {
                                             <td>{dailyRate.target_currency}</td>
                                             <td>{dailyRate.currency_name}</td>
                                             <td>
-                                                {baseConversionRate.toFixed(4).replace(/\.?0+$/, '')}
-                                                {dailyRate.target_currency === 'ZAR' &&
-                                                    <span className="text-bold tb-teal-text">*</span>
-                                                }
-                                            </td>
-                                            <td>
                                                 {markedUpRate}
                                                 {dailyRate.target_currency === 'ZAR' &&
                                                     <span className="text-bold tb-teal-text">*</span>
                                                 }
+                                                {/* <span> USD per {dailyRate.target_currency}</span> */}
                                             </td>
                                         </tr>
                                     );

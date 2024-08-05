@@ -898,6 +898,19 @@ textarea:focus {
   min-height: 80%;
 } */
 
+input[type=text]:not(.browser-default) {
+  border-bottom: 1px solid #8c8782 !important;
+}
+
+input.valid[type=text]:not(.browser-default) {
+  border-bottom: 1px solid #0e9bac !important;
+  box-shadow: 0 1px 0 0 #0e9bac !important;
+}
+
+input.file-path::placeholder {
+  color: #8c8782;
+}
+
 .material-tooltip.tooltip-light {
   background-color: rgba(0, 98, 110, 0.8) !important;
   border-radius: 4px !important;
