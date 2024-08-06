@@ -147,6 +147,22 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                <div className="container" style={{ width: '100%' }}>
+                    <li>
+                        <Link to={'/overview'} className="text-bold">
+                            Weekly Overview
+                        </Link>
+                    </li>
+                </div>
+                {userDetails.role === 'viewer' &&
+                    <div className="container" style={{ width: '100%' }}>
+                        <li>
+                            <Link to={'/properties'} className="text-bold">
+                                Properties
+                            </Link>
+                        </li>
+                    </div>
+                }
                 {/* <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/trip_reports'} className="text-bold">

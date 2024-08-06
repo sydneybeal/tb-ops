@@ -9,7 +9,9 @@ import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import EntryElements from './pages/EntryElements/EntryElements';
+import PropertiesView from './pages/Properties/PropertiesView';
 import LookerReports from './pages/BedNights/LookerReports';
+import Maps from './pages/Maps/Maps';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
@@ -99,6 +101,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/properties/',
+    element: (
+      <ProtectedRoute>
+        <PropertiesView />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/trip_reports/',
     element: (
       <ProtectedRoute>
@@ -135,6 +145,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <AddRates />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/overview/',
+    element: (
+      <ProtectedRoute>
+        <Maps />
       </ProtectedRoute>
     ),
   },
