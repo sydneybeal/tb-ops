@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-DROP TABLE IF EXISTS public.daily_rates;
+-- DROP TABLE IF EXISTS public.daily_rates;
 
 CREATE TABLE IF NOT EXISTS public.daily_rates (
     id UUID PRIMARY KEY NOT NULL,

@@ -85,6 +85,11 @@ export const PropertyDetails = () => {
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
+                {(userDetails.role !== 'admin') ? (
+                        <div className="center">
+                            You do not have permission to view this page.
+                        </div>
+                    ) : (
                     <>
                         <AddEditPropertyDetailModal
                             isOpen={isModalOpen}
@@ -306,6 +311,7 @@ export const PropertyDetails = () => {
                             </div>
                         )}
                     </>
+                )}
                 </div>
             </main>
         </>

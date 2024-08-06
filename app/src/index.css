@@ -911,6 +911,23 @@ input.file-path::placeholder {
   color: #8c8782;
 }
 
+.copyable-text {
+  transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+}
+
+.copyable-text .material-symbols-outlined{
+  transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+}
+
+.copyable-text:hover {
+  color: #098c9c;
+  font-weight: 700 !important;
+}
+
+.copyable-text:hover .material-symbols-outlined {
+  color: #098c9c !important;
+}
+
 .material-tooltip.tooltip-light {
   background-color: rgba(0, 98, 110, 0.8) !important;
   border-radius: 4px !important;

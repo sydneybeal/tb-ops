@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v0.2.5';
+    const version = 'vDailyRates';
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -122,6 +122,7 @@ const Navbar = ({ title }) => {
                             }} />
                     </a>
                 </li>
+                {userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/service_providers'} className="text-bold">
@@ -129,6 +130,8 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                )}
+                {userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/bed_night_reports'} className="text-bold">
@@ -136,6 +139,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                )}
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/daily_rates'} className="text-bold">
@@ -150,6 +154,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div> */}
+                {userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/faq'} className="text-bold">
@@ -157,6 +162,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
+                )}
                 {userDetails?.role === 'admin' && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
