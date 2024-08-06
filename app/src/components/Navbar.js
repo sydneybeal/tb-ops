@@ -58,11 +58,11 @@ const Navbar = ({ title }) => {
                             {userDetails && (
                                 <div className="hide-on-large-only center-align" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                                     <i className="material-icons" style={{ fontSize: '1.2rem' }}>account_circle</i>
-                                    <span className="text-bold" style={{ margin: '0 5px' }}>{userDetails.email.split('@')[0]}</span>
-                                    {userDetails.role === 'admin' && (
+                                    <span className="text-bold" style={{ margin: '0 5px' }}>{userDetails?.email.split('@')[0]}</span>
+                                    {userDetails?.role === 'admin' && (
                                         <>
                                             <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
-                                                {userDetails.role.toUpperCase()}
+                                                {userDetails?.role.toUpperCase()}
                                             </span>
                                             <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
                                                 &nbsp;{version}
@@ -78,12 +78,12 @@ const Navbar = ({ title }) => {
                                 <i className="material-icons" style={{ fontSize: '1.2rem' }}>account_circle</i>
                                 <span className="hide-on-med-and-down" > Welcome, </span>
                                 <span className="text-bold" style={{ margin: '0 5px' }}>
-                                    {userDetails.email.split('@')[0]}
+                                    {userDetails?.email.split('@')[0]}
                                 </span>
-                                {userDetails.role === 'admin' && (
+                                {userDetails?.role === 'admin' && (
                                     <>
                                         <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px 10px 0px 0px' }}>
-                                            {userDetails.role.toUpperCase()}
+                                            {userDetails?.role.toUpperCase()}
                                         </span>
                                         <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
                                             {version}
@@ -122,7 +122,7 @@ const Navbar = ({ title }) => {
                             }} />
                     </a>
                 </li>
-                {userDetails?.role !== 'viewer' && (
+                {userDetails && userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/service_providers'} className="text-bold">
@@ -131,7 +131,7 @@ const Navbar = ({ title }) => {
                     </li>
                 </div>
                 )}
-                {userDetails?.role !== 'viewer' && (
+                {userDetails && userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/bed_night_reports'} className="text-bold">
@@ -154,7 +154,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                {userDetails.role === 'viewer' &&
+                {userDetails?.role === 'viewer' &&
                     <div className="container" style={{ width: '100%' }}>
                         <li>
                             <Link to={'/properties'} className="text-bold">
@@ -170,7 +170,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div> */}
-                {userDetails?.role !== 'viewer' && (
+                {userDetails && userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/faq'} className="text-bold">
