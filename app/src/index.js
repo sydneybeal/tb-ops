@@ -31,7 +31,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['user', 'admin']}>
         <AccommodationLogs />
       </ProtectedRoute>
     ),
@@ -39,7 +39,7 @@ const router = createBrowserRouter([
   {
     path: '/service_providers/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['user', 'admin']}>
         <AccommodationLogs />
       </ProtectedRoute>
     ),

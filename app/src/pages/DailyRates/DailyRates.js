@@ -92,11 +92,11 @@ export const DailyRates = () => {
                     ? moment(rateDate).format('dddd, MMMM D, YYYY') 
                     : null;
 
-    function formatAmount(amount) {
+    function formatAmount(amount, digits=2) {
         if (amount === null || amount === undefined) return "0.00";
     
         // Convert the number to a string with two decimal places
-        return parseFloat(amount).toFixed(2);
+        return parseFloat(amount).toFixed(digits);
     }
     
     useEffect(() => {
@@ -308,7 +308,7 @@ export const DailyRates = () => {
                                                     >
                                                         content_paste
                                                     </span>
-                                                    {baseConversionRateFixed}
+                                                    {formatAmount(baseConversionRateFixed, 4)}
                                                     {dailyRate.target_currency === 'ZAR' &&
                                                         <span className="text-bold tb-teal-text">*</span>
                                                     }
@@ -323,7 +323,7 @@ export const DailyRates = () => {
                                                     >
                                                         content_paste
                                                     </span>
-                                                    {markedUpRate}
+                                                    {formatAmount(markedUpRate, 4)}
                                                     {dailyRate.target_currency === 'ZAR' &&
                                                         <span className="text-bold tb-teal-text">*</span>
                                                     }

@@ -73,10 +73,11 @@ export const AddRates = () => {
                     // If the response is not ok, throw an error with the status
                     console.log('Network response was not ok: ' + response.statusText);
                     M.toast({
-                        html: "toastHtml",
+                        html: "Something went wrong.",
                         displayLength: 4000,
                         classes: "error-red",
                     });
+                    throw new Error('Network response was not ok: ' + response.statusText);
                 }
                 return response.json();
             })
@@ -95,6 +96,9 @@ export const AddRates = () => {
                 }
                 if (unchanged > 0) {
                     successHtml += `${unchanged} rate${unchanged > 1 ? 's' : ''} unchanged.<br>`;
+                }
+                if (successHtml === '') {
+                    successHtml += 'Daily rates have been processed.'
                 }
                 
                 M.toast({
@@ -154,11 +158,11 @@ export const AddRates = () => {
                             errorMessage = 'Error: The fifth column should be blank.';
                             break;
                         }
-                        if (!moment(item[5], 'M/D/YY', true).isValid()) {
+                        if (!moment(item[5], ['M/D/YY', 'MM/DD/YY', 'MM/DD/YYYY', 'M/D/YYYY']).isValid()) {
                             errorMessage = 'Error: The sixth column should be a valid date.';
                             break;
                         }
-                        if (!moment(item[6], 'H:mm:ss', true).isValid()) {
+                        if (!moment(item[6], ['H:mm:ss', 'H:mm:ss A']).isValid()) {
                             errorMessage = 'Error: The seventh column should be a valid time.';
                             break;
                         }
@@ -169,14 +173,13 @@ export const AddRates = () => {
                             target_currency: item[1],
                             currency_name: item[2],
                             conversion_rate: parseFloat(item[3]),
-                            rate_date: moment(item[5], 'M/D/YY').format('YYYY-MM-DD'),
-                            rate_time: moment(item[6], 'H:mm:ss').local().format('hh:mm:ss'),
+                            rate_date: moment(item[5], ['M/D/YY', 'MM/DD/YYYY', 'M/D/YYYY', 'MM/DD/YY']).format('YYYY-MM-DD'),
+                            rate_time: moment(item[6], ['H:mm:ss', 'h:mm:ss A']).local().format('hh:mm:ss'),
                             updated_by: userDetails.email || ''
                         });
-                    }
-    
+                    }    
                     if (errorMessage === '') {
-                        setRates(formattedRates);
+                        setRates(formattedRates.sort((a, b) => a.target_currency.localeCompare(b.target_currency)));
                         if (formattedRates.length > 0) {
                             setDateFilter(formattedRates[0].rate_date);
                         }
@@ -345,16 +348,12 @@ export const AddRates = () => {
                                                         {existingRate ? (
                                                             <>
                                                                 {parseFloat(existingRate.conversion_rate).toFixed(4).replace(/\.?0+$/, '')}
-                                                                {isNewRateDifferent ? (
+                                                                {isNewRateDifferent &&
                                                                     <b className="success-green-text">
                                                                         {" → "}
                                                                         {parseFloat(rate.conversion_rate).toFixed(4).replace(/\.?0+$/, '')}
                                                                     </b>
-                                                                ) : (
-                                                                    <span>
-                                                                        {parseFloat(existingRate.conversion_rate).toFixed(4).replace(/\.?0+$/, '')}
-                                                                    </span>
-                                                                )}
+                                                                }
                                                             </>
                                                         ) : (
                                                             <b className="success-green-text">
