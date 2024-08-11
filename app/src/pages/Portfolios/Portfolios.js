@@ -3,7 +3,6 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
-import Navbar from '../../components/Navbar';
 import AddEditPortfolioModal from './AddEditModal';
 import moment from 'moment';
 
@@ -199,273 +198,257 @@ export const Portfolios = () => {
 
     return (
         <>
-            <header>
-                <Navbar title="Portfolio Management" />
-            </header>
+            <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
+                {loaded ? (
+                    <>
+                        <AddEditPortfolioModal
+                            isOpen={isModalOpen}
+                            onClose={closeModal}
+                            onRefresh={triggerRefresh}
+                            editPortfolioData={currentEditPortfolio}
+                            isEditMode={isEditMode}
+                        />
 
-            <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
-                <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
-                    {(userDetails.role !== 'admin') ? (
-                        <div>
-                            You do not have permission to view this page.
+                        <div className="row center">
+                            <div className="col s8 offset-s2">
+                                <ul className="pagination">
+                                    <li className={currentPage === 0 ? 'disabled' : ''}>
+                                        <a
+                                            onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                            href="#!"
+                                        >
+                                            <i className="material-icons">chevron_left</i>
+                                        </a>
+                                    </li>
+                                    {Array.from({ length: totalPages }, (_, idx) => (
+                                        <li
+                                            className={
+                                                `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
+                                                }`
+                                            }
+                                            key={idx}
+                                            onClick={() => changePage(idx)}
+                                        >
+                                            <a onClick={(e) => e.preventDefault()} className="tb-grey-text text-darken-1" href="#!">{idx + 1}</a>
+                                        </li>
+                                    ))}
+                                    <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                                        <a
+                                            onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
+                                            href="#!"
+                                        >
+                                            <i className="material-icons">chevron_right</i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div className="col s2">
+                                <button
+                                    href=""
+                                    className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
+                                    onClick={openModal}
+                                >
+                                    <span className="material-symbols-outlined">
+                                        add
+                                    </span>
+                                    Add New
+                                </button>
+                            </div>
                         </div>
-                    ) : (
-                        <>
-                            {loaded ? (
-                                <>
-                                    <AddEditPortfolioModal
-                                        isOpen={isModalOpen}
-                                        onClose={closeModal}
-                                        onRefresh={triggerRefresh}
-                                        editPortfolioData={currentEditPortfolio}
-                                        isEditMode={isEditMode}
-                                    />
-
-                                    <div className="row center">
-                                        <div className="col s8 offset-s2">
-                                            <ul className="pagination">
-                                                <li className={currentPage === 0 ? 'disabled' : ''}>
-                                                    <a
-                                                        onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
-                                                        href="#!"
-                                                    >
-                                                        <i className="material-icons">chevron_left</i>
-                                                    </a>
-                                                </li>
-                                                {Array.from({ length: totalPages }, (_, idx) => (
-                                                    <li
-                                                        className={
-                                                            `waves-effect waves-light ${currentPage === idx ? 'active tb-teal lighten-3' : ''
-                                                            }`
-                                                        }
-                                                        key={idx}
-                                                        onClick={() => changePage(idx)}
-                                                    >
-                                                        <a onClick={(e) => e.preventDefault()} className="tb-grey-text text-darken-1" href="#!">{idx + 1}</a>
-                                                    </li>
-                                                ))}
-                                                <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
-                                                    <a
-                                                        onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
-                                                        href="#!"
-                                                    >
-                                                        <i className="material-icons">chevron_right</i>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                        <div className="col s2">
-                                            <button
-                                                href=""
-                                                className="btn-float btn-large waves-effect waves-light tb-teal darken-4"
-                                                onClick={openModal}
+                        <div className="row center">
+                            <div className="input-field col s12 m6 offset-m3">
+                                <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                    search
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="search-input" // Apply any styling as needed
+                                />
+                            </div>
+                        </div>
+                        <div className="row center">
+                            <div>
+                                <button className="btn tb-grey lighten-2" onClick={() => {
+                                    setSearchQuery('');
+                                }}>
+                                    Reset Filters
+                                    <span className="material-symbols-outlined">
+                                        refresh
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <em className="tb-grey-text">
+                                <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> portfolios
+                            </em>
+                        </div>
+                        <div className="container center">
+                            <table className="accommodation-logs-table center">
+                                <thead>
+                                    <tr className="tb-md-black-text text-bold">
+                                        <th
+                                            onClick={() =>
+                                                applySorting('name')
+                                            }
+                                        >
+                                            Name
+                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('num_related_properties')
+                                            }
+                                        >
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Number of Related Properties"
+                                                data-tooltip-class="tooltip-light"
                                             >
                                                 <span className="material-symbols-outlined">
-                                                    add
+                                                    tag
                                                 </span>
-                                                Add New
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="row center">
-                                        <div className="input-field col s12 m6 offset-m3">
-                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                                search
-                                            </span>
-                                            <input
-                                                type="text"
-                                                placeholder="Search..."
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="search-input" // Apply any styling as needed
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="row center">
-                                        <div>
-                                            <button className="btn tb-grey lighten-2" onClick={() => {
-                                                setSearchQuery('');
-                                            }}>
-                                                Reset Filters
                                                 <span className="material-symbols-outlined">
-                                                    refresh
+                                                    hotel
                                                 </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <em className="tb-grey-text">
-                                            <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> portfolios
-                                        </em>
-                                    </div>
-                                    <div className="container center">
-                                        <table className="accommodation-logs-table center">
-                                            <thead>
-                                                <tr className="tb-md-black-text text-bold">
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('name')
-                                                        }
-                                                    >
-                                                        Name
-                                                        <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                            {sorting.field === 'name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('num_related_properties')
-                                                        }
-                                                    >
-                                                        {/* Dates */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Number of Related Properties"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                tag
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'num_related_properties' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('num_related')
+                                            }
+                                        >
+                                            {/* Dates */}
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Number of Related Entries"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    tag
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                        <th
+                                            onClick={() =>
+                                                applySorting('updated_at')
+                                            }
+                                            style={{ width: '200px', textAlign: 'right' }}
+                                        >
+                                            <span
+                                                className={`tooltipped`}
+                                                data-position="bottom"
+                                                data-tooltip="Last updated"
+                                                data-tooltip-class="tooltip-light"
+                                            >
+                                                <span className="material-symbols-outlined tb-md-black-text text-bold">
+                                                    update
+                                                </span>
+                                                <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                    {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                </span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {Array.isArray(displayData) && displayData.length > 0 ? (
+                                        displayData.map((item, index) => (
+                                            <React.Fragment key={item.id}>
+                                                <tr>
+                                                    <td style={{ verticalAlign: 'top' }}>
+                                                        <p className="text-bold">{item.name}</p>
+                                                    </td>
+                                                    <td><span className="chip tb-grey lighten-2">{item.num_related_properties}</span></td>
+                                                    <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
+                                                    <td style={{ width: '200px' }}>
+                                                        <div style={{ textAlign: 'right', padding: '0px' }}>
+                                                            <span
+                                                                className={`tooltipped`}
+                                                                data-position="left"
+                                                                data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
+                                                                data-tooltip-class="tooltip-updated-by"
+                                                            >
+                                                                <button
+                                                                    className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
+                                                                    onClick={() => openEditModal(item)}
+                                                                >
+                                                                    <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.4rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                        edit
+                                                                    </span>
+                                                                </button>
+                                                                <br />
+                                                                <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
+                                                                    <span className="material-symbols-outlined">
+                                                                        update
+                                                                    </span>
+                                                                    {moment.utc(item.updated_at).local().fromNow()}
+                                                                </em>
                                                             </span>
-                                                            <span className="material-symbols-outlined">
-                                                                hotel
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'num_related_properties' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('num_related')
-                                                        }
-                                                    >
-                                                        {/* Dates */}
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Number of Related Entries"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined">
-                                                                tag
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'num_related' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <th
-                                                        onClick={() =>
-                                                            applySorting('updated_at')
-                                                        }
-                                                        style={{ width: '200px', textAlign: 'right' }}
-                                                    >
-                                                        <span
-                                                            className={`tooltipped`}
-                                                            data-position="bottom"
-                                                            data-tooltip="Last updated"
-                                                            data-tooltip-class="tooltip-light"
-                                                        >
-                                                            <span className="material-symbols-outlined tb-md-black-text text-bold">
-                                                                update
-                                                            </span>
-                                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                                {sorting.field === 'updated_at' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
-                                                            </span>
-                                                        </span>
-                                                    </th>
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {Array.isArray(displayData) && displayData.length > 0 ? (
-                                                    displayData.map((item, index) => (
-                                                        <React.Fragment key={item.id}>
-                                                            <tr>
-                                                                <td style={{ verticalAlign: 'top' }}>
-                                                                    <p className="text-bold">{item.name}</p>
-                                                                </td>
-                                                                <td><span className="chip tb-grey lighten-2">{item.num_related_properties}</span></td>
-                                                                <td><span className="chip tb-teal lighten-3">{item.num_related}</span></td>
-                                                                <td style={{ width: '200px' }}>
-                                                                    <div style={{ textAlign: 'right', padding: '0px' }}>
-                                                                        <span
-                                                                            className={`tooltipped`}
-                                                                            data-position="left"
-                                                                            data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
-                                                                            data-tooltip-class="tooltip-updated-by"
-                                                                        >
-                                                                            <button
-                                                                                className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
-                                                                                onClick={() => openEditModal(item)}
-                                                                            >
-                                                                                <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.4rem', marginBottom: '0px', marginRight: '0px' }}>
-                                                                                    edit
-                                                                                </span>
-                                                                            </button>
-                                                                            <br />
-                                                                            <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
-                                                                                <span className="material-symbols-outlined">
-                                                                                    update
-                                                                                </span>
-                                                                                {moment.utc(item.updated_at).local().fromNow()}
-                                                                            </em>
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </React.Fragment>
-                                                    ))
-                                                ) : (
-                                                    <tr>
-                                                        <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                        {isMobileView && (
-                                            <div className="mobile-friendly-table">
-                                                {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
-                                                    <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
-                                                        <div className="card-content">
-                                                            <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
-                                                                <div className="col s10">
-                                                                    <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i><span className="text-bold">{item.name}</span></div>
-                                                                </div>
-                                                                <div className="col s2">
-                                                                    <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                                        <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="card-footer">
-                                                            <div className="row">
-                                                                <div className="col s12" style={{ textAlign: 'right' }}>
-                                                                    <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
-                                                                    <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div >
-                                                ))}
-                                            </div >
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <CircularPreloader show={true} />
-                                </div>
+                                            </React.Fragment>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" style={{ textAlign: 'center' }}>No results.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            {isMobileView && (
+                                <div className="mobile-friendly-table">
+                                    {Array.isArray(displayData) && displayData.length > 0 && displayData.map((item) => (
+                                        <div key={item.id} className="card tb-grey lighten-6" style={{ borderRadius: '6px' }}>
+                                            <div className="card-content">
+                                                <div className="row" style={{ textAlign: 'left', marginBottom: '0px' }}>
+                                                    <div className="col s10">
+                                                        <div><i className="material-symbols-outlined tb-teal-text text-bold">contact_mail</i><span className="text-bold">{item.name}</span></div>
+                                                    </div>
+                                                    <div className="col s2">
+                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="card-footer">
+                                                <div className="row">
+                                                    <div className="col s12" style={{ textAlign: 'right' }}>
+                                                        <i className="material-symbols-outlined tb-teal-text text-bold">update</i>
+                                                        <em className="tb-grey-text text-lighten-2"> Last Updated: {moment.utc(item.updated_at).local().fromNow()}</em>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div >
+                                    ))}
+                                </div >
                             )}
-                        </>
-                    )}
-                </div>
-            </main>
+                        </div>
+                    </>
+                ) : (
+                    <div>
+                        <CircularPreloader show={true} />
+                    </div>
+                )}
+            </div>
         </>
     )
-
-
 
 }
 

@@ -9,14 +9,9 @@ import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import Clients from './pages/Clients/Clients';
+import EntryElements from './pages/EntryElements/EntryElements';
 import LookerReports from './pages/BedNights/LookerReports';
-import Agencies from './pages/Agencies/Agencies';
-import BookingChannels from './pages/BookingChannels/BookingChannels';
-import Portfolios from './pages/Portfolios/Portfolios';
-import Consultants from './pages/Consultants/Consultants';
-import Properties from './pages/Properties/Properties';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
-import Countries from './pages/Countries/Countries';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
@@ -71,10 +66,10 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/properties/',
+    path: '/entry_elements/',
     element: (
       <ProtectedRoute>
-        <Properties />
+        <EntryElements />
       </ProtectedRoute>
     ),
   },
@@ -91,46 +86,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <LookerReports />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/consultants/',
-    element: (
-      <ProtectedRoute>
-        <Consultants />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/agencies/',
-    element: (
-      <ProtectedRoute>
-        <Agencies />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/booking_channels/',
-    element: (
-      <ProtectedRoute>
-        <BookingChannels />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/portfolios/',
-    element: (
-      <ProtectedRoute>
-        <Portfolios />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/countries/',
-    element: (
-      <ProtectedRoute>
-        <Countries />
       </ProtectedRoute>
     ),
   },

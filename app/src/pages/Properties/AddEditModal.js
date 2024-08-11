@@ -510,7 +510,42 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
         }));
     };
 
+    const handleLatitudeChange = (e) => {
+        const value = e.target.value;
+        // Check if input includes a comma, indicating both latitude and longitude are provided
+        if (value.includes(',')) {
+            const parts = value.split(',').map(part => part.trim());
+            if (parts.length === 2) {
+                const lat = parts[0];
+                const long = parts[1];
+                // Update latitude if it's a valid number
+                console.log("lat: " + lat);
+                if (!lat || lat.match(/^[-]?\d*\.?\d*$/)) {
+                    setLatitude(lat);
+                }
+                console.log("long: " + long);
+                // Update longitude if it's a valid number
+                if (!long || long.match(/^[-]?\d*\.?\d*$/)) {
+                    console.log("Longigude is valid, setting long")
+                    setLongitude(long);
+                } else {
+                    console.log("Longitude is invalid " + long);
+                }
+            }
+        } else {
+            // Regular latitude input handling
+            if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
+                setLatitude(value);
+            }
+        }
+    };
 
+    const handleLongitudeChange = (e) => {
+        const value = e.target.value;
+        if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
+            setLongitude(value);
+        }
+    };
 
     const handleShipChange = (e) => {
         const checked = e.target.checked;
@@ -793,15 +828,11 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                                 type="text"
                                                 id="latitude"
                                                 value={latitude}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
-                                                        setLatitude(value);
-                                                    }
-                                                }}
+                                                onChange={handleLatitudeChange}
                                                 placeholder="Latitude"
                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                                 className="input-placeholder-dark"
+                                                autoComplete="off"
                                                 // className={validationErrors.name ? 'invalid' : ''}
                                             />
                                         </div>
@@ -820,15 +851,11 @@ const AddEditPropertyModal = ({ isOpen, onClose, onRefresh, editPropertyData = n
                                                 type="text"
                                                 id="longitude"
                                                 value={longitude}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    if (!value || value.match(/^[-]?\d*\.?\d*$/)) {
-                                                        setLongitude(value);
-                                                    }
-                                                }}
+                                                onChange={handleLongitudeChange}
                                                 placeholder="Longitude"
                                                 style={{ marginRight: '10px', flexGrow: '1' }}
                                                 className="input-placeholder-dark"
+                                                autoComplete="off"
                                                 // className={validationErrors.name ? 'invalid' : ''}
                                             />
                                         </div>
