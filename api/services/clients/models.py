@@ -54,6 +54,7 @@ class Client(BaseModel):
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
+    num_referrals: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     updated_by: str
@@ -94,6 +95,7 @@ class ClientSummary(BaseModel):
     referred_by_id: Optional[UUID] = None
     referred_by_first_name: Optional[str] = None
     referred_by_last_name: Optional[str] = None
+    num_referrals: Optional[int] = None
     # Reservations
     reservations: Optional[Sequence[Reservation]] = None
     # Number of clients referred by this client
@@ -141,3 +143,24 @@ class ClientSummary(BaseModel):
     def trips_plus_referrals(self) -> int:
         """Sum of reservations plus referrals."""
         return self.reservations_count + self.referrals_count
+
+
+class ReferralMatch(BaseModel):
+    source_client_id: UUID
+    source_client_cb_name: str
+    source_client_avg_trip_spend: float
+    source_client_total_trip_spend: float
+    new_client_id: UUID
+    new_client_cb_name: str
+    new_client_avg_trip_spend: float
+    new_client_total_trip_spend: float
+
+
+class ReferralNode(BaseModel):
+    id: UUID
+    name: str
+    spend: float
+    children: Sequence["ReferralNode"] = []
+
+    class Config:
+        orm_mode = True

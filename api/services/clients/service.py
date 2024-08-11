@@ -14,10 +14,15 @@
 
 """Services for interacting with reservation entries."""
 # from typing import Optional, Sequence, Union
-# from uuid import UUID
+from uuid import UUID
 from datetime import datetime
 from typing import Iterable, Union, Sequence
-from api.services.clients.models import Client, ClientSummary
+from api.services.clients.models import (
+    Client,
+    ClientSummary,
+    ReferralMatch,
+    ReferralNode,
+)
 from api.services.clients.repository.postgres import PostgresClientRepository
 from api.services.reservations.service import ReservationService
 
@@ -63,3 +68,73 @@ class ClientService:
                 summary.reservations = []
 
         return client_summaries
+
+    async def get_referral_matches(
+        self,
+    ) -> Sequence[ReferralMatch]:
+        """Returns Clients from the repository."""
+        return await self._repo.get_referral_matches()
+
+    async def get_referral_tree(
+        self,
+    ) -> Sequence[ReferralNode]:
+        """Returns Clients from the repository."""
+        # get Sequence[ReferralMatch] from repository
+        referrals = await self._repo.get_referral_matches()
+        referrals_converted = [ref.model_dump() for ref in referrals]
+
+        # Build the referral tree
+        referral_tree = self.build_referral_tree(referrals_converted)
+        referral_nodes = [ReferralNode(**referral_tree[key]) for key in referral_tree]
+
+        return referral_nodes
+
+    def build_referral_tree(self, referrals) -> dict:
+        referral_tree = {}
+        referred_by_map = {}
+
+        # Initialize the referral tree and the referred_by_map
+        for referral in referrals:
+            source_id = referral["source_client_id"]
+            new_id = referral["new_client_id"]
+
+            if source_id not in referral_tree:
+                referral_tree[source_id] = {
+                    "id": source_id,
+                    "name": referral["source_client_cb_name"],
+                    "spend": referral["source_client_total_trip_spend"],
+                    "children": [],
+                }
+
+            referred_by_map[new_id] = {
+                "id": new_id,
+                "name": referral["new_client_cb_name"],
+                "spend": referral["new_client_total_trip_spend"],
+                "parent_id": source_id,
+            }
+
+        # Recursively build the tree
+        def add_children(node, visited_ids):
+            node_id = node["id"]
+            visited_ids.add(node_id)  # Add current node to the visited set
+
+            for child_id, child_data in referred_by_map.items():
+                if child_data["parent_id"] == node_id and child_id not in visited_ids:
+                    child_node = {
+                        "id": child_data["id"],
+                        "name": child_data["name"],
+                        "spend": child_data["spend"],
+                        "children": [],
+                    }
+                    node["children"].append(child_node)
+                    add_children(
+                        child_node, visited_ids.copy()
+                    )  # Recursive call to add descendants
+
+        # Build the tree from root nodes
+        for source_id, source_data in referral_tree.items():
+            add_children(source_data, set())
+
+        # Optionally handle mutual referrals as before (if still necessary)
+
+        return referral_tree

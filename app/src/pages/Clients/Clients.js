@@ -13,8 +13,19 @@ export const Clients = () => {
     const [showReservations, setShowReservations] = useState({});
     const [displayData, setDisplayData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortedData, setSortedData] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 100;
+    const [totalPages, setTotalPages] = useState(0);
     const [sorting, setSorting] = useState({ field: 'display_name', ascending: true });
     const [loaded, setLoaded] = useState(false);
+    const [filters, setFilters] = useState({
+        state: '',
+    });
+    const [filterOptions, setFilterOptions] = useState({
+        state: [],
+    });
 
     useEffect(() => {
         M.AutoInit();
@@ -50,8 +61,27 @@ export const Clients = () => {
     }, [userDetails.token, logout]);
 
     useEffect(() => {
+        const stateMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
+            if (!acc[item.address_state]) {
+                acc[item.address_state] = {
+                    value: item.address_state || 'no-state',
+                    label: item.address_state || 'no-state'
+                };
+            }
+            return acc;
+        }, {}) : [];
+
+        const stateOptions = Object.values(stateMap).sort((a, b) => a.label.localeCompare(b.label));
+
+
+        setFilterOptions({
+            state: stateOptions,
+        });
+    }, [apiData]);
+
+    useEffect(() => {
         // Perform sorting on filteredData
-        let sortedData = Array.isArray(apiData) ? [...apiData].sort((a, b) => {
+        let sortedAndFilteredData = Array.isArray(apiData) ? [...filteredData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
             let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
 
@@ -66,8 +96,20 @@ export const Clients = () => {
             bValue = String(bValue);
             return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }) : [];
-        setDisplayData(sortedData);
-    }, [sorting, apiData]);
+        setSortedData(sortedAndFilteredData); // Update sortedData with sorted and filtered results
+
+        const newTotalPages = Math.ceil(sortedAndFilteredData.length / itemsPerPage);
+        setTotalPages(newTotalPages);
+
+        // Pagination logic
+        if (currentPage >= newTotalPages) {
+            setCurrentPage(0);
+        }
+        const displayStartIndex = currentPage * itemsPerPage;
+        const displayEndIndex = displayStartIndex + itemsPerPage;
+        setDisplayData(sortedAndFilteredData.slice(displayStartIndex, displayEndIndex));
+
+    }, [sorting, apiData, currentPage, filteredData]);
 
     /**
   * Sets sorting criteria.
@@ -80,6 +122,78 @@ export const Clients = () => {
             ascending: prevSorting.field === key ? !prevSorting.ascending : true,
         }));
     };
+
+    const changePage = (newPage) => {
+        const start = newPage * itemsPerPage;
+        const end = start + itemsPerPage;
+        setDisplayData(sortedData.slice(start, end));
+        setCurrentPage(newPage);
+    };
+
+    function generatePageRange(current, total) {
+        const sidePages = 10; // Pages to show on each side of the current page
+        let start = Math.max(1, current - sidePages + 1);
+        let end = Math.min(total, current + sidePages + 1);
+
+        // Determine when to add ellipses
+        const addEllipsisStart = start > 2;
+        const addEllipsisEnd = end < total - 1;
+
+        // Adjust the start and end if ellipses are being added
+        if (addEllipsisStart) {
+            start++;
+        }
+        if (addEllipsisEnd) {
+            end--;
+        }
+
+        const range = [];
+
+        // Construct the range of page numbers
+        for (let i = start; i <= end; i++) {
+            range.push(i);
+        }
+
+        // Correctly add '1' and ellipses at the start of the range
+        if (addEllipsisStart) {
+            range.unshift(1, '...');
+        } else if (start === 2) {
+            range.unshift(1);
+        }
+
+        // Correctly add ellipses and the last page at the end of the range
+        if (addEllipsisEnd) {
+            range.push('...');
+        }
+        if (end <= total - 1) {
+            range.push(total);
+        }
+
+        return range;
+    }
+
+    const normalizeString = (str) => {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+
+    useEffect(() => {
+        let contextFilteredData = apiData;
+        if (filters.state) {
+            contextFilteredData = contextFilteredData.filter(item => item.address_state === filters.state);
+        }
+        let newFilteredData = contextFilteredData;
+        if (searchQuery) {
+            const normalizedSearchQuery = normalizeString(searchQuery);
+
+            newFilteredData = newFilteredData.filter((item) =>
+                (item.display_name ? normalizeString(item.display_name) : '').includes(normalizedSearchQuery) ||
+                (item.referred_by_display_name ? normalizeString(item.referred_by_display_name) : '').includes(normalizedSearchQuery),
+            );
+        }
+
+        setFilteredData(newFilteredData);
+
+    }, [apiData, searchQuery, filters]);
 
     // Toggle the display of reservations for a given client
     const toggleReservations = (clientId) => {
@@ -119,14 +233,45 @@ export const Clients = () => {
                             {loaded ? (
                                 <>
                                     <div className="row center">
+                                        <div className="col s12">
+                                            <ul className="pagination">
+                                                <li className={currentPage === 0 ? 'disabled' : ''}>
+                                                    <a
+                                                        onClick={(e) => { e.preventDefault(); currentPage > 0 && changePage(currentPage - 1); }}
+                                                        href="#!"
+                                                    >
+                                                        <i className="material-icons">chevron_left</i>
+                                                    </a>
+                                                </li>
+                                                {generatePageRange(currentPage, totalPages).map((page, index) => (
+                                                    <li key={index} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
+                                                        {page === '...' ? (
+                                                            <span>...</span>
+                                                        ) : (
+                                                            <a className="tb-grey-text text-darken-1" onClick={(e) => { e.preventDefault(); changePage(page - 1); }} href="#!">{page}</a>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                                <li className={currentPage + 1 === totalPages ? 'disabled' : ''}>
+                                                    <a
+                                                        onClick={(e) => { e.preventDefault(); currentPage + 1 < totalPages && changePage(currentPage + 1); }}
+                                                        href="#!"
+                                                    >
+                                                        <i className="material-icons">chevron_right</i>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div className="row center">
                                         <div>
                                             <div className="col s12 l4">
                                                 <Select
                                                     placeholder="State"
-                                                    value={null}
-                                                    // onChange={}
-                                                    // options={}
-                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    value={filterOptions.state.find(state => state.label === filters.state) ? { value: filters.state, label: filters.state } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, state: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.state}
+                                                    className={`select ${filters.state ? 'select--has-value' : ''}`}
                                                     classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
@@ -238,8 +383,8 @@ export const Clients = () => {
                                             <input
                                                 type="text"
                                                 placeholder="Search..."
-                                                // value={}
-                                                // onChange={(e) => setSearchQuery(e.target.value)}
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
                                                 className="search-input" // Apply any styling as needed
                                             />
                                         </div>
@@ -390,7 +535,7 @@ export const Clients = () => {
                                                     ))
                                                 ) : (
                                                     <tr>
-                                                        <td colSpan="7" style={{ textAlign: 'center' }}>No results.</td>
+                                                        <td colSpan="8" style={{ textAlign: 'center' }}>No results.</td>
                                                     </tr>
                                                 )}
                                             </tbody>

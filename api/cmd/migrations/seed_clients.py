@@ -254,13 +254,13 @@ class ClientImporter:
 
         print(f"{referred_by_completed} referrals filled in out of {len(clients)}")
 
-    async def seed_cb_activity_referrals(self, clients: Sequence[Client]):
-        print("Seeding activity referrals from Clientbase export")
+    async def seed_cb_activity_referral_names(self, clients: Sequence[Client]):
+        print("Seeding Referred By field from Clientbase export")
+        referrals_found = 0
         activities = self.raw_data["activity_data"]
-        referral_count = 0
-        referrals_matched_count = 0
+        modified_clients = []
+
         for activity in activities:
-            activity_body = activity.get("Subject  (ACTIVITY)", "").lower()
             referring_client = next(
                 (
                     c
@@ -269,36 +269,126 @@ class ClientImporter:
                 ),
                 None,
             )
-            # TODO remove referring_client from clients_effective bc their name might be mentioned
-            if referring_client:
-                referral_count += 1
-                # print(f"+1 referral for {client.cb_name}")
-                # TODO parse string from activity.get("Subject  (ACTIVITY)")
 
+            if referring_client:
+                activity_remarks = (
+                    activity.get("Remarks  (ACTIVITY)", "").strip().lower()
+                )
+                # print(f"{referring_client.cb_name}: {activity_remarks}")
+
+                # Exclude the referring client's name from the search
                 referred_client = next(
                     (
                         c
                         for c in clients
                         if (
-                            (
-                                c.first_name.strip().lower() in activity_body
-                                and c.last_name.strip().lower() in activity_body
+                            c != referring_client
+                            and (
+                                (
+                                    c.first_name.strip().lower() in activity_remarks
+                                    and c.last_name.strip().lower() in activity_remarks
+                                )
+                                or (
+                                    c.cb_name
+                                    and c.cb_name.strip().lower() in activity_remarks
+                                )
                             )
-                            or (c.cb_name in activity_body)
                         )
                     ),
                     None,
                 )
-                if referred_client:
-                    print(
-                        f"{referring_client.cb_name} referred {referred_client.cb_name}"
-                    )
-                    print(f"according to activity: {activity_body}")
-                    referrals_matched_count += 1
 
+                if referred_client:
+                    referrals_found += 1
+                    referred_client.referred_by_id = referring_client.id
+                    modified_clients.append(referred_client)
+                else:
+                    print(
+                        f"Referral not found - {referring_client.cb_name}: {activity_remarks}"
+                    )
+
+        print(f"\n{referrals_found} referrals found out of {len(activities)}")
+        # TODO save the client with new field with `await self._client_service.add(clients)`
+        # if modified_clients:
+        #     await self._client_service.add(modified_clients)
+
+    async def seed_cb_activity_num_referrals(self, clients: Sequence[Client]):
+        print("Seeding activity referrals from Clientbase export")
+        activities = self.raw_data["activity_data"]
+
+        # Initialize the referral count for each client
+        for client in clients:
+            if client.num_referrals is None:
+                client.num_referrals = 0
+
+        referral_count = 0
+        referrals_matched_count = 0
+        for activity in activities:
+            referring_client = next(
+                (
+                    c
+                    for c in clients
+                    if c.cb_profile_no == activity.get("Profile No  (PROFILE)")
+                ),
+                None,
+            )
+            if referring_client:
+                print(f"+1 referral for {referring_client.cb_name}")
+                if referring_client.num_referrals is None:
+                    referring_client.num_referrals = 0
+
+                referring_client.num_referrals += 1
+                referral_count += 1
+
+        # Count how many clients have referrals > 0
+        clients_with_referrals = [
+            client
+            for client in clients
+            if client.num_referrals is not None and client.num_referrals > 0
+        ]
+        count_clients_with_referrals = len(clients_with_referrals)
+
+        # Print the count of clients with referrals > 0
         print(
-            f"{referral_count} valid referrals out of {len(activities)} ({referrals_matched_count} matched to referred client)"
+            f"\nNumber of clients with at least 1 referral: {count_clients_with_referrals}"
         )
+
+        # Sort clients by num_referrals in descending order
+        sorted_clients = sorted(
+            clients_with_referrals, key=lambda c: c.num_referrals or 0, reverse=True
+        )
+
+        # Print the top 10 clients with the most referrals
+        print("\nTop 10 Clients with the Most Referrals:")
+        for client in sorted_clients[:10]:
+            print(f"{client.cb_name}: {client.num_referrals} referrals")
+
+        # Upsert clients with updated referral counts
+        await self._client_service.add(clients)
+
+        # # print(f"+1 referral for {client.cb_name}")
+        # # TODO parse string from activity.get("Subject  (ACTIVITY)")
+
+        # referred_client = next(
+        #     (
+        #         c
+        #         for c in clients
+        #         if (
+        #             (
+        #                 c.first_name.strip().lower() in activity_body
+        #                 and c.last_name.strip().lower() in activity_body
+        #             )
+        #             or (c.cb_name in activity_body)
+        #         )
+        #     ),
+        #     None,
+        # )
+        # if referred_client:
+        #     print(
+        #         f"{referring_client.cb_name} referred {referred_client.cb_name}"
+        #     )
+        #     print(f"according to activity: {activity_body}")
+        #     referrals_matched_count += 1
 
     def read_csv(self, genre, file_name) -> list[dict]:
         """Parses a CSV given a file name."""
@@ -330,17 +420,19 @@ class ClientImporter:
 
     async def seed_clients_and_reservations(self):
 
-        existing_clients = await self.get_existing_clients()
-        existing_client_ids = [client.id for client in existing_clients]
-        print(f"{len(existing_clients)} clients found in repository")
-        await self.seed_clientbase_export_clients()
+        # existing_clients = await self.get_existing_clients()
+        # existing_client_ids = [client.id for client in existing_clients]
+        # print(f"{len(existing_clients)} clients found in repository")
+        # await self.seed_clientbase_export_clients()
 
         existing_clients = await self.get_existing_clients()
         existing_client_ids = [client.id for client in existing_clients]
         print(f"{len(existing_client_ids)} clients found in repository")
-        await self.seed_clientbase_export_rescards(existing_clients)
+        # await self.seed_clientbase_export_rescards(existing_clients)
         # await self.seed_cb_referrred_by(existing_clients)
-        await self.seed_cb_activity_referrals(existing_clients)
+        # await self.seed_cb_activity_num_referrals(existing_clients)
+        # await self.seed_cb_activity_referral_names(existing_clients)
+        # await self.seed_cb_referrred_by(existing_clients)
         # await self.seed_reservations(len(existing_client_ids) * 3, existing_client_ids)
 
 

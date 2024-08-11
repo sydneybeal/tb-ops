@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from textwrap import dedent
 from typing import Iterable, Sequence
-from api.services.clients.models import Client, ClientSummary
+from api.services.clients.models import Client, ClientSummary, ReferralMatch
 
 from api.adapters.repository import PostgresMixin
 from api.services.clients.repository import ClientRepository
@@ -41,12 +41,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 cb_issue_country,
                 cb_relationship, cb_active,
                 cb_passport_expire, cb_gender, cb_created_date, cb_modified_date, cb_referred_by,
-                subjective_score, birth_date, referred_by_id, created_at, updated_at, updated_by
+                subjective_score, birth_date, referred_by_id, num_referrals, created_at, updated_at, updated_by
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
                 $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31,
-                $32, $33
+                $32, $33, $34
             )
             ON CONFLICT (id) DO UPDATE SET
                 first_name = EXCLUDED.first_name,
@@ -77,6 +77,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 subjective_score = EXCLUDED.subjective_score,
                 birth_date = EXCLUDED.birth_date,
                 referred_by_id = EXCLUDED.referred_by_id,
+                num_referrals = EXCLUDED.num_referrals,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
             """
@@ -166,6 +167,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                         client.subjective_score,
                         client.birth_date,
                         client.referred_by_id,
+                        client.num_referrals,
                         client.created_at,
                         client.updated_at,
                         client.updated_by.strip(),
@@ -209,6 +211,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 c.subjective_score,
                 c.birth_date,
                 c.referred_by_id,
+                c.num_referrals,
                 r.first_name AS referred_by_first_name,
                 r.last_name AS referred_by_last_name,
                 c.created_at,
@@ -237,6 +240,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                         subjective_score=record["subjective_score"],
                         birth_date=record["birth_date"],
                         referred_by_id=record["referred_by_id"],
+                        num_referrals=record["num_referrals"],
                         referred_by_first_name=record["referred_by_first_name"],
                         referred_by_last_name=record["referred_by_last_name"],
                         created_at=record["created_at"],
@@ -247,3 +251,56 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                     for record in records
                 ]
                 return client_summaries
+
+    async def get_referral_matches(self) -> Sequence[ReferralMatch]:
+        """Returns ClientSummary instances in the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            with res_info as (
+            select
+                client_id,
+                MIN(start_date) as earliest_trip,
+                MAX(start_date) as latest_trip,
+                count(*) as num_trips,
+                SUM(cost) as total_trip_spend,
+                AVG(cost) as avg_trip_spend,
+                extract(year
+            from
+                AGE(NOW(),
+                MAX(start_date))) * 12 + extract(month
+            from
+                AGE(NOW(),
+                MAX(start_date))) as months_since_last_reservation
+            from
+                public.reservations
+            group by
+                client_id
+            )
+            select
+                source_client.id as source_client_id,
+                source_client.cb_name as source_client_cb_name,
+                source_res_info.avg_trip_spend as source_client_avg_trip_spend,
+                source_res_info.total_trip_spend as source_client_total_trip_spend,
+                new_client.id as new_client_id,
+                new_client.cb_name as new_client_cb_name,
+                new_res_info.avg_trip_spend as new_client_avg_trip_spend,
+                new_res_info.total_trip_spend as new_client_total_trip_spend
+            from
+                public.clients source_client
+            join public.clients new_client
+            on
+                new_client.referred_by_id = source_client.id
+            join res_info new_res_info
+            on
+                new_res_info.client_id = new_client.id
+            join res_info source_res_info
+            on
+                source_res_info.client_id = source_client.id
+            """
+        )
+        async with pool.acquire() as con:
+            async with con.transaction():
+                records = await con.fetch(query)
+                referral_matches = [ReferralMatch(**record) for record in records]
+                return referral_matches

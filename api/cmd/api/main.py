@@ -31,7 +31,7 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.clients.service import ClientService
-from api.services.clients.models import ClientSummary
+from api.services.clients.models import ClientSummary, ReferralMatch, ReferralNode
 from api.services.reservations.service import ReservationService
 from api.services.reservations.models import Reservation
 from api.services.summaries.models import (
@@ -897,6 +897,30 @@ def make_app(
     ) -> Sequence[ClientSummary] | JSONResponse:
         """Get all Client models."""
         return await client_svc.get_summaries()
+
+    @app.get(
+        "/v1/client_referrals",
+        operation_id="get_referral_matches",
+        response_model=Sequence[ReferralMatch],
+        tags=["clients"],
+    )
+    async def get_referral_matches(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralMatch] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_matches()
+
+    @app.get(
+        "/v1/referral_tree",
+        operation_id="get_referral_tree",
+        response_model=Sequence[ReferralNode],
+        tags=["clients"],
+    )
+    async def get_referral_tree(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralNode] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_tree()
 
     @app.get(
         "/v1/reservations",
