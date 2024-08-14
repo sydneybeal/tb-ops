@@ -62,10 +62,10 @@ export const Clients = () => {
 
     useEffect(() => {
         const stateMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
-            if (!acc[item.address_state]) {
+            if (item.address_state && !acc[item.address_state]) {
                 acc[item.address_state] = {
                     value: item.address_state || 'no-state',
-                    label: item.address_state || 'no-state'
+                    label: item.address_state || 'None'
                 };
             }
             return acc;
@@ -492,7 +492,9 @@ export const Clients = () => {
                                                                     </span>
                                                                 </td>
                                                                 <td>
-                                                                    {moment().diff(moment(client.birth_date), 'years')}
+                                                                    {client.birth_date ? moment().diff(moment(client.birth_date), 'years') : (
+                                                                        <span className="chip tb-grey lighten-3 text-bold">?</span>
+                                                                    )}
                                                                 </td>
                                                                 <td>
                                                                     ${formatAmount(client.lifetime_spend)}

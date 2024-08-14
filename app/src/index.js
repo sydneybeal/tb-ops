@@ -9,6 +9,7 @@ import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import Clients from './pages/Clients/Clients';
+import Referrals from './pages/Clients/Referrals';
 import EntryElements from './pages/EntryElements/EntryElements';
 import LookerReports from './pages/BedNights/LookerReports';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
@@ -126,6 +127,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Clients />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/referrals/',
+    element: (
+      <ProtectedRoute>
+        <Referrals />
       </ProtectedRoute>
     ),
   },

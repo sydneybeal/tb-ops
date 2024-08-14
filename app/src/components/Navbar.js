@@ -211,6 +211,20 @@ const Navbar = ({ title }) => {
                                 </Link>
                             </li>
                         </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/clients'} className="text-bold">
+                                    Clients
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/referrals'} className="text-bold">
+                                    Referrals
+                                </Link>
+                            </li>
+                        </div>
                     </>
                 )}
 

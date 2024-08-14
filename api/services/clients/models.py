@@ -164,3 +164,19 @@ class ReferralNode(BaseModel):
 
     class Config:
         orm_mode = True
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def total_associated_referrals(self) -> int:
+        """Sum of reservations plus referrals."""
+        child_referrals = sum([ref.total_associated_referrals for ref in self.children])
+        return len(self.children) + child_referrals
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def total_associated_referral_spend(self) -> float:
+        """Sum of spend for the client and all referrals."""
+        child_referral_spend = sum(
+            ref.total_associated_referral_spend for ref in self.children
+        )
+        return self.spend + child_referral_spend
