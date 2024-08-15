@@ -102,14 +102,24 @@ class ClientService:
                 referral_tree[source_id] = {
                     "id": source_id,
                     "name": referral["source_client_cb_name"],
-                    "spend": referral["source_client_total_trip_spend"],
+                    "birth_date": referral["source_client_birth_date"],
+                    "total_spend": referral["source_client_total_trip_spend"],
+                    "avg_spend": referral["source_client_avg_trip_spend"],
+                    "earliest_trip": referral["source_client_earliest_trip"],
+                    "latest_trip": referral["source_client_latest_trip"],
+                    "num_trips": referral["source_client_num_trips"],
                     "children": [],
                 }
 
             referred_by_map[new_id] = {
                 "id": new_id,
                 "name": referral["new_client_cb_name"],
-                "spend": referral["new_client_total_trip_spend"],
+                "birth_date": referral["new_client_birth_date"],
+                "total_spend": referral["new_client_total_trip_spend"],
+                "avg_spend": referral["new_client_avg_trip_spend"],
+                "earliest_trip": referral["new_client_earliest_trip"],
+                "latest_trip": referral["new_client_latest_trip"],
+                "num_trips": referral["new_client_num_trips"],
                 "parent_id": source_id,
             }
 
@@ -123,7 +133,12 @@ class ClientService:
                     child_node = {
                         "id": child_data["id"],
                         "name": child_data["name"],
-                        "spend": child_data["spend"],
+                        "birth_date": child_data["birth_date"],
+                        "total_spend": child_data["total_spend"],
+                        "avg_spend": child_data["avg_spend"],
+                        "earliest_trip": child_data["earliest_trip"],
+                        "latest_trip": child_data["latest_trip"],
+                        "num_trips": child_data["num_trips"],
                         "children": [],
                     }
                     node["children"].append(child_node)

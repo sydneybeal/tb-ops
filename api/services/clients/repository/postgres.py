@@ -280,12 +280,20 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
             select
                 source_client.id as source_client_id,
                 source_client.cb_name as source_client_cb_name,
+                source_client.birth_date as source_client_birth_date,
                 source_res_info.avg_trip_spend as source_client_avg_trip_spend,
                 source_res_info.total_trip_spend as source_client_total_trip_spend,
+                source_res_info.earliest_trip as source_client_earliest_trip,
+                source_res_info.latest_trip as source_client_latest_trip,
+                source_res_info.num_trips as source_client_num_trips,
                 new_client.id as new_client_id,
                 new_client.cb_name as new_client_cb_name,
+                new_client.birth_date as new_client_birth_date,
                 new_res_info.avg_trip_spend as new_client_avg_trip_spend,
-                new_res_info.total_trip_spend as new_client_total_trip_spend
+                new_res_info.total_trip_spend as new_client_total_trip_spend,
+                new_res_info.earliest_trip as new_client_earliest_trip,
+                new_res_info.latest_trip as new_client_latest_trip,
+                new_res_info.num_trips as new_client_num_trips
             from
                 public.clients source_client
             join public.clients new_client

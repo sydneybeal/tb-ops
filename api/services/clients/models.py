@@ -15,7 +15,7 @@
 """Models for client entries."""
 from datetime import datetime, date
 from uuid import UUID, uuid4
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 from api.services.reservations.models import Reservation
 
 from pydantic import BaseModel, Field, computed_field
@@ -148,18 +148,31 @@ class ClientSummary(BaseModel):
 class ReferralMatch(BaseModel):
     source_client_id: UUID
     source_client_cb_name: str
+    source_client_birth_date: Optional[date] = None
     source_client_avg_trip_spend: float
     source_client_total_trip_spend: float
+    source_client_earliest_trip: Optional[date] = None
+    source_client_latest_trip: Optional[date] = None
+    source_client_num_trips: int = 0
     new_client_id: UUID
     new_client_cb_name: str
+    new_client_birth_date: Optional[date] = None
     new_client_avg_trip_spend: float
     new_client_total_trip_spend: float
+    new_client_earliest_trip: Optional[date] = None
+    new_client_latest_trip: Optional[date] = None
+    new_client_num_trips: int = 0
 
 
 class ReferralNode(BaseModel):
     id: UUID
     name: str
-    spend: float
+    birth_date: Optional[date] = None
+    total_spend: float
+    avg_spend: float
+    earliest_trip: Optional[date] = None
+    latest_trip: Optional[date] = None
+    num_trips: int = 0
     children: Sequence["ReferralNode"] = []
 
     class Config:
@@ -174,9 +187,78 @@ class ReferralNode(BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
+    def total_associated_trips(self) -> int:
+        """Count of trips for the client and all referrals."""
+        child_num_trips = sum(ref.total_associated_trips for ref in self.children)
+        return self.num_trips + child_num_trips
+
+    @computed_field  # type: ignore[misc]
+    @property
     def total_associated_referral_spend(self) -> float:
         """Sum of spend for the client and all referrals."""
         child_referral_spend = sum(
             ref.total_associated_referral_spend for ref in self.children
         )
-        return self.spend + child_referral_spend
+        return self.total_spend + child_referral_spend
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def avg_associated_referral_spend(self) -> float:
+        """Calculates the average spend including the client and all of their direct and indirect referrals."""
+
+        # Helper function to calculate the total spend and count of all nodes recursively
+        def total_spend_and_count(node: "ReferralNode") -> Tuple[float, int]:
+            total_spend = node.avg_spend
+            total_count = 1  # Start with the current node
+            for child in node.children:
+                child_spend, child_count = total_spend_and_count(child)
+                total_spend += child_spend
+                total_count += child_count
+            return total_spend, total_count
+
+        total_spend, total_count = total_spend_and_count(self)
+        if total_count == 0:
+            return 0  # Prevent division by zero, although total_count should always be at least 1
+        return total_spend / total_count
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def age(self) -> Optional[int]:
+        """Calculates the age based on the birth date."""
+        if self.birth_date is None:
+            return None
+        today = date.today()
+        age = today.year - self.birth_date.year
+        if (today.month, today.day) < (self.birth_date.month, self.birth_date.day):
+            age -= 1
+        return age
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def relationship_length(self) -> Optional[int]:
+        """Calculates the age based on the birth date."""
+        if self.earliest_trip is None:
+            return None
+        today = date.today()
+        age = today.year - self.earliest_trip.year
+        if (today.month, today.day) < (
+            self.earliest_trip.month,
+            self.earliest_trip.day,
+        ):
+            age -= 1
+        return age
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def travel_recency(self) -> Optional[int]:
+        """Calculates the age based on the birth date."""
+        if self.latest_trip is None:
+            return None
+        today = date.today()
+        age = today.year - self.latest_trip.year
+        if (today.month, today.day) < (
+            self.latest_trip.month,
+            self.latest_trip.day,
+        ):
+            age -= 1
+        return age
