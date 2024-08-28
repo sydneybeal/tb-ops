@@ -31,7 +31,12 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
 from api.services.clients.service import ClientService
-from api.services.clients.models import ClientSummary, ReferralMatch, ReferralNode
+from api.services.clients.models import (
+    ClientSummary,
+    ReferralMatch,
+    ReferralNode,
+    PatchClientRequest,
+)
 from api.services.reservations.service import ReservationService
 from api.services.reservations.models import Reservation
 from api.services.summaries.models import (
@@ -897,6 +902,19 @@ def make_app(
     ) -> Sequence[ClientSummary] | JSONResponse:
         """Get all Client models."""
         return await client_svc.get_summaries()
+
+    @app.patch(
+        "/v1/clients",
+        operation_id="post_clients",
+        tags=["clients"],
+    )
+    async def post_clients(
+        client_data: PatchClientRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        results = await client_svc.process_patch_request(client_data)
+        return JSONResponse(content=results)
 
     @app.get(
         "/v1/client_referrals",

@@ -23,7 +23,7 @@ class ClientRepository(ABC):
     """Abstract repository for client-related models."""
 
     @abstractmethod
-    async def add(self, clients: Iterable[Client]) -> None:
+    async def upsert(self, clients: Iterable[Client]) -> None:
         """Adds an iterable of Client models to the repository."""
         raise NotImplementedError
 

@@ -16,10 +16,11 @@
 # from typing import Optional, Sequence, Union
 from uuid import UUID
 from datetime import datetime
-from typing import Iterable, Union, Sequence
+from typing import Iterable, Union, Sequence, Optional
 from api.services.clients.models import (
     Client,
     ClientSummary,
+    PatchClientRequest,
     ReferralMatch,
     ReferralNode,
 )
@@ -35,17 +36,46 @@ class ClientService:
         self._repo = PostgresClientRepository()
         self._reservation_service = ReservationService()
 
-    async def add(self, reservations: Union[Client, Iterable[Client]]) -> None:
+    async def add(self, clients: Union[Client, Iterable[Client]]) -> None:
         """Adds new Client to the repository."""
-        if isinstance(reservations, Client):
-            reservations = [reservations]
-        await self._repo.add(reservations)
+        if isinstance(clients, Client):
+            clients = [clients]
+        await self._repo.upsert(clients)
+
+    async def process_patch_request(self, client_request: PatchClientRequest) -> None:
+        """Adds new Client to the repository."""
+        existing_client_by_id = None
+        if client_request.client_id:
+            # Fetch existing client by ID
+            existing_client_by_id = await self.get_by_id(client_request.client_id)
+        if existing_client_by_id:
+            print(f"Found existing client {existing_client_by_id.cb_name}")
+            client_to_upsert = existing_client_by_id
+            client_to_upsert.referred_by_id = client_request.referred_by_id
+            print(
+                f"Setting client {client_to_upsert.cb_name} to referred by {client_request.referred_by_id}"
+            )
+        else:
+            # TODO: create new client with patch request info
+            client_to_upsert = Client(
+                first_name=client_request.first_name,
+                last_name=client_request.last_name,
+                updated_by=client_request.updated_by,
+            )
+            print(
+                f"Creating new client {client_request.last_name}/{client_request.first_name}"
+            )
+        await self._repo.upsert([client_to_upsert])
 
     async def get(
         self,
     ) -> Sequence[Client]:
         """Returns Clients from the repository."""
         return await self._repo.get()
+
+    async def get_by_id(self, client_id: UUID) -> Optional[Client]:
+        """Returns Client from the repository by ID."""
+        return await self._repo.get_by_id(client_id)
 
     async def get_summaries(
         self,

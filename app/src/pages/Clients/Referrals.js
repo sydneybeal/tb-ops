@@ -76,7 +76,7 @@ export const Referrals = () => {
     
                         return (
                             <div className={`col s12 m6 ${columnSize}`} key={child.id}>
-                                <li className="card tb-grey lighten-5 tb-md-black-text">
+                                <li className="card tb-grey lighten-5 tb-md-black-text referral-tree-card">
                                     <div className="card-content">
                                     <span className="tb-teal-text text-bold">{child.name}</span>
                                     <p>Age: {child.age}</p>
@@ -93,12 +93,12 @@ export const Referrals = () => {
         );
     };
 
-    function formatAmount(amount, digits=2) {
-        if (amount === null || amount === undefined) return "0.00";
+    // function formatAmount(amount, digits=2) {
+    //     if (amount === null || amount === undefined) return "0.00";
     
-        // Convert the number to a string with two decimal places
-        return parseFloat(amount).toFixed(digits);
-    }
+    //     // Convert the number to a string with two decimal places
+    //     return parseFloat(amount).toFixed(digits);
+    // }
 
     const renderTreeSummary = (node) => {
         const travelRecency = Math.abs(node.travel_recency);
@@ -175,7 +175,7 @@ export const Referrals = () => {
                                         style={{ marginBottom: row.some(referral => referral.id === visibleReferralId) ? '0px' : '' }}
                                     >
                                         <div
-                                            className={`card ${visibleReferralId === referral.id ? 'tb-teal darken-1 white-text' : ''}`}
+                                            className={`card referral-tree-card ${visibleReferralId === referral.id ? 'tb-teal darken-1 white-text' : ''}`}
                                             style={{ marginBottom: row.some(referral => referral.id === visibleReferralId) ? '0px' : '' }}
                                         >
                                             <div className="card-content">

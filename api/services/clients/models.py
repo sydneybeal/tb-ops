@@ -25,8 +25,8 @@ class Client(BaseModel):
     """Data model for a client."""
 
     id: UUID = Field(default_factory=uuid4)
-    first_name: str
-    last_name: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     middle_name: Optional[str] = None
     address_line_1: Optional[str] = None
     address_line_2: Optional[str] = None
@@ -55,17 +55,17 @@ class Client(BaseModel):
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
     num_referrals: Optional[int] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
 
 
 class ClientSummary(BaseModel):
     """Data model for a client."""
 
-    id: UUID
-    first_name: str
-    last_name: str
+    id: UUID = Field(default_factory=uuid4)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     middle_name: Optional[str] = None
     address_line_1: Optional[str] = None
     address_line_2: Optional[str] = None
@@ -143,6 +143,14 @@ class ClientSummary(BaseModel):
     def trips_plus_referrals(self) -> int:
         """Sum of reservations plus referrals."""
         return self.reservations_count + self.referrals_count
+
+
+class PatchClientRequest(BaseModel):
+    client_id: Optional[UUID] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    referred_by_id: Optional[UUID] = None
+    updated_by: str
 
 
 class ReferralMatch(BaseModel):

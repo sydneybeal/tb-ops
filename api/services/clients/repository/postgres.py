@@ -17,7 +17,8 @@ import json
 from abc import ABC, abstractmethod
 from datetime import datetime
 from textwrap import dedent
-from typing import Iterable, Sequence
+from typing import Iterable, Sequence, Optional
+from uuid import UUID
 from api.services.clients.models import Client, ClientSummary, ReferralMatch
 
 from api.adapters.repository import PostgresMixin
@@ -28,7 +29,7 @@ from api.services.clients.models import Client
 class PostgresClientRepository(PostgresMixin, ClientRepository):
     """Implementation of the ClientRepository ABC for Postgres."""
 
-    async def add(self, clients: Iterable[Client]) -> None:
+    async def upsert(self, clients: Iterable[Client]) -> None:
         """Adds or updates an iterable of Client models in the repository."""
         pool = await self._get_pool()  # Assuming this retrieves an asyncpg pool
         query = dedent(
@@ -194,6 +195,24 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 clients = [Client(**record) for record in records]
                 return clients
 
+    async def get_by_id(self, client_id: UUID) -> Optional[Client]:
+        """Returns Client in the repository by ID."""
+        pool = await self._get_pool()  # Assuming this retrieves an asyncpg pool
+        query = dedent(
+            """
+            SELECT * FROM public.clients
+            WHERE id = $1
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, client_id)
+                if res:
+                    return Client(**res)
+
     async def get_summaries(self) -> Sequence[ClientSummary]:
         """Returns ClientSummary instances in the repository."""
         pool = await self._get_pool()
@@ -210,6 +229,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 c.address_zip,
                 c.subjective_score,
                 c.birth_date,
+                c.cb_name,
+                c.cb_profile_type,
+                c.cb_primary_agent_name,
+                c.cb_active,
+                c.cb_gender,
+                c.cb_created_date,
                 c.referred_by_id,
                 c.num_referrals,
                 r.first_name AS referred_by_first_name,
@@ -227,29 +252,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
         async with pool.acquire() as con:
             async with con.transaction():
                 records = await con.fetch(query)
-                client_summaries = [
-                    ClientSummary(
-                        id=record["id"],
-                        first_name=record["first_name"],
-                        last_name=record["last_name"],
-                        address_line_1=record["address_line_1"],
-                        address_line_2=record["address_line_2"],
-                        address_city=record["address_city"],
-                        address_state=record["address_state"],
-                        address_zip=record["address_zip"],
-                        subjective_score=record["subjective_score"],
-                        birth_date=record["birth_date"],
-                        referred_by_id=record["referred_by_id"],
-                        num_referrals=record["num_referrals"],
-                        referred_by_first_name=record["referred_by_first_name"],
-                        referred_by_last_name=record["referred_by_last_name"],
-                        created_at=record["created_at"],
-                        updated_at=record["updated_at"],
-                        updated_by=record["updated_by"],
-                        referrals_count=record["referrals_count"],
-                    )
-                    for record in records
-                ]
+                client_summaries = [ClientSummary(**record) for record in records]
                 return client_summaries
 
     async def get_referral_matches(self) -> Sequence[ReferralMatch]:
