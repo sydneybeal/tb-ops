@@ -116,6 +116,7 @@ class CurrencyService:
             rate_request.rate_date,
             rate_request.base_currency,
         )
+        print(rate_request)
 
         if existing_rate:
             if (

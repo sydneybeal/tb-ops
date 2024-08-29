@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'vDailyRates';
+    const version = 'v1.0.0';
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -122,7 +122,6 @@ const Navbar = ({ title }) => {
                             }} />
                     </a>
                 </li>
-                {userDetails && userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/service_providers'} className="text-bold">
@@ -130,8 +129,6 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                )}
-                {userDetails && userDetails?.role !== 'viewer' && (
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/bed_night_reports'} className="text-bold">
@@ -139,7 +136,6 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                )}
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/daily_rates'} className="text-bold">
@@ -154,23 +150,13 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                {userDetails?.role === 'viewer' &&
-                    <div className="container" style={{ width: '100%' }}>
-                        <li>
-                            <Link to={'/properties'} className="text-bold">
-                                Properties
-                            </Link>
-                        </li>
-                    </div>
-                }
-                {/* <div className="container" style={{ width: '100%' }}>
+                <div className="container" style={{ width: '100%' }}>
                     <li>
-                        <Link to={'/trip_reports'} className="text-bold">
-                            Trip Reports
+                        <Link to={'/overlaps'} className="text-bold">
+                            Client Overlaps
                         </Link>
                     </li>
-                </div> */}
-                {userDetails && userDetails?.role !== 'viewer' && (
+                </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/faq'} className="text-bold">
@@ -178,7 +164,6 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                )}
                 {userDetails?.role === 'admin' && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
@@ -188,13 +173,7 @@ const Navbar = ({ title }) => {
                                 </div>
                             </li>
                         </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/overlaps'} className="text-bold">
-                                    Client Overlaps
-                                </Link>
-                            </li>
-                        </div>
+                        
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/entry_elements'} className="text-bold">
@@ -219,6 +198,10 @@ const Navbar = ({ title }) => {
                                 </Link>
                             </li>
                         </div>
+                    </>
+                )}
+                { (userDetails?.role === 'admin' || userDetails?.role === 'leadership') && (
+                    <>
                         <div className="container" style={{ width: '80%' }}>
                             <li>
                                 <div className="chip small tb-teal lighten-3">
@@ -226,13 +209,15 @@ const Navbar = ({ title }) => {
                                 </div>
                             </li>
                         </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/property_details'} className="text-bold">
-                                    Property Details
-                                </Link>
-                            </li>
-                        </div>
+                        {userDetails?.role === 'admin' &&
+                            <div className="container" style={{ width: '100%' }}>
+                                <li>
+                                    <Link to={'/property_details'} className="text-bold">
+                                        Property Details
+                                    </Link>
+                                </li>
+                            </div>
+                        }
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/looker_reports'} className="text-bold">
@@ -242,7 +227,6 @@ const Navbar = ({ title }) => {
                         </div>
                     </>
                 )}
-
             </ul>
         </>
     );

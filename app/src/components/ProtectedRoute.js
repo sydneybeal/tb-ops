@@ -4,7 +4,7 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from './AuthContext';
 import LoginModal from '../pages/Login';
 
-const ProtectedRoute = ({ children, allowedRoles = ['admin', 'user', 'viewer'] }) => {
+const ProtectedRoute = ({ children, allowedRoles = ['admin', 'sales_support', 'consultant', 'accounting', 'leadership'] }) => {
     const { userDetails } = useAuth();
     const [showModal, setShowModal] = useState(!userDetails);
     const navigate = useNavigate();
@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin', 'user', 'viewer'] }
     useEffect(() => {
         M.AutoInit();
         if (userDetails && !allowedRoles.includes(userDetails.role)) {
-            navigate('/daily_rates/', { replace: true });
+            navigate('/', { replace: true });
         }
     }, [userDetails, navigate, allowedRoles]);
 

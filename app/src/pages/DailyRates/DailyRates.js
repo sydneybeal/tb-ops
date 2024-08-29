@@ -19,7 +19,7 @@ export const DailyRates = () => {
     const [inputAmount, setInputAmount] = useState();
     const [currency, setCurrency] = useState('ZAR');
     const [convertedAmount, setConvertedAmount] = useState('');
-    const allowedToUpload = ['kayb@travelbeyond.com', 'erinj@travelbeyond.com'];
+    const rolesAllowedToUpload = ['admin', 'accounting'];
 
     const handleAmountChange = (e) => {
         setInputAmount(e.target.value);
@@ -75,10 +75,9 @@ export const DailyRates = () => {
                     // Handle other currencies - assuming they need to be divided by the rate and adjusted
                     rate = currenciesToMultiply.includes(currency) ? rate * 1.04 : rate / 1.04;
                 }
-                console.log(rate);
     
                 const baseAmount = parseFloat(inputAmount);
-                const result = (baseAmount * rate).toFixed(4); // Apply the adjusted rate to the base amount
+                const result = (baseAmount * rate).toFixed(3); // Apply the adjusted rate to the base amount
                 setConvertedAmount(result);
             } else {
                 setConvertedAmount('Rate not available'); // Handling when the rate is zero or not found
@@ -130,9 +129,9 @@ export const DailyRates = () => {
             });
     }, [logout, userDetails.token, rateDate]);
 
-    const displayTime = apiData.length > 0 ? moment(apiData[0].updated_at, "HH:mm:ss").format("h:mma") : null;
+    const displayUpdatedDate = apiData.length > 0 ? moment.utc(apiData[0].updated_at, "HH:mm:ss").local().format("MMM DD, YYYY") : null;
+    const displayTime = apiData.length > 0 ? moment.utc(apiData[0].updated_at, "HH:mm:ss").local().format("h:mma") : null;
     const displayUpdatedBy = apiData.length > 0 ? apiData[0].updated_by: null;
-    // const displayTime = '';
 
     return (
         <>
@@ -186,7 +185,7 @@ export const DailyRates = () => {
                             </button>
                         </div>
                     
-                        { (userDetails.role === 'admin' || allowedToUpload.includes(userDetails.email)) &&
+                        { (rolesAllowedToUpload.includes(userDetails.role)) &&
                             <div className="row center" style={{ marginBottom: '40px'}}>
                                     <Link to={'/daily_rates/add'} className="text-bold">
                                         <div className="btn btn-large tb-teal lighten-2">
@@ -267,7 +266,7 @@ export const DailyRates = () => {
                         </h4>
                         {displayTime &&
                             <p className="center tb-grey-text text-darken-1" style={{ marginTop: '1px' }}>
-                                <em>Rates posted at {displayTime} by {displayUpdatedBy}</em>
+                                <em>Rates posted at {displayTime} on {displayUpdatedDate} by {displayUpdatedBy}</em>
                             </p>
                         }
                         <table className="accommodation-logs-table rates-table" >
@@ -285,10 +284,10 @@ export const DailyRates = () => {
                                     const baseConversionRate = dailyRate.target_currency === 'ZAR'
                                         ? 1 / parseFloat(dailyRate.conversion_rate)
                                         : parseFloat(dailyRate.conversion_rate);
-                                    const baseConversionRateFixed = baseConversionRate.toFixed(4).replace(/\.?0+$/, '');
+                                    const baseConversionRateFixed = baseConversionRate.toFixed(3).replace(/\.?0+$/, '');
                                     const markedUpRate = currenciesToMultiply.includes(dailyRate.target_currency)
-                                        ? (baseConversionRate * 1.04).toFixed(4).replace(/\.?0+$/, '')
-                                        : (baseConversionRate / 1.04).toFixed(4).replace(/\.?0+$/, '');
+                                        ? (baseConversionRate * 1.04).toFixed(3).replace(/\.?0+$/, '')
+                                        : (baseConversionRate / 1.04).toFixed(3).replace(/\.?0+$/, '');
                                     return (
                                         <tr key={index}>
                                             <td>
@@ -308,7 +307,7 @@ export const DailyRates = () => {
                                                     >
                                                         content_paste
                                                     </span>
-                                                    {formatAmount(baseConversionRateFixed, 4)}
+                                                    {formatAmount(baseConversionRateFixed, 3)}
                                                     {dailyRate.target_currency === 'ZAR' &&
                                                         <span className="text-bold tb-teal-text">*</span>
                                                     }
@@ -323,7 +322,7 @@ export const DailyRates = () => {
                                                     >
                                                         content_paste
                                                     </span>
-                                                    {formatAmount(markedUpRate, 4)}
+                                                    {formatAmount(markedUpRate, 3)}
                                                     {dailyRate.target_currency === 'ZAR' &&
                                                         <span className="text-bold tb-teal-text">*</span>
                                                     }

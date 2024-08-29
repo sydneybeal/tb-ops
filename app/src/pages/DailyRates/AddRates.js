@@ -20,7 +20,7 @@ export const AddRates = () => {
     const [successMessage, setSuccessMessage] = useState(null);
     const fileInputRef = useRef(null);
     const filePathRef = useRef(null);
-    const allowedToUpload = ['kayb@travelbeyond.com', 'erinj@travelbeyond.com'];
+    const rolesAllowedToUpload = ['admin', 'accounting'];
 
     const displayTime = existingRates.length > 0 ? moment(existingRates[0].updated_at, "HH:mm:ss").format("h:mma") : null;
     const displayUpdatedBy = existingRates.length > 0 ? existingRates[0].updated_by: null;
@@ -60,6 +60,7 @@ export const AddRates = () => {
 
     const handleSubmit = () => {
         setLoadingPost(true);
+        console.log(rates);
         fetch(`${process.env.REACT_APP_API}/v1/daily_rates`, {
             method: 'PATCH',
             headers: {
@@ -141,6 +142,7 @@ export const AddRates = () => {
                     const formattedRates = [];
     
                     for (const item of result.data) {
+                        console.log(item);
                         // Validate the number of rows and the format of each row
                         if (result.data.length > 30) {
                             errorMessage = 'Error: More than 30 rows of data are not allowed.';
@@ -208,7 +210,7 @@ export const AddRates = () => {
             </header>
             <main className="tb-grey lighten-6">
                 <div className="container" style={{ width: '70%',  marginBottom: '100px' }}>
-                    {(userDetails.role !== 'admin' && !allowedToUpload.includes(userDetails.email)) ? (
+                    {(!rolesAllowedToUpload.includes(userDetails.role)) ? (
                         <div>
                             You do not have permission to view this page.
                         </div>
@@ -228,7 +230,7 @@ export const AddRates = () => {
                                 </div>
                             </div>
                             <div className="row center">
-                                <div className="container" style={{ width: '80%' }}>
+                                <div className="container" style={{ width: '100%', paddingLeft: '80px' }}>
                                     <div className="file-field input-field">
                                         <div
                                             className="btn tb-teal"
@@ -246,7 +248,7 @@ export const AddRates = () => {
                                                 accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
                                             />
                                         </div>
-                                        <div className="file-path-wrapper" style={{ width: '80%' }}>
+                                        <div className="file-path-wrapper" style={{ width: '50%' }}>
                                             <input
                                                 className="file-path validate"
                                                 type="text"
@@ -362,7 +364,7 @@ export const AddRates = () => {
                                                         )}
                                                     </td>
                                                     <td>{rate.rate_date}</td>
-                                                    <td>{rate.rate_time}</td>
+                                                    <td>{moment(rate.rate_time, 'hh:mm:ss').format('hh:mm:ss A')}</td>
                                                 </tr>
                                             )
                                         })}

@@ -12,6 +12,7 @@ export const LookerReports = () => {
         "heatMap": "0e7273c2-c5f9-4ab0-a622-6798c0ee0345/page/nmXtD",
         "africaByYear": "84feb0c8-5400-4db5-8f23-ca7aa347ede1/page/AGQtD"
     }
+    const allowedRoles = ['admin', 'leadership'];
 
     return (
         <>
@@ -21,7 +22,7 @@ export const LookerReports = () => {
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container" style={{ width: '90%', paddingBottom: '100px' }}>
-                {(userDetails.role !== 'admin') ? (
+                {(!allowedRoles.includes(userDetails.role)) ? (
                         <div className="center">
                             You do not have permission to view this page.
                         </div>

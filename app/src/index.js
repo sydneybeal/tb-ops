@@ -31,7 +31,7 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <ProtectedRoute allowedRoles={['user', 'admin']}>
+      <ProtectedRoute>
         <AccommodationLogs />
       </ProtectedRoute>
     ),
@@ -39,7 +39,7 @@ const router = createBrowserRouter([
   {
     path: '/service_providers/',
     element: (
-      <ProtectedRoute allowedRoles={['user', 'admin']}>
+      <ProtectedRoute>
         <AccommodationLogs />
       </ProtectedRoute>
     ),
@@ -71,7 +71,7 @@ const router = createBrowserRouter([
   {
     path: '/entry_elements/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <EntryElements />
       </ProtectedRoute>
     ),
@@ -79,7 +79,7 @@ const router = createBrowserRouter([
   {
     path: '/property_details/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <PropertyDetails />
       </ProtectedRoute>
     ),
@@ -87,7 +87,7 @@ const router = createBrowserRouter([
   {
     path: '/looker_reports/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
         <LookerReports />
       </ProtectedRoute>
     ),
@@ -103,7 +103,7 @@ const router = createBrowserRouter([
   {
     path: '/properties/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <PropertiesView />
       </ProtectedRoute>
     ),
@@ -111,7 +111,7 @@ const router = createBrowserRouter([
   {
     path: '/trip_reports/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <TripReports />
       </ProtectedRoute>
     ),
@@ -119,7 +119,7 @@ const router = createBrowserRouter([
   {
     path: '/audit_logs/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <AuditLanding />
       </ProtectedRoute>
     ),
@@ -127,7 +127,7 @@ const router = createBrowserRouter([
   {
     path: '/trips/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <TripLanding />
       </ProtectedRoute>
     ),
@@ -143,7 +143,7 @@ const router = createBrowserRouter([
   {
     path: '/daily_rates/add',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin', 'accounting']}>
         <AddRates />
       </ProtectedRoute>
     ),
