@@ -13,6 +13,8 @@ const currenciesToMultiply = ["AUD", "EUR", "GBP", "NZD", "ZAR"];
 
 export const DailyRates = () => {
     const [apiData, setApiData] = useState({});
+    const [displayData, setDisplayData] = useState([]);
+    const [sorting, setSorting] = useState({ field: 'target_currency', ascending: true });
     const { userDetails, logout } = useAuth();
     const [loaded, setLoaded] = useState(false);
     const [rateDate, setRateDate] = useState(moment());
@@ -34,6 +36,40 @@ export const DailyRates = () => {
         const nextDay = moment(rateDate).add(1, 'days');
         setRateDate(nextDay.format('YYYY-MM-DD'));
     };
+
+    /**
+  * Sets sorting criteria.
+  * @param {string} key - Field name to sort by.
+  * @param {boolean} ascending - Sort order: true (ascending), false (descending).
+  */
+    function applySorting(key) {
+        setSorting((prevSorting) => ({
+            field: key,
+            ascending: prevSorting.field === key ? !prevSorting.ascending : true,
+        }));
+    };
+
+    useEffect(() => {
+        // Perform sorting on apiData
+        let sortedData = Array.isArray(apiData) ? [...apiData].sort((a, b) => {
+            let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
+            let bValue = b[sorting.field] !== undefined && b[sorting.field] !== null ? b[sorting.field] : '';
+
+            // If both values are numbers, compare them as numbers.
+            if (typeof aValue === 'number' && typeof bValue === 'number') {
+                return sorting.ascending ? aValue - bValue : bValue - aValue;
+            }
+
+            // If either value is not a number, convert both to strings and compare.
+            // This handles null, undefined, and other non-number types safely.
+            aValue = String(aValue);
+            bValue = String(bValue);
+            return sorting.ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        }) : [];
+
+        setDisplayData(sortedData);
+
+    }, [sorting, apiData]);
     
 
     useEffect(() => {
@@ -194,156 +230,169 @@ export const DailyRates = () => {
                                     </Link>
                             </div>
                         }
-                        <div className="row" style={{ width: '70%' }}>
-                        <h4 style={{ marginBottom: '30px' }} className="center">Currency Calculator</h4>
-                            <div className="card potential-trip-card" >
-                                <div className="card-content" style={{paddingBottom: '2px'}}>
-                                    <div className="row">
-                                    {apiData && apiData.length > 0 ? (
-                                    <>
-                                        <div className="col s12 l5">
-                                            <div className="input-field">
-                                                <span className="material-symbols-outlined grey-text text-darken-1 prefix">payments</span>
-                                                <input
-                                                    type="text"
-                                                    id="inputAmount"
-                                                    value={inputAmount}
-                                                    onChange={handleAmountChange}
-                                                    placeholder=" "  // Ensure this is empty or just a space for better label handling
-                                                    autoComplete="off"
-                                                />
-                                                <label
-                                                    style={{ fontSize: '1.3rem' }}
-                                                    htmlFor="inputAmount"
-                                                    className="grey-text text-darken-3"
-                                                >
-                                                    Starting amount
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div className="col s12 l3">
-                                            <div className="input-field" style={{paddingBottom: '1px'}}>
-                                                <select id="currencySelect" value={currency} onChange={handleCurrencyChange}>
-                                                    {apiData && apiData.length > 0 && apiData.map((rate, index) => (
-                                                        <option key={index} value={rate.target_currency}>{rate.target_currency}</option>
-                                                    ))}
-                                                </select>
-                                                <label style={{ fontSize: '1.0rem' }} htmlFor="currencySelect" className="grey-text text-darken-3">
-                                                    <span className="material-symbols-outlined">
-                                                        currency_exchange
-                                                    </span>
-                                                    Currency
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div className="col s12 l4" style={{ textAlign: 'center'}}>
-                                            <label style={{ fontSize: '1.1rem' }} htmlFor="convertedValue" className="grey-text text-darken-3">
-                                                USD Conversion
-                                            </label>
-                                            <span className="copyable-text" onClick={() => copyToClipboard("$"+formatAmount(convertedAmount))}>
-                                                <p id="convertedValue" className="text-bold" style={{ fontSize: '1.8rem' }}>
-                                                    ${formatAmount(convertedAmount)}
-                                                    <span
-                                                        class="material-symbols-outlined tb-teal-text text-darken-2 text-bold"
-                                                        style={{ marginLeft: '5px' }}
+                        {loaded ? (
+                        <>
+                            <div className="row" style={{ width: '70%' }}>
+                            <h4 style={{ marginBottom: '30px' }} className="center">Currency Calculator</h4>
+                                <div className="card potential-trip-card" >
+                                    <div className="card-content" style={{paddingBottom: '2px'}}>
+                                        <div className="row">
+                                        {apiData && apiData.length > 0 ? (
+                                        <>
+                                            <div className="col s12 l5">
+                                                <div className="input-field">
+                                                    <span className="material-symbols-outlined grey-text text-darken-1 prefix">payments</span>
+                                                    <input
+                                                        type="text"
+                                                        id="inputAmount"
+                                                        value={inputAmount}
+                                                        onChange={handleAmountChange}
+                                                        placeholder=" "  // Ensure this is empty or just a space for better label handling
+                                                        autoComplete="off"
+                                                    />
+                                                    <label
+                                                        style={{ fontSize: '1.3rem' }}
+                                                        htmlFor="inputAmount"
+                                                        className="grey-text text-darken-3"
                                                     >
-                                                        content_paste
-                                                    </span>
-                                                </p>
-                                            </span>
+                                                        Starting amount
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="col s12 l3">
+                                                <div className="input-field" style={{paddingBottom: '1px'}}>
+                                                    <select id="currencySelect" value={currency} onChange={handleCurrencyChange}>
+                                                        {apiData && apiData.length > 0 && apiData.map((rate, index) => (
+                                                            <option key={index} value={rate.target_currency}>{rate.target_currency}</option>
+                                                        ))}
+                                                    </select>
+                                                    <label style={{ fontSize: '1.0rem' }} htmlFor="currencySelect" className="grey-text text-darken-3">
+                                                        <span className="material-symbols-outlined">
+                                                            currency_exchange
+                                                        </span>
+                                                        Currency
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="col s12 l4" style={{ textAlign: 'center'}}>
+                                                <label style={{ fontSize: '1.1rem' }} htmlFor="convertedValue" className="grey-text text-darken-3">
+                                                    USD Conversion
+                                                </label>
+                                                <span style={{ cursor: 'pointer'}} className="copyable-text" onClick={() => copyToClipboard("$"+formatAmount(convertedAmount))}>
+                                                    <p id="convertedValue" className="text-bold" style={{ fontSize: '1.8rem' }}>
+                                                        ${formatAmount(convertedAmount)}
+                                                        <span
+                                                            class="material-symbols-outlined tb-teal-text text-darken-2 text-bold"
+                                                            style={{ marginLeft: '5px' }}
+                                                        >
+                                                            content_paste
+                                                        </span>
+                                                    </p>
+                                                </span>
+                                            </div>
+                                        </>
+                                        ) : (
+                                            <p className="center">No rates available for this date.</p>
+                                        )}
                                         </div>
-                                    </>
-                                    ) : (
-                                        <p className="center">No rates available for this date.</p>
-                                    )}
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="container" style={{ width: '70%' }}>
-                        <h4 style={{ marginBottom: '30px' }} className="center">
-                            Conversion Rates
-                        </h4>
-                        {displayTime &&
-                            <p className="center tb-grey-text text-darken-1" style={{ marginTop: '1px' }}>
-                                <em>Rates posted at {displayTime} on {displayUpdatedDate} by {displayUpdatedBy}</em>
-                            </p>
-                        }
-                        <table className="accommodation-logs-table rates-table" >
-                            <thead>
-                                <tr>
-                                    <th>Currency</th>
-                                    <th>Currency Name</th>
-                                    <th>Base Rate</th>
-                                    <th>Markup Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            {apiData && apiData.length > 0 ? (
-                                apiData.map((dailyRate, index) => {
-                                    const baseConversionRate = dailyRate.target_currency === 'ZAR'
-                                        ? 1 / parseFloat(dailyRate.conversion_rate)
-                                        : parseFloat(dailyRate.conversion_rate);
-                                    const baseConversionRateFixed = baseConversionRate.toFixed(3).replace(/\.?0+$/, '');
-                                    const markedUpRate = currenciesToMultiply.includes(dailyRate.target_currency)
-                                        ? (baseConversionRate * 1.04).toFixed(3).replace(/\.?0+$/, '')
-                                        : (baseConversionRate / 1.04).toFixed(3).replace(/\.?0+$/, '');
-                                    return (
-                                        <tr key={index}>
-                                            <td>
-                                                <span className="text-bold">
-                                                    {dailyRate.target_currency}
-                                                    {dailyRate.target_currency === 'ZAR' &&
-                                                        <span className="text-bold tb-teal-text">*</span>
-                                                    }
-                                                </span>
-                                            </td>
-                                            <td>{dailyRate.currency_name}</td>
-                                            <td onClick={() => copyToClipboard(baseConversionRateFixed)}>
-                                                <span className="copyable-text">
-                                                    <span
-                                                        class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"
-                                                        style={{ marginLeft: '10px'}}
-                                                    >
-                                                        content_paste
+                            <div className="container" style={{ width: '70%' }}>
+                            <h4 style={{ marginBottom: '30px' }} className="center">
+                                Conversion Rates
+                            </h4>
+                            {displayTime &&
+                                <p className="center tb-grey-text text-darken-1" style={{ marginTop: '1px' }}>
+                                    <em>Rates posted at {displayTime} on {displayUpdatedDate} by {displayUpdatedBy}</em>
+                                </p>
+                            }
+                            <table className="accommodation-logs-table rates-table" >
+                                <thead>
+                                    <tr>
+                                        <th onClick={() => applySorting('target_currency')}>
+                                            Currency
+                                            <span className="material-symbols-outlined tb-teal-text text-lighten-4">
+                                                {sorting.field === 'target_currency' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                            </span>
+                                        </th>
+                                        <th>Currency Name</th>
+                                        <th>Base Rate</th>
+                                        <th>Markup Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {displayData && displayData.length > 0 ? (
+                                    displayData.map((dailyRate, index) => {
+                                        const baseConversionRate = dailyRate.target_currency === 'ZAR'
+                                            ? 1 / parseFloat(dailyRate.conversion_rate)
+                                            : parseFloat(dailyRate.conversion_rate);
+                                        const baseConversionRateFixed = baseConversionRate.toFixed(3).replace(/\.?0+$/, '');
+                                        const markedUpRate = currenciesToMultiply.includes(dailyRate.target_currency)
+                                            ? (baseConversionRate * 1.04).toFixed(3).replace(/\.?0+$/, '')
+                                            : (baseConversionRate / 1.04).toFixed(3).replace(/\.?0+$/, '');
+                                        return (
+                                            <tr key={index}>
+                                                <td>
+                                                    <span className="text-bold">
+                                                        {dailyRate.target_currency}
+                                                        {dailyRate.target_currency === 'ZAR' &&
+                                                            <span className="text-bold tb-teal-text">*</span>
+                                                        }
                                                     </span>
-                                                    {formatAmount(baseConversionRateFixed, 3)}
-                                                    {dailyRate.target_currency === 'ZAR' &&
-                                                        <span className="text-bold tb-teal-text">*</span>
-                                                    }
-                                                {/* <span> USD per {dailyRate.target_currency}</span> */}
-                                                </span>
-                                            </td>
-                                            <td onClick={() => copyToClipboard(markedUpRate)}>
-                                                <span className="copyable-text">
-                                                    <span
-                                                        class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"
-                                                        style={{ marginLeft: '10px' }}
-                                                    >
-                                                        content_paste
-                                                    </span>
-                                                    {formatAmount(markedUpRate, 3)}
-                                                    {dailyRate.target_currency === 'ZAR' &&
-                                                        <span className="text-bold tb-teal-text">*</span>
-                                                    }
+                                                </td>
+                                                <td>{dailyRate.currency_name}</td>
+                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(baseConversionRateFixed)}>
+                                                    <span className="copyable-text">
+                                                        <span
+                                                            class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"
+                                                            style={{ marginLeft: '10px'}}
+                                                        >
+                                                            content_paste
+                                                        </span>
+                                                        {formatAmount(baseConversionRateFixed, 3)}
+                                                        {dailyRate.target_currency === 'ZAR' &&
+                                                            <span className="text-bold tb-teal-text">*</span>
+                                                        }
                                                     {/* <span> USD per {dailyRate.target_currency}</span> */}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr><td colSpan="4" className="center">No rates available for this date.</td></tr> // Properly filling the table when no data is present
-                            )}
-                            </tbody>
-                        </table>
-                        {apiData && apiData.length > 0 &&
-                            <p className="center">
-                                <span className="text-bold tb-teal-text">*</span>
-                                Please note that for ZAR, the displayed value is the inverse of the conversion rate.
-                            </p>
-                        }
-                        </div>
+                                                    </span>
+                                                </td>
+                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(markedUpRate)}>
+                                                    <span className="copyable-text">
+                                                        <span
+                                                            class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"
+                                                            style={{ marginLeft: '10px' }}
+                                                        >
+                                                            content_paste
+                                                        </span>
+                                                        {formatAmount(markedUpRate, 3)}
+                                                        {dailyRate.target_currency === 'ZAR' &&
+                                                            <span className="text-bold tb-teal-text">*</span>
+                                                        }
+                                                        {/* <span> USD per {dailyRate.target_currency}</span> */}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                ) : (
+                                    <tr><td colSpan="4" className="center">No rates available for this date.</td></tr> // Properly filling the table when no data is present
+                                )}
+                                </tbody>
+                            </table>
+                            {displayData && displayData.length > 0 &&
+                                <p className="center">
+                                    <span className="text-bold tb-teal-text">*</span>
+                                    Please note that for ZAR, the displayed value is the inverse of the conversion rate.
+                                </p>
+                            }
+                            </div>
+                        </>
+                        ) : (
+                            <div>
+                                <CircularPreloader show={true} />
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

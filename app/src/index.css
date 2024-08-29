@@ -904,11 +904,11 @@ textarea:focus {
   min-height: 80%;
 } */
 
-input[type=text]:not(.browser-default) {
+input.file-path[type=text]:not(.browser-default) {
   border-bottom: 1px solid #8c8782 !important;
 }
 
-input.valid[type=text]:not(.browser-default) {
+input.file-path.valid[type=text]:not(.browser-default) {
   border-bottom: 1px solid #0e9bac !important;
   box-shadow: 0 1px 0 0 #0e9bac !important;
 }

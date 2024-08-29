@@ -40,7 +40,7 @@ class UserBuilder:
                 email=user["email"], hashed_password=hashed_password, role=user["role"]
             )
             users_to_add.append(auth_user)
-        print(users_to_add)
+        # print(users_to_add)
         await self._auth_service.add_user(users_to_add)
 
 

@@ -62,6 +62,7 @@ export const Maps = () => {
                         core_destination_name: log.core_destination_name,
                         property_portfolio: log.property_portfolio,
                         property_location: log.property_location,
+                        agency_name: log.agency_name,
                         date_in: log.date_in,
                         date_out: log.date_out,
                         property_name: log.property_name,

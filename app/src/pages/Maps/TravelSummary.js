@@ -7,8 +7,6 @@ const TravelSummary = ({ data }) => {
     const [expandCoreDestinations, setExpandCoreDestinations] = useState(false);
     const [expandLocations, setExpandLocations] = useState(false);
 
-    console.log(JSON.stringify(stats,null,2));
-
     const summarizeAccommodationData = useCallback((records) => {
         if (records.length === 0) return {};
         const summary = records.reduce((acc, record) => {
@@ -73,7 +71,6 @@ const TravelSummary = ({ data }) => {
         if (Array.isArray(data)) {
             const computedStats = summarizeAccommodationData(data);
             setStats(computedStats);
-            console.log(computedStats ? JSON.stringify(computedStats, null, 2) : 'No data to display');
         } else {
             setStats(null);
         }
