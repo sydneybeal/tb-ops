@@ -33,8 +33,6 @@ export const PotentialTrips = () => {
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
 
-    console.log(progress);
-
     useEffect(() => {
         // Calculate the number of pages with the new data
         const numberOfPages = Math.ceil(apiData.length / itemsPerPage);

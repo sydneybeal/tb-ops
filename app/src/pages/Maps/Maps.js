@@ -26,8 +26,6 @@ export const Maps = () => {
         }
     };
 
-    console.log(loaded);
-
     useEffect(() => {
         setLoaded(false);
 

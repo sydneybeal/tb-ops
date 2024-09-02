@@ -74,8 +74,6 @@ export const OverlapsV2 = () => {
         }, {});
     }, [apiData]);
 
-    console.log(groupedOverlaps);
-
     const renderOverlapItems = (property) => {
         if (!property || !Array.isArray(property.overlaps)) {
             return null;

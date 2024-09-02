@@ -12,6 +12,11 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin', 'sales_support', 'c
     useEffect(() => {
         M.AutoInit();
         if (userDetails && !allowedRoles.includes(userDetails.role)) {
+            M.toast({
+                html: 'You do not have permission to view that page, redirecting to home page.',
+                displayLength: 4000,
+                classes: 'error-red',
+            });
             navigate('/', { replace: true });
         }
     }, [userDetails, navigate, allowedRoles]);
@@ -19,6 +24,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin', 'sales_support', 'c
     if (!userDetails) {
         return (
             <>
+                
                 <LoginModal onClose={() => setShowModal(false)} />
             </>
         )
