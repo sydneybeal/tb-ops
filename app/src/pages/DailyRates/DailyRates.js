@@ -232,8 +232,8 @@ export const DailyRates = () => {
                         }
                         {loaded ? (
                         <>
-                            <div className="row" style={{ width: '70%' }}>
-                            <h4 style={{ marginBottom: '30px' }} className="center">Currency Calculator</h4>
+                            <div className="row" style={{ width: '70%', marginBottom: '0px' }}>
+                            <h4 style={{ marginBottom: '20px' }} className="center">Currency Calculator</h4>
                                 <div className="card potential-trip-card" >
                                     <div className="card-content" style={{paddingBottom: '2px'}}>
                                         <div className="row">
@@ -289,6 +289,9 @@ export const DailyRates = () => {
                                                         </span>
                                                     </p>
                                                 </span>
+                                                <label style={{ fontSize: '1.0rem' }} htmlFor="convertedValue" className="grey-text text-darken-1">
+                                                    (markup)
+                                                </label>
                                             </div>
                                         </>
                                         ) : (
@@ -299,7 +302,7 @@ export const DailyRates = () => {
                                 </div>
                             </div>
                             <div className="container" style={{ width: '70%' }}>
-                            <h4 style={{ marginBottom: '30px' }} className="center">
+                            <h4 style={{ marginBottom: '10px' }} className="center">
                                 Conversion Rates
                             </h4>
                             {displayTime &&
@@ -342,7 +345,7 @@ export const DailyRates = () => {
                                                     </span>
                                                 </td>
                                                 <td>{dailyRate.currency_name}</td>
-                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(baseConversionRateFixed)}>
+                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(formatAmount(baseConversionRateFixed, 3))}>
                                                     <span className="copyable-text">
                                                         <span
                                                             class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"
@@ -357,7 +360,7 @@ export const DailyRates = () => {
                                                     {/* <span> USD per {dailyRate.target_currency}</span> */}
                                                     </span>
                                                 </td>
-                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(markedUpRate)}>
+                                                <td style={{ cursor: 'pointer'}} onClick={() => copyToClipboard(formatAmount(markedUpRate, 3))}>
                                                     <span className="copyable-text">
                                                         <span
                                                             class="material-symbols-outlined tb-grey-text text-darken-2 text-bold"

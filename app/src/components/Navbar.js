@@ -64,9 +64,9 @@ const Navbar = ({ title }) => {
                                             <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px' }}>
                                                 {userDetails?.role.toUpperCase()}
                                             </span>
-                                            <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                                            {/* <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
                                                 &nbsp;{version}
-                                            </span>
+                                            </span> */}
                                         </>
                                     )}
                                 </div>
@@ -85,9 +85,9 @@ const Navbar = ({ title }) => {
                                         <span className="chip tb-teal lighten-4 tb-md-black-text text-bold" style={{ margin: '0px 10px 0px 0px' }}>
                                             {userDetails?.role.toUpperCase()}
                                         </span>
-                                        <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                                        {/* <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
                                             {version}
-                                        </span>
+                                        </span> */}
                                     </>
                                 )}
                                 <button className='btn btn-floating error-red' onClick={logout} style={{ height: '30px', width: '30px', lineHeight: '30px', padding: '0', marginLeft: '10px' }}>
@@ -107,8 +107,8 @@ const Navbar = ({ title }) => {
                 </div>
             </nav >
             <ul id="slide-out" className="sidenav sidenav-fixed" style={{ transform: 'translateX(0%)' }}>
-                <li className="logo">
-                    <a id="logo-container" href="/" className="brand-logo">
+                <li className="logo" style={{marginBottom: '0px'}}>
+                    <a id="logo-container" href="/" className="brand-logo" style={{marginBottom: '0px'}}>
                         <img
                             id="front-page-logo"
                             src={`${process.env.PUBLIC_URL}/rrlogo.png`}
@@ -122,6 +122,13 @@ const Navbar = ({ title }) => {
                             }} />
                     </a>
                 </li>
+                <div className="container center">
+                <li>
+                <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                    {version}
+                </span>
+                </li>
+                </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
                         <Link to={'/service_providers'} className="text-bold">

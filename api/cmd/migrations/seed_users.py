@@ -34,6 +34,7 @@ class UserBuilder:
         """Seeds the database table with users."""
         users_to_add = []
         for user in users:
+            print(f"Adding user {user['email']}")
             # hash password
             hashed_password = self._auth_service.hash_password(user["password"])
             auth_user = User(
