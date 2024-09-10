@@ -30,6 +30,8 @@ from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
+from api.services.currency.service import CurrencyService
+from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -62,7 +64,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.2.2"
+VERSION = "v1.0.0"
 
 
 def make_app(
@@ -71,6 +73,7 @@ def make_app(
     auth_svc: AuthService,
     audit_svc: AuditService,
     quality_svc: QualityService,
+    currency_svc: CurrencyService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -880,6 +883,33 @@ def make_app(
             raise HTTPException(status_code=404, detail="Report data not found")
         return progress
 
+    @app.get(
+        "/v1/daily_rates",
+        operation_id="get_daily_rates",
+        response_model=Iterable[DailyRate],
+        tags=["daily_rates"],
+    )
+    async def get_daily_rates(
+        rate_date: date,
+        current_user: User = Depends(get_current_user),
+    ):
+        daily_rates = await currency_svc.get_rates_date(rate_date)
+        if daily_rates is None:
+            raise HTTPException(status_code=404, detail="Daily Rate data not found")
+        return daily_rates
+
+    @app.patch(
+        "/v1/daily_rates",
+        operation_id="post_daily_rates",
+        tags=["daily_rates"],
+    )
+    async def post_daily_rates(
+        daily_rate_requests: list[PatchDailyRateRequest],
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
+        return JSONResponse(content=results)
+
     return app
 
 
@@ -891,7 +921,10 @@ if __name__ == "__main__":
     auth_svc = AuthService()
     audit_svc = AuditService()
     quality_svc = QualityService()
+    currency_svc = CurrencyService()
 
-    app = make_app(travel_svc, summary_svc, auth_svc, audit_svc, quality_svc)
+    app = make_app(
+        travel_svc, summary_svc, auth_svc, audit_svc, quality_svc, currency_svc
+    )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

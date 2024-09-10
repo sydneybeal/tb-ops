@@ -67,20 +67,20 @@ async def main() -> None:
     log.info("Attempting connection to postgres prod")
     conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST_PROD", "localhost"),
-            os.getenv("POSTGRES_USER_PROD", "postgres"),
-            os.getenv("POSTGRES_PASSWORD_PROD", "postgres"),
-            os.getenv("POSTGRES_DB_PROD", "postgres"),
+            os.getenv("POSTGRES_HOST_UAT", "localhost"),
+            os.getenv("POSTGRES_USER_UAT", "postgres"),
+            os.getenv("POSTGRES_PASSWORD_UAT", "postgres"),
+            os.getenv("POSTGRES_DB_UAT", "postgres"),
             int(os.getenv("POSTGRES_PORT", "5432")),
         )
     )
     log.info("Attempting connection to postgres local")
     uat_conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST_LOCAL", "localhost"),
-            os.getenv("POSTGRES_USER_LOCAL", "postgres"),
-            os.getenv("POSTGRES_PASSWORD_LOCAL", "postgres"),
-            os.getenv("POSTGRES_DB_LOCAL", "postgres"),
+            os.getenv("POSTGRES_HOST_PROD", "localhost"),
+            os.getenv("POSTGRES_USER_PROD", "postgres"),
+            os.getenv("POSTGRES_PASSWORD_PROD", "postgres"),
+            os.getenv("POSTGRES_DB_PROD", "postgres"),
             int(os.getenv("POSTGRES_PORT", "5432")),
         )
     )
@@ -96,10 +96,11 @@ async def main() -> None:
         # "public.portfolios",
         # "public.consultants",
         # "public.properties",
-        "public.accommodation_logs",
+        # "public.accommodation_logs",
         # "public.property_details",
         # "public.users",
         # "public.trips",
+        "public.daily_rates",
     ]
 
     for table in tables:

@@ -21,7 +21,6 @@ const AddEditPropertyDetailModal = ({ isOpen, onClose, onRefresh, editPropertyDa
         { value: 'camp', label: 'Camp' },
         { value: 'boat', label: 'Boat' },
     ]), []); // Dependencies array is empty, so this only runs once
-    console.log(selectedPropertyType);
 
     const priceRangeOptions = useMemo(() => ([
         { value: '<$500', label: '<$500' },

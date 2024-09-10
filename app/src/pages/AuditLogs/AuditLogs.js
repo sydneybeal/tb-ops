@@ -71,6 +71,8 @@ export const AuditLogs = ({ auditLogs }) => {
                 return ['name'];
             case 'property_details':
                 return ['property_id'];
+            case 'daily_rates':
+                return ['target_currency', 'rate_date'];
             default:
                 return [];
         }
@@ -112,7 +114,8 @@ export const AuditLogs = ({ auditLogs }) => {
         countries: "country",
         trips: "trip",
         potential_trips: "flagged trips",
-        property_details: "property detail"
+        property_details: "property detail",
+        daily_rates: "daily rates"
     };
 
     return (

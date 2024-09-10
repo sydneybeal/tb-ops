@@ -9,19 +9,17 @@ import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import EntryElements from './pages/EntryElements/EntryElements';
+import PropertiesView from './pages/Properties/PropertiesView';
 import LookerReports from './pages/BedNights/LookerReports';
-import Agencies from './pages/Agencies/Agencies';
-import BookingChannels from './pages/BookingChannels/BookingChannels';
-import Portfolios from './pages/Portfolios/Portfolios';
-import Consultants from './pages/Consultants/Consultants';
-import Properties from './pages/Properties/Properties';
+import Maps from './pages/Maps/Maps';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
-import Countries from './pages/Countries/Countries';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
+import DailyRates from './pages/DailyRates/DailyRates';
+import AddRates from './pages/DailyRates/AddRates';
 import FaqPage from './pages/FAQ/FAQ';
 
 
@@ -73,7 +71,7 @@ const router = createBrowserRouter([
   {
     path: '/entry_elements/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <EntryElements />
       </ProtectedRoute>
     ),
@@ -81,7 +79,7 @@ const router = createBrowserRouter([
   {
     path: '/property_details/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <PropertyDetails />
       </ProtectedRoute>
     ),
@@ -89,7 +87,7 @@ const router = createBrowserRouter([
   {
     path: '/looker_reports/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
         <LookerReports />
       </ProtectedRoute>
     ),
@@ -103,9 +101,17 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/properties/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin']}>
+        <PropertiesView />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/trip_reports/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <TripReports />
       </ProtectedRoute>
     ),
@@ -113,7 +119,7 @@ const router = createBrowserRouter([
   {
     path: '/audit_logs/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <AuditLanding />
       </ProtectedRoute>
     ),
@@ -121,8 +127,32 @@ const router = createBrowserRouter([
   {
     path: '/trips/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute allowedRoles={['admin']}>
         <TripLanding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/daily_rates/',
+    element: (
+      <ProtectedRoute>
+        <DailyRates />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/daily_rates/add',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'accounting']}>
+        <AddRates />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/overview/',
+    element: (
+      <ProtectedRoute>
+        <Maps />
       </ProtectedRoute>
     ),
   },
