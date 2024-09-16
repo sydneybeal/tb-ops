@@ -7,9 +7,8 @@ const TravelSummary = ({ data }) => {
     const [expandCoreDestinations, setExpandCoreDestinations] = useState(false);
     const [expandLocations, setExpandLocations] = useState(false);
 
-    console.log(JSON.stringify(stats,null,2));
-
     const summarizeAccommodationData = useCallback((records) => {
+        if (records.length === 0) return {};
         const summary = records.reduce((acc, record) => {
             // Calculate total bed nights and total travelers
             acc.totalBedNights += record.bed_nights;
@@ -72,16 +71,16 @@ const TravelSummary = ({ data }) => {
         if (Array.isArray(data)) {
             const computedStats = summarizeAccommodationData(data);
             setStats(computedStats);
-            console.log(computedStats ? JSON.stringify(computedStats, null, 2) : 'No data to display');
         } else {
             setStats(null);
         }
     }, [data, summarizeAccommodationData]);
 
     const findTopEntry = (entries) => {
+        if (Object.entries(entries).length === 0) return ['', 0];
         return Object.entries(entries).reduce((top, current) => {
             return (top[1] > current[1] ? top : current);
-        }, ['', 0]);
+        }, ['', 0]); // Initial value for comparison
     };
 
     const getSortedTopEntries = useCallback((statsObject, key, isExpanded) => {

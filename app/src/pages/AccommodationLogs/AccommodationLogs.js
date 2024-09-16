@@ -24,6 +24,7 @@ export const Overview = () => {
     const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
     const [bulkSelectedEntries, setBulkSelectedEntries] = useState(new Map());
     const [bulkAction, setBulkAction] = useState(null);
+    const allowedToEditRoles = ['admin', 'sales_support'];
     const [filterOptions, setFilterOptions] = useState({
         core_destination_name: [],
         country_name: [],
@@ -477,14 +478,16 @@ export const Overview = () => {
                                     />
 
                                 </div>
-                                <div className="col s12 l2">
-                                    <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>
-                                        <span className="material-symbols-outlined">
-                                            add
-                                        </span>
-                                        Add New
-                                    </button>
-                                </div>
+                                {allowedToEditRoles.includes(userDetails.role) &&
+                                    <div className="col s12 l2">
+                                        <button className="btn-float btn-large waves-effect waves-light tb-teal darken-4" onClick={openModal}>
+                                            <span className="material-symbols-outlined">
+                                                add
+                                            </span>
+                                            Add New
+                                        </button>
+                                    </div>
+                                }
                             </div>
                             <div className="row center" style={{ marginBottom: '0px', marginTop: '0px' }}>
                                 <div>
@@ -982,7 +985,7 @@ export const Overview = () => {
                                 openEditModal={openEditModal}
                                 handleSelectionChange={handleSelectionChange}
                                 bulkSelectedEntries={bulkSelectedEntries}
-                                isEditable={true}
+                                isEditable={allowedToEditRoles.includes(userDetails.role)}
                             />
                         </>
                     ) : (

@@ -405,7 +405,7 @@ export const Properties = () => {
                 {loaded ? (
                     <>
                         <div className="row center">
-                            <div className="col s10">
+                            <div className={userDetails.role === 'admin' ? 'col s10' : 'col s12'}>
                                 <ul className="pagination">
                                     <li className={currentPage === 0 ? 'disabled' : ''}>
                                         <a
@@ -437,6 +437,7 @@ export const Properties = () => {
                                     </li>
                                 </ul>
                             </div>
+                            {userDetails.role === 'admin' &&
                             <div className="col s2">
                                 <button
                                     href=""
@@ -449,6 +450,7 @@ export const Properties = () => {
                                     Add New
                                 </button>
                             </div>
+                            }
                         </div>
                         <div className="row center">
                             <div>
@@ -883,15 +885,19 @@ export const Properties = () => {
                                                                 data-tooltip={`Updated ${moment.utc(item.updated_at).local().fromNow()} by ${item.updated_by === 'Initialization script' ? 'platform' : item.updated_by}`}
                                                                 data-tooltip-class="tooltip-updated-by"
                                                             >
-                                                                <button
-                                                                    className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
-                                                                    onClick={() => openEditModal(item)}
-                                                                >
-                                                                    <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
-                                                                        edit
-                                                                    </span>
-                                                                </button>
-                                                                <br />
+                                                                {userDetails.role === 'admin' &&
+                                                                    <>
+                                                                        <button
+                                                                            className="btn-floating btn-small waves-effect waves-light tb-grey lighten-2"
+                                                                            onClick={() => openEditModal(item)}
+                                                                        >
+                                                                            <span className="material-symbols-outlined grey-text text-darken-4" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                                                edit
+                                                                            </span>
+                                                                        </button>
+                                                                        <br />
+                                                                    </>
+                                                                }
                                                                 <em className="tb-grey-text text-darken-1" style={{ fontSize: '0.75rem' }}>
                                                                     <span className="material-symbols-outlined">
                                                                         update
@@ -930,9 +936,11 @@ export const Properties = () => {
                                                         <div><span className="chip tb-teal lighten-2 text-bold">{item.core_destination_name}</span></div>
                                                     </div>
                                                     <div className="col s2">
-                                                        <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
-                                                            <i className="material-icons grey-text text-darken-3">edit_note</i>
-                                                        </button>
+                                                        {userDetails.role === 'admin' &&
+                                                            <button onClick={() => openEditModal(item)} className="btn-floating btn-small waves-effect waves-light warning-yellow-light right">
+                                                                <i className="material-icons grey-text text-darken-3">edit_note</i>
+                                                            </button>
+                                                        }
                                                     </div>
                                                 </div>
                                             </div>

@@ -12,30 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Seeds users into application database."""
+import csv
+import uuid
+from datetime import datetime
 import asyncio
-from api.cmd.migrations.user_passwords import users
-from api.services.auth.service import AuthService
+import asyncpg
 from api.services.auth.models import User
+from api.services.auth.service import AuthService
+from user_passwords import users
 
 
 class UserBuilder:
+    """Populates the database with users."""
 
     def __init__(self):
         """Initializes the source data to be seeded."""
         self._auth_service = AuthService()
 
     async def seed_users(self):
-        print(users)
+        """Seeds the database table with users."""
         users_to_add = []
-
         for user in users:
-            user_to_add = User(
-                email=user["email"],
-                hashed_password=self._auth_service.hash_password(user["password"]),
-                role=user["role"],
+            print(f"Adding user {user['email']}")
+            # hash password
+            hashed_password = self._auth_service.hash_password(user["password"])
+            auth_user = User(
+                email=user["email"], hashed_password=hashed_password, role=user["role"]
             )
-            users_to_add.append(user_to_add)
-
+            users_to_add.append(auth_user)
+        # print(users_to_add)
         await self._auth_service.add_user(users_to_add)
 
 

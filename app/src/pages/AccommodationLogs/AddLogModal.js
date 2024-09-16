@@ -334,9 +334,9 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             updated_by: userDetails.email || ''
         }));
         console.log(logsToSubmit);
-        if (userDetails.role !== 'admin' && userDetails.role !== 'user') {
+        if (userDetails.role !== 'admin' && userDetails.role !== 'sales_support') {
             M.toast({
-                html: 'Your entry was valid, but only admins & users are able to save to the database.',
+                html: 'Your entry was valid, but only admins & sales support are able to save to the database.',
                 displayLength: 4000,
                 classes: 'warning-yellow tb-md-black-text',
             });
@@ -578,8 +578,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                 logError.new_property_country_id = 'Missing new property country';
             }
         }
-        console.log(userDetails.email);
-        console.log(skipBookingChannelAllowedEmails.includes(userDetails.email));
         if (!log.booking_channel_id && !log.new_booking_channel_name) {
             // allow to skip BC if admin or in the allowed list
             if (

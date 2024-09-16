@@ -26,8 +26,6 @@ export const Maps = () => {
         }
     };
 
-    console.log(loaded);
-
     useEffect(() => {
         setLoaded(false);
 
@@ -62,6 +60,7 @@ export const Maps = () => {
                         core_destination_name: log.core_destination_name,
                         property_portfolio: log.property_portfolio,
                         property_location: log.property_location,
+                        agency_name: log.agency_name,
                         date_in: log.date_in,
                         date_out: log.date_out,
                         property_name: log.property_name,
@@ -120,7 +119,7 @@ export const Maps = () => {
             </header>
 
             <main className="tb-grey lighten-6">
-                <div className="container center" style={{ width: '90%' }}>
+                <div className="container center" style={{ width: '90%', marginBottom: '500px' }}>
                     <div className="sticky-container">
                         <WeekSelector onWeekChange={handleWeekChange} initialDate={startDate} />
                         <div style={{ fontSize: '1.4rem' }}>

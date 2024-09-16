@@ -34,6 +34,10 @@ const TravelMap = ({ data }) => {
                 return acc;
             }, {});
 
+            if (Object.keys(clusters).length === 0) {
+                return;
+            }
+
             // Find the densest cluster key
             const densestKey = Object.keys(clusters).reduce((a, b) => {
                 // Ensure that both a and b are defined keys in clusters and have populated arrays
@@ -59,11 +63,11 @@ const TravelMap = ({ data }) => {
             const markerElements = validData.map((item, index) => (
                 <Marker key={index} position={[item.latitude, item.longitude]}>
                     <Popup>
-                        {item.primary_traveler} x{item.num_pax}<br />
                         <span className="text-bold">{item.property_name}</span><br />
-                        {item.country_name}<br />
-                        {item.consultant_display_name}<br />
-                        {moment(item.date_in).format('MMM Do YYYY')} - {moment(item.date_out).format('MMM Do YYYY')}
+                        {moment(item.date_in).format('MMM Do YYYY')} - {moment(item.date_out).format('MMM Do YYYY')}<br />
+                        {item.primary_traveler} x{item.num_pax}<br />
+                        {item.consultant_display_name} <br />
+                        {item.agency_name && item.agency_name !== "n/a" ? <>Agency: {item.agency_name}<br /></> : null}
                     </Popup>
                 </Marker>
             ));

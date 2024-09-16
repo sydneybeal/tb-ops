@@ -34,6 +34,8 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.models import UserSummary
 from api.services.auth.service import AuthService
+from api.services.currency.service import CurrencyService
+from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -83,6 +85,7 @@ def make_app(
     review_svc: ReviewService,
     quality_svc: QualityService,
     admin_svc: AdminService,
+    currency_svc: CurrencyService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -965,6 +968,33 @@ def make_app(
         """Get all Country models."""
         return await auth_svc.get_all_users()
 
+    @app.get(
+        "/v1/daily_rates",
+        operation_id="get_daily_rates",
+        response_model=Iterable[DailyRate],
+        tags=["daily_rates"],
+    )
+    async def get_daily_rates(
+        rate_date: date,
+        current_user: User = Depends(get_current_user),
+    ):
+        daily_rates = await currency_svc.get_rates_date(rate_date)
+        if daily_rates is None:
+            raise HTTPException(status_code=404, detail="Daily Rate data not found")
+        return daily_rates
+
+    @app.patch(
+        "/v1/daily_rates",
+        operation_id="post_daily_rates",
+        tags=["daily_rates"],
+    )
+    async def post_daily_rates(
+        daily_rate_requests: list[PatchDailyRateRequest],
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
+        return JSONResponse(content=results)
+
     return app
 
 
@@ -978,9 +1008,16 @@ if __name__ == "__main__":
     review_svc = ReviewService()
     quality_svc = QualityService()
     admin_svc = AdminService()
+    currency_svc = CurrencyService()
 
     app = make_app(
-        travel_svc, summary_svc, auth_svc, audit_svc, review_svc, quality_svc, admin_svc
+        travel_svc,
+        summary_svc,
+        auth_svc,
+        audit_svc,
+        quality_svc,
+        admin_svc,
+        currency_svc,
     )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

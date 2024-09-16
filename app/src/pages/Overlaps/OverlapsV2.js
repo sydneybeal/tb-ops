@@ -74,8 +74,6 @@ export const OverlapsV2 = () => {
         }, {});
     }, [apiData]);
 
-    console.log(groupedOverlaps);
-
     const renderOverlapItems = (property) => {
         if (!property || !Array.isArray(property.overlaps)) {
             return null;
@@ -226,66 +224,58 @@ export const OverlapsV2 = () => {
                 overflowY: 'auto',
             }}>
                 <div className="container center" style={{ width: '90%', paddingBottom: '800px' }}>
-                    {(userDetails.role !== 'admin') ? (
-                        <div>
-                            You do not have permission to view this page.
-                        </div>
-                    ) : (
+                    {loaded ? (
                         <>
-                            {loaded ? (
-                                <>
-                                    <div className="container center" style={{ width: '100%' }}>
-                                        <div className="sticky-container">
-                                            <WeekSelector onWeekChange={handleWeekChange} initialDate={startDate} />
-                                            <div style={{ fontSize: '1.4rem' }}>
-                                                <span>Overlaps from </span>
-                                                <span className="tb-teal-text text-bold">
-                                                    {startDate.format("M/D/YY")}
-                                                </span>
-                                                <span> to </span>
-                                                <span className="tb-teal-text text-bold">
-                                                    {moment(startDate).endOf('week').format("M/D/YY")}
-                                                </span>
-                                            </div>
-                                            {/* Rest of your component */}
-                                        </div>
-                                        <table className="overlaps-table">
-                                            <thead>
-                                                <tr className="tb-grey-text text-lighten-5 text-bold" style={{ borderBottom: '2px solid #8c8782', borderTop: 'none' }}>
-                                                    <th className="tb-teal darken-4" style={{ borderRadius: '5px 0px 0px 0px', width: '200px' }}>Property</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>SUN</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>MON</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>TUES</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>WEDS</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>THURS</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>FRI</th>
-                                                    <th className="tb-teal darken-3" style={{ borderRadius: '0px 5px 0px 0px' }}>SAT</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {loaded && Object.values(groupedOverlaps).length > 0 ? (
-                                                    Object.values(groupedOverlaps).map((property, propertyIndex) => (
-                                                        <React.Fragment key={propertyIndex}>
-                                                            {renderOverlapItems(property)} {/* Call with the entire property */}
-                                                        </React.Fragment>
-                                                    ))
-                                                ) : loaded ? (
-                                                    <tr>
-                                                        <td colSpan="8" style={{ textAlign: 'center' }}>No overlaps this week.</td>
-                                                    </tr>
-                                                ) :
-                                                    null
-                                                }
-                                            </tbody>
-                                        </table>
+                            <div className="container center" style={{ width: '100%' }}>
+                                <div className="sticky-container">
+                                    <WeekSelector onWeekChange={handleWeekChange} initialDate={startDate} />
+                                    <div style={{ fontSize: '1.4rem' }}>
+                                        <span>Overlaps from </span>
+                                        <span className="tb-teal-text text-bold">
+                                            {startDate.format("M/D/YY")}
+                                        </span>
+                                        <span> to </span>
+                                        <span className="tb-teal-text text-bold">
+                                            {moment(startDate).endOf('week').format("M/D/YY")}
+                                        </span>
                                     </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <CircularPreloader show={true} />
+                                    {/* Rest of your component */}
                                 </div>
-                            )}
+                                <table className="overlaps-table">
+                                    <thead>
+                                        <tr className="tb-grey-text text-lighten-5 text-bold" style={{ borderBottom: '2px solid #8c8782', borderTop: 'none' }}>
+                                            <th className="tb-teal darken-4" style={{ borderRadius: '5px 0px 0px 0px', width: '200px' }}>Property</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>SUN</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>MON</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>TUES</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>WEDS</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>THURS</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px' }}>FRI</th>
+                                            <th className="tb-teal darken-3" style={{ borderRadius: '0px 5px 0px 0px' }}>SAT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loaded && Object.values(groupedOverlaps).length > 0 ? (
+                                            Object.values(groupedOverlaps).map((property, propertyIndex) => (
+                                                <React.Fragment key={propertyIndex}>
+                                                    {renderOverlapItems(property)} {/* Call with the entire property */}
+                                                </React.Fragment>
+                                            ))
+                                        ) : loaded ? (
+                                            <tr>
+                                                <td colSpan="8" style={{ textAlign: 'center' }}>No overlaps this week.</td>
+                                            </tr>
+                                        ) :
+                                            null
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         </>
+                    ) : (
+                        <div>
+                            <CircularPreloader show={true} />
+                        </div>
                     )}
                 </div>
             </main >
