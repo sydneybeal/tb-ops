@@ -1,0 +1,6 @@
+version: 2
+
+secret:
+
+  ignored_paths:
+      - 'api/cmd/migrations/seed_from_prod.py'
