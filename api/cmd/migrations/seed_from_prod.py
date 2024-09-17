@@ -67,21 +67,21 @@ async def main() -> None:
     log.info("Attempting connection to postgres prod")
     conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST_UAT", "localhost"),
-            os.getenv("POSTGRES_USER_UAT", "postgres"),
-            os.getenv("POSTGRES_PASSWORD_UAT", "postgres"),
-            os.getenv("POSTGRES_DB_UAT", "postgres"),
-            int(os.getenv("POSTGRES_PORT", "5432")),
+            os.getenv("POSTGRES_HOST_UAT", ""),
+            os.getenv("POSTGRES_USER_UAT", ""),
+            os.getenv("POSTGRES_PASSWORD_UAT", ""),
+            os.getenv("POSTGRES_DB_UAT", ""),
+            int(os.getenv("POSTGRES_PORT", "")),
         )
     )
     log.info("Attempting connection to postgres local")
     uat_conn = await make_conn(
         PostgresConfig(
-            os.getenv("POSTGRES_HOST_PROD", "localhost"),
-            os.getenv("POSTGRES_USER_PROD", "postgres"),
-            os.getenv("POSTGRES_PASSWORD_PROD", "postgres"),
-            os.getenv("POSTGRES_DB_PROD", "postgres"),
-            int(os.getenv("POSTGRES_PORT", "5432")),
+            os.getenv("POSTGRES_HOST_PROD", ""),
+            os.getenv("POSTGRES_USER_PROD", ""),
+            os.getenv("POSTGRES_PASSWORD_PROD", ""),
+            os.getenv("POSTGRES_DB_PROD", ""),
+            int(os.getenv("POSTGRES_PORT", "")),
         )
     )
     assert not conn.is_closed()
