@@ -136,6 +136,7 @@ def make_app(
         user = await auth_svc.authenticate_user(email, password)
 
         if not user:
+            print(f"User login for {email} failed.")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
@@ -143,6 +144,7 @@ def make_app(
             )
 
         # Remove the fixed expiration duration. Let `create_access_token` handle the expiration.
+        print(f"User login for {email} successful.")
         access_token = auth_svc.create_access_token(
             data={
                 "sub": user.email
