@@ -56,6 +56,6 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: python -m pip install --upgrade setuptools pip virtualenv -r requirements.txt
+      - run: python -m pip install --upgrade setuptools pip virtualenv -r requirements.txt -r dev-requirements.txt
       - run: pip install -e .
       - run: tox -e py311
