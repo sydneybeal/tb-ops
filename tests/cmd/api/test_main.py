@@ -247,23 +247,81 @@ async def test_entry_elements_crud(ac: AsyncClient):
     )
 
 
-async def test_get_one_accommodation_log(ac: AsyncClient):
+async def test_in_line_element_creation(ac: AsyncClient):
+    # Tests a payload where the user created new agency/BC/property in the form
+    consultant_res = await get_consultants(ac)
+    if consultant_res:
+        consultant = consultant_res[0]
+    country_res = await get_countries(ac)
+    if country_res:
+        country = country_res[0]
+        print(country)
+    portfolio_res = await get_portfolios(ac)
+    if portfolio_res:
+        portfolio = portfolio_res[0]
+    data = [
+        {
+            "log_id": None,
+            # test with fill-in-the-blank property
+            "property_id": None,
+            "new_property_name": "Test In-Line Property",
+            "new_property_portfolio_id": portfolio["id"],
+            # TODO fix failure for fill-in-the-blank portfolio
+            "new_property_portfolio_name": None,
+            "new_property_country_id": country["id"],
+            "new_property_core_destination_id": country["core_destination_id"],
+            # TODO is new core destination in-line supported?
+            "new_property_core_destination_name": None,
+            "consultant_id": consultant["id"],
+            "primary_traveler": "Test/Test",
+            "num_pax": 2,
+            "date_in": "2024-01-01",
+            "date_out": "2024-01-04",
+            # test with fill-in-the-blank booking channel
+            "booking_channel_id": None,
+            "new_booking_channel_name": "Test In-Line Booking Channel",
+            # test with fill-in-the-blank agency
+            "agency_id": None,
+            "new_agency_name": "Test In-Line Agency",
+            "updated_by": "Test Package Runner",
+        }
+    ]
+    res = await ac.patch(url="/v1/accommodation_logs", json=data)
+    assert res.status_code == 200
+
+    assert res.json() == {
+        "summarized_audit_logs": {
+            "accommodation_logs": {"insert": 1},
+            "agencies": {"insert": 1},
+            "booking_channels": {"insert": 1},
+            "properties": {"insert": 1},
+        },
+        "messages": [],
+    }
+
+
+async def test_get_accommodation_logs(ac: AsyncClient):
     res = await ac.get(url="/v1/accommodation_logs")
     assert res.status_code == 200
     accommodation_logs = res.json()
-    assert len(accommodation_logs) == 1
-    al = accommodation_logs[0]
-    assert al["primary_traveler"] == "Test/Test"
-    assert al["core_destination_name"] == "Test Core Destination"
-    assert al["country_name"] == "Test Country"
-    assert al["num_pax"] == 2
-    assert al["date_in"] == "2024-01-01"
-    assert al["date_out"] == "2024-01-04"
-    assert al["bed_nights"] == 6
-    assert al["property_name"] == "Test Property"
-    assert al["property_portfolio"] == "Test Portfolio"
-    assert al["booking_channel_name"] == "Test Booking Channel"
-    assert al["agency_name"] == "Test Agency"
-    assert al["consultant_first_name"] == "Test"
-    assert al["consultant_last_name"] == "Test"
-    assert al["consultant_display_name"] == "Test/Test"
+    assert len(accommodation_logs) == 2
+    for al in accommodation_logs:
+        assert al["primary_traveler"] == "Test/Test"
+        assert al["core_destination_name"] == "Test Core Destination"
+        assert al["country_name"] == "Test Country"
+        assert al["num_pax"] == 2
+        assert al["date_in"] == "2024-01-01"
+        assert al["date_out"] == "2024-01-04"
+        assert al["bed_nights"] == 6
+        assert al["property_portfolio"] == "Test Portfolio"
+        if "In-Line" in al["property_name"]:
+            assert al["property_name"] == "Test In-Line Property"
+            assert al["agency_name"] == "Test In-Line Agency"
+            assert al["booking_channel_name"] == "Test In-Line Booking Channel"
+        else:
+            assert al["property_name"] == "Test Property"
+            assert al["agency_name"] == "Test Agency"
+            assert al["booking_channel_name"] == "Test Booking Channel"
+        assert al["consultant_first_name"] == "Test"
+        assert al["consultant_last_name"] == "Test"
+        assert al["consultant_display_name"] == "Test/Test"
