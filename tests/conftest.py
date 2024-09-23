@@ -172,7 +172,7 @@ async def postgres_test_database(event_loop):
     """Set up and tear down the PostgreSQL test database."""
     asyncio.set_event_loop(event_loop)
     test_db_name = "rr_test"
-    original_db_name = "tb-ops"
+    original_db_name = "postgres"
     log.info("Spinning up PostgreSQL test database...")
 
     # Temporarily set the environment variable to the original database
