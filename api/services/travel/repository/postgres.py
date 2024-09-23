@@ -912,6 +912,62 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new core destination record(s) to the repository."
         )
 
+    async def upsert_core_destination(
+        self, core_destination_data: CoreDestination
+    ) -> list[Tuple[UUID, bool]]:
+        """Upserts a sequence of CoreDestination models into the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+        INSERT INTO public.core_destinations (
+            id,
+            name,
+            created_at,
+            updated_at,
+            updated_by
+        ) VALUES (
+            $1, $2, $3, $4, $5
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            name = EXCLUDED.name,
+            updated_at = EXCLUDED.updated_at,
+            updated_by = EXCLUDED.updated_by
+        RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    core_destination_data.id,
+                    core_destination_data.name.strip(),
+                    core_destination_data.created_at,
+                    core_destination_data.updated_at,
+                    core_destination_data.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new core destination(s).")
+        print(f"Updated {updated_count} existing core destination(s).")
+        return results
+
     async def get_core_destination_by_name(self, name: str) -> CoreDestination:
         """Returns a single CoreDestination model in the repository by name."""
         pool = await self._get_pool()
@@ -1054,7 +1110,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new country record(s) to the repository."
         )
 
-    async def upsert_country(self, country_data: Property) -> list[Tuple[UUID, bool]]:
+    async def upsert_country(self, country_data: Country) -> list[Tuple[UUID, bool]]:
         """Upserts a sequence of Country models into the repository."""
         pool = await self._get_pool()
         query = dedent(

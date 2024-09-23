@@ -86,16 +86,39 @@ async def make_pool(conf: PostgresConfig) -> asyncpg.Pool:
 class ConnectionManager:
     """Manages connection pools."""
 
-    __pools: dict[str, asyncpg.Pool] = {}
+    def __init__(self):
+        self.pools: dict[tuple[str, str], asyncpg.Pool] = {}
 
-    def __contains__(self, host: str) -> bool:
-        """Check if a database connection pool for a host exists within the manager."""
-        return host in ConnectionManager.__pools
+    async def get(self, conn_config: PostgresConfig) -> asyncpg.Pool:
+        """Get a pool if it exists; else create and return it."""
+        pool_key = (conn_config.host, conn_config.dbname)
+        if pool_key not in self.pools:
+            self.pools[pool_key] = await make_pool(conn_config)
+        return self.pools[pool_key]
 
-    @classmethod
-    async def get(cls, conn_config: PostgresConfig) -> asyncpg.Pool:
-        """Get a pool if exists, else creates and returns it."""
-        if conn_config.host not in ConnectionManager.__pools:
-            ConnectionManager.__pools[conn_config.host] = await make_pool(conn_config)
+    async def close_all_pools(self):
+        """Close all pools and reset the pools dictionary."""
+        for pool in self.pools.values():
+            await pool.close()
+        self.pools.clear()
 
-        return ConnectionManager.__pools[conn_config.host]
+    # __pools: dict[str, asyncpg.Pool] = {}
+
+    # def __contains__(self, host: str) -> bool:
+    #     """Check if a database connection pool for a host exists within the manager."""
+    #     return host in ConnectionManager.__pools
+
+    # @classmethod
+    # async def get(cls, conn_config: PostgresConfig) -> asyncpg.Pool:
+    #     """Get a pool if exists, else creates and returns it."""
+    #     if conn_config.host not in ConnectionManager.__pools:
+    #         ConnectionManager.__pools[conn_config.host] = await make_pool(conn_config)
+
+    #     return ConnectionManager.__pools[conn_config.host]
+
+    # @classmethod
+    # async def close_all(cls):
+    #     """Close all pools and reset the __pools dictionary."""
+    #     for pool in cls.__pools.values():
+    #         await pool.close()
+    #     cls.__pools.clear()

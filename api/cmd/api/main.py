@@ -53,6 +53,7 @@ from api.services.travel.models import (
     PatchBookingChannelRequest,
     PatchConsultantRequest,
     PatchCountryRequest,
+    PatchCoreDestinationRequest,
     PatchPortfolioRequest,
     PatchPropertyRequest,
     PatchPropertyDetailRequest,
@@ -64,7 +65,29 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v1.0.0"
+VERSION = "v1.0.1"
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """Gets current user for API authentication."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WwW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(
+            token, auth_svc.SECRET_KEY, algorithms=[auth_svc.ALGORITHM]
+        )
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        user = await auth_svc.get_user(email=email)
+        if user is None:
+            raise credentials_exception
+        return user
+    except JWTError as exc:
+        raise credentials_exception from exc
 
 
 def make_app(
@@ -105,27 +128,6 @@ def make_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    async def get_current_user(token: str = Depends(oauth2_scheme)):
-        """Gets current user for API authentication."""
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WwW-Authenticate": "Bearer"},
-        )
-        try:
-            payload = jwt.decode(
-                token, auth_svc.SECRET_KEY, algorithms=[auth_svc.ALGORITHM]
-            )
-            email: str = payload.get("sub")
-            if email is None:
-                raise credentials_exception
-            user = await auth_svc.get_user(email=email)
-            if user is None:
-                raise credentials_exception
-            return user
-        except JWTError as exc:
-            raise credentials_exception from exc
 
     @app.get("/")
     def root():
@@ -431,6 +433,19 @@ def make_app(
     ) -> Sequence[CoreDestination] | JSONResponse:
         """Get all CoreDestination models."""
         return await travel_svc.get_all_core_destinations()
+
+    @app.patch(
+        "/v1/core_destinations",
+        operation_id="post_core_destinations",
+        tags=["core_destinations"],
+    )
+    async def post_core_destinations(
+        core_dest_data: PatchCoreDestinationRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a CoreDestination."""
+        results = await travel_svc.process_core_destination_request(core_dest_data)
+        return JSONResponse(content=results)
 
     @app.get(
         "/v1/consultants",

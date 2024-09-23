@@ -37,6 +37,7 @@ async def main() -> int:
             int(os.getenv("POSTGRES_PORT", "5432")),
         )
     )
+    log.info(f"Running migrations on database {os.getenv('POSTGRES_DB', 'tb-ops')}")
     assert not conn.is_closed()
     migrations = list(
         sorted(
