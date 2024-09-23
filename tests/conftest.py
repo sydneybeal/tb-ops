@@ -38,6 +38,8 @@ from api.services.quality.service import QualityService
 from api.adapters.repository import ConnectionPoolManager
 from api.cmd.api.main import make_app
 from api.cmd.api.main import get_current_user
+from jose import jwt
+from datetime import datetime, timedelta
 
 log = logging.getLogger("rr")
 
@@ -81,6 +83,37 @@ def quality_service():
 @pytest.fixture
 def currency_service():
     return CurrencyService()
+
+
+@pytest.fixture
+async def test_user(postgres_test_database):
+    # Assuming you have a User model and an AuthService that can create users
+    user_data = {
+        "email": "testuser@example.com",
+        "password": "testpassword",  # Store hashed password in actual implementation
+    }
+    # Create the user using AuthService or directly via the database session
+    user = await auth_service.create_user(**user_data)
+    return user
+
+
+def create_test_token(email: str, secret_key: str, algorithm: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode = {"sub": email, "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
+    return encoded_jwt
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_endpoint(ac: AsyncClient, test_user):
+    token = create_test_token(
+        email=test_user.email,
+        secret_key=auth_service.SECRET_KEY,
+        algorithm=auth_service.ALGORITHM,
+    )
+    headers = {"Authorization": f"Bearer {token}"}
+    response = await ac.get("/v1/accommodation_logs", headers=headers)
+    assert response.status_code == 200
 
 
 @pytest.fixture
@@ -128,36 +161,6 @@ def event_loop():
     asyncio.set_event_loop(loop)
     yield loop
     loop.close()
-
-
-# @pytest.fixture(scope="session", autouse=True)
-# async def postgres_test_database():
-#     """Set up and tear down the PostgreSQL test database."""
-#     test_db_name = "rr_test"
-#     log.info("Spinning up PostgreSQL test database...")
-#     pool = await ConnectionPoolManager.get()
-#     async with pool.acquire() as connection:
-#         await connection.execute(f"DROP DATABASE IF EXISTS {test_db_name}")
-#         await connection.execute(f"CREATE DATABASE {test_db_name}")
-#     await pool.close()
-#     ConnectionPoolManager._pool = None
-#     log.info("Changing connection to test database.")
-#     rr_db = os.environ["POSTGRES_DB"]
-#     os.environ["POSTGRES_DB"] = test_db_name
-#     pool = await ConnectionPoolManager.get()
-#     log.info("Running migrations on test database.")
-#     await runner.main()
-#     log.info("PostgreSQL test database initialized.")
-#     yield
-#     log.info("Closing connection to test database.")
-#     await pool.close()
-#     ConnectionPoolManager._pool = None
-#     log.info("Changing connection to main database.")
-#     os.environ["POSTGRES_DB"] = rr_db
-#     pool = await ConnectionPoolManager.get()
-#     async with pool.acquire() as connection:
-#         await connection.execute(f"DROP DATABASE {test_db_name}")
-#     log.info("Tore down PostgreSQL test database.")
 
 
 @pytest.fixture(scope="session")
