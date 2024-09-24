@@ -20,7 +20,7 @@ omit =
     .tox/*
     tests/*
     setup.py
-    tb-ops/cmd/migrations/*
+    api/cmd/migrations/*
 
 [report]
 show_missing = True

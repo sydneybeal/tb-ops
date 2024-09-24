@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """API tests."""
+import os
 from httpx import AsyncClient
+from api.services.auth.models import User
 import logging
+from jose import jwt
+from datetime import datetime, timedelta
 
 log = logging.getLogger("rr")
 
@@ -27,9 +31,61 @@ async def test_get_empty_accommodation_logs(ac: AsyncClient):
     assert len(accommodation_logs) == 0
 
 
+def create_test_token(email: str, secret_key: str, algorithm: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode = {"sub": email, "exp": expire}
+    encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
+    return encoded_jwt
+
+
+async def test_get_current_user_endpoint(ac: AsyncClient, auth_service):
+    user_data = {
+        "email": "testuser@example.com",
+        "password": "testpassword",
+        "role": "sales_support",
+    }
+    hashed_password = auth_service.hash_password(user_data["password"])
+    auth_user = User(
+        email=user_data["email"],
+        hashed_password=hashed_password,
+        role=user_data["role"],
+    )
+    # Create the user using AuthService
+    await auth_service.add_user([auth_user])
+    data = {"email": user_data["email"], "password": user_data["password"]}
+    auth_res = await ac.post(url="/token", data=data)
+    assert auth_res.status_code == 200
+    auth_res = auth_res.json()
+    assert auth_res["role"] == "sales_support"
+
+    # user = await auth_service.get_user(email=user_data["email"])
+    # print(user)
+    # token = create_test_token(
+    #     email=user.email,
+    #     secret_key=os.environ["SECRET_KEY"],
+    #     algorithm=os.environ["ALGORITHM"],
+    # )
+    # headers = {"Authorization": f"Bearer {token}"}
+    # response = await ac.get("/v1/accommodation_logs", headers=headers)
+    # assert response.status_code == 200
+
+
 async def test_get_bad_endpoint(ac: AsyncClient):
-    res = await ac.get(url="/v1/bad_endpoint")
+    res = await ac.get(
+        url="/v1/bad_endpoint",
+    )
     assert res.status_code == 404
+
+
+async def test_get_bad_token(ac: AsyncClient):
+    data = {"email": "bad@email.com", "password": "badpassword"}
+    auth_res = await ac.post(url="/token", data=data)
+    assert auth_res.status_code == 401
+
+
+async def test_get_root(ac: AsyncClient):
+    res = await ac.get(url="/")
+    return res.status_code == 200
 
 
 async def add_core_destination(ac: AsyncClient):

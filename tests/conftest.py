@@ -17,7 +17,7 @@ import os
 
 os.environ["POSTGRES_DB"] = "rr_test"
 os.environ["SECRET_KEY"] = "test"
-os.environ["ALGORITHM"] = "abc"
+os.environ["ALGORITHM"] = "HS256"
 
 
 import asyncio
@@ -27,10 +27,11 @@ from httpx import AsyncClient
 import logging
 import pytest
 
+
 from api.services.audit.service import AuditService
 from api.services.auth.service import AuthService
 from api.cmd.migrations import runner
-from api.config.postgres import PostgresConfig, ConnectionManager
+from api.config.postgres import PostgresConfig
 from api.services.currency.service import CurrencyService
 from api.services.summaries.service import SummaryService
 from api.services.travel.service import TravelService
@@ -38,8 +39,7 @@ from api.services.quality.service import QualityService
 from api.adapters.repository import ConnectionPoolManager
 from api.cmd.api.main import make_app
 from api.cmd.api.main import get_current_user
-from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime
 
 log = logging.getLogger("rr")
 
@@ -66,7 +66,7 @@ def summary_service(postgres_test_database):
 
 
 @pytest.fixture
-def auth_service():
+def auth_service(postgres_test_database):
     return AuthService()
 
 
@@ -83,37 +83,6 @@ def quality_service():
 @pytest.fixture
 def currency_service():
     return CurrencyService()
-
-
-@pytest.fixture
-async def test_user(postgres_test_database):
-    # Assuming you have a User model and an AuthService that can create users
-    user_data = {
-        "email": "testuser@example.com",
-        "password": "testpassword",  # Store hashed password in actual implementation
-    }
-    # Create the user using AuthService or directly via the database session
-    user = await auth_service.create_user(**user_data)
-    return user
-
-
-def create_test_token(email: str, secret_key: str, algorithm: str) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode = {"sub": email, "exp": expire}
-    encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algorithm)
-    return encoded_jwt
-
-
-@pytest.mark.asyncio
-async def test_get_current_user_endpoint(ac: AsyncClient, test_user):
-    token = create_test_token(
-        email=test_user.email,
-        secret_key=auth_service.SECRET_KEY,
-        algorithm=auth_service.ALGORITHM,
-    )
-    headers = {"Authorization": f"Bearer {token}"}
-    response = await ac.get("/v1/accommodation_logs", headers=headers)
-    assert response.status_code == 200
 
 
 @pytest.fixture
