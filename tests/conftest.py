@@ -26,6 +26,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 import logging
 import pytest
+from unittest.mock import AsyncMock, Mock
 
 
 from api.services.audit.service import AuditService
@@ -53,6 +54,21 @@ def now() -> datetime:
 def monkeysession():
     with pytest.MonkeyPatch.context() as monkeypatch:
         yield monkeypatch
+
+
+@pytest.fixture
+async def mock_auth_service():
+    mock_service = Mock(spec=AuthService)
+    mock_service.SECRET_KEY = "testsecretkey"
+    mock_service.ALGORITHM = "HS256"
+    mock_service.get_user = AsyncMock(
+        return_value={
+            "email": "testuser@example.com",
+            "password": "testpassword",
+            "role": "sales_support",
+        }
+    )
+    return mock_service
 
 
 @pytest.fixture

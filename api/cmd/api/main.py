@@ -68,18 +68,27 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 VERSION = "v1.0.1"
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_auth_service() -> AuthService:
+    """Dependency provider for AuthService."""
+    # This function will be overridden in the app to provide the actual auth_svc
+    raise NotImplementedError
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    auth_svc: AuthService = Depends(get_auth_service),
+):
     """Gets current user for API authentication."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WwW-Authenticate": "Bearer"},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     try:
         payload = jwt.decode(
             token, auth_svc.SECRET_KEY, algorithms=[auth_svc.ALGORITHM]
         )
-        email: str = payload.get("sub")
+        email: Optional[str] = payload.get("sub")
         if email is None:
             raise credentials_exception
         user = await auth_svc.get_user(email=email)
@@ -128,6 +137,13 @@ def make_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Provide the actual AuthService instance
+    def get_auth_service_override() -> AuthService:
+        return auth_svc
+
+    # Override the dependency
+    app.dependency_overrides[get_auth_service] = get_auth_service_override
 
     @app.get("/")
     def root():
@@ -703,10 +719,7 @@ def make_app(
         if property_location:
             query_params["property_location"] = property_location.split("|")
         # Similar parsing for other array-like parameters if necessary
-
         report_data = await summary_svc.get_bed_night_report(query_params)
-        if report_data is None:
-            raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
     @app.get(

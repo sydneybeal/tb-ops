@@ -108,7 +108,9 @@ class TravelService:
         accommodation_log_summary = (
             await self._summary_svc.get_accommodation_logs_by_filters(filters)
         )
-        first_row = accommodation_log_summary[0] if accommodation_log_summary else None
+        if not accommodation_log_summary:
+            return False
+        first_row = accommodation_log_summary[0]
         detail_before_deletion = {
             "id": first_row.id,
             "primary_traveler": first_row.primary_traveler,
@@ -678,6 +680,8 @@ class TravelService:
                 "details": affected_logs,
             }
         country_summary = await self._summary_svc.get_country_details_by_id(country_id)
+        if not country_summary:
+            return False
         detail_before_deletion = {
             "id": country_summary.id,
             "name": country_summary.name,
@@ -1065,6 +1069,8 @@ class TravelService:
         property_summary = await self._summary_svc.get_property_details_by_id(
             property_id
         )
+        if not property_summary:
+            return False
         detail_before_deletion = {
             "id": property_summary.property_id,
             "name": property_summary.name,
