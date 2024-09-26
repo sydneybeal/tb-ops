@@ -2,9 +2,9 @@
 
 import os
 import pytest
-from typing import Iterable
+from typing import Iterable, Sequence
 from api.services.travel.service import TravelService
-from api.services.travel.models import AccommodationLog
+from api.services.travel.models import AccommodationLog, Property
 
 
 @pytest.fixture
@@ -49,17 +49,43 @@ def accommodation_logs():
 
 
 @pytest.fixture
+def accommodation_logs():
+    properties = [
+        {
+            "id": "59eb9a25-e618-4c51-9ff8-c190cd99a590",
+            "name": "Test Service Property",
+            "portfolio_id": "TODO mock existing portfolio",
+            "representative": None,
+            "country_id": "TODO mock existing country",
+            "core_destination_id": "TODO mock existing core destination",
+            "property_type": "luxury hotel",
+            "location": "Test National Park",
+            "latitude": -12.414,
+            "longitude": -12.414,
+            "created_at": "2024-03-14T01:21:53.129748Z",
+            "updated_at": "2024-03-14T01:21:53.129749Z",
+            "updated_by": "Test",
+        }
+    ]
+    return [Property(**al) for al in properties]
+
+
+@pytest.fixture
 def test_email():
     return "test@travelbeyond.com"
 
 
-# async def test_accommodation_logs_crud(
-#     accommodation_logs: Iterable[AccommodationLog], test_email: str
-# ) -> None:
-#     travel_service = TravelService()
+async def test_accommodation_logs_crud(
+    accommodation_logs: Sequence[AccommodationLog], test_email: str
+) -> None:
+    travel_service = TravelService()
 
-#     print(f"{travel_service._repo}")
+    print(f"{travel_service._repo}")
 
-# First delete just in case there are leftovers
-# for accommodation_log in accommodation_logs:
-#     await travel_service.delete_accommodation_log(accommodation_log.id, test_email)
+    # First delete just in case there are leftovers
+    for accommodation_log in accommodation_logs:
+        await travel_service.delete_accommodation_log(accommodation_log.id, test_email)
+
+    # Now testing the add function
+    # TODO: fails because property_id, country_id, etc are not existent
+    await travel_service.add_accommodation_log(accommodation_logs)

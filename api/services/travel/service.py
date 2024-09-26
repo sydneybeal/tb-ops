@@ -58,14 +58,6 @@ class TravelService:
     # AccommodationLog
     async def add_accommodation_log(self, models: Sequence[AccommodationLog]) -> None:
         """Adds accommodation log model to the repository."""
-        # Only add countries that don't already exist
-        # to_be_added = [
-        #     model
-        #     for model in models
-        #     if not await self._repo.get_accommodation_log(
-        #         model.primary_traveler, model.property_id, model.date_in, model.date_out
-        #     )
-        # ]
         existing_records = await self._repo.get_all_accommodation_logs()
         existing_combinations = {
             (log.primary_traveler, log.property_id, log.date_in, log.date_out)
