@@ -140,7 +140,9 @@ export const DailyRates = () => {
                 setConvertedAmount('Rate not available'); // Handling when the rate is zero or not found
             }
         } else {
-            setConvertedAmount(0)
+            setConvertedAmount(0);
+            setCalculationInput(null);
+            setCalculationRate(null);
         }
     }, [inputAmount, currency, apiData]);       
 
