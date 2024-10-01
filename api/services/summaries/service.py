@@ -20,8 +20,11 @@ from operator import attrgetter
 from typing import Sequence, List, Optional, Set
 from uuid import UUID
 from io import BytesIO
+from xml.etree.ElementInclude import include
 import pandas as pd
 from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
+from openpyxl.cell.cell import MergedCell
 
 from api.services.summaries.models import (
     AccommodationLogSummary,
@@ -41,6 +44,8 @@ from api.services.summaries.models import (
 from api.services.summaries.repository.postgres import PostgresSummaryRepository
 
 from api.services.travel.models import Trip
+
+FONT_NAME = "Brandon Grotesque"
 
 
 class SummaryService:
@@ -231,7 +236,7 @@ class SummaryService:
             property_granularity,
         )
 
-        return await self.write_excel(df, report_title)
+        return await self.write_excel(df, report_title, include_total_column=True)
 
     def results_to_dataframe(self, results, time_granularity, property_granularity):
         """Create a pandas DataFrame from the results."""
@@ -280,98 +285,367 @@ class SummaryService:
 
         return pivot_df
 
+    # async def write_excel(
+    #     self, df: pd.DataFrame, report_title: str = "Bed Night Report"
+    # ):
+    #     """Writes a dataframe into an Excel stream."""
+    #     excel_stream = BytesIO()
+    #     with pd.ExcelWriter(excel_stream, engine="openpyxl") as writer:
+    #         df.to_excel(
+    #             writer, index=False, startrow=1
+    #         )  # startrow=1 to leave space for the title
+
+    #         # Set the title in the Excel sheet
+    #         sheet = writer.sheets["Sheet1"]
+    #         title = report_title
+    #         title_row = 1
+    #         title_column_start = 1
+    #         title_column_end = len(
+    #             df.columns
+    #         )  # This assumes that you want to span across all columns used in the df
+
+    #         # Write title to the first cell
+    #         sheet.cell(row=title_row, column=title_column_start, value=title)
+
+    #         # Set column widths
+    #         for col in sheet.columns:
+    #             max_length = 0
+    #             column = col[0].column_letter  # Get the column letters
+
+    #             for cell in col:
+    #                 try:
+    #                     # Adjust the length if necessary; adding a little extra space
+    #                     if len(str(cell.value)) > max_length:
+    #                         max_length = len(str(cell.value))
+    #                 except:
+    #                     pass
+    #             adjusted_width = max_length + 1
+    #             sheet.column_dimensions[column].width = adjusted_width
+
+    #         # Append footer after DataFrame ends
+    #         footer_row = len(df) + 3  # Assuming 2 extra rows after the DataFrame ends
+    #         sheet.cell(row=footer_row, column=1, value="Travel Beyond Confidential")
+
+    #         # Merge cells for the title row across the width of DataFrame columns
+    #         sheet.merge_cells(
+    #             start_row=title_row,
+    #             start_column=title_column_start,
+    #             end_row=title_row,
+    #             end_column=title_column_end,
+    #         )
+    #         sheet.merge_cells(
+    #             start_row=footer_row,
+    #             start_column=title_column_start,
+    #             end_row=footer_row,
+    #             end_column=title_column_end,
+    #         )
+
+    #         # Define font, fill, and border styles for title and footer
+    #         title_font = Font(bold=True, size=18, color="F2F0E7")
+    #         footer_font = Font(bold=True, size=14, color="F2F0E7")
+    #         fill_color = PatternFill(
+    #             start_color="0E9BAC", end_color="0E9BAC", fill_type="solid"
+    #         )
+    #         border_style = Border(
+    #             left=Side(style="thin", color="000000"),
+    #             right=Side(style="thin", color="000000"),
+    #             top=Side(style="thin", color="000000"),
+    #             bottom=Side(style="thin", color="000000"),
+    #         )
+
+    #         # Apply formatting for title
+    #         footer_cell = sheet.cell(row=footer_row, column=1)
+    #         footer_cell.alignment = Alignment(horizontal="center", vertical="center")
+    #         footer_cell.font = footer_font
+    #         footer_cell.fill = fill_color
+    #         footer_cell.border = border_style
+
+    #         for col_num in range(
+    #             1, len(df.columns) + 1
+    #         ):  # Apply border to all cells in the footer row
+    #             footer_cell = sheet.cell(row=footer_row, column=col_num)
+    #             footer_cell.alignment = Alignment(
+    #                 horizontal="center", vertical="center"
+    #             )
+    #             footer_cell.font = footer_font
+    #             footer_cell.fill = fill_color
+    #             footer_cell.border = border_style
+
+    #         # Apply formatting for footer
+    #         title_cell = sheet.cell(row=1, column=1)
+    #         title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    #         title_cell.font = title_font
+    #         title_cell.fill = fill_color
+    #         title_cell.border = border_style
+
+    #     excel_stream.seek(0)  # Rewind the buffer to the beginning after writing
+    #     return excel_stream
+
+    def is_numeric(self, value):
+        """
+        Determines if a given value is numeric.
+        Returns True if value is an integer or float, or a string that can be converted to a float.
+        """
+        if isinstance(value, (int, float)):
+            return True
+        if isinstance(value, str):
+            value = value.strip()
+            if value.isdigit():
+                return True
+            try:
+                float(value)
+                return True
+            except ValueError:
+                return False
+        return False
+
     async def write_excel(
-        self, df: pd.DataFrame, report_title: str = "Bed Night Report"
+        self,
+        df: pd.DataFrame,
+        report_title: str = "Bed Night Report",
+        include_total_column: bool = False,
     ):
-        """Writes a dataframe into an Excel stream."""
+        """Writes a dataframe into an Excel stream with enhanced formatting based on stakeholder requests."""
         excel_stream = BytesIO()
+        header_row = 3
+        tb_teal_fill = PatternFill(
+            start_color="0E9BAC", end_color="0E9BAC", fill_type="solid"
+        )
+        tb_white_font = "F2F0E7"
+
         with pd.ExcelWriter(excel_stream, engine="openpyxl") as writer:
+            # Write the DataFrame starting from row 3 to leave space for title and subtitle
             df.to_excel(
-                writer, index=False, startrow=1
-            )  # startrow=1 to leave space for the title
+                writer, index=False, startrow=header_row - 1, sheet_name="Sheet1"
+            )
+            numeric_columns = df.select_dtypes(include=["number"]).columns.tolist()
 
-            # Set the title in the Excel sheet
             sheet = writer.sheets["Sheet1"]
-            title = report_title
-            title_row = 1
-            title_column_start = 1
-            title_column_end = len(
-                df.columns
-            )  # This assumes that you want to span across all columns used in the df
 
-            # Write title to the first cell
-            sheet.cell(row=title_row, column=title_column_start, value=title)
+            # Define the number of columns in the DataFrame
+            df_width = len(df.columns)
+            num_columns = df_width + 1 if include_total_column else df_width
 
-            # Set column widths
-            for col in sheet.columns:
-                max_length = 0
-                column = col[0].column_letter  # Get the column letters
-
-                for cell in col:
-                    try:
-                        # Adjust the length if necessary; adding a little extra space
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = max_length + 1
-                sheet.column_dimensions[column].width = adjusted_width
-
-            # Append footer after DataFrame ends
-            footer_row = len(df) + 3  # Assuming 2 extra rows after the DataFrame ends
-            sheet.cell(row=footer_row, column=1, value="Travel Beyond Confidential")
-
-            # Merge cells for the title row across the width of DataFrame columns
+            # ----------------------------
+            # 1. Add Title (Row 1)
+            # ----------------------------
+            title_font = Font(name=FONT_NAME, bold=True, size=18, color=tb_white_font)
             sheet.merge_cells(
-                start_row=title_row,
-                start_column=title_column_start,
-                end_row=title_row,
-                end_column=title_column_end,
+                start_row=1,
+                start_column=1,
+                end_row=1,
+                end_column=num_columns,
             )
-            sheet.merge_cells(
-                start_row=footer_row,
-                start_column=title_column_start,
-                end_row=footer_row,
-                end_column=title_column_end,
-            )
+            title_cell = sheet.cell(row=1, column=1, value=report_title)
+            title_cell.font = title_font
+            title_cell.fill = tb_teal_fill
+            title_cell.alignment = Alignment(horizontal="center", vertical="center")
 
-            # Define font, fill, and border styles for title and footer
-            title_font = Font(bold=True, size=18, color="F2F0E7")
-            footer_font = Font(bold=True, size=14, color="F2F0E7")
-            fill_color = PatternFill(
-                start_color="0E9BAC", end_color="0E9BAC", fill_type="solid"
+            # ----------------------------
+            # 2. Add Subtitle (Row 2)
+            # ----------------------------
+            subtitle_font = Font(name=FONT_NAME, size=14, color=tb_white_font)
+            current_datetime = datetime.now()
+            subtitle_text = f"Bed Nights as of {current_datetime.strftime('%B')} {current_datetime.day}, {current_datetime.year}"
+            sheet.merge_cells(
+                start_row=2, start_column=1, end_row=2, end_column=num_columns
             )
-            border_style = Border(
+            subtitle_cell = sheet.cell(row=2, column=1, value=subtitle_text)
+            subtitle_cell.font = subtitle_font
+            subtitle_cell.fill = tb_teal_fill
+            subtitle_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            # ----------------------------
+            # 3. Format Headers (Row 4)
+            # ----------------------------
+
+            header_font = Font(name=FONT_NAME, bold=True, size=11)
+            for col_num in range(1, num_columns + 1):
+                # Retrieve the header value from the DataFrame
+                if col_num < num_columns:
+                    # Zero-based indexing in pandas
+                    header_value = df.columns[col_num - 1]
+                else:
+                    header_value = ""
+
+                cell = sheet.cell(row=header_row, column=col_num)
+
+                if self.is_numeric(header_value):
+                    # Convert to appropriate numeric type
+                    if isinstance(header_value, float) or (
+                        isinstance(header_value, str) and "." in header_value
+                    ):
+                        numeric_header = float(header_value)
+                        cell.value = numeric_header
+                        cell.number_format = "0.00"
+                    else:
+                        numeric_header = int(float(header_value))
+                        cell.value = numeric_header
+                        cell.number_format = "0"
+
+                    # Set alignment for numeric headers
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+                else:
+                    # For non-numeric headers, set as uppercase string
+                    cell.value = str(header_value).upper()
+                    cell.number_format = "General"
+
+                    # Set alignment based on header content
+                    if cell.value == "PROPERTY":
+                        cell.alignment = Alignment(horizontal="left", vertical="center")
+                    else:
+                        cell.alignment = Alignment(
+                            horizontal="center", vertical="center"
+                        )
+
+                # Apply font styling
+                cell.font = header_font
+
+            # ----------------------------
+            # 4. Add TOTAL Column
+            # ----------------------------
+            total_col = num_columns
+            if include_total_column:
+                # total_col = num_columns + 1
+                sheet.cell(row=header_row, column=total_col, value="TOTAL").font = (
+                    header_font
+                )
+                sheet.cell(row=header_row, column=total_col).alignment = Alignment(
+                    horizontal="center", vertical="center"
+                )
+
+                # Populate TOTAL column with formulas
+                for row in range(header_row + 1, header_row + 1 + len(df)):
+                    # Assuming numerical data starts from column 2 to (total_col -1)
+                    sum_range = f"${get_column_letter(2)}${row}:${get_column_letter(num_columns-1)}${row}"
+                    total_cell = sheet.cell(row=row, column=total_col)
+                    total_cell.value = f"=SUM({sum_range})"
+                    total_cell.font = Font(name=FONT_NAME, bold=True, size=11)
+                    total_cell.alignment = Alignment(
+                        horizontal="center", vertical="center"
+                    )
+
+            # ----------------------------
+            # 5. Add TOTAL Row
+            # ----------------------------
+            total_row = header_row + 1 + len(df)
+            sheet.cell(row=total_row, column=1, value="TOTAL").font = Font(
+                name=FONT_NAME, bold=True, size=11
+            )
+            sheet.cell(row=total_row, column=1).alignment = Alignment(
+                horizontal="right", vertical="center"
+            )
+            for col_num in range(2, total_col + 1):
+                if include_total_column and col_num == total_col:
+                    # Grand total for TOTAL column
+                    sum_range = f"${get_column_letter(col_num)}${header_row + 1}:${get_column_letter(col_num)}${total_row - 1}"
+                    total_cell = sheet.cell(row=total_row, column=col_num)
+                    total_cell.value = f"=SUM({sum_range})"
+                    # total_cell.number_format = "General"
+                else:
+                    column_name = df.columns[col_num - 1]
+                    if column_name in numeric_columns:
+                        sum_range = f"${get_column_letter(col_num)}${header_row + 1}:${get_column_letter(col_num)}${total_row - 1}"
+                        total_cell = sheet.cell(row=total_row, column=col_num)
+                        total_cell.value = f"=SUM({sum_range})"
+                    else:
+                        total_cell = sheet.cell(row=total_row, column=col_num)
+                        sheet.cell(row=total_row, column=col_num).value = ""
+                total_cell.font = Font(name=FONT_NAME, bold=True, size=11)
+                total_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+            # ----------------------------
+            # 6. Apply Gridlines (Borders) to the Table
+            # ----------------------------
+            thin_border = Border(
                 left=Side(style="thin", color="000000"),
                 right=Side(style="thin", color="000000"),
                 top=Side(style="thin", color="000000"),
                 bottom=Side(style="thin", color="000000"),
             )
 
-            # Apply formatting for title
+            for row in range(header_row, total_row + 2):
+                for col in range(1, num_columns + 1):
+                    cell = sheet.cell(row=row, column=col)
+                    cell.border = thin_border
+                    cell.font = Font(name=FONT_NAME, size=11)
+                    if row >= header_row + 1 and row < total_row and col != total_col:
+                        # Table data cells
+                        cell.font = Font(name=FONT_NAME, size=11)
+                        column_name = df.columns[col - 1]
+                        if column_name in numeric_columns:
+                            cell.alignment = Alignment(
+                                horizontal="center", vertical="center"
+                            )
+                            cell.number_format = "General"
+                    elif row == header_row:
+                        # Header cells already styled
+                        cell.font = Font(name=FONT_NAME, bold=True, size=11)
+                    elif row == total_row:
+                        # TOTAL row cells
+                        cell.font = Font(name=FONT_NAME, bold=True, size=11)
+                    elif include_total_column and col == total_col:
+                        # TOTAL column cells
+                        cell.font = Font(name=FONT_NAME, bold=True, size=11)
+
+            # ----------------------------
+            # 7. Set Column Widths
+            # ----------------------------
+            for col in sheet.columns:
+                max_length = 0
+                column = None  # Initialize the column variable
+
+                # Find the first non-merged cell in the column to get the column letter
+                for cell in col:
+                    if not isinstance(cell, MergedCell):
+                        column = cell.column_letter
+                        break
+
+                if column is None:
+                    # All cells in the column are merged; skip adjusting this column
+                    continue
+
+                for cell in col:
+                    if isinstance(cell, MergedCell):
+                        # Skip MergedCell objects
+                        continue
+                    try:
+                        cell_value = str(cell.value) if cell.value is not None else ""
+                        cell_length = len(cell_value)
+                        if cell_length > max_length:
+                            max_length = cell_length
+                    except:
+                        pass
+                adjusted_width = max_length + 2  # Adding extra space for readability
+                sheet.column_dimensions[column].width = adjusted_width
+            # ----------------------------
+            # 8. Add Final Footer (Optional)
+            # ----------------------------
+            footer_row = total_row + 1
+            sheet.cell(row=footer_row, column=1, value="Travel Beyond Confidential")
+            footer_font = Font(
+                name=FONT_NAME,
+                bold=True,
+                size=14,
+                color=tb_white_font,
+            )
+            footer_alignment = Alignment(horizontal="center", vertical="center")
+
+            sheet.merge_cells(
+                start_row=footer_row,
+                start_column=1,
+                end_row=footer_row,
+                end_column=total_col,
+            )
             footer_cell = sheet.cell(row=footer_row, column=1)
-            footer_cell.alignment = Alignment(horizontal="center", vertical="center")
             footer_cell.font = footer_font
-            footer_cell.fill = fill_color
-            footer_cell.border = border_style
+            footer_cell.fill = tb_teal_fill
+            footer_cell.alignment = footer_alignment
+            footer_cell.border = thin_border
 
-            for col_num in range(
-                1, len(df.columns) + 1
-            ):  # Apply border to all cells in the footer row
-                footer_cell = sheet.cell(row=footer_row, column=col_num)
-                footer_cell.alignment = Alignment(
-                    horizontal="center", vertical="center"
-                )
-                footer_cell.font = footer_font
-                footer_cell.fill = fill_color
-                footer_cell.border = border_style
-
-            # Apply formatting for footer
-            title_cell = sheet.cell(row=1, column=1)
-            title_cell.alignment = Alignment(horizontal="center", vertical="center")
-            title_cell.font = title_font
-            title_cell.fill = fill_color
-            title_cell.border = border_style
+            for col_num in range(1, total_col + 1):
+                cell = sheet.cell(row=footer_row, column=col_num)
+                cell.border = thin_border
 
         excel_stream.seek(0)  # Rewind the buffer to the beginning after writing
         return excel_stream
