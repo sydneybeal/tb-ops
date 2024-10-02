@@ -31,6 +31,7 @@ from api.services.travel.models import (
     Consultant,
     PatchConsultantRequest,
     CoreDestination,
+    PatchCoreDestinationRequest,
     Country,
     PatchCountryRequest,
     PatchTripRequest,
@@ -57,14 +58,6 @@ class TravelService:
     # AccommodationLog
     async def add_accommodation_log(self, models: Sequence[AccommodationLog]) -> None:
         """Adds accommodation log model to the repository."""
-        # Only add countries that don't already exist
-        # to_be_added = [
-        #     model
-        #     for model in models
-        #     if not await self._repo.get_accommodation_log(
-        #         model.primary_traveler, model.property_id, model.date_in, model.date_out
-        #     )
-        # ]
         existing_records = await self._repo.get_all_accommodation_logs()
         existing_combinations = {
             (log.primary_traveler, log.property_id, log.date_in, log.date_out)
@@ -107,7 +100,9 @@ class TravelService:
         accommodation_log_summary = (
             await self._summary_svc.get_accommodation_logs_by_filters(filters)
         )
-        first_row = accommodation_log_summary[0] if accommodation_log_summary else None
+        if not accommodation_log_summary:
+            return False
+        first_row = accommodation_log_summary[0]
         detail_before_deletion = {
             "id": first_row.id,
             "primary_traveler": first_row.primary_traveler,
@@ -677,6 +672,8 @@ class TravelService:
                 "details": affected_logs,
             }
         country_summary = await self._summary_svc.get_country_details_by_id(country_id)
+        if not country_summary:
+            return False
         detail_before_deletion = {
             "id": country_summary.id,
             "name": country_summary.name,
@@ -744,6 +741,101 @@ class TravelService:
     async def get_core_destination_by_name(self, name: str) -> CoreDestination:
         """Gets a sequence of CoreDestination models by core destination name"""
         return await self._repo.get_core_destination_by_name(name)
+
+    async def process_core_destination_request(
+        self, core_dest_request: PatchCoreDestinationRequest
+    ) -> dict:
+        """Adds or edits accommodation log models in the repository."""
+        prepared_data_or_error = await self.prepare_core_dest_data(core_dest_request)
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a conflict or issue
+            return {"error": prepared_data_or_error["error"]}
+
+        # Check if the prepared data is a tuple containing property data and an audit log
+        if isinstance(prepared_data_or_error, tuple):
+            core_dest_data, audit_logs = prepared_data_or_error
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_core_destination(core_dest_data)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid core destination data provided for processing."}
+
+    async def prepare_core_dest_data(
+        self, core_dest_request: PatchCoreDestinationRequest
+    ) -> Union[Dict[str, str], Tuple[CoreDestination, AuditLog]]:
+        """Resolves and prepares a core destination patch for insertion."""
+
+        existing_core_dest_by_id = None
+        if core_dest_request.core_destination_id:
+            existing_core_dest_by_id = await self.get_core_destination_by_id(
+                core_dest_request.core_destination_id
+            )
+
+        # Check for a name conflict with a different core destination
+        existing_core_dest_by_name = await self.get_core_destination_by_name(
+            core_dest_request.name,
+        )
+
+        if existing_core_dest_by_name and (
+            not existing_core_dest_by_id
+            or existing_core_dest_by_id.id != existing_core_dest_by_name.id
+        ):
+            # Found a name conflict with another core destination
+            return {
+                "error": f"Core Destination '{core_dest_request.name}' already exists."
+            }
+
+        if existing_core_dest_by_id:
+            if existing_core_dest_by_id.name == core_dest_request.name:
+                # No changes detected, return a message indicating so
+                return {"error": "No changes were detected."}
+            # If updating, return the existing property with possibly updated fields
+            updated_core_dest = CoreDestination(
+                id=existing_core_dest_by_id.id,  # Keep the same ID
+                name=core_dest_request.name,
+                updated_by=core_dest_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="core_destinations",
+                record_id=existing_core_dest_by_id.id,
+                user_name=core_dest_request.updated_by,
+                before_value=existing_core_dest_by_id.dict(),
+                after_value=core_dest_request.dict(),
+                action="update",
+            )
+            return updated_core_dest, audit_log
+        else:
+            # If new, prepare the new property data
+            new_core_dest = CoreDestination(
+                name=core_dest_request.name,
+                updated_by=core_dest_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="core_destinations",
+                record_id=new_core_dest.id,
+                user_name=new_core_dest.updated_by,
+                before_value={},
+                after_value=new_core_dest.dict(),
+                action="insert",
+            )
+
+            return new_core_dest, audit_log
 
     # Property
     async def add_property(self, models: Sequence[Property]) -> None:
@@ -969,6 +1061,8 @@ class TravelService:
         property_summary = await self._summary_svc.get_property_details_by_id(
             property_id
         )
+        if not property_summary:
+            return False
         detail_before_deletion = {
             "id": property_summary.property_id,
             "name": property_summary.name,

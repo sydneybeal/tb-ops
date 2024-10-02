@@ -235,6 +235,7 @@ class SummaryService:
             time_granularity,
             property_granularity,
         )
+        print(df)
 
         return await self.write_excel(df, report_title, include_total_column=True)
 
@@ -284,102 +285,6 @@ class SummaryService:
         )
 
         return pivot_df
-
-    # async def write_excel(
-    #     self, df: pd.DataFrame, report_title: str = "Bed Night Report"
-    # ):
-    #     """Writes a dataframe into an Excel stream."""
-    #     excel_stream = BytesIO()
-    #     with pd.ExcelWriter(excel_stream, engine="openpyxl") as writer:
-    #         df.to_excel(
-    #             writer, index=False, startrow=1
-    #         )  # startrow=1 to leave space for the title
-
-    #         # Set the title in the Excel sheet
-    #         sheet = writer.sheets["Sheet1"]
-    #         title = report_title
-    #         title_row = 1
-    #         title_column_start = 1
-    #         title_column_end = len(
-    #             df.columns
-    #         )  # This assumes that you want to span across all columns used in the df
-
-    #         # Write title to the first cell
-    #         sheet.cell(row=title_row, column=title_column_start, value=title)
-
-    #         # Set column widths
-    #         for col in sheet.columns:
-    #             max_length = 0
-    #             column = col[0].column_letter  # Get the column letters
-
-    #             for cell in col:
-    #                 try:
-    #                     # Adjust the length if necessary; adding a little extra space
-    #                     if len(str(cell.value)) > max_length:
-    #                         max_length = len(str(cell.value))
-    #                 except:
-    #                     pass
-    #             adjusted_width = max_length + 1
-    #             sheet.column_dimensions[column].width = adjusted_width
-
-    #         # Append footer after DataFrame ends
-    #         footer_row = len(df) + 3  # Assuming 2 extra rows after the DataFrame ends
-    #         sheet.cell(row=footer_row, column=1, value="Travel Beyond Confidential")
-
-    #         # Merge cells for the title row across the width of DataFrame columns
-    #         sheet.merge_cells(
-    #             start_row=title_row,
-    #             start_column=title_column_start,
-    #             end_row=title_row,
-    #             end_column=title_column_end,
-    #         )
-    #         sheet.merge_cells(
-    #             start_row=footer_row,
-    #             start_column=title_column_start,
-    #             end_row=footer_row,
-    #             end_column=title_column_end,
-    #         )
-
-    #         # Define font, fill, and border styles for title and footer
-    #         title_font = Font(bold=True, size=18, color="F2F0E7")
-    #         footer_font = Font(bold=True, size=14, color="F2F0E7")
-    #         fill_color = PatternFill(
-    #             start_color="0E9BAC", end_color="0E9BAC", fill_type="solid"
-    #         )
-    #         border_style = Border(
-    #             left=Side(style="thin", color="000000"),
-    #             right=Side(style="thin", color="000000"),
-    #             top=Side(style="thin", color="000000"),
-    #             bottom=Side(style="thin", color="000000"),
-    #         )
-
-    #         # Apply formatting for title
-    #         footer_cell = sheet.cell(row=footer_row, column=1)
-    #         footer_cell.alignment = Alignment(horizontal="center", vertical="center")
-    #         footer_cell.font = footer_font
-    #         footer_cell.fill = fill_color
-    #         footer_cell.border = border_style
-
-    #         for col_num in range(
-    #             1, len(df.columns) + 1
-    #         ):  # Apply border to all cells in the footer row
-    #             footer_cell = sheet.cell(row=footer_row, column=col_num)
-    #             footer_cell.alignment = Alignment(
-    #                 horizontal="center", vertical="center"
-    #             )
-    #             footer_cell.font = footer_font
-    #             footer_cell.fill = fill_color
-    #             footer_cell.border = border_style
-
-    #         # Apply formatting for footer
-    #         title_cell = sheet.cell(row=1, column=1)
-    #         title_cell.alignment = Alignment(horizontal="center", vertical="center")
-    #         title_cell.font = title_font
-    #         title_cell.fill = fill_color
-    #         title_cell.border = border_style
-
-    #     excel_stream.seek(0)  # Rewind the buffer to the beginning after writing
-    #     return excel_stream
 
     def is_numeric(self, value):
         """

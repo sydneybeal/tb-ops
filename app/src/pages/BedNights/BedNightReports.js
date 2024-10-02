@@ -233,8 +233,8 @@ export const BedNightReports = () => {
     }, []);
 
     useEffect(() => {
-        var elems = document.querySelectorAll('select');
-        M.FormSelect.init(elems);
+        // var elems = document.querySelectorAll('select');
+        // M.FormSelect.init(elems);
     }, [filters, filterOptions, accommodationLogData, reportData]);
 
     useEffect(() => {
