@@ -232,17 +232,17 @@ export const BedNightReports = () => {
         M.AutoInit();
     }, []);
 
-    useEffect(() => {
-        // var elems = document.querySelectorAll('select');
-        // M.FormSelect.init(elems);
-    }, [filters, filterOptions, accommodationLogData, reportData]);
+    // useEffect(() => {
+    //     // var elems = document.querySelectorAll('select');
+    //     // M.FormSelect.init(elems);
+    // }, [filters, filterOptions, accommodationLogData, reportData]);
 
-    useEffect(() => {
-        if (accommodationLogData.length > 0) {
-            const elems = document.querySelectorAll('select');
-            M.FormSelect.init(elems);
-        }
-    }, [accommodationLogData]);
+    // useEffect(() => {
+    //     if (accommodationLogData.length > 0) {
+    //         // const elems = document.querySelectorAll('select');
+    //         // M.FormSelect.init(elems);
+    //     }
+    // }, [accommodationLogData]);
 
     useEffect(() => {
         // Initialize or dynamically update filter options based on `accommodationLogData` and current `filters`
@@ -922,7 +922,7 @@ export const BedNightReports = () => {
                             />
                         </>
                     ) : (
-                        <div>
+                        <div style={{ marginTop: '50px'}}>
                             <CircularPreloader show={true} />
                         </div>
                     )}

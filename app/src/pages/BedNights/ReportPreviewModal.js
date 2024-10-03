@@ -46,15 +46,18 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
     useEffect(() => {
         let newQueryString = `${reportTypeEndpoint}${queryString}`;
 
-        if (reportType === 'bed_nights' && excludeFields.length > 0) {
+        if (reportType === 'bed_nights') {
+            if (excludeFields.length > 0) {
             const excludeString = excludeFields.join(',');
             const encodedExcludeString = encodeURIComponent(excludeString);
             const separator = queryString.includes('?') ? '&' : '?';
 
             newQueryString += `${separator}exclude_columns=${encodedExcludeString}&report_title=${encodeURIComponent(reportTitle)}`;
-        } else {
-            const separator = queryString.includes('?') ? '&' : '?';
-            newQueryString += `${separator}&report_title=${encodeURIComponent(reportTitle)}`;
+            }
+            else {
+                const separator = queryString.includes('?') ? '&' : '?';
+                newQueryString += `${separator}&report_title=${encodeURIComponent(reportTitle)}`;
+            }
         }
 
         if (reportType === 'custom') {
@@ -97,7 +100,7 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
                 onClose();
             },
         };
-        // if (!isOpen) return;
+        if (!isOpen) return;
         const modalElement = document.getElementById('add-log-modal');
         const instance = M.Modal.init(modalElement, options);
         if (isOpen) {
