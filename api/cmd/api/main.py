@@ -107,7 +107,6 @@ async def get_current_user(
         return user
     except JWTError as exc:
         raise credentials_exception from exc
->>>>>>> main
 
 
 def make_app(
@@ -187,24 +186,6 @@ def make_app(
             "role": user.role,
             "email": user.email,
         }
-
-    # user = await auth_svc.authenticate_user(email, password)
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Incorrect email or password",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    # access_token_expires = timedelta(minutes=auth_svc.ACCESS_TOKEN_EXPIRE_MINUTES)
-    # access_token = auth_svc.create_access_token(
-    #     data={"sub": user.email}, expires_delta=access_token_expires
-    # )
-    # return {
-    #     "access token": access_token,
-    #     "token_type": "bearer",
-    #     "role": user.role,
-    #     "email": user.email,
-    # }
 
     @app.get(
         "/v1/accommodation_logs",
