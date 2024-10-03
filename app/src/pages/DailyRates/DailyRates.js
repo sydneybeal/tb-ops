@@ -19,6 +19,8 @@ export const DailyRates = () => {
     const [loaded, setLoaded] = useState(false);
     const [rateDate, setRateDate] = useState(moment());
     const [inputAmount, setInputAmount] = useState();
+    const [calculationInput, setCalculationInput] = useState();
+    const [calculationRate, setCalculationRate] = useState();
     const [currency, setCurrency] = useState('ZAR');
     const [convertedAmount, setConvertedAmount] = useState('');
     const rolesAllowedToUpload = ['admin', 'accounting'];
@@ -99,10 +101,10 @@ export const DailyRates = () => {
     useEffect(() => {
         M.AutoInit();
         if (apiData && apiData.length > 0 && currency && inputAmount) {
+            // TODO remove commas from input amount and use this to multiply later
             // Find the rate from apiData based on the selected currency
             const currencyRate = apiData.find(rate => rate.target_currency === currency);
-            let rate = currencyRate ? parseFloat(currencyRate.conversion_rate) : 0;
-    
+            let rate = currencyRate ? parseFloat(currencyRate.conversion_rate).toFixed(3).replace(/\.?0+$/, '') : 0;
             if (rate !== 0) { // Ensure rate is not zero to avoid division by zero
                 if (currency === 'ZAR') {
                     // Special handling for ZAR as per company's spreadsheet
@@ -111,15 +113,36 @@ export const DailyRates = () => {
                     // Handle other currencies - assuming they need to be divided by the rate and adjusted
                     rate = currenciesToMultiply.includes(currency) ? rate * 1.04 : rate / 1.04;
                 }
+                rate = rate.toFixed(3).replace(/\.?0+$/, '');
+
+                const cleanedInput = inputAmount.replace(/,/g, '');
+                const parsedAmount = parseFloat(cleanedInput);
+                setCalculationInput(parsedAmount);
+                setCalculationRate(rate);
+
+                if (isNaN(parsedAmount)) {
+                    M.toast({
+                        html: 'Invalid input amount. Please enter a valid number.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    setConvertedAmount(null);
+                    return;
+                }
     
-                const baseAmount = parseFloat(inputAmount);
-                const result = (baseAmount * rate).toFixed(3); // Apply the adjusted rate to the base amount
-                setConvertedAmount(result);
+                const baseAmount = parseFloat(parsedAmount);
+                // const result = (baseAmount * rate).toFixed(3);
+                const result = currenciesToMultiply.includes(currency) ? baseAmount * rate : baseAmount / rate;
+                const displayResult = result.toFixed(3);
+                // Apply the adjusted rate to the base amount
+                setConvertedAmount(displayResult);
             } else {
                 setConvertedAmount('Rate not available'); // Handling when the rate is zero or not found
             }
         } else {
-            setConvertedAmount(0)
+            setConvertedAmount(0);
+            setCalculationInput(null);
+            setCalculationRate(null);
         }
     }, [inputAmount, currency, apiData]);       
 
@@ -165,8 +188,8 @@ export const DailyRates = () => {
             });
     }, [logout, userDetails.token, rateDate]);
 
-    const displayUpdatedDate = apiData.length > 0 ? moment.utc(apiData[0].updated_at, "HH:mm:ss").local().format("MMM DD, YYYY") : null;
-    const displayTime = apiData.length > 0 ? moment.utc(apiData[0].updated_at, "HH:mm:ss").local().format("h:mma") : null;
+    const displayUpdatedDate = apiData.length > 0 ? moment.utc(apiData[0].updated_at).local().format("MMM DD, YYYY") : null;
+    const displayTime = apiData.length > 0 ? moment.utc(apiData[0].updated_at).local().format("h:mma") : null;
     const displayUpdatedBy = apiData.length > 0 ? apiData[0].updated_by: null;
 
     return (
@@ -234,7 +257,7 @@ export const DailyRates = () => {
                         <>
                             <div className="row" style={{ width: '70%', marginBottom: '0px' }}>
                             <h4 style={{ marginBottom: '20px' }} className="center">Currency Calculator</h4>
-                                <div className="card potential-trip-card" >
+                                <div className="card potential-trip-card" style={{marginBottom: '5px'}}>
                                     <div className="card-content" style={{paddingBottom: '2px'}}>
                                         <div className="row">
                                         {apiData && apiData.length > 0 ? (
@@ -260,7 +283,7 @@ export const DailyRates = () => {
                                                 </div>
                                             </div>
                                             <div className="col s12 l3">
-                                                <div className="input-field" style={{paddingBottom: '1px'}}>
+                                                <div className="input-field currency-select-wrapper" style={{paddingBottom: '1px'}}>
                                                     <select id="currencySelect" value={currency} onChange={handleCurrencyChange}>
                                                         {apiData && apiData.length > 0 && apiData.map((rate, index) => (
                                                             <option key={index} value={rate.target_currency}>{rate.target_currency}</option>
@@ -289,7 +312,7 @@ export const DailyRates = () => {
                                                         </span>
                                                     </p>
                                                 </span>
-                                                <label style={{ fontSize: '1.0rem' }} htmlFor="convertedValue" className="grey-text text-darken-1">
+                                                <label style={{ fontSize: '0.9rem' }} htmlFor="convertedValue" className="grey-text text-darken-1">
                                                     (markup)
                                                 </label>
                                             </div>
@@ -299,6 +322,16 @@ export const DailyRates = () => {
                                         )}
                                         </div>
                                     </div>
+                                </div>
+                                <div className="row center">
+                                <em className="center grey-text text-darken-1">
+                                    {calculationInput && currency && calculationRate &&
+                                    <>
+                                    <span>Rate formula: </span>
+                                    {calculationInput} {currenciesToMultiply.includes(currency) ? "*" : "/"} {calculationRate}
+                                    </>
+                                    }
+                                </em>
                                 </div>
                             </div>
                             <div className="container" style={{ width: '70%' }}>
@@ -392,7 +425,7 @@ export const DailyRates = () => {
                             </div>
                         </>
                         ) : (
-                            <div>
+                            <div className="row center">
                                 <CircularPreloader show={true} />
                             </div>
                         )}

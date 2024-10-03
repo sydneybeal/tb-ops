@@ -1067,6 +1067,12 @@ input.file-path::placeholder {
   color: #8c8782;
 }
 
+.currency-select-wrapper .select-dropdown {
+  z-index: 3000 !important;
+  top: 100% !important;
+  transform: none !important;
+}
+
 .copyable-text {
   transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
 }
