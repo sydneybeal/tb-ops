@@ -232,10 +232,15 @@ export const BedNightReports = () => {
         M.AutoInit();
     }, []);
 
-    // useEffect(() => {
-    //     // var elems = document.querySelectorAll('select');
-    //     // M.FormSelect.init(elems);
-    // }, [filters, filterOptions, accommodationLogData, reportData]);
+    useEffect(() => {
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+    }, [loaded]);
+
+    useEffect(() => {
+        var elems = document.querySelectorAll('select');
+        M.FormSelect.init(elems);
+    }, [showModal]);
 
     // useEffect(() => {
     //     if (accommodationLogData.length > 0) {
