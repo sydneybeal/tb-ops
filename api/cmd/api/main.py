@@ -75,10 +75,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-<<<<<<< HEAD
 VERSION = "vTripReports"
-=======
-VERSION = "v1.0.2"
 
 
 def get_auth_service() -> AuthService:
