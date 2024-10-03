@@ -182,7 +182,7 @@ class SummaryService:
             "num_pax": "# Pax",
             "bed_nights": "Bed Nights",
             "property_name": "Property",
-            "property_portfolio": "Property Portfolio",
+            "property_portfolio": "Portfolio",
             "core_destination_name": "Core Destination Name",
             "country_name": "Country",
             "agency_name": "Agency",
@@ -235,7 +235,6 @@ class SummaryService:
             time_granularity,
             property_granularity,
         )
-        print(df)
 
         return await self.write_excel(df, report_title, include_total_column=True)
 
@@ -365,13 +364,21 @@ class SummaryService:
             # ----------------------------
 
             header_font = Font(name=FONT_NAME, bold=True, size=11)
-            for col_num in range(1, num_columns + 1):
-                # Retrieve the header value from the DataFrame
-                if col_num < num_columns:
+            if include_total_column:
+                max_col = num_columns  # Include an extra column for 'TOTAL'
+            else:
+                max_col = num_columns  # Only include existing columns
+
+            for col_num in range(1, max_col + 1):
+                if col_num <= num_columns:
                     # Zero-based indexing in pandas
-                    header_value = df.columns[col_num - 1]
-                else:
-                    header_value = ""
+                    if col_num == num_columns and include_total_column:
+                        header_value = "TOTAL"
+                    else:
+                        header_value = df.columns[col_num - 1]
+                elif col_num == (num_columns - 1) and include_total_column:
+                    # Last column when include_total_column is True
+                    header_value = "TOTAL"
 
                 cell = sheet.cell(row=header_row, column=col_num)
 
@@ -396,7 +403,7 @@ class SummaryService:
                     cell.number_format = "General"
 
                     # Set alignment based on header content
-                    if cell.value == "PROPERTY":
+                    if cell.value == "PROPERTY" and include_total_column:
                         cell.alignment = Alignment(horizontal="left", vertical="center")
                     else:
                         cell.alignment = Alignment(
@@ -446,17 +453,19 @@ class SummaryService:
                     sum_range = f"${get_column_letter(col_num)}${header_row + 1}:${get_column_letter(col_num)}${total_row - 1}"
                     total_cell = sheet.cell(row=total_row, column=col_num)
                     total_cell.value = f"=SUM({sum_range})"
-                    # total_cell.number_format = "General"
+                    total_cell.font = Font(name=FONT_NAME, bold=True, size=11)
                 else:
                     column_name = df.columns[col_num - 1]
                     if column_name in numeric_columns:
                         sum_range = f"${get_column_letter(col_num)}${header_row + 1}:${get_column_letter(col_num)}${total_row - 1}"
                         total_cell = sheet.cell(row=total_row, column=col_num)
                         total_cell.value = f"=SUM({sum_range})"
+                        total_cell.font = Font(name=FONT_NAME, bold=True, size=11)
                     else:
                         total_cell = sheet.cell(row=total_row, column=col_num)
-                        sheet.cell(row=total_row, column=col_num).value = ""
-                total_cell.font = Font(name=FONT_NAME, bold=True, size=11)
+                        total_cell.value = ""
+                        total_cell.font = Font(name=FONT_NAME, bold=False, size=11)
+                # Set alignment for all cells in TOTAL row
                 total_cell.alignment = Alignment(horizontal="center", vertical="center")
 
             # ----------------------------
@@ -473,8 +482,13 @@ class SummaryService:
                 for col in range(1, num_columns + 1):
                     cell = sheet.cell(row=row, column=col)
                     cell.border = thin_border
-                    cell.font = Font(name=FONT_NAME, size=11)
-                    if row >= header_row + 1 and row < total_row and col != total_col:
+                    if row == header_row:
+                        # Header cells already styled
+                        pass
+                    elif row == total_row:
+                        # Total cells already styled
+                        pass
+                    elif row >= header_row + 1 and row < total_row and col != total_col:
                         # Table data cells
                         cell.font = Font(name=FONT_NAME, size=11)
                         column_name = df.columns[col - 1]
@@ -483,12 +497,6 @@ class SummaryService:
                                 horizontal="center", vertical="center"
                             )
                             cell.number_format = "General"
-                    elif row == header_row:
-                        # Header cells already styled
-                        cell.font = Font(name=FONT_NAME, bold=True, size=11)
-                    elif row == total_row:
-                        # TOTAL row cells
-                        cell.font = Font(name=FONT_NAME, bold=True, size=11)
                     elif include_total_column and col == total_col:
                         # TOTAL column cells
                         cell.font = Font(name=FONT_NAME, bold=True, size=11)

@@ -52,6 +52,9 @@ const ReportPreviewModal = ({ queryString, reportData, filteredData, onClose, is
             const separator = queryString.includes('?') ? '&' : '?';
 
             newQueryString += `${separator}exclude_columns=${encodedExcludeString}&report_title=${encodeURIComponent(reportTitle)}`;
+        } else {
+            const separator = queryString.includes('?') ? '&' : '?';
+            newQueryString += `${separator}&report_title=${encodeURIComponent(reportTitle)}`;
         }
 
         if (reportType === 'custom') {
