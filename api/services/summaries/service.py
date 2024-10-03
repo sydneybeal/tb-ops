@@ -43,8 +43,6 @@ from api.services.summaries.models import (
 )
 from api.services.summaries.repository.postgres import PostgresSummaryRepository
 
-from api.services.travel.models import Trip
-
 FONT_NAME = "Brandon Grotesque"
 
 
@@ -229,6 +227,26 @@ class SummaryService:
         results = self.aggregate_custom_report(
             accommodation_logs, calculation_type, property_granularity, time_granularity
         )
+
+        if query_params.get("portfolio_name") is not None:
+            portfolio_name = query_params.get("portfolio_name")
+            if not portfolio_name:
+                raise ValueError(
+                    "Missing 'portfolio_name' in query parameters for portfolio report."
+                )
+
+            # Fetch all properties in the Portfolio
+            properties = await self._repo.get_properties_by_portfolio_name(
+                portfolio_name
+            )
+
+            # Add Zero-Value Properties into Results
+            time_keys = set(key[0] for key in results.keys())
+
+            for time_key in time_keys:
+                for property_key in properties:
+                    if (time_key, property_key.name) not in results:
+                        results[(time_key, property_key.name)] = 0
 
         df = self.results_to_dataframe(
             results,
