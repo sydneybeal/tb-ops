@@ -482,6 +482,26 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
         """Gets a PropertyDetail models in the repository by ID, joined with foreign keys."""
         raise NotImplementedError
 
+    async def get_properties_by_portfolio_name(
+        self,
+        portfolio_name: str,
+    ) -> Sequence[Property]:
+        """Gets all Property models by a portfolio name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                p.*
+            FROM public.properties p
+            INNER JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            WHERE pf.name = $1
+            """
+        )
+        async with pool.acquire() as con:
+            records = await con.fetch(query, portfolio_name)
+            properties = [Property(**record) for record in records]
+            return properties
+
     async def get_all_countries(self) -> Sequence[CountrySummary]:
         """Gets all Country models."""
         pool = await self._get_pool()
