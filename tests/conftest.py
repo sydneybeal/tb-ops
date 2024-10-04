@@ -29,11 +29,13 @@ import pytest
 from unittest.mock import AsyncMock, Mock
 
 
+from api.services.admin.service import AdminService
 from api.services.audit.service import AuditService
 from api.services.auth.service import AuthService
 from api.cmd.migrations import runner
 from api.config.postgres import PostgresConfig
 from api.services.currency.service import CurrencyService
+from api.services.reviews.service import ReviewService
 from api.services.summaries.service import SummaryService
 from api.services.travel.service import TravelService
 from api.services.quality.service import QualityService
@@ -92,8 +94,18 @@ def audit_service():
 
 
 @pytest.fixture
+def review_service(postgres_test_database):
+    return ReviewService()
+
+
+@pytest.fixture
 def quality_service():
     return QualityService()
+
+
+@pytest.fixture
+def admin_service(postgres_test_database):
+    return AdminService()
 
 
 @pytest.fixture
@@ -107,7 +119,9 @@ def app(
     summary_service,
     auth_service,
     audit_service,
+    review_service,
     quality_service,
+    admin_service,
     currency_service,
 ) -> FastAPI:
     app = make_app(
@@ -115,7 +129,9 @@ def app(
         summary_service,
         auth_service,
         audit_service,
+        review_service,
         quality_service,
+        admin_service,
         currency_service,
     )
 
