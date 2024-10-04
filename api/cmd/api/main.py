@@ -39,6 +39,8 @@ from api.services.clients.models import (
 )
 from api.services.reservations.service import ReservationService
 from api.services.reservations.models import Reservation
+from api.services.currency.service import CurrencyService
+from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
@@ -60,6 +62,7 @@ from api.services.travel.models import (
     PatchBookingChannelRequest,
     PatchConsultantRequest,
     PatchCountryRequest,
+    PatchCoreDestinationRequest,
     PatchPortfolioRequest,
     PatchPropertyRequest,
     PatchPropertyDetailRequest,
@@ -71,7 +74,38 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v0.2.2"
+VERSION = "v1.0.2"
+
+
+def get_auth_service() -> AuthService:
+    """Dependency provider for AuthService."""
+    # This function will be overridden in the app to provide the actual auth_svc
+    raise NotImplementedError
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    auth_svc: AuthService = Depends(get_auth_service),
+):
+    """Gets current user for API authentication."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(
+            token, auth_svc.SECRET_KEY, algorithms=[auth_svc.ALGORITHM]
+        )
+        email: Optional[str] = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        user = await auth_svc.get_user(email=email)
+        if user is None:
+            raise credentials_exception
+        return user
+    except JWTError as exc:
+        raise credentials_exception from exc
 
 
 def make_app(
@@ -82,6 +116,7 @@ def make_app(
     quality_svc: QualityService,
     client_svc: ClientService,
     reservation_svc: ReservationService,
+    currency_svc: CurrencyService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
     app = FastAPI(
@@ -114,26 +149,12 @@ def make_app(
         allow_headers=["*"],
     )
 
-    async def get_current_user(token: str = Depends(oauth2_scheme)):
-        """Gets current user for API authentication."""
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WwW-Authenticate": "Bearer"},
-        )
-        try:
-            payload = jwt.decode(
-                token, auth_svc.SECRET_KEY, algorithms=[auth_svc.ALGORITHM]
-            )
-            email: str = payload.get("sub")
-            if email is None:
-                raise credentials_exception
-            user = await auth_svc.get_user(email=email)
-            if user is None:
-                raise credentials_exception
-            return user
-        except JWTError as exc:
-            raise credentials_exception from exc
+    # Provide the actual AuthService instance
+    def get_auth_service_override() -> AuthService:
+        return auth_svc
+
+    # Override the dependency
+    app.dependency_overrides[get_auth_service] = get_auth_service_override
 
     @app.get("/")
     def root():
@@ -144,6 +165,7 @@ def make_app(
         user = await auth_svc.authenticate_user(email, password)
 
         if not user:
+            print(f"User login for {email} failed.")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect email or password",
@@ -151,6 +173,7 @@ def make_app(
             )
 
         # Remove the fixed expiration duration. Let `create_access_token` handle the expiration.
+        print(f"User login for {email} successful.")
         access_token = auth_svc.create_access_token(
             data={
                 "sub": user.email
@@ -438,6 +461,19 @@ def make_app(
         """Get all CoreDestination models."""
         return await travel_svc.get_all_core_destinations()
 
+    @app.patch(
+        "/v1/core_destinations",
+        operation_id="post_core_destinations",
+        tags=["core_destinations"],
+    )
+    async def post_core_destinations(
+        core_dest_data: PatchCoreDestinationRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a CoreDestination."""
+        results = await travel_svc.process_core_destination_request(core_dest_data)
+        return JSONResponse(content=results)
+
     @app.get(
         "/v1/consultants",
         operation_id="get_consultants",
@@ -694,10 +730,7 @@ def make_app(
         if property_location:
             query_params["property_location"] = property_location.split("|")
         # Similar parsing for other array-like parameters if necessary
-
         report_data = await summary_svc.get_bed_night_report(query_params)
-        if report_data is None:
-            raise HTTPException(status_code=404, detail="Report data not found")
         return report_data
 
     @app.get(
@@ -952,6 +985,33 @@ def make_app(
         """Get all Reservation models."""
         return await reservation_svc.get()
 
+    @app.get(
+        "/v1/daily_rates",
+        operation_id="get_daily_rates",
+        response_model=Iterable[DailyRate],
+        tags=["daily_rates"],
+    )
+    async def get_daily_rates(
+        rate_date: date,
+        current_user: User = Depends(get_current_user),
+    ):
+        daily_rates = await currency_svc.get_rates_date(rate_date)
+        if daily_rates is None:
+            raise HTTPException(status_code=404, detail="Daily Rate data not found")
+        return daily_rates
+
+    @app.patch(
+        "/v1/daily_rates",
+        operation_id="post_daily_rates",
+        tags=["daily_rates"],
+    )
+    async def post_daily_rates(
+        daily_rate_requests: list[PatchDailyRateRequest],
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
+        return JSONResponse(content=results)
+
     return app
 
 
@@ -965,6 +1025,9 @@ if __name__ == "__main__":
     quality_svc = QualityService()
     client_svc = ClientService()
     reservation_svc = ReservationService()
+    currency_svc = CurrencyService()
+    client_svc = ClientService()
+    reservation_svc = ReservationService()
 
     app = make_app(
         travel_svc,
@@ -974,6 +1037,7 @@ if __name__ == "__main__":
         quality_svc,
         client_svc,
         reservation_svc,
+        currency_svc,
     )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)

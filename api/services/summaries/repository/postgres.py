@@ -122,6 +122,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.name AS property_name,
                 p.property_type AS property_type,
                 p.location AS property_location,
+                p.latitude AS property_latitude,
+                p.longitude AS property_longitude,
                 pf.id AS property_portfolio_id,
                 pf.name AS property_portfolio,
                 bc.name AS booking_channel_name,
@@ -241,6 +243,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.name AS property_name,
                 p.property_type AS property_type,
                 p.location AS property_location,
+                p.latitude AS property_latitude,
+                p.longitude AS property_longitude,
                 pf.name AS property_portfolio,
                 p.portfolio_id AS property_portfolio_id,
                 bc.name AS booking_channel_name,
@@ -477,6 +481,26 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
     async def get_property_details_by_id(self) -> PropertyDetailSummary:
         """Gets a PropertyDetail models in the repository by ID, joined with foreign keys."""
         raise NotImplementedError
+
+    async def get_properties_by_portfolio_name(
+        self,
+        portfolio_name: str,
+    ) -> Sequence[Property]:
+        """Gets all Property models by a portfolio name."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT
+                p.*
+            FROM public.properties p
+            INNER JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            WHERE pf.name = $1
+            """
+        )
+        async with pool.acquire() as con:
+            records = await con.fetch(query, portfolio_name)
+            properties = [Property(**record) for record in records]
+            return properties
 
     async def get_all_countries(self) -> Sequence[CountrySummary]:
         """Gets all Country models."""

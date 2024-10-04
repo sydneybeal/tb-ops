@@ -4,9 +4,9 @@ import M from 'materialize-css';
 import moment from 'moment';
 
 const ReportDashboard = ({ id = "reportData", reportData, showPieCharts = true, showMonthly = true, maxProps = 10 }) => {
-    useEffect(() => {
-        M.AutoInit();
-    }, [reportData]);
+    // useEffect(() => {
+    //     M.AutoInit();
+    // }, []);
 
     if (!reportData || Object.keys(reportData).length === 0 || reportData?.calculations?.total_bed_nights === 0) {
         return (

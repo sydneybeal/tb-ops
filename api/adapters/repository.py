@@ -15,10 +15,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Type
 
 import asyncpg
+
+log = logging.getLogger("rr")
 
 
 def connection_configuration() -> dict:
@@ -38,16 +41,23 @@ def connection_configuration() -> dict:
 class ConnectionPoolManager:
     """Manages the postgresql connection pools for postgresql repositories."""
 
-    __pool: asyncpg.Pool | None = None
+    _pool: asyncpg.Pool | None = None
 
     @classmethod
     async def get(cls) -> asyncpg.Pool:
         """Provides connection pool for the repository."""
-        if cls.__pool is None:
+        if cls._pool is None:
             configuration = connection_configuration()
-            cls.__pool = await asyncpg.create_pool(**configuration)
-            assert cls.__pool is not None
-        return cls.__pool
+            cls._pool = await asyncpg.create_pool(**configuration)
+            assert cls._pool is not None
+        return cls._pool
+
+    @classmethod
+    async def close_pool(cls) -> None:
+        """Closes the connection pool."""
+        if cls._pool:
+            log.info("Closing connection pool.")
+            await cls._pool.close()
 
 
 class KeyValueStoreManager:

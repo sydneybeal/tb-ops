@@ -109,6 +109,12 @@ nav.top-nav {
   font-size: 0.95rem;
 }
 
+.travel-map {
+  height: 400px;
+  box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+  border-radius: 5px;
+}
+
 /* tb-md-black */
 .tb-md-black {
   background-color: #363839 !important;
@@ -898,6 +904,42 @@ textarea:focus {
   min-height: 80%;
 } */
 
+input.file-path[type=text]:not(.browser-default) {
+  border-bottom: 1px solid #8c8782 !important;
+}
+
+input.file-path.valid[type=text]:not(.browser-default) {
+  border-bottom: 1px solid #0e9bac !important;
+  box-shadow: 0 1px 0 0 #0e9bac !important;
+}
+
+input.file-path::placeholder {
+  color: #8c8782;
+}
+
+.currency-select-wrapper .select-dropdown {
+  z-index: 3000 !important;
+  top: 100% !important;
+  transform: none !important;
+}
+
+.copyable-text {
+  transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+}
+
+.copyable-text .material-symbols-outlined{
+  transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+}
+
+.copyable-text:hover {
+  color: #098c9c;
+  font-weight: 700 !important;
+}
+
+.copyable-text:hover .material-symbols-outlined {
+  color: #098c9c !important;
+}
+
 .material-tooltip.tooltip-light {
   background-color: rgba(0, 98, 110, 0.8) !important;
   border-radius: 4px !important;
@@ -1153,6 +1195,26 @@ table.accommodation-logs-table>thead>tr>th {
 
 table.accommodation-logs-table>tbody>tr>td {
   border-radius: 0px;
+}
+
+
+table.rates-table th, table.rates-table td {
+  padding: 3px 10px; /* Half the padding of the accommodation-logs-table for smaller row heights */
+}
+
+table.rates-table>thead>tr>th:first-child {
+  border-top-left-radius: 6px;
+}
+
+table.rates-table>thead>tr>th:last-child {
+  border-top-right-radius: 6px;
+}
+table.rates-table>tbody>tr:last-child>td:last-child {
+  border-bottom-right-radius: 6px;
+}
+
+table.rates-table>tbody>tr:last-child>td:first-child {
+  border-bottom-left-radius: 6px;
 }
 
 .date-selectors {

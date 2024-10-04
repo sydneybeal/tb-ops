@@ -312,6 +312,14 @@ class PatchCountryRequest(BaseModel):
     updated_by: str
 
 
+class PatchCoreDestinationRequest(BaseModel):
+    """A request object model that contains information for a new CoreDestination."""
+
+    core_destination_id: Optional[UUID] = None
+    name: str
+    updated_by: str
+
+
 class PatchPropertyDetailRequest(BaseModel):
     """A request object model that contains Property detail information."""
 

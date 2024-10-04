@@ -14,8 +14,9 @@
 
 """Models for audit entries."""
 import json
-from datetime import datetime, date
+from datetime import datetime, date, time
 from uuid import UUID, uuid4
+from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
@@ -25,8 +26,10 @@ def custom_json_encoder(obj):
     """Specifies return values for non-serializable fields."""
     if isinstance(obj, UUID):
         return str(obj)
-    elif isinstance(obj, datetime) or isinstance(obj, date):
+    elif isinstance(obj, datetime) or isinstance(obj, date) or isinstance(obj, time):
         return obj.isoformat()
+    elif isinstance(obj, Decimal):
+        return str(obj)
     # Add more custom encodings here if necessary
     raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
