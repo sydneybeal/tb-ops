@@ -15,8 +15,10 @@
 """Services for interacting with reservation entries."""
 # from typing import Optional, Sequence, Union
 from uuid import UUID
-from datetime import datetime
-from typing import Iterable, Union, Sequence, Optional
+import copy
+from typing import Iterable, Union, Sequence, Optional, Tuple, Dict
+from api.services.audit.service import AuditService
+from api.services.audit.models import AuditLog
 from api.services.clients.models import (
     Client,
     ClientSummary,
@@ -34,6 +36,7 @@ class ClientService:
     def __init__(self):
         """Initializes with a configured repository."""
         self._repo = PostgresClientRepository()
+        self._audit_svc = AuditService()
         self._reservation_service = ReservationService()
 
     async def add(self, clients: Union[Client, Iterable[Client]]) -> None:
@@ -42,30 +45,94 @@ class ClientService:
             clients = [clients]
         await self._repo.upsert(clients)
 
-    async def process_patch_request(self, client_request: PatchClientRequest) -> None:
+    async def process_patch_request(self, client_request: PatchClientRequest) -> dict:
         """Adds new Client to the repository."""
+        prepared_data_or_error = await self.prepare_client_data(client_request)
+
+        if (
+            isinstance(prepared_data_or_error, dict)
+            and "error" in prepared_data_or_error
+        ):
+            # Return the error message directly if there was a conflict or issue
+            return {"error": prepared_data_or_error["error"]}
+
+        if isinstance(prepared_data_or_error, tuple):
+            client_referral_data, audit_logs = prepared_data_or_error
+            inserted_count = 0
+            updated_count = 0
+            results = await self._repo.upsert_referral(client_referral_data)
+            for _, was_inserted in results:
+                if was_inserted:
+                    inserted_count += 1
+                else:
+                    updated_count += 1
+
+            # Process the audit logs
+            await self.process_audit_logs(audit_logs)
+
+            # Prepare the response based on the operation performed
+            return {"inserted_count": inserted_count, "updated_count": updated_count}
+
+        # If no data was prepared for insertion or update
+        return {"error": "No valid client data provided for processing."}
+
+    async def prepare_client_data(
+        self, client_request: PatchClientRequest
+    ) -> Union[Dict[str, str], Tuple[Client, AuditLog]]:
         existing_client_by_id = None
         if client_request.client_id:
             # Fetch existing client by ID
             existing_client_by_id = await self.get_by_id(client_request.client_id)
         if existing_client_by_id:
+            if existing_client_by_id.referred_by_id == client_request.referred_by_id:
+                return {"error": "No changes were detected."}
+
+            # If updating, return the existing client with possibly updated fields
             print(f"Found existing client {existing_client_by_id.cb_name}")
-            client_to_upsert = existing_client_by_id
-            client_to_upsert.referred_by_id = client_request.referred_by_id
             print(
-                f"Setting client {client_to_upsert.cb_name} to referred by {client_request.referred_by_id}"
+                f"Setting client {existing_client_by_id.cb_name} to referred by {client_request.referred_by_id}"
             )
+            # create a copy of the existing client to update
+            updated_client = copy.deepcopy(existing_client_by_id)
+            # set the new attributes to update the client
+            updated_client.first_name = client_request.first_name
+            updated_client.last_name = client_request.last_name
+            updated_client.referred_by_id = client_request.referred_by_id
+            updated_client.updated_by = client_request.updated_by
+            audit_log = AuditLog(
+                table_name="clients",
+                record_id=existing_client_by_id.id,
+                user_name=existing_client_by_id.updated_by,
+                before_value=existing_client_by_id.dict(),
+                after_value=updated_client.dict(),
+                action="update",
+            )
+            return updated_client, audit_log
+
         else:
-            # TODO: create new client with patch request info
-            client_to_upsert = Client(
-                first_name=client_request.first_name,
-                last_name=client_request.last_name,
-                updated_by=client_request.updated_by,
-            )
+            # If new, prepare the new client data
             print(
                 f"Creating new client {client_request.last_name}/{client_request.first_name}"
             )
-        await self._repo.upsert([client_to_upsert])
+            new_client = Client(
+                first_name=client_request.first_name,
+                last_name=client_request.last_name,
+                referred_by_id=client_request.referred_by_id,
+                updated_by=client_request.updated_by,
+            )
+            audit_log = AuditLog(
+                table_name="clients",
+                record_id=new_client.id,
+                user_name=new_client.updated_by,
+                before_value={},
+                after_value=new_client.dict(),
+                action="insert",
+            )
+            return new_client, audit_log
+
+    async def process_audit_logs(self, audit_logs):
+        """Calls audit service to insert audit logs to the database."""
+        await self._audit_svc.add_audit_logs(audit_logs)
 
     async def get(
         self,

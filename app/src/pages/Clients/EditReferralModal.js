@@ -61,7 +61,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                     referrals_count: client.referrals_count,
                     reservations_count: client.reservations_count,
                 }));
-                console.log(JSON.stringify(data[0], null, 2));
+                // console.log(JSON.stringify(data[0], null, 2));
                 setClientOptions(formattedClientOptions);
                 setLoaded(true);
             })
@@ -93,9 +93,12 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
 
         const clientToSubmit = {
             client_id: editClientData.id || null,
+            first_name: editClientData.first_name,
+            last_name: editClientData.last_name,
             referred_by_id: selectedReferringClientId || null,
             updated_by: userDetails.email || ''
         };
+        console.log(clientToSubmit);
 
         if (userDetails.role !== 'admin') {
             M.toast({
@@ -105,7 +108,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             });
         }
         else {
-            fetch(`${process.env.REACT_APP_API}/v1/client_referral`, {
+            fetch(`${process.env.REACT_APP_API}/v1/clients`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -132,11 +135,11 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                         toastHtml = data.error;
                         toastColor = 'error-red';
                     } else if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} country.`;
+                        toastHtml = `Added ${insertedCount} client.`;
                     } else if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} country.`;
+                        toastHtml = `Modified ${updatedCount} client.`;
                     } else {
-                        toastHtml = data?.message ?? "No countries were added.";
+                        toastHtml = data?.message ?? "No clients were added.";
                         toastColor = 'error-red';
                     }
                     M.toast({
@@ -163,7 +166,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     };
 
     
-    console.log(editClientData);
+    // console.log(editClientData);
     // console.log(clientOptions);
 
     return (

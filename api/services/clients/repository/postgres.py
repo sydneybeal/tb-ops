@@ -14,10 +14,8 @@
 
 """Repositories for client-related data."""
 import json
-from abc import ABC, abstractmethod
-from datetime import datetime
 from textwrap import dedent
-from typing import Iterable, Sequence, Optional
+from typing import Iterable, Sequence, Optional, Tuple
 from uuid import UUID
 from api.services.clients.models import Client, ClientSummary, ReferralMatch
 
@@ -91,8 +89,8 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 args = [
                     (
                         client.id,
-                        client.first_name.strip(),
-                        client.last_name.strip(),
+                        client.first_name.strip() if client.first_name else None,
+                        client.last_name.strip() if client.last_name else None,
                         client.middle_name.strip() if client.middle_name else None,
                         (
                             client.address_line_1.strip()
@@ -177,6 +175,61 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 ]
                 await con.executemany(query, args)
         print(f"Successfully processed {len(args)} Client record(s) in the repository.")
+
+    async def upsert_referral(self, client: Client) -> list[Tuple[UUID, bool]]:
+        """Adds or updates an iterable of Client models in the repository."""
+        pool = await self._get_pool()  # Assuming this retrieves an asyncpg pool
+        query = dedent(
+            """
+            INSERT INTO public.clients (
+                id, first_name, last_name, referred_by_id, created_at, updated_at, updated_by
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                first_name = EXCLUDED.first_name,
+                last_name = EXCLUDED.last_name,
+                referred_by_id = EXCLUDED.referred_by_id,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+            """
+        )
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    client.id,
+                    client.first_name.strip() if client.first_name else None,
+                    client.last_name.strip() if client.last_name else None,
+                    client.referred_by_id,
+                    client.created_at,
+                    client.updated_at,
+                    client.updated_by,
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    # Append log ID and whether it was an insert (True) or an update (False)
+                    results.append((row["id"], row["was_inserted"]))
+        # Initialize counters
+        inserted_count = 0
+        updated_count = 0
+
+        # Process the results to count inserts and updates
+        for _, was_inserted in results:
+            if was_inserted:
+                inserted_count += 1
+            else:
+                updated_count += 1
+
+        print(f"Processed {len(results)} upsert operation(s).")
+        print(f"Inserted {inserted_count} new client(s).")
+        print(f"Updated {updated_count} existing client(s).")
+        return results
 
     async def get(self) -> Sequence[Client]:
         """Returns Clients in the repository."""

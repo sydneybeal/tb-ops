@@ -51,7 +51,6 @@ export const MatchReferrals = () => {
                     console.error("Expected an array but got:", data);
                     data = []; // Set data to an empty array if it's not an array
                 }
-                console.log(JSON.stringify(data[0], null, 2));
                 data.forEach(item => {
                     if (item.cb_primary_agent_name) {
                         item.cb_primary_agent_name = normalizeConsultantName(item.cb_primary_agent_name);
@@ -254,7 +253,7 @@ export const MatchReferrals = () => {
                                                     </a>
                                                 </li>
                                                 {generatePageRange(currentPage, totalPages).map((page, index) => (
-                                                    <li key={index} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
+                                                    <li key={`page-${index}`} className={`waves-effect waves-light ${currentPage === page - 1 ? 'active tb-teal lighten-3' : ''}`}>
                                                         {page === '...' ? (
                                                             <span>...</span>
                                                         ) : (
@@ -328,7 +327,7 @@ export const MatchReferrals = () => {
                                     <div className="container center" style={{ width: '70%' }}>
                                         {Array.isArray(displayData) && displayData.length > 0 ? (
                                             displayData.map((client, index) => (
-                                                <>
+                                                <React.Fragment key={`client-${index}`}>
                                                     <div className="card referral-match-card">
                                                         <div className="card-content">
                                                             <div className="row" style={{ marginBottom: '0px'}}>
@@ -381,7 +380,7 @@ export const MatchReferrals = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </>
+                                                </React.Fragment>
                                             ))
                                         ) : (
                                             <p>No results.</p>
