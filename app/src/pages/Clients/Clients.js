@@ -391,7 +391,7 @@ export const Clients = () => {
                                     </div>
                                     <div style={{ marginBottom: '20px' }}>
                                         <em className="tb-grey-text">
-                                            <span className="text-bold tb-teal-text">{displayData?.length?.toLocaleString()}</span> clients
+                                            <span className="text-bold tb-teal-text">{filteredData?.length?.toLocaleString()}</span> clients
                                         </em>
                                     </div>
                                     <div className="container center" style={{ width: '100%' }}>

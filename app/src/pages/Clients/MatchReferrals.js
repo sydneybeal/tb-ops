@@ -3,6 +3,7 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
+import EditReferralModal from './EditReferralModal';
 import Select from 'react-select';
 import moment from 'moment';
 
@@ -23,6 +24,9 @@ export const MatchReferrals = () => {
     const [filterOptions, setFilterOptions] = useState({
         consultant: [],
     });
+    const [refreshData, setRefreshData] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [currentEditClient, setCurrentEditClient] = useState(null);
 
     useEffect(() => {
         M.AutoInit();
@@ -192,7 +196,29 @@ export const MatchReferrals = () => {
         return range;
     }
 
-    console.log(displayData);
+    const triggerRefresh = () => {
+        setRefreshData(prev => !prev);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setCurrentEditClient(null);
+        document.body.style.overflow = '';
+    };
+
+    const openEditModal = (client) => {
+        if (!userDetails.email) {
+            M.toast({
+                html: 'Please log in before adding referrals.',
+                displayLength: 2000,
+                classes: 'red lighten-2',
+            });
+            return;
+        } else {
+            setCurrentEditClient(client);
+            setIsModalOpen(true);
+        }
+    };
 
     return (
         <>
@@ -210,6 +236,12 @@ export const MatchReferrals = () => {
                         <>
                             {loaded ? (
                                 <>
+                                    <EditReferralModal
+                                        isOpen={isModalOpen}
+                                        onClose={closeModal}
+                                        onRefresh={triggerRefresh}
+                                        editClientData={currentEditClient}
+                                    />
                                     <div className="row center">
                                         <div className="col s12">
                                             <ul className="pagination">
@@ -283,7 +315,9 @@ export const MatchReferrals = () => {
                                                             backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac',
                                                         },
                                                     }),
+                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
                                                 }}
+                                                menuPortalTarget={document.body}
                                                 isClearable
                                             />
                                             <span className="material-symbols-outlined tb-grey-text text-darken-1">
@@ -335,8 +369,11 @@ export const MatchReferrals = () => {
                                                                     </div>
                                                                 </div>
                                                                 <div className="col s1">
-                                                                    <button className="btn btn-small btn-floating tb-grey">
-                                                                        <span class="material-symbols-outlined">
+                                                                    <button
+                                                                        className="btn btn-small btn-floating tb-grey"
+                                                                        onClick={() => openEditModal(client)}
+                                                                    >
+                                                                        <span className="material-symbols-outlined">
                                                                             edit
                                                                         </span>
                                                                     </button>
