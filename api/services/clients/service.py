@@ -99,12 +99,15 @@ class ClientService:
             updated_client.last_name = client_request.last_name
             updated_client.referred_by_id = client_request.referred_by_id
             updated_client.updated_by = client_request.updated_by
+
+            before_detail = await self.add_audit_detail(existing_client_by_id)
+            after_detail = await self.add_audit_detail(updated_client)
             audit_log = AuditLog(
                 table_name="clients",
                 record_id=existing_client_by_id.id,
                 user_name=existing_client_by_id.updated_by,
-                before_value=existing_client_by_id.dict(),
-                after_value=updated_client.dict(),
+                before_value=before_detail,
+                after_value=after_detail,
                 action="update",
             )
             return updated_client, audit_log
@@ -133,6 +136,16 @@ class ClientService:
     async def process_audit_logs(self, audit_logs):
         """Calls audit service to insert audit logs to the database."""
         await self._audit_svc.add_audit_logs(audit_logs)
+
+    async def add_audit_detail(self, client: Client) -> dict:
+        """Adds audit detail such as the referral first and last name."""
+        detail_dict = client.model_dump()
+        if client.referred_by_id:
+            referring_client = await self.get_by_id(client.referred_by_id)
+            if referring_client:
+                detail_dict["referred_by_first_name"] = referring_client.first_name
+                detail_dict["referred_by_last_name"] = referring_client.last_name
+        return detail_dict
 
     async def get(
         self,

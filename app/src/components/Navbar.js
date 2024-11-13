@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'vClients';
+    const version = 'v1.0.3';
 
     // useEffect(() => {
     //     // Initialize Sidenav
