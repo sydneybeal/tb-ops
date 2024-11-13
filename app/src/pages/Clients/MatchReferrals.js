@@ -16,6 +16,7 @@ export const MatchReferrals = () => {
     const [filteredData, setFilteredData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [sorting, setSorting] = useState({ field: 'display_name', ascending: true });
+    const allowedRoles = ['admin', 'leadership'];
     const itemsPerPage = 100;
     const [totalPages, setTotalPages] = useState(0);
     const [filters, setFilters] = useState({
@@ -222,12 +223,12 @@ export const MatchReferrals = () => {
     return (
         <>
             <header>
-                <Navbar title="Referral Matching" />
+                <Navbar title="Edit Referrals" />
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
-                    {(userDetails.role !== 'admin') ? (
+                    {(!allowedRoles.includes(userDetails.role)) ? (
                         <div>
                             You do not have permission to view this page.
                         </div>

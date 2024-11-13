@@ -8,6 +8,7 @@ export const Referrals = () => {
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
     const [visibleReferralId, setVisibleReferralId] = useState(null);
+    const allowedRoles = ['admin', 'leadership'];
 
     useEffect(() => {
         M.AutoInit();
@@ -47,7 +48,7 @@ export const Referrals = () => {
 
     const rows = [];
     for (let i = 0; i < sortedData.length; i += 3) {
-        rows.push(sortedData.slice(i, i + 3));
+        rows.push(sortedData.slice(i, i + 1));
     }
 
     const renderChildReferrals = (children) => {
@@ -104,10 +105,12 @@ export const Referrals = () => {
         const travelRecency = Math.abs(node.travel_recency);
         const travelRecencyComment = node.travel_recency < 0 ?
             `has an upcoming trip booked for ${travelRecency} year${travelRecency > 1 ? 's' : ''} from now.` :
-            `last went on a trip ${travelRecency} year${travelRecency > 1 ? 's' : ''} ago.`;
+            node.travel_recency === 0 ?
+            `last went on a trip this year.` :
+            `last went on a trip ${travelRecency} year${(travelRecency > 1) ? 's' : ''} ago.`;
     
         const relationshipComment = node.relationship_length === travelRecency && node.travel_recency > 0 ?
-            `Their first trip was ${node.relationship_length} years ago and has not returned since, suggesting a one-time engagement` :
+            `Their first trip was ${node.relationship_length} years ago and they have not returned since, suggesting a one-time engagement` :
             `They are a ${node.relationship_length > travelRecency ? 'repeat' : 'relatively new'} customer who ${travelRecencyComment}`;
     
         const ageComment = node.age >= 80 ?
@@ -142,7 +145,7 @@ export const Referrals = () => {
                 <p>{referralTotalComment}</p>
                 <p>{node.name} {referralEfficiencyComment} Their average referral spends ${directReferralAvgSpend.toLocaleString()} compared to their own average of ${node.avg_spend.toLocaleString()}.</p>
                 <p>{referralDepthComment}</p>
-                <p>The total lifetime value contributed by {node.name} through referrals is ${ltvContribution.toLocaleString()}.</p>
+                <p>The total lifetime contribution by {node.name} through spend & referrals is ${ltvContribution.toLocaleString()}.</p>
             </div>
         );
     }
@@ -157,11 +160,17 @@ export const Referrals = () => {
     return (
         <>
             <header>
-                <Navbar title="Referrals" />
+                <Navbar title="Referral Trees" />
             </header>
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
+                {(!allowedRoles.includes(userDetails.role)) ? (
+                        <div>
+                            You do not have permission to view this page.
+                        </div>
+                    ) : (
+                        <>
                     {rows.map((row, rowIndex) => (
                         <>
                             <div
@@ -170,27 +179,97 @@ export const Referrals = () => {
                             >
                                 {row.map((referral, index) => (
                                     <div
-                                        className="col s12 m6 l4"
+                                        className="col s12"
                                         key={referral.id}
                                         style={{ marginBottom: row.some(referral => referral.id === visibleReferralId) ? '0px' : '' }}
                                     >
                                         <div
                                             className={`card referral-tree-card ${visibleReferralId === referral.id ? 'tb-teal darken-1 white-text' : ''}`}
-                                            style={{ marginBottom: row.some(referral => referral.id === visibleReferralId) ? '0px' : '' }}
+                                            style={{
+                                                marginBottom: row.some(referral => referral.id === visibleReferralId) ? '0px' : '',
+                                                borderRadius: row.some(referral => referral.id === visibleReferralId) ? '10px 10px 0px 0px' : '' 
+                                            }}
                                         >
                                             <div className="card-content">
                                                 <span className="card-title">
                                                     {referral.name}
                                                 </span>
-                                                <p>Age: {referral.age}</p>
-                                                <p>Customer for: {referral.relationship_length} years</p>
-                                                <p>
-                                                    Latest trip: {referral.travel_recency < 0 ? 
-                                                    `in ${Math.abs(referral.travel_recency)} year${Math.abs(referral.travel_recency) !== 1 ? 's' : ''}` : 
-                                                    `${Math.abs(referral.travel_recency)} year${Math.abs(referral.travel_recency) !== 1 ? 's' : ''} ago`}
-                                                </p>
-                                                <p>Spend + Referral Spend: <b>${referral.total_associated_referral_spend.toLocaleString()}</b></p>
-                                                <p>Total Associated Referrals: <b>{referral.total_associated_referrals}</b></p>
+                                                <div className="row" style={{ fontSize: '1.5rem'}}>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {referral.age}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            Age
+                                                        </em>
+                                                    </div>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {`${referral.relationship_length} year${(referral.relationship_length > 1 || referral.relationship_length === 0) ? 's' : ''}`}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            TB relationship length
+                                                        </em>
+                                                    </div>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {referral.travel_recency === 0 ? `This year` : referral.travel_recency < 0 ? 
+                                                                `in ${Math.abs(referral.travel_recency)} year${Math.abs(referral.travel_recency) !== 1 ? 's' : ''}` : 
+                                                                `${Math.abs(referral.travel_recency)} year${Math.abs(referral.travel_recency) !== 1 ? 's' : ''} ago`}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            Latest trip
+                                                        </em>
+                                                    </div>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {referral.num_trips}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            # Trips
+                                                        </em>
+                                                    </div>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {referral.total_associated_referrals}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            # Referrals
+                                                        </em>
+                                                    </div>
+                                                    <div className="col s12 l2">
+                                                        <span className="text-bold" style={{ fontSize: '1.2rem' }}>
+                                                            {`$${referral.total_associated_referral_spend.toLocaleString()}`}
+                                                        </span>
+                                                        <br />
+                                                        <em style={{ fontSize: '1rem' }}>
+                                                            {/* <span className="material-symbols-outlined">
+                                                                hotel
+                                                            </span> */}
+                                                            Spend + Referral Spend
+                                                        </em>
+                                                    </div>
+                                                </div>
                                             </div>
                                             {referral.children.length > 0 && (
                                                 <div className="card-action">
@@ -206,9 +285,9 @@ export const Referrals = () => {
                                 ))}
                             </div>
                             {row.some(referral => referral.id === visibleReferralId) && (
-                                <div className="row" style={{ marginTop: '0px'}}>
+                                <div className="row" style={{ marginTop: '0px', paddingTop: '0px'}}>
                                 <div className="col s12">
-                                    <div className="card tb-grey darken-1 referral-tree-card">
+                                    <div className="card tb-grey referral-details-card">
                                         <div className="card-content white-text">
                                             {renderTreeSummary(apiData.find(r => r.id === visibleReferralId))}
                                             {renderChildReferrals(apiData.find(r => r.id === visibleReferralId).children)}
@@ -219,6 +298,8 @@ export const Referrals = () => {
                             )}
                         </>
                     ))}
+                    </>
+                    )}
                 </div>
             </main>
         </>

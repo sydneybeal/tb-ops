@@ -1315,7 +1315,22 @@ th {
 }
 
 .card.referral-tree-card {
-  border-radius: 10px;
+  border-radius: 10px 10px 10px 10px;
+  /* background-color: pink; */
+}
+
+.card.referral-tree-card .card-action:last-child {
+  border-radius: 0px 0px 10px 10px;
+}
+
+.card.referral-tree-card .card-content {
+  padding: 12px 10px 0px 10px;
+}
+
+.card.referral-details-card {
+  border-radius: 0px 0px 10px 10px;
+  padding-top: 0px;
+  margin-top: 0px;
   transition: box-shadow 0.25s;
   box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 }

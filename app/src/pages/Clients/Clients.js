@@ -18,13 +18,16 @@ export const Clients = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 100;
     const [totalPages, setTotalPages] = useState(0);
+    const allowedRoles = ['admin', 'leadership'];
     const [sorting, setSorting] = useState({ field: 'display_name', ascending: true });
     const [loaded, setLoaded] = useState(false);
     const [filters, setFilters] = useState({
         state: '',
+        referred_by: '',
     });
     const [filterOptions, setFilterOptions] = useState({
         state: [],
+        referred_by: [],
     });
 
     useEffect(() => {
@@ -71,11 +74,23 @@ export const Clients = () => {
             return acc;
         }, {}) : [];
 
+        const referredByMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
+            if (item.referred_by_display_name && !acc[item.referred_by_display_name]) {
+                acc[item.referred_by_display_name] = {
+                    value: item.referred_by_display_name || 'no-referral',
+                    label: item.referred_by_display_name || 'None'
+                };
+            }
+            return acc;
+        }, {}) : [];
+
         const stateOptions = Object.values(stateMap).sort((a, b) => a.label.localeCompare(b.label));
+        const referredByOptions = Object.values(referredByMap).sort((a, b) => a.label.localeCompare(b.label));
 
 
         setFilterOptions({
             state: stateOptions,
+            referred_by: referredByOptions,
         });
     }, [apiData]);
 
@@ -181,6 +196,9 @@ export const Clients = () => {
         if (filters.state) {
             contextFilteredData = contextFilteredData.filter(item => item.address_state === filters.state);
         }
+        if (filters.referred_by) {
+            contextFilteredData = contextFilteredData.filter(item => item.referred_by_display_name === filters.referred_by);
+        }
         let newFilteredData = contextFilteredData;
         if (searchQuery) {
             const normalizedSearchQuery = normalizeString(searchQuery);
@@ -224,7 +242,7 @@ export const Clients = () => {
 
             <main className="tb-grey lighten-6" style={{ paddingTop: '30px' }}>
                 <div className="container center" style={{ width: '90%', paddingBottom: '100px' }}>
-                    {(userDetails.role !== 'admin') ? (
+                    {(!allowedRoles.includes(userDetails.role)) ? (
                         <div>
                             You do not have permission to view this page.
                         </div>
@@ -265,7 +283,7 @@ export const Clients = () => {
                                     </div>
                                     <div className="row center">
                                         <div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l6">
                                                 <Select
                                                     placeholder="State"
                                                     value={filterOptions.state.find(state => state.label === filters.state) ? { value: filters.state, label: filters.state } : null}
@@ -301,13 +319,13 @@ export const Clients = () => {
                                                     globe
                                                 </span>
                                             </div>
-                                            <div className="col s12 l4">
+                                            <div className="col s12 l6">
                                                 <Select
                                                     placeholder="Referred By"
-                                                    value={null}
-                                                    // onChange={}
-                                                    // options={}
-                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
+                                                    value={filterOptions.referred_by.find(ref => ref.label === filters.referred_by) ? { value: filters.referred_by, label: filters.referred_by } : null}
+                                                    onChange={(selectedOption) => setFilters({ ...filters, referred_by: selectedOption ? selectedOption.label : '' })}
+                                                    options={filterOptions.referred_by}
+                                                    className={`select ${filters.referred_by ? 'select--has-value' : ''}`}
                                                     classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
@@ -337,13 +355,10 @@ export const Clients = () => {
                                                     group
                                                 </span>
                                             </div>
-                                            <div className="col s12 l4">
+                                            {/* <div className="col s12 l4">
                                                 <Select
                                                     placeholder="Core Destination"
                                                     value={null}
-                                                    // onChange={}
-                                                    // options={}
-                                                    // className={`select ${filters.core_destination ? 'select--has-value' : ''}`}
                                                     classNamePrefix="select"
                                                     styles={{
                                                         control: (provided, state) => ({
@@ -372,7 +387,7 @@ export const Clients = () => {
                                                 <span className="material-symbols-outlined tb-grey-text text-darken-1">
                                                     travel_explore
                                                 </span>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     </div>
                                     <div className="row center">
@@ -530,7 +545,7 @@ export const Clients = () => {
                                                                     {client.trips_plus_referrals}
                                                                 </td>
                                                                 <td>
-                                                                    {client.subjective_score} / 100
+                                                                    {client.subjective_score || 'TBD'} / 100
                                                                 </td>
                                                             </tr>
                                                         </React.Fragment>

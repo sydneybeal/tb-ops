@@ -173,7 +173,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         <div id="add-edit-modal" className="modal add-edit-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
-                    Edit Referral for Client
+                    Edit Referral for {editClientData?.display_name || 'Client'}
                 </h4>
                 <p>
                     Previously referred by: {originalReferringClient || 'none'}
@@ -213,7 +213,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                 </div>
             </div>
             <div className="modal-footer" style={{ marginBottom: '20px', zIndex: '-1' }}>
-                <div style={{ paddingBottom: '20px' }}>
+                <div className="center" style={{ paddingBottom: '20px' }}>
                     <button className="btn modal-close waves-effect waves-light error-red" onClick={onClose}>
                         Close
                     </button>

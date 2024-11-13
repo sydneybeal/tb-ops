@@ -242,14 +242,14 @@ const Navbar = ({ title }) => {
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/referrals'} className="text-bold">
-                                    Referrals
+                                    Referral Trees
                                 </Link>
                             </li>
                         </div>
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/match_referrals'} className="text-bold">
-                                   Match Referrals
+                                   Edit Referrals
                                 </Link>
                             </li>
                         </div>
