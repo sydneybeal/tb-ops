@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import BedNightReports from './pages/BedNights/BedNightReports';
+import Clients from './pages/Clients/Clients';
+import Referrals from './pages/Clients/Referrals';
+import MatchReferrals from './pages/Clients/MatchReferrals';
 import EntryElements from './pages/EntryElements/EntryElements';
 import PropertiesView from './pages/Properties/PropertiesView';
 import LookerReports from './pages/BedNights/LookerReports';
@@ -155,6 +158,30 @@ const router = createBrowserRouter([
         <Maps />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/clients/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <Clients />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/referrals/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <Referrals />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/match_referrals/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <MatchReferrals />
+      </ProtectedRoute>
+    )
   },
 ]);
 

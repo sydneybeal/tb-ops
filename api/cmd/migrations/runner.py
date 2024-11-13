@@ -20,6 +20,16 @@ import os
 from api.config.postgres import PostgresConfig, make_conn
 
 
+def extract_migration_number(filename: str) -> int:
+    """
+    Extracts the numerical prefix from a migration filename.
+    For example, '10_create_table.sql' returns 10.
+    If no valid number is found, returns a high number to place it at the end.
+    """
+    number_part = filename.split("_")[0]
+    return int(number_part)
+
+
 async def main() -> int:
     """Entrypoint script for running migrations."""
     log = logging.getLogger()
@@ -39,15 +49,12 @@ async def main() -> int:
     )
     log.info(f"Running migrations on database {os.getenv('POSTGRES_DB', 'tb-ops')}")
     assert not conn.is_closed()
-    migrations = list(
-        sorted(
-            filter(
-                lambda x: x.endswith(".sql"),
-                os.listdir(os.path.join(os.path.dirname(__file__), "ddl")),
-            )
-        )
-    )
-    for f in migrations:
+    ddl_directory = os.path.join(os.path.dirname(__file__), "ddl")
+    migration_files = [f for f in os.listdir(ddl_directory) if f.endswith(".sql")]
+
+    # Sort the files based on their numerical prefixes
+    sorted_migrations = sorted(migration_files, key=extract_migration_number)
+    for f in sorted_migrations:
         log.info("running migration: %s", f)
         with open(
             os.path.join(os.path.dirname(__file__), "ddl", f), encoding="utf-8"

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.2';
+    const version = 'v1.0.3';
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -229,6 +229,27 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/looker_reports'} className="text-bold">
                                     Looker Reports
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/clients'} className="text-bold">
+                                    Clients
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/referrals'} className="text-bold">
+                                    Referral Trees
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/match_referrals'} className="text-bold">
+                                   Edit Referrals
                                 </Link>
                             </li>
                         </div>

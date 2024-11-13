@@ -33,7 +33,9 @@ from api.services.audit.service import AuditService
 from api.services.auth.service import AuthService
 from api.cmd.migrations import runner
 from api.config.postgres import PostgresConfig
+from api.services.clients.service import ClientService
 from api.services.currency.service import CurrencyService
+from api.services.reservations.service import ReservationService
 from api.services.summaries.service import SummaryService
 from api.services.travel.service import TravelService
 from api.services.quality.service import QualityService
@@ -97,8 +99,18 @@ def quality_service():
 
 
 @pytest.fixture
+def client_service(postgres_test_database):
+    return ClientService()
+
+
+@pytest.fixture
 def currency_service():
     return CurrencyService()
+
+
+@pytest.fixture
+def reservation_service(postgres_test_database):
+    return ReservationService()
 
 
 @pytest.fixture
@@ -108,6 +120,8 @@ def app(
     auth_service,
     audit_service,
     quality_service,
+    client_service,
+    reservation_service,
     currency_service,
 ) -> FastAPI:
     app = make_app(
@@ -116,6 +130,8 @@ def app(
         auth_service,
         audit_service,
         quality_service,
+        client_service,
+        reservation_service,
         currency_service,
     )
 

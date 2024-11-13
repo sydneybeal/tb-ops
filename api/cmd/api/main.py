@@ -30,6 +30,15 @@ from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.service import AuthService
+from api.services.clients.service import ClientService
+from api.services.clients.models import (
+    ClientSummary,
+    ReferralMatch,
+    ReferralNode,
+    PatchClientRequest,
+)
+from api.services.reservations.service import ReservationService
+from api.services.reservations.models import Reservation
 from api.services.currency.service import CurrencyService
 from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
@@ -65,7 +74,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v1.0.2"
+VERSION = "v1.0.3"
 
 
 def get_auth_service() -> AuthService:
@@ -105,6 +114,8 @@ def make_app(
     auth_svc: AuthService,
     audit_svc: AuditService,
     quality_svc: QualityService,
+    client_svc: ClientService,
+    reservation_svc: ReservationService,
     currency_svc: CurrencyService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
@@ -914,6 +925,67 @@ def make_app(
         return progress
 
     @app.get(
+        "/v1/clients",
+        operation_id="get_clients",
+        response_model=Sequence[ClientSummary],
+        tags=["clients"],
+    )
+    async def get_clients(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ClientSummary] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_summaries()
+
+    @app.patch(
+        "/v1/clients",
+        operation_id="post_clients",
+        tags=["clients"],
+    )
+    async def post_clients(
+        client_data: PatchClientRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        results = await client_svc.process_patch_request(client_data)
+        return JSONResponse(content=results)
+
+    @app.get(
+        "/v1/client_referrals",
+        operation_id="get_referral_matches",
+        response_model=Sequence[ReferralMatch],
+        tags=["clients"],
+    )
+    async def get_referral_matches(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralMatch] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_matches()
+
+    @app.get(
+        "/v1/referral_tree",
+        operation_id="get_referral_tree",
+        response_model=Sequence[ReferralNode],
+        tags=["clients"],
+    )
+    async def get_referral_tree(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralNode] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_tree()
+
+    @app.get(
+        "/v1/reservations",
+        operation_id="get_reservations",
+        response_model=Sequence[Reservation],
+        tags=["reservations"],
+    )
+    async def get_reservations(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[Reservation] | JSONResponse:
+        """Get all Reservation models."""
+        return await reservation_svc.get()
+
+    @app.get(
         "/v1/daily_rates",
         operation_id="get_daily_rates",
         response_model=Iterable[DailyRate],
@@ -951,10 +1023,21 @@ if __name__ == "__main__":
     auth_svc = AuthService()
     audit_svc = AuditService()
     quality_svc = QualityService()
+    client_svc = ClientService()
+    reservation_svc = ReservationService()
     currency_svc = CurrencyService()
+    client_svc = ClientService()
+    reservation_svc = ReservationService()
 
     app = make_app(
-        travel_svc, summary_svc, auth_svc, audit_svc, quality_svc, currency_svc
+        travel_svc,
+        summary_svc,
+        auth_svc,
+        audit_svc,
+        quality_svc,
+        client_svc,
+        reservation_svc,
+        currency_svc,
     )
 
     uvicorn.run(app, host="0.0.0.0", port=9900)
