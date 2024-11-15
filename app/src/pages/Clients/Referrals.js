@@ -49,10 +49,7 @@ export const Referrals = () => {
         b.total_associated_referral_spend - a.total_associated_referral_spend
     );
 
-    const rows = [];
-    for (let i = 0; i < sortedData.length; i += 3) {
-        rows.push(sortedData.slice(i, i + 1));
-    }
+    const rows = sortedData.map((item) => [item]);
 
     const renderChildReferrals = (children) => {
         // Function to determine the column size based on the number of children
