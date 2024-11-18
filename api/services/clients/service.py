@@ -105,7 +105,7 @@ class ClientService:
             audit_log = AuditLog(
                 table_name="clients",
                 record_id=existing_client_by_id.id,
-                user_name=existing_client_by_id.updated_by,
+                user_name=updated_client.updated_by,
                 before_value=before_detail,
                 after_value=after_detail,
                 action="update",

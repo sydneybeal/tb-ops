@@ -100,69 +100,60 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         };
         console.log(clientToSubmit);
 
-        if (userDetails.role !== 'admin') {
-            M.toast({
-                html: 'Your entry was valid, but only admins are able to save to the database at this time.',
-                displayLength: 4000,
-                classes: 'warning-yellow tb-md-black-text',
-            });
-        }
-        else {
-            fetch(`${process.env.REACT_APP_API}/v1/clients`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userDetails.token}`,
-                },
-                body: JSON.stringify(clientToSubmit, null, 2),
+        fetch(`${process.env.REACT_APP_API}/v1/clients`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userDetails.token}`,
+            },
+            body: JSON.stringify(clientToSubmit, null, 2),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    // If the response is not ok, throw an error with the status
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
             })
-                .then(response => {
-                    if (!response.ok) {
-                        // If the response is not ok, throw an error with the status
-                        throw new Error('Network response was not ok: ' + response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Handle success response
-                    const insertedCount = data?.inserted_count ?? 0;
-                    const updatedCount = data?.updated_count ?? 0;
-                    let toastHtml = '';
-                    let toastColor = 'success-green';
+            .then(data => {
+                // Handle success response
+                const insertedCount = data?.inserted_count ?? 0;
+                const updatedCount = data?.updated_count ?? 0;
+                let toastHtml = '';
+                let toastColor = 'success-green';
 
-                    // Check for error first
-                    if (data?.error) {
-                        toastHtml = data.error;
-                        toastColor = 'error-red';
-                    } else if (insertedCount > 0) {
-                        toastHtml = `Added ${insertedCount} client.`;
-                    } else if (updatedCount > 0) {
-                        toastHtml = `Modified ${updatedCount} client.`;
-                    } else {
-                        toastHtml = data?.message ?? "No clients were added.";
-                        toastColor = 'error-red';
-                    }
-                    M.toast({
-                        html: toastHtml,
-                        displayLength: 4000,
-                        classes: toastColor,
-                    });
-                })
-                .finally(() => {
-                    resetFormState();
-                    onRefresh();
-                    onClose();
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    M.toast({
-                        html: 'Your entry was valid, but we were unable to save to the database.',
-                        displayLength: 4000,
-                        classes: 'warning-yellow tb-md-black-text',
-                    });
+                // Check for error first
+                if (data?.error) {
+                    toastHtml = data.error;
+                    toastColor = 'error-red';
+                } else if (insertedCount > 0) {
+                    toastHtml = `Added ${insertedCount} client.`;
+                } else if (updatedCount > 0) {
+                    toastHtml = `Modified ${updatedCount} client.`;
+                } else {
+                    toastHtml = data?.message ?? "No clients were added.";
+                    toastColor = 'error-red';
+                }
+                M.toast({
+                    html: toastHtml,
+                    displayLength: 4000,
+                    classes: toastColor,
                 });
-            // }
-        }
+            })
+            .finally(() => {
+                resetFormState();
+                onRefresh();
+                onClose();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                M.toast({
+                    html: 'Your entry was valid, but we were unable to save to the database.',
+                    displayLength: 4000,
+                    classes: 'warning-yellow tb-md-black-text',
+                });
+            });
+        // }
     };
 
     
