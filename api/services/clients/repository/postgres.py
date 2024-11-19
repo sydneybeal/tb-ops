@@ -299,6 +299,7 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 c.cb_created_date,
                 c.cb_modified_date,
                 c.cb_referred_by,
+                c.cb_marketing_sources,
                 c.subjective_score,
                 c.birth_date,
                 c.referred_by_id,

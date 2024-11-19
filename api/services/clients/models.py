@@ -92,6 +92,7 @@ class ClientSummary(BaseModel):
     cb_created_date: Optional[date] = None
     cb_modified_date: Optional[date] = None
     cb_referred_by: Optional[str] = None
+    cb_marketing_sources: Optional[list[str]] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None

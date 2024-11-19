@@ -13,4 +13,4 @@
 -- limitations under the License.
 
 ALTER TABLE public.clients
-ADD COLUMN IF NOT EXISTS cb_marketing_sources VARCHAR(255) NULL;
+ADD COLUMN IF NOT EXISTS cb_marketing_sources TEXT[] NULL;
