@@ -13,6 +13,11 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     const [originalReferringClient, setOriginalReferringClient] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
+    const toTitleCase = str => str ? str.replace(
+        /\w\S*/g, 
+        txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    ) : '';
+
     useEffect(() => {
         const options = {
             onCloseEnd: () => {
@@ -54,7 +59,11 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                 }
                 const formattedClientOptions = data.map((client) => ({
                     value: client.id,
-                    label: client.display_name,
+                    label: `${client.display_name}${
+                        client.address_city || client.address_state
+                            ? ` (${[toTitleCase(client.address_city), client.address_state].filter(Boolean).join(', ')})`
+                            : ''
+                    }`,
                     address_city: client.address_city,
                     address_state: client.address_state,
                     referred_by_display_name: client.referred_by_display_name,
@@ -99,6 +108,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             updated_by: userDetails.email || ''
         };
         console.log(clientToSubmit);
+
 
         fetch(`${process.env.REACT_APP_API}/v1/clients`, {
             method: 'PATCH',
@@ -169,6 +179,24 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                 <p>
                     Previously referred by: {originalReferringClient || 'none'}
                 </p>
+                <div>
+                    <p>CB marketing sources: </p>
+                    {Array.isArray(editClientData.cb_marketing_sources) && editClientData.cb_marketing_sources.length > 0 ? (
+                        editClientData.cb_marketing_sources.map((source, index) => (
+                            <p key={index} className="tb-teal-text text-bold">
+                                {source}
+                            </p>
+                        ))
+                    ) : (
+                        <>
+                            <span className="">
+                                <span className="material-symbols-outlined">
+                                    live_help
+                                </span>
+                            </span>
+                        </>
+                    )}
+                </div>
                 <div className="container" style={{ width: '60%' }}>
                     <div style={{ textAlign: 'left', marginTop: '50px' }}>
                         <form id="consultantForm" onSubmit={handleFormSubmit}>

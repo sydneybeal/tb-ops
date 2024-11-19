@@ -220,6 +220,8 @@ export const MatchReferrals = () => {
         }
     };
 
+    console.log(displayData[0]);
+
     return (
         <>
             <header>
@@ -350,22 +352,41 @@ export const MatchReferrals = () => {
                                                                 </div>
                                                                 <div className="col s5">
                                                                     <div>
-                                                                    {client.referred_by_id ?
-                                                                        <>
                                                                         <p>Referred by: </p>
-                                                                        <span className="tb-teal-text text-bold">
-                                                                            {client.referred_by_last_name}/{client.referred_by_first_name}
-                                                                        </span>
-                                                                        </>
-                                                                        :
-                                                                        <>
-                                                                            <span className="">
-                                                                                <span className="material-symbols-outlined">
-                                                                                    live_help
+                                                                        {client.referred_by_id ?
+                                                                            <>
+                                                                                <span className="tb-teal-text text-bold">
+                                                                                    {client.referred_by_last_name}/{client.referred_by_first_name}
                                                                                 </span>
-                                                                            </span>
-                                                                        </>
-                                                                    }
+                                                                            </>
+                                                                        :
+                                                                            <>
+                                                                                <span className="">
+                                                                                    <span className="material-symbols-outlined">
+                                                                                        live_help
+                                                                                    </span>
+                                                                                </span>
+                                                                            </>
+                                                                        }
+                                                                    </div>
+                                                                    <br/>
+                                                                    <div>
+                                                                        <p>CB marketing sources: </p>
+                                                                        {Array.isArray(client.cb_marketing_sources) && client.cb_marketing_sources.length > 0 ? (
+                                                                            client.cb_marketing_sources.map((source, index) => (
+                                                                                <p key={index} className="tb-teal-text text-bold">
+                                                                                    {source}
+                                                                                </p>
+                                                                            ))
+                                                                        ) : (
+                                                                            <>
+                                                                                <span className="">
+                                                                                    <span className="material-symbols-outlined">
+                                                                                        live_help
+                                                                                    </span>
+                                                                                </span>
+                                                                            </>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="col s1">

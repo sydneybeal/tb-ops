@@ -51,6 +51,7 @@ class Client(BaseModel):
     cb_created_date: Optional[date] = None
     cb_modified_date: Optional[date] = None
     cb_referred_by: Optional[str] = None
+    cb_marketing_sources: Optional[list[str]] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
@@ -83,6 +84,7 @@ class ClientSummary(BaseModel):
     cb_courtesy_title: Optional[str] = None
     cb_primary_agent_name: Optional[str] = None
     cb_salutation: Optional[str] = None
+    cb_issue_country: Optional[str] = None
     cb_relationship: Optional[str] = None
     cb_active: Optional[str] = None
     cb_passport_expire: Optional[str] = None
@@ -90,6 +92,7 @@ class ClientSummary(BaseModel):
     cb_created_date: Optional[date] = None
     cb_modified_date: Optional[date] = None
     cb_referred_by: Optional[str] = None
+    cb_marketing_sources: Optional[list[str]] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
     referred_by_id: Optional[UUID] = None
