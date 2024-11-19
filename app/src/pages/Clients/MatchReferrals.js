@@ -220,8 +220,6 @@ export const MatchReferrals = () => {
         }
     };
 
-    console.log(displayData[0]);
-
     return (
         <>
             <header>

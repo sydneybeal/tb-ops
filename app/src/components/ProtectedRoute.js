@@ -4,14 +4,27 @@ import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from './AuthContext';
 import LoginModal from '../pages/Login';
 
-const ProtectedRoute = ({ children, allowedRoles = ['admin', 'sales_support', 'consultant', 'accounting', 'leadership'] }) => {
+const ProtectedRoute = ({
+        children,
+        allowedRoles = ['admin', 'sales_support', 'consultant', 'accounting', 'leadership'],
+        allowedUsers = []
+    }) => {
     const { userDetails } = useAuth();
     const [showModal, setShowModal] = useState(!userDetails);
     const navigate = useNavigate();
 
+    //TODO allow these 2 to also view the page
+    //allowedUsers = [
+    //     'amandab@abc.com',
+    //     'samanthae@abc.com',
+    // ];
     useEffect(() => {
         M.AutoInit();
-        if (userDetails && !allowedRoles.includes(userDetails.role)) {
+        if (
+            userDetails && 
+            !allowedRoles.includes(userDetails.role) && 
+            !allowedUsers.includes(userDetails.email)
+        ) {
             M.toast({
                 html: 'You do not have permission to view that page, redirecting to home page.',
                 displayLength: 4000,
@@ -19,7 +32,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin', 'sales_support', 'c
             });
             navigate('/', { replace: true });
         }
-    }, [userDetails, navigate, allowedRoles]);
+    }, [userDetails, navigate, allowedRoles, allowedUsers]);
 
     if (!userDetails) {
         return (
