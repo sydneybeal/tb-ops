@@ -176,27 +176,6 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
                     Edit Referral for {editClientData?.display_name || 'Client'}
                 </h4>
-                <p>
-                    Previously referred by: {originalReferringClient || 'none'}
-                </p>
-                <div>
-                    <p>CB marketing sources: </p>
-                    {Array.isArray(editClientData.cb_marketing_sources) && editClientData.cb_marketing_sources.length > 0 ? (
-                        editClientData.cb_marketing_sources.map((source, index) => (
-                            <p key={index} className="tb-teal-text text-bold">
-                                {source}
-                            </p>
-                        ))
-                    ) : (
-                        <>
-                            <span className="">
-                                <span className="material-symbols-outlined">
-                                    live_help
-                                </span>
-                            </span>
-                        </>
-                    )}
-                </div>
                 <div className="container" style={{ width: '60%' }}>
                     <div style={{ textAlign: 'left', marginTop: '50px' }}>
                         <form id="consultantForm" onSubmit={handleFormSubmit}>
@@ -228,6 +207,34 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                 menuPortalTarget={document.body}
                             />
                         </form>
+                    </div>
+                </div>
+                <div className="row" style={{marginTop: '15px'}}>
+                    <div className="col s6">
+                        <span className="tb-teal-text text-bold">
+                            Previously referred by:
+                        </span>
+                        <br/>
+                        <span>{originalReferringClient || 'none'}</span>
+                    </div>
+                    <div className="col s6">
+                        <span className="tb-teal-text text-bold">CB marketing sources: </span>
+                        <br/>
+                        {Array.isArray(editClientData?.cb_marketing_sources) && editClientData?.cb_marketing_sources.length > 0 ? (
+                            editClientData?.cb_marketing_sources.map((source, index) => (
+                                <span key={index}>
+                                    {source}
+                                </span>
+                            ))
+                        ) : (
+                            <>
+                                <span className="">
+                                    <span className="material-symbols-outlined">
+                                        live_help
+                                    </span>
+                                </span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

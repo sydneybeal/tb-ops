@@ -19,6 +19,10 @@ export const Trips = () => {
     const { userDetails, logout } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
     // const [displayData, setDisplayData] = useState([]);
+    const allowedUsers = [
+        'amandab@travelbeyond.com',
+        'samanthae@travelbeyond.com',
+    ];
 
     useEffect(() => {
         // Calculate the number of pages with the new data
@@ -183,7 +187,8 @@ export const Trips = () => {
 
     return (
         <>
-            {(userDetails.role !== 'admin') ? (
+            {!(userDetails.role === 'admin' ||
+                allowedUsers.includes(userDetails.email)) ? (
                 <div>
                     You do not have permission to view this page.
                 </div>

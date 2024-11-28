@@ -5,7 +5,11 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.5';
+    const version = 'v1.0.6';
+    const allowedUsers = [
+        'amandab@travelbeyond.com',
+        'samanthae@travelbeyond.com',
+    ];
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -171,7 +175,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                {userDetails?.role === 'admin' && (
+                {(userDetails?.role === 'admin' || allowedUsers.includes(userDetails?.email)) && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
                             <li>
@@ -181,13 +185,15 @@ const Navbar = ({ title }) => {
                             </li>
                         </div>
                         
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/entry_elements'} className="text-bold">
-                                    Entry Elements
-                                </Link>
-                            </li>
-                        </div>
+                        {userDetails?.role === 'admin' &&
+                            <div className="container" style={{ width: '100%' }}>
+                                <li>
+                                    <Link to={'/entry_elements'} className="text-bold">
+                                        Entry Elements
+                                    </Link>
+                                </li>
+                            </div>
+                        }
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/trips'} className="text-bold">
@@ -198,13 +204,15 @@ const Navbar = ({ title }) => {
                                 </Link>
                             </li>
                         </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/audit_logs'} className="text-bold">
-                                    Audit Logs
-                                </Link>
-                            </li>
-                        </div>
+                        {userDetails?.role === 'admin' &&
+                            <div className="container" style={{ width: '100%' }}>
+                                <li>
+                                    <Link to={'/audit_logs'} className="text-bold">
+                                        Audit Logs
+                                    </Link>
+                                </li>
+                            </div>
+                        }
                     </>
                 )}
                 { (userDetails?.role === 'admin' || userDetails?.role === 'leadership') && (

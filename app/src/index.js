@@ -130,7 +130,7 @@ const router = createBrowserRouter([
   {
     path: '/trips/',
     element: (
-      <ProtectedRoute allowedRoles={['admin']}>
+      <ProtectedRoute allowedRoles={['admin']} allowedUsers={['amandab@travelbeyond.com','samanthae@travelbeyond.com']}>
         <TripLanding />
       </ProtectedRoute>
     ),
