@@ -30,6 +30,10 @@ export const PotentialTrips = () => {
     const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOption, setFilterOption] = useState('all');
+    const allowedUsers = [
+        'amandab@travelbeyond.com',
+        'samanthae@travelbeyond.com',
+    ];
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
 
@@ -464,7 +468,8 @@ export const PotentialTrips = () => {
 
     return (
         <>
-            {(userDetails.role !== 'admin') ? (
+            {!(userDetails.role === 'admin' ||
+                allowedUsers.includes(userDetails.email)) ? (
                 <div>
                     You do not have permission to view this page.
                 </div>

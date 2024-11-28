@@ -6,6 +6,10 @@ import { Link } from 'react-router-dom';
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
     const version = 'vTripReports';
+    const allowedUsers = [
+        'amandab@travelbeyond.com',
+        'samanthae@travelbeyond.com',
+    ];
 
     // useEffect(() => {
     //     // Initialize Sidenav
@@ -171,7 +175,7 @@ const Navbar = ({ title }) => {
                         </Link>
                     </li>
                 </div>
-                {userDetails?.role === 'admin' && (
+                {(userDetails?.role === 'admin' || allowedUsers.includes(userDetails?.email)) && (
                     <>
                         <div className="container" style={{ width: '80%' }}>
                             <li>
@@ -181,13 +185,15 @@ const Navbar = ({ title }) => {
                             </li>
                         </div>
                         
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/entry_elements'} className="text-bold">
-                                    Entry Elements
-                                </Link>
-                            </li>
-                        </div>
+                        {userDetails?.role === 'admin' &&
+                            <div className="container" style={{ width: '100%' }}>
+                                <li>
+                                    <Link to={'/entry_elements'} className="text-bold">
+                                        Entry Elements
+                                    </Link>
+                                </li>
+                            </div>
+                        }
                         <div className="container" style={{ width: '100%' }}>
                             <li>
                                 <Link to={'/admin_hub'} className="text-bold">
@@ -205,13 +211,15 @@ const Navbar = ({ title }) => {
                                 </Link>
                             </li>
                         </div>
-                        <div className="container" style={{ width: '100%' }}>
-                            <li>
-                                <Link to={'/audit_logs'} className="text-bold">
-                                    Audit Logs
-                                </Link>
-                            </li>
-                        </div>
+                        {userDetails?.role === 'admin' &&
+                            <div className="container" style={{ width: '100%' }}>
+                                <li>
+                                    <Link to={'/audit_logs'} className="text-bold">
+                                        Audit Logs
+                                    </Link>
+                                </li>
+                            </div>
+                        }
                     </>
                 )}
                 { (userDetails?.role === 'admin' || userDetails?.role === 'leadership') && (
@@ -243,6 +251,27 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/trip_reports'} className="text-bold">
                                     Trip Reports
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/clients'} className="text-bold">
+                                    Clients
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/referrals'} className="text-bold">
+                                    Referral Trees
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/match_referrals'} className="text-bold">
+                                   Edit Referrals
                                 </Link>
                             </li>
                         </div>

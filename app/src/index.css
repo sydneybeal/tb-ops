@@ -1464,6 +1464,33 @@ th {
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
 }
 
+.card.referral-tree-card {
+  border-radius: 10px 10px 10px 10px;
+  /* background-color: pink; */
+}
+
+.card.referral-tree-card .card-action:last-child {
+  border-radius: 0px 0px 10px 10px;
+}
+
+.card.referral-tree-card .card-content {
+  padding: 12px 10px 0px 10px;
+}
+
+.card.referral-details-card {
+  border-radius: 0px 0px 10px 10px;
+  padding-top: 0px;
+  margin-top: 0px;
+  transition: box-shadow 0.25s;
+  box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.card.referral-match-card {
+  border-radius: 10px;
+  transition: box-shadow 0.25s;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
 .potential-trips .btn.chip:hover {
   background-color: #057e8c;
 }

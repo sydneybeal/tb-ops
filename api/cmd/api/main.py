@@ -15,7 +15,7 @@
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
 from datetime import timedelta, datetime, date
-from typing import Sequence, Iterable, Optional, List, Union
+from typing import Sequence, Iterable, Optional, Union
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status, Query
 
@@ -34,12 +34,20 @@ from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.auth.models import UserSummary
 from api.services.auth.service import AuthService
+from api.services.clients.service import ClientService
+from api.services.clients.models import (
+    ClientSummary,
+    ReferralMatch,
+    ReferralNode,
+    PatchClientRequest,
+)
+from api.services.reservations.service import ReservationService
+from api.services.reservations.models import Reservation
 from api.services.currency.service import CurrencyService
 from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
-    BaseTrip,
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
@@ -66,7 +74,6 @@ from api.services.travel.models import (
 from api.services.travel.service import TravelService
 from api.services.reviews.models import (
     PatchTripReportRequest,
-    TripReport,
     TripReportSummary,
 )
 from api.services.reviews.service import ReviewService
@@ -117,6 +124,8 @@ def make_app(
     review_svc: ReviewService,
     quality_svc: QualityService,
     admin_svc: AdminService,
+    client_svc: ClientService,
+    reservation_svc: ReservationService,
     currency_svc: CurrencyService,
 ) -> FastAPI:
     """Function to build FastAPI app."""
@@ -981,6 +990,67 @@ def make_app(
         return await auth_svc.get_all_users()
 
     @app.get(
+        "/v1/clients",
+        operation_id="get_clients",
+        response_model=Sequence[ClientSummary],
+        tags=["clients"],
+    )
+    async def get_clients(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ClientSummary] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_summaries()
+
+    @app.patch(
+        "/v1/clients",
+        operation_id="post_clients",
+        tags=["clients"],
+    )
+    async def post_clients(
+        client_data: PatchClientRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a Property."""
+        results = await client_svc.process_patch_request(client_data)
+        return JSONResponse(content=results)
+
+    @app.get(
+        "/v1/client_referrals",
+        operation_id="get_referral_matches",
+        response_model=Sequence[ReferralMatch],
+        tags=["clients"],
+    )
+    async def get_referral_matches(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralMatch] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_matches()
+
+    @app.get(
+        "/v1/referral_tree",
+        operation_id="get_referral_tree",
+        response_model=Sequence[ReferralNode],
+        tags=["clients"],
+    )
+    async def get_referral_tree(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[ReferralNode] | JSONResponse:
+        """Get all Client models."""
+        return await client_svc.get_referral_tree()
+
+    @app.get(
+        "/v1/reservations",
+        operation_id="get_reservations",
+        response_model=Sequence[Reservation],
+        tags=["reservations"],
+    )
+    async def get_reservations(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[Reservation] | JSONResponse:
+        """Get all Reservation models."""
+        return await reservation_svc.get()
+
+    @app.get(
         "/v1/daily_rates",
         operation_id="get_daily_rates",
         response_model=Iterable[DailyRate],
@@ -1020,6 +1090,8 @@ if __name__ == "__main__":
     review_svc = ReviewService()
     quality_svc = QualityService()
     admin_svc = AdminService()
+    client_svc = ClientService()
+    reservation_svc = ReservationService()
     currency_svc = CurrencyService()
 
     app = make_app(
@@ -1027,8 +1099,11 @@ if __name__ == "__main__":
         summary_svc,
         auth_svc,
         audit_svc,
+        review_svc,
         quality_svc,
         admin_svc,
+        client_svc,
+        reservation_svc,
         currency_svc,
     )
 

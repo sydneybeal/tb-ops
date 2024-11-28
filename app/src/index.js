@@ -8,6 +8,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
 import AdminHub from './pages/AdminHub/AdminHub';
+import Clients from './pages/Clients/Clients';
+import Referrals from './pages/Clients/Referrals';
+import MatchReferrals from './pages/Clients/MatchReferrals';
 import EntryElements from './pages/EntryElements/EntryElements';
 import BedNightReports from './pages/BedNights/BedNightReports';
 import PropertiesView from './pages/Properties/PropertiesView';
@@ -162,7 +165,7 @@ const router = createBrowserRouter([
   {
     path: '/trips/',
     element: (
-      <ProtectedRoute allowedRoles={['admin']}>
+      <ProtectedRoute allowedRoles={['admin']} allowedUsers={['amandab@travelbeyond.com','samanthae@travelbeyond.com']}>
         <TripLanding />
       </ProtectedRoute>
     ),
@@ -190,6 +193,30 @@ const router = createBrowserRouter([
         <Maps />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/clients/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <Clients />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/referrals/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <Referrals />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/match_referrals/',
+    element: (
+      <ProtectedRoute allowedRoles={['admin', 'leadership']}>
+        <MatchReferrals />
+      </ProtectedRoute>
+    )
   },
 ]);
 
