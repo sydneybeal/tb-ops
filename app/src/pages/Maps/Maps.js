@@ -132,7 +132,7 @@ export const Maps = () => {
                                 {moment(startDate).endOf('week').format("M/D/YY")}
                             </span>
                         </div>
-                </div>
+                    </div>
                 {loaded ? (
                     <>
                         <TravelSummary data={displayData} />

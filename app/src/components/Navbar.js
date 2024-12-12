@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.6';
+    const version = 'v1.0.7';
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
@@ -127,10 +127,19 @@ const Navbar = ({ title }) => {
                     </a>
                 </li>
                 <div className="container center">
-                <li>
-                <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
-                    {version}
-                </span>
+                <li style={{lineHeight: '30px'}}>
+                    <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
+                        {version}
+                    </span>
+                    {(userDetails?.role === 'admin') &&
+                        <div>
+                            <Link to={'/wrapped'} className="text-bold">
+                                <span className="chip tb-teal white-text z-depth-3">
+                                    &#10024;2024 Wrapped&#10024;
+                                </span>
+                            </Link>
+                        </div>
+                    }
                 </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
