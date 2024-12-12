@@ -131,15 +131,13 @@ const Navbar = ({ title }) => {
                     <span className="tb-teal-text text-bold" style={{ margin: '0px' }}>
                         {version}
                     </span>
-                    {(userDetails?.role === 'admin') &&
-                        <div>
-                            <Link to={'/wrapped'} className="text-bold">
-                                <span className="chip tb-teal white-text z-depth-3">
-                                    &#10024;2024 Wrapped&#10024;
-                                </span>
-                            </Link>
-                        </div>
-                    }
+                    <div>
+                        <Link to={'/wrapped'} className="text-bold">
+                            <span className="chip tb-teal white-text z-depth-3">
+                                &#10024;2024 Wrapped&#10024;
+                            </span>
+                        </Link>
+                    </div>
                 </li>
                 </div>
                 <div className="container" style={{ width: '100%' }}>
