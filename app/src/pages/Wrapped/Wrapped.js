@@ -11,6 +11,9 @@ import moment from 'moment';
 export const Wrapped = () => {
     const [apiData, setApiData] = useState([]);
     const [displayData, setDisplayData] = useState([]);
+    const [fiscalSelected, setFiscalSelected] = useState(false);
+    const [startOfYear, setStartOfYear] = useState(false);
+    const [endOfYear, setEndOfYear] = useState(false);
     const [selectedConsultant, setSelectedConsultant] = useState(null);
     const [consultantOptions, setConsultantOptions] = useState([]);
     const { userDetails, logout } = useAuth();
@@ -113,11 +116,17 @@ export const Wrapped = () => {
     console.log(selectedConsultant);
 
     useEffect(() => {
-        if (Array.isArray(apiData)) {
-            // Define the start and end of 2024 explicitly
-            const startOfYear = moment('2024-01-01').startOf('day');
-            const endOfYear = moment('2024-12-31').endOf('day');
-        
+        if (fiscalSelected) {
+            setStartOfYear(moment('2023-10-01').startOf('day'));
+            setEndOfYear(moment('2024-09-30').endOf('day'));
+        } else {
+            setStartOfYear(moment('2024-01-01').startOf('day'));
+            setEndOfYear(moment('2024-12-31').endOf('day'));
+        }
+    }, [fiscalSelected]);
+
+    useEffect(() => {
+        if (Array.isArray(apiData)) {     
             // Filter data where check-in date is within the 2024 range
             const filteredData = apiData.filter(item => {
                 const dateIn = moment(item.date_in);
@@ -131,7 +140,7 @@ export const Wrapped = () => {
         
             setDisplayData(filteredData);
         }
-    }, [apiData, selectedConsultant]);
+    }, [apiData, selectedConsultant, fiscalSelected, startOfYear, endOfYear]);
 
     return (
         <>
@@ -152,6 +161,31 @@ export const Wrapped = () => {
                                 data={displayData}
                                 consultantName={selectedConsultant && selectedConsultant.consultant_first_name}
                             />
+                            <div className="row" style={{ marginTop: '0px', marginBottom: '0px'}}>
+                                <div
+                                    className={`chip waves-effect btn ${!fiscalSelected ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                    onClick={() => setFiscalSelected(false)}
+                                >
+                                    <span className="material-symbols-outlined">
+                                        today
+                                    </span>
+                                    Calendar Year 2024
+                                </div>
+                                <div
+                                    className={`chip waves-effect btn ${fiscalSelected ? 'tb-teal darken-2 tb-off-white-text text-bold' : 'tb-grey lighten-4'}`}
+                                    onClick={() => setFiscalSelected(true)}
+                                >
+                                    <span className="material-symbols-outlined">
+                                        today
+                                    </span>
+                                    Fiscal Year 2024
+                                </div>
+                            </div>
+                            <div className="row" style={{ marginTop: '0px', marginBottom: '20px'}}>
+                                <em>
+                                    Displaying bed nights from {startOfYear.format('MMM D, YYYY')} to {endOfYear.format('MMM D, YYYY')}
+                                </em>
+                            </div>
                             <div className="container">
                                 <Select
                                     placeholder="Consultant"
