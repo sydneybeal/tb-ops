@@ -43,13 +43,8 @@ export const Wrapped = () => {
                     consultant_first_name: item.consultant_first_name || '',
                     consultant_is_active: item.consultant_is_active
                 }))
-                .sort((a, b) => {
-                    // Sort by is_active, true before false
-                    if (a.consultant_is_active && !b.consultant_is_active) return -1;
-                    if (!a.consultant_is_active && b.consultant_is_active) return 1;
-        
-                    // Then sort alphabetically by label
-                    return a.label.localeCompare(b.label);
+                .filter(item => {
+                    return (item.consultant_is_active);
                 })
                 .map(item => ({
                     value: item.value,
