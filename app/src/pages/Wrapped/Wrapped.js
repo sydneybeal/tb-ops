@@ -43,6 +43,9 @@ export const Wrapped = () => {
                     consultant_first_name: item.consultant_first_name || '',
                     consultant_is_active: item.consultant_is_active
                 }))
+                .sort((a, b) => {
+                    return a.label.localeCompare(b.label);
+                })
                 .filter(item => {
                     return (item.consultant_is_active);
                 })
