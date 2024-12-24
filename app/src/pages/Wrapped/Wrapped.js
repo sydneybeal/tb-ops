@@ -157,6 +157,7 @@ export const Wrapped = () => {
                         <>
                             <WrappedSummary
                                 data={displayData}
+                                isFiscal={fiscalSelected}
                                 consultantName={selectedConsultant && selectedConsultant.consultant_first_name}
                             />
                             <div className="row" style={{ marginTop: '0px', marginBottom: '0px'}}>
@@ -176,7 +177,7 @@ export const Wrapped = () => {
                                     <span className="material-symbols-outlined">
                                         today
                                     </span>
-                                    Fiscal Year 2024
+                                    Fiscal Year 2023
                                 </div>
                             </div>
                             <div className="row" style={{ marginTop: '0px', marginBottom: '20px'}}>

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import TravelMap from '../../pages/Maps/TravelMap';
 import moment from 'moment';
 
-const WrappedSummary = ({ data, consultantName=null }) => {
+const WrappedSummary = ({ data, consultantName=null, isFiscal }) => {
     const [stats, setStats] = useState(null);
     const [expandProperties, setExpandProperties] = useState(false);
     const [expandCoreDestinations, setExpandCoreDestinations] = useState(false);
@@ -202,7 +202,7 @@ const WrappedSummary = ({ data, consultantName=null }) => {
                             }}
                         >
                             <h2 style={{ fontWeight: '900', fontSize: '3rem', margin: '20px 0', color: '#fff' }}>
-                                In 2024, You Booked {stats.totalBedNights.toLocaleString()} Bed Nights
+                                In {isFiscal ? 'FY 2023' : '2024'}, You Booked {stats.totalBedNights.toLocaleString()} Bed Nights
                             </h2>
                             <p style={{ fontSize: '1.4rem',  color: '#fff', margin: '10px 0' }}>
                                 <span style={{ fontSize: '2rem' }}>🌍</span><br/>
