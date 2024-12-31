@@ -11,17 +11,26 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     const [clientOptions, setClientOptions] = useState([]);
     const [employeeOptions, setEmployeeOptions] = useState([]);
     const [agencyOptions, setAgencyOptions] = useState([]);
+    const [primaryAgentOptions, setPrimaryAgentOptions] = useState([]);
     const [selectedReferringEmployeeId, setSelectedReferringEmployeeId] = useState(null);
     const [selectedReferringClientId, setSelectedReferringClientId] = useState(null);
     const [selectedReferralCategory, setSelectedReferralCategory] = useState('client');
     const [selectedReferralType, setSelectedReferralType] = useState('existing_client');
     const [selectedReferringAgencyId, setSelectedReferringAgencyId] = useState(null);
     const [selectedInternetSource, setSelectedInternetSource] = useState(null);
+    const [selectedPrimaryAgentName, setSelectedPrimaryAgentName] = useState(null);
+    const [referralAgencyName, setReferralAgencyName] = useState(null);
+    const [referralAgentName, setReferralAgentName] = useState(null);
     const [referredByName, setReferredByName] = useState('');
     const [otherInternetSource, setOtherInternetSource] = useState(false);
     const [notes, setNotes] = useState('');
     const [isAudited, setIsAudited] = useState(false);
+    const [reassign, setReassign] = useState(false);
+    const [deceased, setDeceased] = useState(false);
+    const [doNotContact, setDoNotContact] = useState(false);
+    const [movedBusiness, setMovedBusiness] = useState(false);
     const [originalReferringClient, setOriginalReferringClient] = useState(null);
+    const [originalConsultant, setOriginalConsultant] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
     const toTitleCase = str => str ? str.replace(
@@ -106,6 +115,14 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                     reservations_count: client.reservations_count,
                 }));
                 setClientOptions(formattedClientOptions);
+                const agentOptions = data
+                    .map((client) => client.cb_primary_agent_name)
+                    .filter((value, index, self) => self.indexOf(value) === index)
+                    .map((agentName) => ({
+                        value: agentName,
+                        label: agentName,
+                    }));
+                setPrimaryAgentOptions(agentOptions);
                 setLoaded(true);
             })
             .catch((err) => {
@@ -169,11 +186,25 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         }
     };
 
+    const handleInitialCategory = (referral_type) => {
+        if (['existing_client', 'other_client'].includes(referral_type)) {
+            setSelectedReferralCategory('client');
+        } else if (['employee', 'employee_network'].includes(referral_type)) {
+            setSelectedReferralCategory('employee');
+        } else if (['existing_agency', 'other_agency'].includes(referral_type)) {
+            setSelectedReferralCategory('travel_agency');
+        } else {
+            setSelectedReferralCategory(referral_type);
+        }
+    };
+
     useEffect(() => {
         if (!isOpen) {
             resetFormState(); // Reset form state when modal closes
         } else if (isOpen && editClientData) {
             setOriginalReferringClient(editClientData.referred_by_display_name);
+            setOriginalConsultant(editClientData.cb_primary_agent_name);
+            handleInitialCategory(editClientData.referral_type);
             setSelectedReferralType(editClientData.referral_type);
             setSelectedReferringClientId(editClientData.referred_by_id);
             setReferredByName(editClientData.referred_by_name);
@@ -183,9 +214,29 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     }, [isOpen, editClientData]);
 
     const resetFormState = () => {
+        // referral-related
+        setSelectedReferringClientId(null);
+        setReferralAgencyName(null);
+        setReferralAgentName(null);
+        setSelectedReferralCategory(null);
+        setSelectedReferralType(null);
+        setReferredByName('');
+        setNotes('');
+        setIsAudited(null);
+        // non-referral-related
+        // setSelectedPrimaryAgentName(null);
+        setReassign(false);
+        setDeceased(false);
+        setDoNotContact(false);
+        setMovedBusiness(false);
+    };
+
+    const resetReferralState = () => {
         setSelectedReferringClientId(null);
         setSelectedReferralCategory(null);
         setSelectedReferralType(null);
+        setReferralAgencyName(null);
+        setReferralAgentName(null);
         setReferredByName('');
         setNotes('');
         setIsAudited(null);
@@ -259,7 +310,12 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             referred_by_name: referredByName || null,
             notes: notes || null,
             // save with audited true if user indicated completion
+            // handle with isAudited in case it came in earlier
             audited: status === 'complete' ? true : false,
+            cb_primary_agent_name: selectedPrimaryAgentName || editClientData.cb_primary_agent_name,
+            deceased: deceased,
+            doNotContact: doNotContact,
+            movedBusiness: movedBusiness,
             updated_by: userDetails.email || ''
         };
         console.log(clientToSubmit);
@@ -267,7 +323,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     };
 
     const handleCategoryChange = (category) => {
-        resetFormState();
+        resetReferralState();
         setSelectedReferralCategory(category);
         if (category === "client") {
             setSelectedReferralType('existing_client');
@@ -278,13 +334,116 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         }
     };
 
+    // const handleFreeTypedAgency = (value, type) => {
+    //     if (type === 'agency') {
+    //         setReferralAgencyName(value);
+    //         setSelectedReferringAgencyId(null);
+    //     } else if (type === 'agent') {
+    //         setReferralAgentName(value);
+    //     }
+        
+    //     // Combine agency and agent names when both are available
+    //     if (referralAgencyName && referralAgentName) {
+    //         setReferredByName(`${referralAgencyName} - ${referralAgentName}`);
+    //     } else if (referralAgencyName) {
+    //         setReferredByName(referralAgencyName);
+    //     } else if (referralAgentName) {
+    //         setReferredByName(referralAgentName);
+    //     } else {
+    //         setReferredByName("");  // Set to empty string if neither is typed
+    //     }
+    // };
+
+    console.log("selectedReferringAgencyId: " + selectedReferringAgencyId);
+    console.log("referralAgencyName: " + referralAgencyName);
+    console.log("referralAgentName: " + referralAgentName);
+    console.log("referredByName: " + referredByName);
+
+    const handleFreeTypedAgency = (value, type) => {
+        if (type === 'agency') {
+            setReferralAgencyName(value);
+            setSelectedReferringAgencyId(null);
+        } else if (type === 'agent') {
+            setReferralAgentName(value);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedReferralType === 'other_agency') {
+            const combinedName = `${referralAgencyName || ''} - ${referralAgentName || ''}`.trim();
+            setReferredByName(combinedName);
+        } else if (selectedReferralType === 'existing_agency') {
+            setReferredByName(referralAgentName);
+        }
+    }, [referralAgencyName, referralAgentName, selectedReferralType]);
+    
+
     return (
         <div id="add-edit-modal" className="modal referral-modal" style={{ zIndex: '1000', position: 'fixed' }}>
             <div className="modal-content" style={{ zIndex: '1000' }}>
-                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '30px' }}>
+                <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '10px' }}>
                     Edit Referral for {editClientData?.display_name || 'Client'}
                 </h4>
                 <div className="container" style={{ width: '90%' }}>
+                    <div className="row">
+                        <span
+                            className={`chip ${reassign ? 'tb-teal' : 'tb-grey lighten-3'}`}
+                            onClick={() => {
+                                setReassign(!reassign);
+                                setSelectedPrimaryAgentName(null);
+                            }}
+                        >
+                            Re-Assign Consultant
+                        </span>
+                        {reassign &&
+                            <div className="card">
+                                <div className="card-content">
+                                    <div className="row" style={{marginBottom: '0px'}}>
+                                        <div className="col s5">
+                                            <p className="text-bold">{originalConsultant}</p>
+                                            <span className="text-small">Original Consultant</span>
+                                        </div>
+                                        <div className="col s2" style={{fontSize: '2rem'}}>
+                                            <span className="material-symbols-outlined">
+                                                arrow_forward
+                                            </span>
+                                        </div>
+                                        <div className="col s5">
+                                            <Select
+                                                placeholder="Select new primary agent"
+                                                inputId="agent_select"
+                                                value={primaryAgentOptions.find(agent => agent.value === selectedPrimaryAgentName) || ''}
+                                                onChange={(selectedOption) => {
+                                                    setSelectedPrimaryAgentName(selectedOption ? selectedOption.value : '');
+                                                }}
+                                                options={primaryAgentOptions}
+                                                isClearable
+                                                style={{ flexGrow: '1', width: '60%' }}
+                                                classNamePrefix="select"
+                                                styles={{
+                                                    option: (provided, state) => ({
+                                                        ...provided,
+                                                        fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                        backgroundColor: state.isSelected
+                                                            ? '#0e9bac' // Background color for selected options
+                                                            : state.isFocused
+                                                                ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                                : '#ffffff', // Default background color for other states
+                                                        color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                        ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                            backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                        },
+                                                    }),
+                                                    menuPortal: base => ({ ...base, zIndex: 9999 })
+                                                }}
+                                                menuPortalTarget={document.body}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                     <div className="row" style={{marginTop: '15px'}}>
                         <div className="col s6">
                             <span className="tb-teal-text text-bold">
@@ -316,38 +475,38 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                     <div style={{ textAlign: 'left', marginTop: '15px' }}>
                         <form id="referralForm">
                             <div className="row center">
-                                <btn
+                                <span
                                     className={`btn-small ${selectedReferralCategory === 'client' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("client")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Client
-                                </btn>
-                                <btn
+                                </span>
+                                <span
                                     className={`btn-small ${selectedReferralCategory === 'employee' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     style={{marginRight: '10px'}}
                                     onClick={() => handleCategoryChange("employee")}
                                 >
                                     Employee
-                                </btn>
-                                <btn className={`btn-small ${selectedReferralCategory === 'internet' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                </span>
+                                <span className={`btn-small ${selectedReferralCategory === 'internet' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("internet")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Internet
-                                </btn>
-                                <btn className={`btn-small ${selectedReferralCategory === 'travel_agency' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                </span>
+                                <span className={`btn-small ${selectedReferralCategory === 'travel_agency' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("travel_agency")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Travel Agency
-                                </btn>
-                                <btn className={`btn-small ${selectedReferralCategory === 'third_party' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                </span>
+                                <span className={`btn-small ${selectedReferralCategory === 'third_party' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("third_party")}
 
                                 >
                                     Event/Third Party
-                                </btn>
+                                </span>
                             </div>
                             <div className="row center" style={{marginTop: '40px'}}>
                                 {/* Client */}
@@ -363,6 +522,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                                     checked={selectedReferralType === "existing_client"}
                                                     onChange={() => {
                                                         setSelectedReferralType('existing_client');
+                                                        setReferredByName(null);
                                                     }}
                                                 />
                                                 <span className="text-bold">
@@ -382,6 +542,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                                     checked={selectedReferralType === "other_client"}
                                                     onChange={(e) => {
                                                         setSelectedReferralType('other_client');
+                                                        setSelectedReferringClientId(null);
                                                     }}
                                                 />
                                                 <span className="text-bold">
@@ -433,7 +594,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                         <input
                                             type="text"
                                             placeholder="Client's name (Last/First)"
-                                            value={referredByName}
+                                            value={referredByName || ''}
                                             onChange={(e) => setReferredByName(e.target.value)}
                                             className="search-input" 
                                         />
@@ -455,6 +616,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                                     checked={selectedReferralType === "employee"}
                                                     onChange={() => {
                                                         setSelectedReferralType('employee');
+                                                        setReferredByName(null);
                                                     }}
                                                 />
                                                 <span className="text-bold">
@@ -523,7 +685,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                                 <input
                                                     type="text"
                                                     placeholder="Employee contact's name (Last/First)"
-                                                    value={referredByName}
+                                                    value={referredByName || ''}
                                                     onChange={(e) => setReferredByName(e.target.value)}
                                                     className="search-input" 
                                                 />
@@ -544,6 +706,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                                     // className="filled-in"
                                                     checked={selectedReferralType === "existing_agency"}
                                                     onChange={() => {
+                                                        setReferralAgencyName(null);
                                                         setSelectedReferralType('existing_agency');
                                                     }}
                                                 />
@@ -615,8 +778,10 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                             <input
                                                 type="text"
                                                 placeholder="Agency name"
-                                                value={referredByName}
-                                                onChange={(e) => setReferredByName(e.target.value)}
+                                                value={referralAgencyName || ''}
+                                                onChange={(e) => {
+                                                    handleFreeTypedAgency(e.target.value, "agency");
+                                                }}
                                                 className="search-input"
                                             />
                                         </div>
@@ -628,8 +793,8 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                             <input
                                                 type="text"
                                                 placeholder="Agent's name (Last/First)"
-                                                value={referredByName}
-                                                onChange={(e) => setReferredByName(e.target.value)}
+                                                value={referralAgentName || ''}
+                                                onChange={(e) => handleFreeTypedAgency(e.target.value, "agent")}
                                                 className="search-input" 
                                             />
                                         </div>
@@ -675,7 +840,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                             <input
                                                 type="text"
                                                 placeholder="Name of source"
-                                                value={referredByName}
+                                                value={referredByName || ''}
                                                 onChange={(e) => setReferredByName(e.target.value)}
                                                 className="search-input"
                                             />
@@ -694,7 +859,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                         <input
                                             type="text"
                                             placeholder="Name of organization (zoo, church, non-profit, etc.) or event"
-                                            value={referredByName}
+                                            value={referredByName || ''}
                                             onChange={(e) => setReferredByName(e.target.value)}
                                             className="search-input" 
                                         />
@@ -702,14 +867,16 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                 </div>
                                 }
                             </div>
-                            <div class="row">
-                                <div class="input-field col s12">
+                            <div className="row">
+                                <div className="input-field col s12">
                                     <span className="tb-grey-text text-darken-3">
                                         Other Notes
                                     </span>
                                     <textarea
-                                        maxlength='200'
+                                        maxLength='200'
                                         style={{marginBottom: '0px', paddingBottom: '0px'}}
+                                        value={notes || ''}
+                                        onChange={(e) => setNotes(e.target.value)}
                                         className="materialize-textarea input-placeholder-dark trip-report-comments"
                                     />
                                     <span className="text-small tb-grey-text text-darken-3">
@@ -719,6 +886,72 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                 </div>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+            <div className="container">
+                <div className="card">
+                    <div className="card-content">
+                        <p className="tb-grey-text">Other Info</p>
+                        <div className="row center" style={{paddingTop: '10px'}}>
+                            <div className="col s4">
+                                <label htmlFor="deceased">
+                                    <input
+                                        type="checkbox"
+                                        id="deceased"
+                                        // className="filled-in"
+                                        checked={deceased}
+                                        onChange={() => {
+                                            setDeceased(!deceased);
+                                        }}
+                                    />
+                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                        <span className="material-symbols-outlined">
+                                            skull
+                                        </span>
+                                        Deceased
+                                    </span>
+                                </label>
+                            </div>
+                            <div className="col s4">
+                                <label htmlFor="do_not_contact">
+                                    <input
+                                        type="checkbox"
+                                        id="do_not_contact"
+                                        // className="filled-in"
+                                        checked={doNotContact}
+                                        onChange={() => {
+                                            setDoNotContact(!doNotContact);
+                                        }}
+                                    />
+                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                        <span className="material-symbols-outlined">
+                                            block
+                                        </span>
+                                        Do not contact
+                                    </span>
+                                </label>
+                            </div>
+                            <div className="col s4">
+                                <label htmlFor="moved_business">
+                                    <input
+                                        type="checkbox"
+                                        id="moved_business"
+                                        // className="filled-in"
+                                        checked={movedBusiness}
+                                        onChange={() => {
+                                            setMovedBusiness(!movedBusiness);
+                                        }}
+                                    />
+                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                        <span className="material-symbols-outlined">
+                                            move_location
+                                        </span>
+                                        Moved business
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

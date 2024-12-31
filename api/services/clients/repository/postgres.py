@@ -40,7 +40,8 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 cb_issue_country,
                 cb_relationship, cb_active,
                 cb_passport_expire, cb_gender, cb_created_date, cb_modified_date, cb_referred_by,
-                subjective_score, birth_date, referred_by_id, num_referrals, created_at, updated_at, updated_by
+                subjective_score, birth_date, referral_type, referred_by_id, referred_by_name, notes,
+                num_referrals, audited, created_at, updated_at, updated_by
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
@@ -75,8 +76,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 cb_referred_by = EXCLUDED.cb_referred_by,
                 subjective_score = EXCLUDED.subjective_score,
                 birth_date = EXCLUDED.birth_date,
+                referral_type = EXCLUDED.referral_type,
                 referred_by_id = EXCLUDED.referred_by_id,
+                referred_by_name = EXCLUDED.referred_by_name,
+                notes = EXCLUDED.notes,
                 num_referrals = EXCLUDED.num_referrals,
+                audited = EXCLUDED.audited,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
             """
@@ -165,8 +170,16 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                         ),
                         client.subjective_score,
                         client.birth_date,
+                        client.referral_type,
                         client.referred_by_id,
+                        (
+                            client.referred_by_name.strip()
+                            if client.referred_by_name
+                            else None
+                        ),
+                        (client.notes.strip() if client.notes else None),
                         client.num_referrals,
+                        client.audited,
                         client.created_at,
                         client.updated_at,
                         client.updated_by.strip(),
@@ -182,7 +195,8 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
         query = dedent(
             """
             INSERT INTO public.clients (
-                id, first_name, last_name, referred_by_id, created_at, updated_at, updated_by
+                id, first_name, last_name, referral_type, referred_by_id, referred_by_name,
+                notes, audited, created_at, updated_at, updated_by
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7
@@ -190,7 +204,11 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
             ON CONFLICT (id) DO UPDATE SET
                 first_name = EXCLUDED.first_name,
                 last_name = EXCLUDED.last_name,
+                referral_type = EXCLUDED.referral_type,
                 referred_by_id = EXCLUDED.referred_by_id,
+                referred_by_name = EXCLUDED.referred_by_name,
+                notes = EXCLUDED.notes,
+                audited = EXCLUDED.audited,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
             RETURNING id, (xmax = 0) AS was_inserted;
@@ -206,7 +224,15 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                     client.id,
                     client.first_name.strip() if client.first_name else None,
                     client.last_name.strip() if client.last_name else None,
+                    client.referral_type,
                     client.referred_by_id,
+                    (
+                        client.referred_by_name.strip()
+                        if client.referred_by_name
+                        else None
+                    ),
+                    (client.notes.strip() if client.notes else None),
+                    client.audited,
                     client.created_at,
                     client.updated_at,
                     client.updated_by,
@@ -302,10 +328,14 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 c.cb_marketing_sources,
                 c.subjective_score,
                 c.birth_date,
+                c.referral_type,
                 c.referred_by_id,
+                c.referred_by_name,
+                c.notes,
                 r.first_name AS referred_by_first_name,
                 r.last_name AS referred_by_last_name,
                 COUNT(distinct ref.id) AS referrals_count,
+                c.audited,
                 c.created_at,
                 c.updated_at,
                 c.updated_by
