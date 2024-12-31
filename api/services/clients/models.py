@@ -14,11 +14,33 @@
 
 """Models for client entries."""
 from datetime import datetime, date
+from enum import Enum
 from uuid import UUID, uuid4
 from typing import Optional, Sequence, Tuple
 from api.services.reservations.models import Reservation
 
 from pydantic import BaseModel, Field, computed_field
+
+
+class ReferralType(str, Enum):
+    """The type of referral."""
+
+    # client that is already in R&R
+    EXISTING_CLIENT = "existing_client"
+    # client not found in R&R (i.e. has not booked), name free-typed
+    OTHER_CLIENT = "other_client"
+    # found TB online (Tripadvisor, Flyertalk, Google, Instagram)
+    INTERNET = "internet"
+    # agency that is already in R&R
+    EXISTING_AGENCY = "existing_agency"
+    # client not found in R&R (i.e. no recent booking), name free-typed
+    OTHER_AGENCY = "other_agency"
+    # organization such as a zoo, church, nonprofit
+    THIRD_PARTY = "third_party"
+    # directly referred by Travel Beyond employee
+    EMPLOYEE = "employee"
+    # referred by Travel Beyond employee's network (friend, family, etc)
+    EMPLOYEE_NETWORK = "employee_network"
 
 
 class Client(BaseModel):
@@ -54,8 +76,14 @@ class Client(BaseModel):
     cb_marketing_sources: Optional[list[str]] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
+    referral_type: Optional[ReferralType] = None
+    # R&R ID of client/employee/agency who referred, if applicable
     referred_by_id: Optional[UUID] = None
+    # name of agent/employee/non-R&R client who referred, if applicable
+    referred_by_name: Optional[str] = None
+    notes: Optional[str] = None
     num_referrals: Optional[int] = None
+    audited: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -95,14 +123,20 @@ class ClientSummary(BaseModel):
     cb_marketing_sources: Optional[list[str]] = None
     subjective_score: Optional[int] = None
     birth_date: Optional[date] = None
+    referral_type: Optional[ReferralType] = None
+    # R&R ID of client/employee/agency who referred, if applicable
     referred_by_id: Optional[UUID] = None
     referred_by_first_name: Optional[str] = None
     referred_by_last_name: Optional[str] = None
+    # name of agent/employee/non-R&R client who referred, if applicable
+    referred_by_name: Optional[str] = None
+    notes: Optional[str] = None
     num_referrals: Optional[int] = None
     # Reservations
     reservations: Optional[Sequence[Reservation]] = None
     # Number of clients referred by this client
     referrals_count: int = 0
+    audited: bool = False
     created_at: datetime
     updated_at: datetime
     updated_by: str
@@ -152,7 +186,13 @@ class PatchClientRequest(BaseModel):
     client_id: Optional[UUID] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    referral_type: Optional[ReferralType] = None
+    # R&R ID of client/employee/agency who referred, if applicable
     referred_by_id: Optional[UUID] = None
+    # free-typed name of agent, employee, other client if not an R&R client
+    referred_by_name: Optional[str] = None
+    notes: Optional[str] = None
+    audited: bool
     updated_by: str
 
 

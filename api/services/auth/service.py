@@ -21,7 +21,7 @@ from passlib.context import CryptContext
 from jose import jwt
 
 from api.services.auth.repository.postgres import PostgresAuthRepository
-from api.services.auth.models import User
+from api.services.auth.models import User, UserSummary
 
 
 class AuthService:
@@ -82,3 +82,7 @@ class AuthService:
             user for user in users if not await self._repo.get_user(user.email)
         ]
         await self._repo.add_user(to_be_added)
+
+    async def get_all_users(self) -> Sequence[UserSummary]:
+        """Adds a user model to the repository."""
+        return await self._repo.get_all_users()

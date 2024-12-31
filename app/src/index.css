@@ -875,6 +875,17 @@ textarea:focus {
   overflow-y: auto;
 }
 
+.modal.referral-modal {
+  border-radius: 10px;
+  width: 50%;
+  min-height: 80%;
+}
+
+.modal.referral-modal .modal-content {
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
 
 .modal.download-report-modal {
   border-radius: 10px;
@@ -1077,6 +1088,21 @@ table.overlaps-table td>div {
   z-index: 6;
 }
 
+textarea.materialize-textarea.trip-report-comments {
+  background-color: white; /* Set the background color to white */
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 5px; /* Rounded corners */
+  outline: none;
+  height: 100px; /* Make it taller */
+  width: 100%;
+  font-size: 16px;
+  margin: 0 0 16px 0; /* Add some margin at the bottom */
+  padding: 10px; /* Add padding inside the box */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+  box-sizing: border-box; /* Ensure padding and border are included in the height/width */
+  transition: box-shadow .3s, border .3s;
+  resize: vertical; /* Allow vertical resizing */
+}
 
 .suggestions-list {
   position: absolute;

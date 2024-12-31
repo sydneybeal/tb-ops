@@ -25,3 +25,11 @@ class User(BaseModel):
     email: str
     hashed_password: str
     role: str
+
+
+class UserSummary(BaseModel):
+    """Record for a user."""
+
+    id: UUID = Field(default_factory=uuid4)
+    email: str
+    role: str

@@ -84,20 +84,43 @@ class ClientService:
             # Fetch existing client by ID
             existing_client_by_id = await self.get_by_id(client_request.client_id)
         if existing_client_by_id:
-            if existing_client_by_id.referred_by_id == client_request.referred_by_id:
+            if (
+                (existing_client_by_id.first_name == client_request.first_name)
+                and (existing_client_by_id.last_name == client_request.last_name)
+                and (
+                    existing_client_by_id.referral_type == client_request.referral_type
+                )
+                and (
+                    existing_client_by_id.referred_by_id
+                    == client_request.referred_by_id
+                )
+                # the new name entered matches either the client/agent/employee name
+                and (
+                    existing_client_by_id.referred_by_name
+                    == client_request.referred_by_name
+                )
+                and (existing_client_by_id.notes == client_request.notes)
+                and (existing_client_by_id.audited == client_request.audited)
+            ):
                 return {"error": "No changes were detected."}
 
             # If updating, return the existing client with possibly updated fields
             print(f"Found existing client {existing_client_by_id.cb_name}")
             print(
-                f"Setting client {existing_client_by_id.cb_name} to referred by {client_request.referred_by_id}"
+                f"Setting client {existing_client_by_id.cb_name} "
+                f"to referral type {client_request.referral_type} "
+                f"with name '{client_request.referred_by_name}'"
             )
             # create a copy of the existing client to update
             updated_client = copy.deepcopy(existing_client_by_id)
             # set the new attributes to update the client
             updated_client.first_name = client_request.first_name
             updated_client.last_name = client_request.last_name
+            updated_client.referral_type = client_request.referral_type
             updated_client.referred_by_id = client_request.referred_by_id
+            updated_client.referred_by_name = client_request.referred_by_name
+            updated_client.notes = client_request.notes
+            updated_client.audited = client_request.audited
             updated_client.updated_by = client_request.updated_by
 
             before_detail = await self.add_audit_detail(existing_client_by_id)
@@ -120,7 +143,11 @@ class ClientService:
             new_client = Client(
                 first_name=client_request.first_name,
                 last_name=client_request.last_name,
+                referral_type=client_request.referral_type,
                 referred_by_id=client_request.referred_by_id,
+                referred_by_name=client_request.referred_by_name,
+                notes=client_request.notes,
+                audited=client_request.audited,
                 updated_by=client_request.updated_by,
             )
             audit_log = AuditLog(

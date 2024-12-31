@@ -117,6 +117,8 @@ export const MatchReferrals = () => {
     }, [apiData, searchQuery, filters]);
 
     useEffect(() => {
+        // TODO toggle to sort by CB marketing source
+
         // Perform sorting on filteredData
         let sortedAndFilteredData = Array.isArray(filteredData) ? [...filteredData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
@@ -145,7 +147,7 @@ export const MatchReferrals = () => {
         const displayEndIndex = displayStartIndex + itemsPerPage;
         setDisplayData(sortedAndFilteredData.slice(displayStartIndex, displayEndIndex));
 
-    }, [apiData, currentPage, filteredData]);
+    }, [apiData, currentPage, filteredData, sorting]);
 
     const changePage = (newPage) => {
         const start = newPage * itemsPerPage;
