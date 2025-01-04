@@ -6,7 +6,7 @@ import M from 'materialize-css';
 import 'react-datepicker/dist/react-datepicker.css';
 // import moment from 'moment';
 
-const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }) => {
+const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null, mapReferralType }) => {
     const { userDetails, logout } = useAuth();
     const [clientOptions, setClientOptions] = useState([]);
     const [employeeOptions, setEmployeeOptions] = useState([]);
@@ -27,10 +27,12 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     const [isAudited, setIsAudited] = useState(false);
     const [reassign, setReassign] = useState(false);
     const [deceased, setDeceased] = useState(false);
+    const [shouldContact, setShouldContact] = useState(false);
     const [doNotContact, setDoNotContact] = useState(false);
     const [movedBusiness, setMovedBusiness] = useState(false);
     const [originalReferringClient, setOriginalReferringClient] = useState(null);
     const [originalConsultant, setOriginalConsultant] = useState(null);
+    const [originalReferralType, setOriginalReferralType] = useState(null);
     const [loaded, setLoaded] = useState(false);
 
     const toTitleCase = str => str ? str.replace(
@@ -52,8 +54,8 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             "label": "Travel Beyond Website"
         },
         {
-            "value": "magazine",
-            "label": "Magazine"
+            "value": "magazine_article",
+            "label": "Magazine/Article"
         },
         {
             "value": "other",
@@ -182,6 +184,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             setOtherInternetSource(false);
         } else {
             setSelectedInternetSource(selectedOption ? selectedOption.value : '');
+            setReferredByName(null);
             setOtherInternetSource(true);
         }
     };
@@ -204,18 +207,37 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         } else if (isOpen && editClientData) {
             setOriginalReferringClient(editClientData.referred_by_display_name);
             setOriginalConsultant(editClientData.cb_primary_agent_name);
+            setOriginalReferralType(mapReferralType(editClientData.referral_type));
             handleInitialCategory(editClientData.referral_type);
             setSelectedReferralType(editClientData.referral_type);
-            setSelectedReferringClientId(editClientData.referred_by_id);
+            if (editClientData.referral_type === 'existing_client') {
+                setSelectedReferringClientId(editClientData.referred_by_id);
+            } else if (editClientData.referral_type === 'existing_agency') {
+                setSelectedReferringAgencyId(editClientData.referred_by_id);
+                setReferralAgentName(editClientData.referred_by_name);
+            } else if (editClientData.referral_type === 'other_agency') {
+                const [agencyName, agentName] = editClientData.referred_by_name.split(' - ');
+                setReferralAgencyName(agencyName || '');
+                setReferralAgentName(agentName || '');
+            } else if (editClientData.referral_type === 'existing_employee') {
+                setSelectedReferringEmployeeId(editClientData.referred_by_id);
+                setReferredByName(editClientData.referred_by_name);
+            }
             setReferredByName(editClientData.referred_by_name);
             setNotes(editClientData.notes);
-            setIsAudited(editClientData.notes);
+            setIsAudited(editClientData.audited);
+            setDeceased(editClientData.deceased);
+            setShouldContact(editClientData.should_contact);
+            setDoNotContact(editClientData.do_not_contact);
+            setMovedBusiness(editClientData.moved_business);
         }
-    }, [isOpen, editClientData]);
+    }, [isOpen, editClientData, mapReferralType]);
 
     const resetFormState = () => {
         // referral-related
         setSelectedReferringClientId(null);
+        setSelectedReferringAgencyId(null);
+        setSelectedReferringEmployeeId(null);
         setReferralAgencyName(null);
         setReferralAgentName(null);
         setSelectedReferralCategory(null);
@@ -227,6 +249,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         // setSelectedPrimaryAgentName(null);
         setReassign(false);
         setDeceased(false);
+        setShouldContact(false);
         setDoNotContact(false);
         setMovedBusiness(false);
     };
@@ -235,12 +258,16 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
         setSelectedReferringClientId(null);
         setSelectedReferralCategory(null);
         setSelectedReferralType(null);
+        setSelectedReferringAgencyId(null);
+        setSelectedReferringEmployeeId(null);
         setReferralAgencyName(null);
         setReferralAgentName(null);
         setReferredByName('');
         setNotes('');
         setIsAudited(null);
     };
+
+    console.log(selectedReferringAgencyId);
 
     const saveForm = (clientToSubmit) => {
         fetch(`${process.env.REACT_APP_API}/v1/clients`, {
@@ -301,12 +328,19 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
 
     const handleSave = (e, status) => {
         e.preventDefault();
+        const referredById = selectedReferringClientId || selectedReferringAgencyId || selectedReferringEmployeeId || null;
+        console.log("Referred by id for clientToSubmit set to " + referredById);
+
+        console.log("selectedReferringClientId " + selectedReferringClientId);
+        console.log("selectedReferringAgencyId " + selectedReferringAgencyId);
+        console.log("selectedReferringEmployeeId " + selectedReferringEmployeeId);
+
         const clientToSubmit = {
             client_id: editClientData.id || null,
             first_name: editClientData.first_name,
             last_name: editClientData.last_name,
             referral_type: selectedReferralType || null,
-            referred_by_id: selectedReferringClientId || null,
+            referred_by_id: referredById,
             referred_by_name: referredByName || null,
             notes: notes || null,
             // save with audited true if user indicated completion
@@ -314,12 +348,13 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             audited: status === 'complete' ? true : false,
             cb_primary_agent_name: selectedPrimaryAgentName || editClientData.cb_primary_agent_name,
             deceased: deceased,
-            doNotContact: doNotContact,
-            movedBusiness: movedBusiness,
+            should_contact: shouldContact,
+            do_not_contact: doNotContact,
+            moved_business: movedBusiness,
             updated_by: userDetails.email || ''
         };
         console.log(clientToSubmit);
-        // saveForm(clientToSubmit);
+        saveForm(clientToSubmit);
     };
 
     const handleCategoryChange = (category) => {
@@ -331,6 +366,8 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
             setSelectedReferralType('employee');
         } else if (category === "travel_agency") {
             setSelectedReferralType('existing_agency');
+        } else {
+            setSelectedReferralType(category);
         }
     };
 
@@ -354,10 +391,10 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
     //     }
     // };
 
-    console.log("selectedReferringAgencyId: " + selectedReferringAgencyId);
-    console.log("referralAgencyName: " + referralAgencyName);
-    console.log("referralAgentName: " + referralAgentName);
-    console.log("referredByName: " + referredByName);
+    // console.log("selectedReferringAgencyId: " + selectedReferringAgencyId);
+    // console.log("referralAgencyName: " + referralAgencyName);
+    // console.log("referralAgentName: " + referralAgentName);
+    // console.log("referredByName: " + referredByName);
 
     const handleFreeTypedAgency = (value, type) => {
         if (type === 'agency') {
@@ -384,10 +421,10 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                 <h4 className="grey-text text-darken-2" style={{ marginTop: '20px', marginBottom: '10px' }}>
                     Edit Referral for {editClientData?.display_name || 'Client'}
                 </h4>
-                <div className="container" style={{ width: '90%' }}>
+                <div className="container" style={{ width: '100%' }}>
                     <div className="row">
                         <span
-                            className={`chip ${reassign ? 'tb-teal' : 'tb-grey lighten-3'}`}
+                            className={`chip z-depth-2 ${reassign ? 'tb-teal' : 'tb-grey lighten-3'}`}
                             onClick={() => {
                                 setReassign(!reassign);
                                 setSelectedPrimaryAgentName(null);
@@ -447,8 +484,10 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                     <div className="row" style={{marginTop: '15px'}}>
                         <div className="col s6">
                             <span className="tb-teal-text text-bold">
-                                Previously referred by:
+                                Previous referral type:
                             </span>
+                            <br/>
+                            <span>{originalReferralType || 'none'}</span>
                             <br/>
                             <span>{originalReferringClient || 'none'}</span>
                         </div>
@@ -476,36 +515,41 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                         <form id="referralForm">
                             <div className="row center">
                                 <span
-                                    className={`btn-small ${selectedReferralCategory === 'client' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                    className={`btn-small z-depth-2 ${selectedReferralCategory === 'client' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("client")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Client
                                 </span>
                                 <span
-                                    className={`btn-small ${selectedReferralCategory === 'employee' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                    className={`btn-small z-depth-2 ${selectedReferralCategory === 'employee' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     style={{marginRight: '10px'}}
                                     onClick={() => handleCategoryChange("employee")}
                                 >
                                     Employee
                                 </span>
-                                <span className={`btn-small ${selectedReferralCategory === 'internet' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                <span className={`btn-small z-depth-2 ${selectedReferralCategory === 'internet' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("internet")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Internet
                                 </span>
-                                <span className={`btn-small ${selectedReferralCategory === 'travel_agency' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                <span className={`btn-small z-depth-2 ${selectedReferralCategory === 'travel_agency' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("travel_agency")}
                                     style={{marginRight: '10px'}}
                                 >
                                     Travel Agency
                                 </span>
-                                <span className={`btn-small ${selectedReferralCategory === 'third_party' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                <span className={`btn-small z-depth-2 ${selectedReferralCategory === 'third_party' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                     onClick={() => handleCategoryChange("third_party")}
-
+                                    style={{marginRight: '10px'}}
                                 >
                                     Event/Third Party
+                                </span>
+                                <span className={`btn-small z-depth-2 ${selectedReferralCategory === 'other' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                    onClick={() => handleCategoryChange("other")}
+                                >
+                                    Other
                                 </span>
                             </div>
                             <div className="row center" style={{marginTop: '40px'}}>
@@ -867,10 +911,10 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                 </div>
                                 }
                             </div>
-                            <div className="row">
+                            <div className="row" style={{width: '90%'}}>
                                 <div className="input-field col s12">
                                     <span className="tb-grey-text text-darken-3">
-                                        Other Notes
+                                        Notes
                                     </span>
                                     <textarea
                                         maxLength='200'
@@ -885,73 +929,88 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null }
                                     {/* <label for="textarea1">Other Notes</label> */}
                                 </div>
                             </div>
+                            <div className="row">
+                                <div className="container center" style={{marginTop: '0px'}}>
+                                    <div className="card">
+                                        <div className="card-content">
+                                            <p className="tb-grey-text">Extra Indicators</p>
+                                            <div className="row center" style={{paddingTop: '20px', textAlign: 'left'}}>
+                                                <div className="col s6">
+                                                    <label htmlFor="should_contact">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="should_contact"
+                                                            // className="filled-in"
+                                                            checked={shouldContact}
+                                                            onChange={() => {
+                                                                setShouldContact(!shouldContact);
+                                                            }}
+                                                        />
+                                                        <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                                            <i class="fa-solid fa-thumbtack" style={{padding: '0px 4px'}}/>
+                                                            Reminder to contact
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                <div className="col s6" style={{textAlign: 'right'}}>
+                                                    <label htmlFor="do_not_contact">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="do_not_contact"
+                                                            // className="filled-in"
+                                                            checked={doNotContact}
+                                                            onChange={() => {
+                                                                setDoNotContact(!doNotContact);
+                                                            }}
+                                                        />
+                                                        <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                                            <i class="fa-solid fa-ban" style={{padding: '0px 4px'}}/>
+                                                            Do not contact
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="row center" style={{paddingTop: '10px', textAlign: 'left'}}>
+                                                <div className="col s6">
+                                                    <label htmlFor="deceased">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="deceased"
+                                                            // className="filled-in"
+                                                            checked={deceased}
+                                                            onChange={() => {
+                                                                setDeceased(!deceased);
+                                                            }}
+                                                        />
+                                                        <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                                            <i class="fa-solid fa-skull-crossbones" style={{padding: '0px 4px'}}/>
+                                                            Deceased
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                <div className="col s6" style={{textAlign: 'right'}}>
+                                                    <label htmlFor="moved_business">
+                                                        <input
+                                                            type="checkbox"
+                                                            id="moved_business"
+                                                            // className="filled-in"
+                                                            checked={movedBusiness}
+                                                            onChange={() => {
+                                                                setMovedBusiness(!movedBusiness);
+                                                            }}
+                                                        />
+                                                        <span className="text-bold" style={{paddingLeft: '20px'}}>
+                                                            <i class="fa-solid fa-person-walking-arrow-right" style={{padding: '0px 4px'}}/>
+                                                            Moved business
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
-                    </div>
-                </div>
-            </div>
-            <div className="container">
-                <div className="card">
-                    <div className="card-content">
-                        <p className="tb-grey-text">Other Info</p>
-                        <div className="row center" style={{paddingTop: '10px'}}>
-                            <div className="col s4">
-                                <label htmlFor="deceased">
-                                    <input
-                                        type="checkbox"
-                                        id="deceased"
-                                        // className="filled-in"
-                                        checked={deceased}
-                                        onChange={() => {
-                                            setDeceased(!deceased);
-                                        }}
-                                    />
-                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
-                                        <span className="material-symbols-outlined">
-                                            skull
-                                        </span>
-                                        Deceased
-                                    </span>
-                                </label>
-                            </div>
-                            <div className="col s4">
-                                <label htmlFor="do_not_contact">
-                                    <input
-                                        type="checkbox"
-                                        id="do_not_contact"
-                                        // className="filled-in"
-                                        checked={doNotContact}
-                                        onChange={() => {
-                                            setDoNotContact(!doNotContact);
-                                        }}
-                                    />
-                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
-                                        <span className="material-symbols-outlined">
-                                            block
-                                        </span>
-                                        Do not contact
-                                    </span>
-                                </label>
-                            </div>
-                            <div className="col s4">
-                                <label htmlFor="moved_business">
-                                    <input
-                                        type="checkbox"
-                                        id="moved_business"
-                                        // className="filled-in"
-                                        checked={movedBusiness}
-                                        onChange={() => {
-                                            setMovedBusiness(!movedBusiness);
-                                        }}
-                                    />
-                                    <span className="text-bold" style={{paddingLeft: '20px'}}>
-                                        <span className="material-symbols-outlined">
-                                            move_location
-                                        </span>
-                                        Moved business
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

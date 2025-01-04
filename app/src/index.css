@@ -877,7 +877,7 @@ textarea:focus {
 
 .modal.referral-modal {
   border-radius: 10px;
-  width: 50%;
+  width: 60%;
   min-height: 80%;
 }
 
@@ -1371,6 +1371,14 @@ th {
 }
 
 .card.referral-match-card {
+  border-radius: 10px;
+  transition: box-shadow 0.25s;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.card.referral-match-card.audited-referral {
+  background-color: #a5d7be;
+  border: 2px solid #3d9973;
   border-radius: 10px;
   transition: box-shadow 0.25s;
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;

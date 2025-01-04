@@ -41,6 +41,7 @@ class ReferralType(str, Enum):
     EMPLOYEE = "employee"
     # referred by Travel Beyond employee's network (friend, family, etc)
     EMPLOYEE_NETWORK = "employee_network"
+    OTHER = "other"
 
 
 class Client(BaseModel):
@@ -84,6 +85,10 @@ class Client(BaseModel):
     notes: Optional[str] = None
     num_referrals: Optional[int] = None
     audited: bool = False
+    deceased: bool = False
+    should_contact: bool = False
+    do_not_contact: bool = False
+    moved_business: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -128,6 +133,7 @@ class ClientSummary(BaseModel):
     referred_by_id: Optional[UUID] = None
     referred_by_first_name: Optional[str] = None
     referred_by_last_name: Optional[str] = None
+    name_of_referred_by_id: Optional[str] = None
     # name of agent/employee/non-R&R client who referred, if applicable
     referred_by_name: Optional[str] = None
     notes: Optional[str] = None
@@ -137,6 +143,10 @@ class ClientSummary(BaseModel):
     # Number of clients referred by this client
     referrals_count: int = 0
     audited: bool = False
+    deceased: bool
+    should_contact: bool
+    do_not_contact: bool
+    moved_business: bool
     created_at: datetime
     updated_at: datetime
     updated_by: str
@@ -153,6 +163,10 @@ class ClientSummary(BaseModel):
         """Display name for the client who referred this client."""
         if self.referred_by_last_name and self.referred_by_first_name:
             return f"{self.referred_by_last_name}/{self.referred_by_first_name}"
+        if self.name_of_referred_by_id:
+            return self.name_of_referred_by_id
+        if self.referred_by_name:
+            return self.referred_by_name
         return None
 
     @computed_field  # type: ignore[misc]
@@ -193,6 +207,11 @@ class PatchClientRequest(BaseModel):
     referred_by_name: Optional[str] = None
     notes: Optional[str] = None
     audited: bool
+    cb_primary_agent_name: Optional[str] = None
+    deceased: bool
+    should_contact: bool
+    do_not_contact: bool
+    moved_business: bool
     updated_by: str
 
 

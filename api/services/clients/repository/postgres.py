@@ -196,10 +196,11 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
             """
             INSERT INTO public.clients (
                 id, first_name, last_name, referral_type, referred_by_id, referred_by_name,
-                notes, audited, created_at, updated_at, updated_by
+                notes, cb_primary_agent_name, audited, deceased, should_contact, do_not_contact,
+                moved_business, created_at, updated_at, updated_by
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
             )
             ON CONFLICT (id) DO UPDATE SET
                 first_name = EXCLUDED.first_name,
@@ -208,7 +209,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 referred_by_id = EXCLUDED.referred_by_id,
                 referred_by_name = EXCLUDED.referred_by_name,
                 notes = EXCLUDED.notes,
+                cb_primary_agent_name = EXCLUDED.cb_primary_agent_name,
                 audited = EXCLUDED.audited,
+                deceased = EXCLUDED.deceased,
+                should_contact = EXCLUDED.should_contact,
+                do_not_contact = EXCLUDED.do_not_contact,
+                moved_business = EXCLUDED.moved_business,
                 updated_at = EXCLUDED.updated_at,
                 updated_by = EXCLUDED.updated_by
             RETURNING id, (xmax = 0) AS was_inserted;
@@ -232,7 +238,12 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                         else None
                     ),
                     (client.notes.strip() if client.notes else None),
+                    client.cb_primary_agent_name,
                     client.audited,
+                    client.deceased,
+                    client.should_contact,
+                    client.do_not_contact,
+                    client.moved_business,
                     client.created_at,
                     client.updated_at,
                     client.updated_by,
@@ -334,15 +345,22 @@ class PostgresClientRepository(PostgresMixin, ClientRepository):
                 c.notes,
                 r.first_name AS referred_by_first_name,
                 r.last_name AS referred_by_last_name,
+                coalesce(ag.name, empl.email, r.last_name || '/' || r.first_name) AS name_of_referred_by_id,
                 COUNT(distinct ref.id) AS referrals_count,
                 c.audited,
+                c.deceased,
+                c.should_contact,
+                c.do_not_contact,
+                c.moved_business,
                 c.created_at,
                 c.updated_at,
                 c.updated_by
             FROM public.clients AS c
             LEFT JOIN public.clients AS r ON c.referred_by_id = r.id
-            LEFT JOIN public.clients AS ref ON ref.referred_by_id = c.id
-            GROUP BY c.id, r.first_name, r.last_name
+            LEFT JOIN public.clients AS ref ON c.referred_by_id = ref.id
+            LEFT JOIN public.agencies AS ag ON c.referred_by_id = ag.id
+            LEFT JOIN public.users AS empl ON c.referred_by_id = empl.id
+            GROUP BY c.id, r.first_name, r.last_name, ag.name, empl.email
             """
         )
         async with pool.acquire() as con:
