@@ -124,6 +124,9 @@ export const MatchReferrals = () => {
         if (selectedFilter === 'complete') {
             contextFilteredData = contextFilteredData.filter(item => item.audited === true);
         }
+        if (selectedFilter === 'should_contact') {
+            contextFilteredData = contextFilteredData.filter(item => item.should_contact === true);
+        }
         let newFilteredData = contextFilteredData;
 
         if (searchQuery) {
@@ -360,10 +363,23 @@ export const MatchReferrals = () => {
                                     </div>
                                     <div className="row center">
                                         <span
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'all' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("all")}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            All
+                                        </span>
+                                        <span
                                             className={`btn-small z-depth-2 ${selectedFilter === 'incomplete' ? 'tb-teal' : 'tb-grey lighten-2'}`}
                                             onClick={() => setSelectedFilter("incomplete")}
                                             style={{marginRight: '10px'}}
                                         >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
                                             Incomplete
                                         </span>
                                         <span
@@ -371,20 +387,61 @@ export const MatchReferrals = () => {
                                             onClick={() => setSelectedFilter("complete")}
                                             style={{marginRight: '10px'}}
                                         >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
                                             Complete
                                         </span>
                                         <span
-                                            className={`btn-small z-depth-2 ${selectedFilter === 'all' ? 'tb-teal' : 'tb-grey lighten-2'}`}
-                                            onClick={() => setSelectedFilter("all")}
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'should_contact' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("should_contact")}
                                             style={{marginRight: '10px'}}
                                         >
-                                            All
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            Should Contact
+                                        </span>
+                                    </div>
+                                    <div className="row center">
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'referral_type' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('referral_type')}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                            Referral Type
                                         </span>
                                         <span
-                                            className={`btn-small z-depth-2 ${selectedFilter === 'all' ? 'tb-teal' : 'tb-grey lighten-2'}`}
-                                            onClick={() => applySorting('referral_type')}
+                                            className={`btn-small z-depth-2 ${sorting.field === 'last_name' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('last_name')}
+                                            style={{marginRight: '10px'}}
                                         >
-                                            Sort By Referral Type
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                                Last Name
+                                            </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'audited' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('audited')}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                                Audited
+                                            </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'cb_primary_agent_name' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('cb_primary_agent_name')}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                            Consultant
                                         </span>
                                     </div>
                                     <div className="container center" style={{ width: '70%' }}>
@@ -492,6 +549,50 @@ export const MatchReferrals = () => {
                                                                         </span>
                                                                     </button>
                                                                 </div>
+                                                            </div>
+                                                            <div className="row chip" style={{ marginBottom: '10px'}}>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Reminder to contact"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span
+                                                                        className={`${client.should_contact ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}
+                                                                    >
+                                                                        <i class="fa-solid fa-thumbtack" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Do not contact"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.do_not_contact ? 'red-text text-lighten-2' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-ban" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Deceased"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.deceased ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-face-frown" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Moved business elsewhere"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.moved_business ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-person-walking-arrow-right" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
                                                             </div>
                                                             { client.audited &&
                                                                 <div className="row text-small" style={{ marginBottom: '0px'}}>

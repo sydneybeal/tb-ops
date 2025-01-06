@@ -983,7 +983,7 @@ const EditReferralModal = ({ isOpen, onClose, onRefresh, editClientData = null, 
                                                             }}
                                                         />
                                                         <span className="text-bold" style={{paddingLeft: '20px'}}>
-                                                            <i class="fa-solid fa-skull-crossbones" style={{padding: '0px 4px'}}/>
+                                                            <i class="fa-solid fa-face-frown" style={{padding: '0px 4px'}}/>
                                                             Deceased
                                                         </span>
                                                     </label>
