@@ -683,6 +683,44 @@ input[type=text]:focus + label {
   color: #47443e !important;
 }
 
+.rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 40px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.rating-item {
+  display: flex;
+  align-items: center;
+  width: 150px; /* Adjust width as needed */
+  flex-shrink: 0; /* Prevent shrinking below 150px */
+  padding-right: 10px; /* Add some padding to ensure space between item and options */
+  box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.rating-options {
+  display: flex;
+  justify-content: space-between; /* Distribute space between options */
+  flex-wrap: wrap;
+  flex-grow: 1;
+  gap: 3px; /* Adjust gap as needed */
+  min-width: 0; /* Allow options to shrink appropriately */
+}
+
+.rating-option {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Allow options to grow */
+  flex-basis: 0; /* Ensure equal distribution of space */
+  margin-right: 3px; /* Adjust margin as needed */
+}
+
+.rating-option input {
+  margin-right: 0px; /* Adjust margin as needed */
+}
 
 input {
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', 'Roboto', 'Oxygen',
@@ -708,7 +746,12 @@ input {
   width: 50%;
 }
 
-
+.btn-floating.btn-tiny {
+  width: 20.4px;
+  height: 20.4px;
+  font-size: 0.2rem;
+  line-height: 0.2rem;
+}
 
 /* @media screen and (min-width: 993px) {
   nav.top-nav {
@@ -749,6 +792,79 @@ a.sidenav-trigger.top-nav {
   font-family: 'Bodoni', sans-serif;
   color: #47443e;
 }
+
+.trip-report-direction {
+  padding-bottom: 10px;
+  font-size: 1.2rem;
+  font-style: 'italics';
+}
+
+.trip-report-summary-cell {
+  font-size: 1.4rem;
+}
+
+.trip-report-display-header {
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.trip-report-property-row {
+  margin: 20px 0px;
+}
+
+.rating-box {
+  width: 80%; /* No quotes around numerical values */
+  margin: 0 auto; /* Centers the box */
+  border: 1px solid #d1cdc9; /* Light gray border */
+  border-radius: 10px; /* Slightly rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* CSS shadow */
+  padding: 20px 20px 0px 20px; /* Optional: add some padding inside the box */
+  background-color: #e8e5e1; /* Light grey background color */
+}
+
+.rating-box [type="radio"]:not(:checked)+span {
+  padding-left: 24px;
+}
+
+.rating-box [type="radio"]:checked+span {
+  padding-left: 24px;
+}
+
+.rating-row [type="radio"]:not(:checked)+span {
+  padding-left: 24px;
+}
+
+.rating-row [type="radio"]:checked+span {
+  padding-left: 24px;
+}
+
+/* .tb-grey {
+  background-color: #8c8782 !important;
+}
+
+.tb-grey.lighten-1 {
+  background-color: #a39e9a !important;
+}
+
+.tb-grey.lighten-2 {
+  background-color: #bab5b1 !important;
+}
+
+.tb-grey.lighten-3 {
+  background-color: #d1cdc9 !important;
+} */
+
+/* .tb-grey.lighten-4 {
+  background-color: #e8e5e1 !important;
+}
+
+.tb-grey.lighten-5 {
+  background-color: #fdf7f3 !important;
+}
+
+.tb-grey.lighten-6 {
+  background-color: #fffefd !important;
+} */
 
 ul.sidenav.sidenav-fixed li.logo:hover,
 ul.sidenav.sidenav-fixed li.logo #logo-container:hover {
@@ -850,6 +966,40 @@ ul.sidenav.sidenav-fixed li.logo {
 textarea {
   font-family: 'HvDTrial Brandon Grotesque', 'BrandonGrotesque-Regular', 'Segoe UI', sans-serif !important;
 }
+
+
+/* textarea.materialize-textarea.trip-report-comments {
+  background-color: pink;
+  border: none;
+  border-bottom: 1px solid #9e9e9e;
+  border-radius: 0;
+  outline: none;
+  height: 3rem !important;
+  width: 100%;
+  font-size: 16px;
+  margin: 0 0 8px 0;
+  padding: .8rem 0 .8rem 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  transition: box-shadow .3s, border .3s;
+} */
+
+textarea.materialize-textarea.trip-report-comments {
+  background-color: white; /* Set the background color to white */
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 5px; /* Rounded corners */
+  outline: none;
+  height: 100px; /* Make it taller */
+  width: 100%;
+  font-size: 16px;
+  margin: 0 0 16px 0; /* Add some margin at the bottom */
+  padding: 10px; /* Add padding inside the box */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+  box-sizing: border-box; /* Ensure padding and border are included in the height/width */
+  transition: box-shadow .3s, border .3s;
+  resize: vertical; /* Allow vertical resizing */
+}
+
 
 textarea:focus {
   border-bottom: 1px solid #0e9bac !important;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 // import Select from 'react-select';
 import { useAuth } from '../../components/AuthContext';
@@ -8,7 +8,6 @@ import 'react-datepicker/dist/react-datepicker.css';
 import CircularPreloader from '../../components/CircularPreloader';
 import Navbar from '../../components/Navbar';
 import AuditLogs from '../AuditLogs/AuditLogs';
-import moment from 'moment';
 
 const AccommodationLogDetails = () => {
     const { log_id } = useParams();

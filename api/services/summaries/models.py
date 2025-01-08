@@ -121,6 +121,9 @@ class PropertyDetailSummary(BaseModel):
     country_id: Optional[UUID] = None
     property_type: Optional[str] = None
     price_range: Optional[str] = None
+    location: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
     num_tents: Optional[int] = None
     has_trackers: Optional[bool] = None
     has_wifi_in_room: Optional[bool] = None

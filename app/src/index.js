@@ -7,11 +7,12 @@ import { AuthProvider } from './components/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AccommodationLogs from './pages/AccommodationLogs/AccommodationLogs';
 import AccommodationLogDetails from './pages/AccommodationLogs/Details';
-import BedNightReports from './pages/BedNights/BedNightReports';
+import AdminHub from './pages/AdminHub/AdminHub';
 import Clients from './pages/Clients/Clients';
 import Referrals from './pages/Clients/Referrals';
 import MatchReferrals from './pages/Clients/MatchReferrals';
 import EntryElements from './pages/EntryElements/EntryElements';
+import BedNightReports from './pages/BedNights/BedNightReports';
 import PropertiesView from './pages/Properties/PropertiesView';
 import LookerReports from './pages/BedNights/LookerReports';
 import Maps from './pages/Maps/Maps';
@@ -20,6 +21,8 @@ import Wrapped from './pages/Wrapped/Wrapped';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
+import TripReportDetails from './pages/TripReports/Details';
+import AddEditTripReport from './pages/TripReports/AddEditTripReport';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
 import DailyRates from './pages/DailyRates/DailyRates';
@@ -81,6 +84,14 @@ const router = createBrowserRouter([
     ),
   },
   {
+    path: '/admin_hub/',
+    element: (
+      <ProtectedRoute>
+        <AdminHub />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: '/property_details/',
     element: (
       <ProtectedRoute allowedRoles={['admin']}>
@@ -125,6 +136,30 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['admin']}>
         <TripReports />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip_reports/new',
+    element: (
+      <ProtectedRoute>
+        <AddEditTripReport />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip_reports/:trip_report_id',
+    element: (
+      <ProtectedRoute>
+        <TripReportDetails />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip_reports/edit/:trip_report_id',
+    element: (
+      <ProtectedRoute>
+        <AddEditTripReport />
       </ProtectedRoute>
     ),
   },

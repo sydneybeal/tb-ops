@@ -662,9 +662,11 @@ class SummaryService:
         return await self._repo.get_all_properties()
 
     # Property
-    async def get_all_property_details(self) -> Sequence[PropertyDetailSummary]:
+    async def get_all_property_details(
+        self, entered_only=True
+    ) -> Sequence[PropertyDetailSummary]:
         """Gets all PropertyDetailSummary models."""
-        return await self._repo.get_property_details()
+        return await self._repo.get_property_details(entered_only)
 
     async def get_property_details_by_id(
         self, property_id: UUID

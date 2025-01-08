@@ -22,6 +22,10 @@
 -- drop table if exists public.core_destinations;
 -- drop table if exists public.audit_logs;
 -- drop table if exists public.property_details;
+-- drop table if exists public.potential_trips;
+-- drop table if exists public.users;
+-- drop table if exists public.trips;
+-- drop table if exists public.audit_logs;
 
 CREATE TABLE IF NOT EXISTS public.core_destinations (
     id UUID NOT NULL PRIMARY KEY,

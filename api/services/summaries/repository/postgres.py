@@ -15,7 +15,7 @@
 import datetime
 import json
 from uuid import UUID
-from typing import Sequence
+from typing import Sequence, Optional
 from textwrap import dedent
 
 from api.adapters.repository import PostgresMixin
@@ -40,6 +40,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
 
     async def get_bed_night_report(self, input_args: dict) -> BedNightReport:
         """Creates a BedNightReport model given the inputs and repo data."""
+        raise NotImplementedError
         # Parse the input args to filter the query
         # print(input_args)
         # for k, v in input_args.items():
@@ -410,7 +411,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 return property_summaries
 
     async def get_property_details(
-        self, entered_only: bool = True, by_id: UUID = None
+        self, entered_only: bool = True, by_id: Optional[UUID] = None
     ) -> Sequence[PropertyDetailSummary]:
         """Gets all PropertyDetail models in the repository, joined with their foreign keys."""
         pool = await self._get_pool()
@@ -425,8 +426,11 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 p.portfolio_id,
                 cd.id AS core_destination_id,
                 c.id AS country_id,
-                pd.property_type,
+                p.property_type,
                 pd.price_range,
+                p.location,
+                p.latitude,
+                p.longitude,
                 pd.num_tents,
                 pd.has_trackers,
                 pd.has_wifi_in_room,
@@ -528,9 +532,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 country_summaries = [CountrySummary(**record) for record in records]
                 return country_summaries
 
-    async def get_country_by_id(
-        self, country_id: UUID = None
-    ) -> Sequence[CountrySummary]:
+    async def get_country_by_id(self, country_id: UUID) -> Optional[CountrySummary]:
         """Gets a CountrySummary model by ID, joined with its foreign keys."""
         pool = await self._get_pool()
         query = dedent(
@@ -721,7 +723,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
 
                 return list(trip_summaries.values())
 
-    async def get_trip_summary_by_id(self, trip_id: UUID) -> TripSummary:
+    async def get_trip_summary_by_id(self, trip_id: UUID) -> Optional[TripSummary]:
         """Gets a TripSummary model by its ID."""
         pool = await self._get_pool()
         query = dedent(

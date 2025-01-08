@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.8';
+    const version = 'vTripReports';
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
@@ -203,6 +203,13 @@ const Navbar = ({ title }) => {
                         }
                         <div className="container" style={{ width: '100%' }}>
                             <li>
+                                <Link to={'/admin_hub'} className="text-bold">
+                                    Admin Hub
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
                                 <Link to={'/trips'} className="text-bold">
                                     <span className="material-symbols-outlined">
                                         casino
@@ -244,6 +251,13 @@ const Navbar = ({ title }) => {
                             <li>
                                 <Link to={'/looker_reports'} className="text-bold">
                                     Looker Reports
+                                </Link>
+                            </li>
+                        </div>
+                        <div className="container" style={{ width: '100%' }}>
+                            <li>
+                                <Link to={'/trip_reports'} className="text-bold">
+                                    Trip Reports
                                 </Link>
                             </li>
                         </div>

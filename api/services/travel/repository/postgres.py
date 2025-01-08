@@ -274,6 +274,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                         date_out=res["date_out"],
                         booking_channel_id=res["booking_channel_id"],
                         agency_id=res["agency_id"],
+                        trip_id=res["trip_id"],
                         created_at=res["created_at"],
                         updated_at=res["updated_at"],
                         updated_by=res["updated_by"],

@@ -9,7 +9,7 @@ import moment from 'moment';
 export const BookingChannels = () => {
     const [apiData, setApiData] = useState([]);
     const [loaded, setLoaded] = useState(false);
-    const { userDetails } = useAuth();
+    const { userDetails, logout } = useAuth();
     const [displayData, setDisplayData] = useState([]);
     const [sorting, setSorting] = useState({ field: 'name', ascending: true });
     const [refreshData, setRefreshData] = useState(false);
@@ -37,6 +37,16 @@ export const BookingChannels = () => {
         })
             .then((res) => res.json())
             .then((data) => {
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    // Session has expired or credentials are invalid
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
                 setApiData(data);
                 setLoaded(true);
             })
@@ -44,7 +54,7 @@ export const BookingChannels = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, refreshData]);
+    }, [userDetails.token, refreshData, logout]);
 
     /**
   * Sets sorting criteria.

@@ -533,7 +533,6 @@ async def test_patch_property_details(ac: AsyncClient):
     res = await ac.patch(url="/v1/property_details", json=data)
     assert res.status_code == 200
     res = res.json()
-    log.info(res)
 
 
 async def test_get_property_details(ac: AsyncClient):
@@ -544,16 +543,36 @@ async def test_get_property_details(ac: AsyncClient):
     assert len(properties) == 1
 
     property_with_details = properties[0]
-    assert property_with_details["property_type"] == "luxury hotel"
+    # property_type has become None because getting direct from properties table
+    # need to deprecate property_type from the property_details table
+    assert property_with_details["property_type"] == None
     assert property_with_details["has_trackers"] == False
+    assert property_with_details["has_trackers"] == False
+    assert property_with_details["has_wifi_in_room"] == True
+    assert property_with_details["has_wifi_in_common_areas"] == True
+    assert property_with_details["has_hairdryers"] == True
+    assert property_with_details["has_pool"] == True
+    assert property_with_details["has_heated_pool"] == None
+    assert property_with_details["has_credit_card_tipping"] == None
+    assert property_with_details["is_child_friendly"] == None
+    assert property_with_details["is_handicap_accessible"] == None
 
     res = await ac.get(
         url=f"/v1/property_details/{property_with_details['property_id']}"
     )
     assert res.status_code == 200
     res = res.json()
-    assert res["property_type"] == "luxury hotel"
+    assert res["property_type"] == None
     assert res["has_trackers"] == False
+    assert res["has_trackers"] == False
+    assert res["has_wifi_in_room"] == True
+    assert res["has_wifi_in_common_areas"] == True
+    assert res["has_hairdryers"] == True
+    assert res["has_pool"] == True
+    assert res["has_heated_pool"] == None
+    assert res["has_credit_card_tipping"] == None
+    assert res["is_child_friendly"] == None
+    assert res["is_handicap_accessible"] == None
 
 
 async def test_delete_country_related_entries(ac: AsyncClient):

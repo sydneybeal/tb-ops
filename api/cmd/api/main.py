@@ -15,17 +15,20 @@
 """REST API entrypoint code for TB Operations."""
 # from urllib import parse
 from datetime import timedelta, datetime, date
-from typing import Sequence, Iterable, Optional, List, Union
+from typing import Sequence, Iterable, Optional, Union
 from uuid import UUID
 from fastapi import FastAPI, Depends, Request, HTTPException, status, Query
 
 # from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.param_functions import Form
 
 from jose import JWTError, jwt
+from api.services.admin.models import AdminComment
+from api.services.admin.service import AdminService
 from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
@@ -45,7 +48,6 @@ from api.services.currency.models import DailyRate, PatchDailyRateRequest
 from api.services.summaries.models import (
     AccommodationLogSummary,
     AgencySummary,
-    BaseTrip,
     BookingChannelSummary,
     CountrySummary,
     PortfolioSummary,
@@ -70,12 +72,17 @@ from api.services.travel.models import (
     PatchTripRequest,
 )
 from api.services.travel.service import TravelService
+from api.services.reviews.models import (
+    PatchTripReportRequest,
+    TripReportSummary,
+)
+from api.services.reviews.service import ReviewService
 from api.services.quality.service import QualityService
 from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v1.0.6"
+VERSION = "vTripReports"
 
 
 def get_auth_service() -> AuthService:
@@ -114,7 +121,9 @@ def make_app(
     summary_svc: SummaryService,
     auth_svc: AuthService,
     audit_svc: AuditService,
+    review_svc: ReviewService,
     quality_svc: QualityService,
+    admin_svc: AdminService,
     client_svc: ClientService,
     reservation_svc: ReservationService,
     currency_svc: CurrencyService,
@@ -186,24 +195,6 @@ def make_app(
             "role": user.role,
             "email": user.email,
         }
-
-    # user = await auth_svc.authenticate_user(email, password)
-    # if not user:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_401_UNAUTHORIZED,
-    #         detail="Incorrect email or password",
-    #         headers={"WWW-Authenticate": "Bearer"},
-    #     )
-    # access_token_expires = timedelta(minutes=auth_svc.ACCESS_TOKEN_EXPIRE_MINUTES)
-    # access_token = auth_svc.create_access_token(
-    #     data={"sub": user.email}, expires_delta=access_token_expires
-    # )
-    # return {
-    #     "access token": access_token,
-    #     "token_type": "bearer",
-    #     "role": user.role,
-    #     "email": user.email,
-    # }
 
     @app.get(
         "/v1/accommodation_logs",
@@ -361,10 +352,11 @@ def make_app(
         tags=["properties"],
     )
     async def get_all_property_details(
+        entered_only: bool = True,
         current_user: User = Depends(get_current_user),
     ) -> Sequence[PropertyDetailSummary] | JSONResponse:
         """Get all PropertyDetail summaries."""
-        return await summary_svc.get_all_property_details()
+        return await summary_svc.get_all_property_details(entered_only)
 
     @app.get(
         "/v1/property_details/{property_id}",
@@ -676,6 +668,66 @@ def make_app(
         results = await travel_svc.process_portfolio_request(portfolio_data)
         return JSONResponse(content=results)
 
+    @app.get(
+        "/v1/trip_reports/{trip_report_id}",
+        operation_id="get_trip_report",
+        tags=["reviews"],
+        response_model=TripReportSummary,
+    )
+    async def get_trip_report(
+        trip_report_id: UUID,
+        current_user: User = Depends(get_current_user),
+    ) -> TripReportSummary | JSONResponse:
+        """Get a TripReport by its ID."""
+        results = await review_svc.get_trip_report(trip_report_id)
+        if results:
+            return results
+        return JSONResponse(content={}, status_code=404)
+
+    @app.get(
+        "/v1/trip_reports",
+        operation_id="get_all_trip_reports",
+        tags=["reviews"],
+        response_model=Sequence[TripReportSummary],
+    )
+    async def get_all_trip_reports(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[TripReportSummary] | JSONResponse:
+        """Get all Agency models."""
+        results = await review_svc.get_all_trip_reports()
+        if results:
+            return JSONResponse(content=jsonable_encoder(results))
+        return JSONResponse(content={}, status_code=404)
+
+    @app.patch(
+        "/v1/trip_reports",
+        operation_id="patch_trip_report",
+        tags=["reviews"],
+    )
+    async def patch_trip_report(
+        trip_report_data: PatchTripReportRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        """Add or edit a TripReport."""
+        results = await review_svc.process_trip_report_request(trip_report_data)
+        return JSONResponse(content=results)
+
+    @app.get(
+        "/v1/admin_comments",
+        operation_id="get_all_admin_comments",
+        tags=["admin"],
+        response_model=Sequence[AdminComment],
+    )
+    async def get_all_admin_comments(
+        current_user: User = Depends(get_current_user),
+        comment_id: Optional[UUID] = None,
+    ) -> Sequence[AdminComment] | JSONResponse:
+        """Get all Agency models."""
+        results = await admin_svc.get_summaries()
+        if results:
+            return JSONResponse(content=jsonable_encoder(results))
+        return JSONResponse(content={}, status_code=404)
+
     @app.delete(
         "/v1/portfolios/{portfolio_id}",
         operation_id="delete_portfolio",
@@ -926,6 +978,18 @@ def make_app(
         return progress
 
     @app.get(
+        "/v1/users",
+        operation_id="get_users",
+        response_model=Sequence[UserSummary],
+        tags=["users"],
+    )
+    async def get_all_users(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[UserSummary] | JSONResponse:
+        """Get all Country models."""
+        return await auth_svc.get_all_users()
+
+    @app.get(
         "/v1/clients",
         operation_id="get_clients",
         response_model=Sequence[ClientSummary],
@@ -1013,18 +1077,6 @@ def make_app(
         results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
         return JSONResponse(content=results)
 
-    @app.get(
-        "/v1/users",
-        operation_id="get_users",
-        response_model=Sequence[UserSummary],
-        tags=["users"],
-    )
-    async def get_all_users(
-        current_user: User = Depends(get_current_user),
-    ) -> Sequence[UserSummary] | JSONResponse:
-        """Get all Country models."""
-        return await auth_svc.get_all_users()
-
     return app
 
 
@@ -1035,19 +1087,21 @@ if __name__ == "__main__":
     summary_svc = SummaryService()
     auth_svc = AuthService()
     audit_svc = AuditService()
+    review_svc = ReviewService()
     quality_svc = QualityService()
+    admin_svc = AdminService()
     client_svc = ClientService()
     reservation_svc = ReservationService()
     currency_svc = CurrencyService()
-    client_svc = ClientService()
-    reservation_svc = ReservationService()
 
     app = make_app(
         travel_svc,
         summary_svc,
         auth_svc,
         audit_svc,
+        review_svc,
         quality_svc,
+        admin_svc,
         client_svc,
         reservation_svc,
         currency_svc,

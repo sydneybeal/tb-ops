@@ -1541,49 +1541,6 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
                                                                         </span>
                                                                         Portfolio Name
                                                                     </label>
-                                                                    {/* <div>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="new_property_portfolio_name"
-                                                                            value={log.new_property_portfolio_name || ''}
-                                                                            onChange={(e) => handlePropertyChange(index, 'new_property_portfolio_name', e.target.value)}
-                                                                            onFocus={() => setShowPortfolioSuggestions(true)}
-                                                                            onBlur={(e) => {
-                                                                                // First, check if suggestionsRef.current exists to avoid the null reference error
-                                                                                if (suggestionsRef.current && e.relatedTarget) {
-                                                                                    // Then, check if the relatedTarget is not within the suggestions list
-                                                                                    if (!suggestionsRef.current.contains(e.relatedTarget)) {
-                                                                                        setShowPortfolioSuggestions(false);
-                                                                                    }
-                                                                                } else {
-                                                                                    // If suggestionsRef.current is null or e.relatedTarget is null, hide the suggestions
-                                                                                    setShowPortfolioSuggestions(false);
-                                                                                }
-                                                                            }}
-                                                                            placeholder="Portfolio Name"
-                                                                            style={{ marginRight: '10px', flexGrow: '1' }}
-                                                                            autoComplete="off"
-                                                                        />
-                                                                        {showPortfolioSuggestions && filteredPortfolioSuggestions.length > 0 && (
-                                                                            <ul className="suggestions-list" ref={suggestionsRef}>
-                                                                                {filteredPortfolioSuggestions.map((suggestion, suggestionIndex) => (
-                                                                                    <li
-                                                                                        key={suggestionIndex}
-                                                                                        tabIndex="0"
-                                                                                        onClick={() => selectPortfolioSuggestion(index, suggestion)}
-                                                                                    >
-                                                                                        {suggestion}
-                                                                                    </li>
-                                                                                ))}
-                                                                            </ul>
-                                                                        )}
-                                                                    </div>
-                                                                    <label htmlFor="new_property_portfolio_name">
-                                                                        <span className="material-symbols-outlined">
-                                                                            store
-                                                                        </span>
-                                                                        Portfolio Name
-                                                                    </label> */}
                                                                 </div>
                                                             </div>
                                                             <div className="row">
