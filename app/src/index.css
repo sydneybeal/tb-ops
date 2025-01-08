@@ -1025,6 +1025,17 @@ textarea:focus {
   overflow-y: auto;
 }
 
+.modal.referral-modal {
+  border-radius: 10px;
+  width: 60%;
+  min-height: 80%;
+}
+
+.modal.referral-modal .modal-content {
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
 
 .modal.download-report-modal {
   border-radius: 10px;
@@ -1227,6 +1238,21 @@ table.overlaps-table td>div {
   z-index: 6;
 }
 
+textarea.materialize-textarea.trip-report-comments {
+  background-color: white; /* Set the background color to white */
+  border: 1px solid #ccc; /* Light grey border */
+  border-radius: 5px; /* Rounded corners */
+  outline: none;
+  height: 100px; /* Make it taller */
+  width: 100%;
+  font-size: 16px;
+  margin: 0 0 16px 0; /* Add some margin at the bottom */
+  padding: 10px; /* Add padding inside the box */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle box shadow */
+  box-sizing: border-box; /* Ensure padding and border are included in the height/width */
+  transition: box-shadow .3s, border .3s;
+  resize: vertical; /* Allow vertical resizing */
+}
 
 .suggestions-list {
   position: absolute;
@@ -1457,6 +1483,15 @@ th {
   box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
 }
 
+.card.wrapped-card {
+  border-radius: 2px;
+  min-height: 400px;
+  margin-top: 20px;
+  background-color: #d1cdc9;
+  transition: box-shadow 0.25s;
+  box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.12), 0 1px 5px 0 rgba(0, 0, 0, 0.2);
+}
+
 .card.potential-trip-card {
   border-radius: 8px;
   margin-bottom: 30px;
@@ -1486,6 +1521,14 @@ th {
 }
 
 .card.referral-match-card {
+  border-radius: 10px;
+  transition: box-shadow 0.25s;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.card.referral-match-card.audited-referral {
+  background-color: #a5d7be;
+  border: 2px solid #3d9973;
   border-radius: 10px;
   transition: box-shadow 0.25s;
   box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;

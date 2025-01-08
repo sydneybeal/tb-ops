@@ -17,6 +17,7 @@ import PropertiesView from './pages/Properties/PropertiesView';
 import LookerReports from './pages/BedNights/LookerReports';
 import Maps from './pages/Maps/Maps';
 import PropertyDetails from './pages/PropertyDetails/PropertyDetails';
+import Wrapped from './pages/Wrapped/Wrapped';
 // import Overlaps from './pages/Overlaps/Overlaps';
 import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
@@ -111,6 +112,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <OverlapsV2 />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/wrapped/',
+    element: (
+      <ProtectedRoute>
+        <Wrapped />
       </ProtectedRoute>
     ),
   },

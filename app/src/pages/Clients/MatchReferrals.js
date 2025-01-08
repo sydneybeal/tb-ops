@@ -25,9 +25,26 @@ export const MatchReferrals = () => {
     const [filterOptions, setFilterOptions] = useState({
         consultant: [],
     });
+    const [selectedFilter, setSelectedFilter] = useState(null);
     const [refreshData, setRefreshData] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentEditClient, setCurrentEditClient] = useState(null);
+
+    const mapReferralType = (keyword) => {
+        const referralMap = {
+            existing_client: "Existing Client",
+            other_client: "Other Client",
+            internet: "Internet",
+            existing_agency: "Existing Agency",
+            other_agency: "Other Agency",
+            third_party: "Third Party",
+            employee: "Employee",
+            employee_network: "Employee Network",
+            other: "Other"
+        };
+    
+        return referralMap[keyword] || "Unknown";
+    };
 
     useEffect(() => {
         M.AutoInit();
@@ -64,7 +81,7 @@ export const MatchReferrals = () => {
                 setLoaded(true);
                 console.error(err);
             });
-    }, [userDetails.token, logout]);
+    }, [refreshData, userDetails.token, logout]);
 
     useEffect(() => {
         const consultantMap = Array.isArray(apiData) ? apiData.reduce((acc, item) => {
@@ -101,6 +118,15 @@ export const MatchReferrals = () => {
         if (filters.consultant) {
             contextFilteredData = contextFilteredData.filter(item => item.cb_primary_agent_name === filters.consultant);
         }
+        if (selectedFilter === 'incomplete') {
+            contextFilteredData = contextFilteredData.filter(item => item.audited === false);
+        }
+        if (selectedFilter === 'complete') {
+            contextFilteredData = contextFilteredData.filter(item => item.audited === true);
+        }
+        if (selectedFilter === 'should_contact') {
+            contextFilteredData = contextFilteredData.filter(item => item.should_contact === true);
+        }
         let newFilteredData = contextFilteredData;
 
         if (searchQuery) {
@@ -114,9 +140,18 @@ export const MatchReferrals = () => {
 
         setFilteredData(newFilteredData);
 
-    }, [apiData, searchQuery, filters]);
+    }, [apiData, searchQuery, filters, selectedFilter]);
+
+    function applySorting(key) {
+        setSorting((prevSorting) => ({
+            field: key,
+            ascending: prevSorting.field === key ? !prevSorting.ascending : true,
+        }));
+    };
 
     useEffect(() => {
+        // TODO toggle to sort by CB marketing source
+
         // Perform sorting on filteredData
         let sortedAndFilteredData = Array.isArray(filteredData) ? [...filteredData].sort((a, b) => {
             let aValue = a[sorting.field] !== undefined && a[sorting.field] !== null ? a[sorting.field] : '';
@@ -145,7 +180,7 @@ export const MatchReferrals = () => {
         const displayEndIndex = displayStartIndex + itemsPerPage;
         setDisplayData(sortedAndFilteredData.slice(displayStartIndex, displayEndIndex));
 
-    }, [apiData, currentPage, filteredData]);
+    }, [apiData, currentPage, filteredData, sorting]);
 
     const changePage = (newPage) => {
         const start = newPage * itemsPerPage;
@@ -241,6 +276,7 @@ export const MatchReferrals = () => {
                                         onClose={closeModal}
                                         onRefresh={triggerRefresh}
                                         editClientData={currentEditClient}
+                                        mapReferralType={mapReferralType}
                                     />
                                     <div className="row center">
                                         <div className="col s12">
@@ -325,13 +361,96 @@ export const MatchReferrals = () => {
                                             </span>
                                         </div>
                                     </div>
+                                    <div className="row center">
+                                        <span
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'all' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("all")}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            All
+                                        </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'incomplete' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("incomplete")}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            Incomplete
+                                        </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'complete' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("complete")}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            Complete
+                                        </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${selectedFilter === 'should_contact' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => setSelectedFilter("should_contact")}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                filter_alt
+                                            </span>
+                                            Should Contact
+                                        </span>
+                                    </div>
+                                    <div className="row center">
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'referral_type' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('referral_type')}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                            Referral Type
+                                        </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'last_name' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('last_name')}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                                Last Name
+                                            </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'audited' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('audited')}
+                                            style={{marginRight: '10px'}}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                                Audited
+                                            </span>
+                                        <span
+                                            className={`btn-small z-depth-2 ${sorting.field === 'cb_primary_agent_name' ? 'tb-teal' : 'tb-grey lighten-2'}`}
+                                            onClick={() => applySorting('cb_primary_agent_name')}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                swap_vert
+                                            </span>
+                                            Consultant
+                                        </span>
+                                    </div>
                                     <div className="container center" style={{ width: '70%' }}>
                                         {Array.isArray(displayData) && displayData.length > 0 ? (
                                             displayData.map((client, index) => (
                                                 <React.Fragment key={`client-${index}`}>
-                                                    <div className="card referral-match-card">
+                                                    <div className={`card referral-match-card ${ client.audited && 'audited-referral'}`}>
                                                         <div className="card-content">
-                                                            <div className="row" style={{ marginBottom: '0px'}}>
+                                                            <div className="row" style={{ marginBottom: '10px'}}>
                                                                 <div className="col s6">
                                                                     <p><b>{client.cb_name}</b></p>
                                                                     <p>
@@ -339,23 +458,56 @@ export const MatchReferrals = () => {
                                                                         {client.address_city}, {client.address_state}
                                                                     </span>
                                                                     </p>
-                                                                    <p>Age: {client.birth_date ? moment().diff(moment(client.birth_date), 'years') : (
+                                                                    <p>Age: <span className="text-bold">{client.birth_date ? moment().diff(moment(client.birth_date), 'years') : (
                                                                         <span className="chip tb-grey lighten-3 text-bold">?</span>
-                                                                    )}</p>
-                                                                    <p>Customer for: {client.cb_created_date ? moment().diff(moment(client.cb_created_date), 'years') : (
+                                                                    )}</span></p>
+                                                                    <p>Customer for: <span className="text-bold">{client.cb_created_date ? moment().diff(moment(client.cb_created_date), 'years') : (
                                                                         <span className="chip tb-grey lighten-3 text-bold">?</span>
-                                                                    )} years</p>
-                                                                    <p>Total Trip Count: {client.reservations_count}</p>
-                                                                    <p>ClientBase Agent: {client.cb_primary_agent_name}</p>
+                                                                    )} years</span></p>
+                                                                    <p>Total Trip Count: <span className="text-bold">{client.reservations_count}</span></p>
+                                                                    <p>ClientBase Agent: <span className="text-bold">{client.cb_primary_agent_name}</span></p>
                                                                 </div>
                                                                 <div className="col s5">
                                                                     <div>
-                                                                        <p>Referred by: </p>
-                                                                        {client.referred_by_id ?
+                                                                        <p>Referral type: </p>
+                                                                        {client.referral_type ?
                                                                             <>
                                                                                 <span className="tb-teal-text text-bold">
-                                                                                    {client.referred_by_last_name}/{client.referred_by_first_name}
+                                                                                    {mapReferralType(client.referral_type)}
                                                                                 </span>
+                                                                                {['existing_client', 'existing_agency', 'employee'].includes(client.referral_type)  &&
+                                                                                    <>
+                                                                                    {client.referred_by_id ?
+                                                                                        <>
+                                                                                            <p className="tb-grey-text text-bold">
+                                                                                                {client.referred_by_display_name}
+                                                                                            </p>
+                                                                                            {client.referred_by_name &&
+                                                                                                <p className="tb-grey-text text-bold">
+                                                                                                    ({client.referred_by_name})
+                                                                                                </p>
+                                                                                            }
+                                                                                        </>
+                                                                                    :
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            Unknown
+                                                                                        </p>
+                                                                                    }
+                                                                                    </>
+                                                                                }
+                                                                                {['other_client', 'other_agency', 'internet', 'third_party'].includes(client.referral_type) &&
+                                                                                <>
+                                                                                    {client.referred_by_name ?
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            {client.referred_by_display_name}
+                                                                                        </p>
+                                                                                    :
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            Unknown
+                                                                                        </p>
+                                                                                    }
+                                                                                </>
+                                                                                }
                                                                             </>
                                                                         :
                                                                             <>
@@ -398,6 +550,59 @@ export const MatchReferrals = () => {
                                                                     </button>
                                                                 </div>
                                                             </div>
+                                                            <div className="row chip" style={{ marginBottom: '10px'}}>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Reminder to contact"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span
+                                                                        className={`${client.should_contact ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}
+                                                                    >
+                                                                        <i class="fa-solid fa-thumbtack" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Do not contact"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.do_not_contact ? 'red-text text-lighten-2' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-ban" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Deceased"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.deceased ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-face-frown" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                                <span
+                                                                    className={`tooltipped`}
+                                                                    data-position="bottom"
+                                                                    data-tooltip="Moved business elsewhere"
+                                                                    data-tooltip-class="tooltip-light"
+                                                                >
+                                                                    <span className={`${client.moved_business ? 'tb-teal-text' : 'tb-grey-text text-lighten-3'}`}>
+                                                                        <i class="fa-solid fa-person-walking-arrow-right" style={{padding: '0px 20px'}}/>
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                            { client.audited &&
+                                                                <div className="row text-small" style={{ marginBottom: '0px'}}>
+                                                                    <span className="material-symbols-outlined">
+                                                                        check_circle
+                                                                    </span>
+                                                                    Audited by <span className="text-bold">{client.updated_by?.split('@')[0]}</span>
+                                                                    <span> {moment(client.updated_at).local().fromNow()}</span>
+                                                                </div>
+                                                            }
                                                         </div>
                                                     </div>
                                                 </React.Fragment>

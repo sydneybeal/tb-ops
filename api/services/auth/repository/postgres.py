@@ -86,6 +86,7 @@ class PostgresAuthRepository(PostgresMixin, AuthRepository):
             email,
             role
             FROM public.users
+            ORDER BY email
             """
         )
         async with pool.acquire() as con:
