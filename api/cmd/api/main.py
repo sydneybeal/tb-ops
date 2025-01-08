@@ -29,6 +29,7 @@ from jose import JWTError, jwt
 from api.services.auth.models import User
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
+from api.services.auth.models import UserSummary
 from api.services.auth.service import AuthService
 from api.services.clients.service import ClientService
 from api.services.clients.models import (
@@ -74,7 +75,7 @@ from api.services.quality.models import PotentialTrip, MatchingProgress
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-VERSION = "v1.0.5"
+VERSION = "v1.0.6"
 
 
 def get_auth_service() -> AuthService:
@@ -1011,6 +1012,18 @@ def make_app(
     ) -> JSONResponse:
         results = await currency_svc.process_daily_rate_requests(daily_rate_requests)
         return JSONResponse(content=results)
+
+    @app.get(
+        "/v1/users",
+        operation_id="get_users",
+        response_model=Sequence[UserSummary],
+        tags=["users"],
+    )
+    async def get_all_users(
+        current_user: User = Depends(get_current_user),
+    ) -> Sequence[UserSummary] | JSONResponse:
+        """Get all Country models."""
+        return await auth_svc.get_all_users()
 
     return app
 

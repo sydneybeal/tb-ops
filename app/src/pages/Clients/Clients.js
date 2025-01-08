@@ -30,6 +30,22 @@ export const Clients = () => {
         referred_by: [],
     });
 
+    const mapReferralType = (keyword) => {
+        const referralMap = {
+            existing_client: "Existing Client",
+            other_client: "Other Client",
+            internet: "Internet",
+            existing_agency: "Existing Agency",
+            other_agency: "Other Agency",
+            third_party: "Third Party",
+            employee: "Employee",
+            employee_network: "Employee Network",
+            other: "Other"
+        };
+    
+        return referralMap[keyword] || "Unknown";
+    };
+
     useEffect(() => {
         M.AutoInit();
         fetch(`${process.env.REACT_APP_API}/v1/clients`, {
@@ -445,12 +461,12 @@ export const Clients = () => {
                                                     </th>
                                                     <th
                                                         onClick={() =>
-                                                            applySorting('referred_by_display_name')
+                                                            applySorting('referral_type')
                                                         }
                                                     >
-                                                        Referred By
+                                                        Referral Type
                                                         <span className="material-symbols-outlined tb-teal-text text-lighten-4">
-                                                            {sorting.field === 'referred_by_display_name' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
+                                                            {sorting.field === 'referral_type' && sorting.ascending ? 'arrow_drop_up' : 'arrow_drop_down'}
                                                         </span>
                                                     </th>
                                                     <th
@@ -515,7 +531,54 @@ export const Clients = () => {
                                                                     ${formatAmount(client.lifetime_spend)}
                                                                 </td>
                                                                 <td>
-                                                                    {client.referred_by_display_name}
+                                                                    {client.referral_type ?
+                                                                            <>
+                                                                                <span className="tb-teal-text text-bold">
+                                                                                    {mapReferralType(client.referral_type)}
+                                                                                </span>
+                                                                                {['existing_client', 'existing_agency', 'employee'].includes(client.referral_type)  &&
+                                                                                    <>
+                                                                                    {client.referred_by_id ?
+                                                                                        <>
+                                                                                            <p className="tb-grey-text text-bold">
+                                                                                                {client.referred_by_display_name}
+                                                                                            </p>
+                                                                                            {client.referred_by_name &&
+                                                                                                <p className="tb-grey-text text-bold">
+                                                                                                    ({client.referred_by_name})
+                                                                                                </p>
+                                                                                            }
+                                                                                        </>
+                                                                                    :
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            Unknown
+                                                                                        </p>
+                                                                                    }
+                                                                                    </>
+                                                                                }
+                                                                                {['other_client', 'other_agency', 'internet', 'third_party'].includes(client.referral_type) &&
+                                                                                <>
+                                                                                    {client.referred_by_name ?
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            {client.referred_by_display_name}
+                                                                                        </p>
+                                                                                    :
+                                                                                        <p className="tb-grey-text text-bold">
+                                                                                            Unknown
+                                                                                        </p>
+                                                                                    }
+                                                                                </>
+                                                                                }
+                                                                            </>
+                                                                        :
+                                                                            <>
+                                                                                <span className="">
+                                                                                    <span className="material-symbols-outlined">
+                                                                                        live_help
+                                                                                    </span>
+                                                                                </span>
+                                                                            </>
+                                                                        }
                                                                 </td>
                                                                 <td>
                                                                     <span className="chip tb-teal lighten-2" onClick={() => toggleReservations(client.id)}>

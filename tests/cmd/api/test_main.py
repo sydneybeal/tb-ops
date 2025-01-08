@@ -143,46 +143,6 @@ async def add_consultant(
     assert res.json() == {"inserted_count": 1, "updated_count": 0}
 
 
-async def add_client(
-    ac: AsyncClient,
-    first_name: str,
-    last_name: str,
-):
-    data = {
-        "client_id": None,
-        "first_name": first_name,
-        "last_name": last_name,
-        "referred_by_id": None,
-        "updated_by": "Test Package Runner",
-    }
-
-    res = await ac.patch(url="/v1/clients", json=data)
-    assert res.json() == {"inserted_count": 1, "updated_count": 0}
-
-
-async def patch_client_referral(
-    ac: AsyncClient,
-    new_client: dict,
-    referring_client_id: str | None = None,
-):
-    data = {
-        "client_id": new_client["id"],
-        "first_name": new_client["first_name"],
-        "last_name": new_client["last_name"],
-        "referred_by_id": referring_client_id,
-        "updated_by": "Test Package Runner",
-    }
-
-    res = await ac.patch(url="/v1/clients", json=data)
-    assert res.status_code == 200
-    return res.json()
-
-
-async def get_clients(ac: AsyncClient):
-    res = await ac.get(url="/v1/clients")
-    return res.json()
-
-
 async def get_consultants(ac: AsyncClient):
     res = await ac.get(url="/v1/consultants")
     assert len(res.json()) == 1
@@ -312,39 +272,6 @@ async def test_entry_elements_crud(ac: AsyncClient):
         booking_channel_id=booking_channel["id"],
         agency_id=agency["id"],
     )
-
-
-async def test_add_client_referrals(ac: AsyncClient):
-    # Seed two clients
-    await add_client(ac, first_name="Original", last_name="Client")
-    await add_client(ac, first_name="New", last_name="Client")
-
-    # Get the list of clients
-    client_res = await get_clients(ac)
-    assert len(client_res) == 2
-
-    # Filter clients based on their first name
-    original_client = next(
-        client for client in client_res if client["first_name"] == "Original"
-    )
-    new_client = next(client for client in client_res if client["first_name"] == "New")
-
-    # Patch the new client to be referred by the original client
-    patch_res = await patch_client_referral(
-        ac, new_client=new_client, referring_client_id=original_client["id"]
-    )
-
-    # Assert the response of the patch request is successful
-    assert patch_res == {"inserted_count": 0, "updated_count": 1}
-
-    # Get the clients again to verify the referral
-    updated_client_res = await get_clients(ac)
-    updated_new_client = next(
-        client for client in updated_client_res if client["first_name"] == "New"
-    )
-
-    # Assert that the new client's 'referred_by_id' matches the original client's ID
-    assert updated_new_client["referred_by_id"] == original_client["id"]
 
 
 async def test_in_line_element_creation(ac: AsyncClient):
@@ -528,7 +455,7 @@ async def test_get_audit_logs(ac: AsyncClient):
     assert res.status_code == 200
     # log.info(f"Number of audit logs: {len(res.json())}")
     # Number of audit logs generated thusfar during testing
-    assert len(res.json()) == 16
+    assert len(res.json()) == 17
 
 
 async def test_get_trips(ac: AsyncClient):

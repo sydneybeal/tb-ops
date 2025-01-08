@@ -15,8 +15,11 @@
 """Services for interacting with reservation entries."""
 # from typing import Optional, Sequence, Union
 from uuid import UUID
+from datetime import datetime
 import copy
 from typing import Iterable, Union, Sequence, Optional, Tuple, Dict
+
+from numpy import true_divide
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.clients.models import (
@@ -76,6 +79,52 @@ class ClientService:
         # If no data was prepared for insertion or update
         return {"error": "No valid client data provided for processing."}
 
+    def is_client_unchanged(
+        self, existing_client: Client, client_request: PatchClientRequest
+    ) -> bool:
+        if (
+            (existing_client.first_name == client_request.first_name)
+            and (existing_client.last_name == client_request.last_name)
+            and (existing_client.referral_type == client_request.referral_type)
+            and (existing_client.referred_by_id == client_request.referred_by_id)
+            # the new name entered matches either the client/agent/employee name
+            and (existing_client.referred_by_name == client_request.referred_by_name)
+            and (existing_client.notes == client_request.notes)
+            and (existing_client.audited == client_request.audited)
+            and (
+                existing_client.cb_primary_agent_name
+                == client_request.cb_primary_agent_name
+            )
+            and (existing_client.deceased == client_request.deceased)
+            and (existing_client.should_contact == client_request.should_contact)
+            and (existing_client.do_not_contact == client_request.do_not_contact)
+            and (existing_client.moved_business == client_request.moved_business)
+        ):
+            return True
+        return False
+
+    def create_updated_client(
+        self, existing_client: Client, client_request: PatchClientRequest
+    ) -> Client:
+        # create a copy of the existing client to update
+        updated_client = copy.deepcopy(existing_client)
+        # set the new attributes to update the client
+        updated_client.first_name = client_request.first_name
+        updated_client.last_name = client_request.last_name
+        updated_client.referral_type = client_request.referral_type
+        updated_client.referred_by_id = client_request.referred_by_id
+        updated_client.referred_by_name = client_request.referred_by_name
+        updated_client.notes = client_request.notes
+        updated_client.cb_primary_agent_name = client_request.cb_primary_agent_name
+        updated_client.audited = client_request.audited
+        updated_client.deceased = client_request.deceased
+        updated_client.should_contact = client_request.should_contact
+        updated_client.do_not_contact = client_request.do_not_contact
+        updated_client.moved_business = client_request.moved_business
+        updated_client.updated_by = client_request.updated_by
+        updated_client.updated_at = datetime.now()
+        return updated_client
+
     async def prepare_client_data(
         self, client_request: PatchClientRequest
     ) -> Union[Dict[str, str], Tuple[Client, AuditLog]]:
@@ -84,22 +133,19 @@ class ClientService:
             # Fetch existing client by ID
             existing_client_by_id = await self.get_by_id(client_request.client_id)
         if existing_client_by_id:
-            if existing_client_by_id.referred_by_id == client_request.referred_by_id:
+            if self.is_client_unchanged(existing_client_by_id, client_request):
                 return {"error": "No changes were detected."}
 
             # If updating, return the existing client with possibly updated fields
             print(f"Found existing client {existing_client_by_id.cb_name}")
             print(
-                f"Setting client {existing_client_by_id.cb_name} to referred by {client_request.referred_by_id}"
+                f"Setting client {existing_client_by_id.cb_name} "
+                f"to referral type {client_request.referral_type} "
+                f"with name '{client_request.referred_by_name}'"
             )
-            # create a copy of the existing client to update
-            updated_client = copy.deepcopy(existing_client_by_id)
-            # set the new attributes to update the client
-            updated_client.first_name = client_request.first_name
-            updated_client.last_name = client_request.last_name
-            updated_client.referred_by_id = client_request.referred_by_id
-            updated_client.updated_by = client_request.updated_by
-
+            updated_client = self.create_updated_client(
+                existing_client_by_id, client_request
+            )
             before_detail = await self.add_audit_detail(existing_client_by_id)
             after_detail = await self.add_audit_detail(updated_client)
             audit_log = AuditLog(
@@ -120,7 +166,15 @@ class ClientService:
             new_client = Client(
                 first_name=client_request.first_name,
                 last_name=client_request.last_name,
+                referral_type=client_request.referral_type,
                 referred_by_id=client_request.referred_by_id,
+                referred_by_name=client_request.referred_by_name,
+                notes=client_request.notes,
+                deceased=client_request.deceased,
+                should_contact=client_request.should_contact,
+                do_not_contact=client_request.do_not_contact,
+                moved_business=client_request.moved_business,
+                audited=client_request.audited,
                 updated_by=client_request.updated_by,
             )
             audit_log = AuditLog(

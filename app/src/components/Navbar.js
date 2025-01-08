@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.7';
+    const version = 'v1.0.8';
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
