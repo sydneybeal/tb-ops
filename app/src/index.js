@@ -22,6 +22,8 @@ import OverlapsV2 from './pages/Overlaps/OverlapsV2';
 import TripReports from './pages/TripReports/TripReports';
 import AuditLanding from './pages/AuditLogs/AuditLanding';
 import TripLanding from './pages/Trips/TripLanding';
+import TripDetail from './pages/Trips/TripDetail';
+import TripEdit from './pages/Trips/TripEdit';
 import DailyRates from './pages/DailyRates/DailyRates';
 import AddRates from './pages/DailyRates/AddRates';
 import FaqPage from './pages/FAQ/FAQ';
@@ -141,6 +143,22 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute allowedRoles={['admin']} allowedUsers={['amandab@travelbeyond.com','samanthae@travelbeyond.com']}>
         <TripLanding />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip/:trip_id',
+    element: (
+      <ProtectedRoute allowedRoles={['admin']}>
+        <TripDetail />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/trip/edit/:trip_id',
+    element: (
+      <ProtectedRoute>
+        <TripEdit />
       </ProtectedRoute>
     ),
   },

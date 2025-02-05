@@ -868,6 +868,18 @@ def make_app(
     ) -> Iterable[TripSummary]:
         return await summary_svc.get_all_trips()
 
+    @app.get(
+        "/v1/trips/{trip_id}",
+        operation_id="get_trip",
+        response_model=TripSummary,
+        tags=["trips"],
+    )
+    async def get_trip(
+        trip_id: UUID,
+        current_user: User = Depends(get_current_user),
+    ) -> TripSummary:
+        return await summary_svc.get_trip_summary_by_id(trip_id)
+
     @app.patch(
         "/v1/confirm_trip",
         operation_id="post_trips",

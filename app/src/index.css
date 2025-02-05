@@ -109,6 +109,14 @@ nav.top-nav {
   font-size: 0.95rem;
 }
 
+.text-large {
+  font-size: 1.2rem;
+}
+
+.text-xlarge {
+  font-size: 1.5rem !important;
+}
+
 .travel-map {
   height: 400px;
   box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
