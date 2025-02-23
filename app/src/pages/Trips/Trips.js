@@ -256,7 +256,6 @@ export const Trips = () => {
                                         <div key={trip.id} className="card potential-trip-card">
                                             <div className="card-content">
                                                 <span className="card-title">
-                                                    
                                                     <div
                                                         className="tb-teal-text text-darken-2 text-bold"
                                                         onClick={() => window.open(`/trip/${trip.id}`, '_blank')} style={{ cursor: 'pointer' }}

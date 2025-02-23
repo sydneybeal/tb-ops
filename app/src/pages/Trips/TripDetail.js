@@ -138,7 +138,6 @@ export const TripDetail = () => {
                                     {displayData.trip_name || "Unnamed Trip"}
                                 </h5>
                                 <em className="tb-grey-text text-darken-1 text-small" style={{ fontSize: '1rem' }}>
-                                    {/*  */}
                                     <span className="text-bold teal-text" style={{ fontSize: '1.2rem' }}>
                                         {moment(displayData.start_date).format('MMMM D, YYYY')}
                                     </span>

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import M from 'materialize-css/dist/js/materialize';
 import { useAuth } from '../../components/AuthContext';
 import 'react-datepicker/dist/react-datepicker.css';
+import Select from 'react-select';
 import ReactDatePicker from 'react-datepicker';
 import CircularPreloader from '../../components/CircularPreloader';
 import CondensedSingleLogDisplay from '../AccommodationLogs/CondensedSingleLogDisplay';
@@ -13,6 +14,7 @@ export const TripEdit = () => {
     const { trip_id } = useParams();
     const { userDetails, logout } = useAuth();
     const [tripData, setTripData] = useState({});
+    const [users, setUsers] = useState();
     const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
@@ -40,6 +42,29 @@ export const TripEdit = () => {
                 setLoaded(true);
                 console.error(err);
             });
+        fetch(`${process.env.REACT_APP_API}/v1/users`, {
+            headers: {
+                'Authorization': `Bearer ${userDetails.token}`
+            }
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                // Exclude specific emails from the list
+                const excludedEmails = [
+                    "demo@travelbeyond.com",
+                    "admin@travelbeyond.com",
+                    "user@travelbeyond.com",
+                    "uat@travelbeyond.com",
+                    "testuser@travelbeyond.com"
+                ];
+                const sortedUsers = data.filter(user => !excludedEmails.includes(user.email));
+                const filteredUsers = sortedUsers.map((user) => ({
+                    value: user.id,
+                    label: `${user.email?.split('@')[0]}`,
+                }));
+                setUsers(filteredUsers);
+            })
+            .catch((err) => console.error(err));
     }, [logout, userDetails.token, trip_id]);
 
     const handleFormSubmit = (e) => {
@@ -111,7 +136,7 @@ export const TripEdit = () => {
                                 <div className="card potential-trip-card">
                                 <div className="card-content">
                                 <div className="row">
-                                    <div className="input-field col s12 l8 offset-l2">
+                                    <div className="input-field col s12 l8">
                                         <span className="material-symbols-outlined grey-text text-darken-1 prefix">
                                             airplane_ticket
                                         </span>
@@ -128,6 +153,52 @@ export const TripEdit = () => {
                                         >
                                             Trip Name
                                         </span>
+                                    </div>
+                                    <div className="col s12 l4">
+                                        <Select
+                                            placeholder="Select Travel Advisor"
+                                            inputId="ta_select"
+                                            value={users.find(cons => cons.value === tripData['travel_advisor_id']) || ''}
+                                            onChange={(selectedOption) => handleTripChange(
+                                                "travel_advisor_id",
+                                                selectedOption ? selectedOption.value : ''
+                                            )}
+                                            options={users}
+                                            isClearable
+                                            style={{ flexGrow: '1' }}
+                                            classNamePrefix="select" // Use this for prefixing generated class names
+                                            className=''
+                                            styles={{
+                                                control: (provided, state) => ({
+                                                    ...provided,
+                                                    borderColor: provided.borderColor,
+                                                    '&:hover': {
+                                                        borderColor: provided['&:hover'].borderColor,
+                                                    },
+                                                }),
+                                                option: (provided, state) => ({
+                                                    ...provided,
+                                                    fontWeight: state.isFocused || state.isSelected ? 'bold' : 'normal',
+                                                    backgroundColor: state.isSelected
+                                                        ? '#0e9bac' // Background color for selected options
+                                                        : state.isFocused
+                                                            ? '#e8e5e1' // Background color for focused (including hovered) options
+                                                            : '#ffffff', // Default background color for other states
+                                                    color: state.isSelected || state.isFocused ? 'initial' : 'initial', // Adjust text color as needed
+                                                    ':active': { // This targets the state when an option is being clicked or selected with the keyboard
+                                                        backgroundColor: !state.isSelected ? '#e8e5e1' : '#0e9bac', // Use the focused or selected color
+                                                    },
+                                                }),
+                                                menuPortal: base => ({ ...base, zIndex: 9999 })
+                                            }}
+                                            menuPortalTarget={document.body}
+                                        />
+                                        <label htmlFor="ta_select">
+                                            <span className="material-symbols-outlined">
+                                                badge
+                                            </span>
+                                            Travel Advisor
+                                        </label>
                                     </div>
                                 </div>
                                 <div className="row">
