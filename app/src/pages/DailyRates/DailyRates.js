@@ -24,6 +24,7 @@ export const DailyRates = () => {
     const [currency, setCurrency] = useState('ZAR');
     const [convertedAmount, setConvertedAmount] = useState('');
     const rolesAllowedToUpload = ['admin', 'accounting'];
+    const bufferMultiplier = 1.02;
 
     const handleAmountChange = (e) => {
         setInputAmount(e.target.value);
@@ -108,10 +109,10 @@ export const DailyRates = () => {
             if (rate !== 0) { // Ensure rate is not zero to avoid division by zero
                 if (currency === 'ZAR') {
                     // Special handling for ZAR as per company's spreadsheet
-                    rate = 1 / rate * 1.04; // Adjust the rate by inverting and then multiplying by 1.04
+                    rate = 1 / rate * bufferMultiplier; // Adjust the rate by inverting and then multiplying by bufferMultiplier
                 } else {
                     // Handle other currencies - assuming they need to be divided by the rate and adjusted
-                    rate = currenciesToMultiply.includes(currency) ? rate * 1.04 : rate / 1.04;
+                    rate = currenciesToMultiply.includes(currency) ? rate * bufferMultiplier : rate / bufferMultiplier;
                 }
                 rate = rate.toFixed(3).replace(/\.?0+$/, '');
 
@@ -365,8 +366,8 @@ export const DailyRates = () => {
                                             : parseFloat(dailyRate.conversion_rate);
                                         const baseConversionRateFixed = baseConversionRate.toFixed(3).replace(/\.?0+$/, '');
                                         const markedUpRate = currenciesToMultiply.includes(dailyRate.target_currency)
-                                            ? (baseConversionRate * 1.04).toFixed(3).replace(/\.?0+$/, '')
-                                            : (baseConversionRate / 1.04).toFixed(3).replace(/\.?0+$/, '');
+                                            ? (baseConversionRate * bufferMultiplier).toFixed(3).replace(/\.?0+$/, '')
+                                            : (baseConversionRate / bufferMultiplier).toFixed(3).replace(/\.?0+$/, '');
                                         return (
                                             <tr key={index}>
                                                 <td>
