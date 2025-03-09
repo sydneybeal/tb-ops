@@ -789,15 +789,15 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.updated_at,
                 al.updated_by
             FROM public.trips t
-            JOIN public.accommodation_logs al ON t.id = al.trip_id
+            LEFT JOIN public.accommodation_logs al ON t.id = al.trip_id
             LEFT JOIN public.users u ON t.travel_advisor_id = u.id
-            JOIN public.properties p ON al.property_id = p.id
-            JOIN public.portfolios pf ON p.portfolio_id = pf.id
-            JOIN public.consultants cons ON al.consultant_id = cons.id
+            LEFT JOIN public.properties p ON al.property_id = p.id
+            LEFT JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            LEFT JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
-            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            LEFT JOIN public.core_destinations cd ON p.core_destination_id = cd.id
             WHERE t.id = $1
             """
         )
@@ -832,6 +832,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 )
 
                 for record in records:
+                    if record["log_id"] is None:
+                        continue
                     trip_summary.accommodation_logs.append(
                         AccommodationLogSummary(
                             id=record["log_id"],

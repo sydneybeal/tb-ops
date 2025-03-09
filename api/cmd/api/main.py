@@ -68,6 +68,7 @@ from api.services.travel.models import (
     PatchPropertyRequest,
     PatchPropertyDetailRequest,
     PatchTripRequest,
+    PatchTripDataRequest,
 )
 from api.services.travel.service import TravelService
 from api.services.quality.service import QualityService
@@ -878,7 +879,21 @@ def make_app(
         trip_id: UUID,
         current_user: User = Depends(get_current_user),
     ) -> TripSummary:
-        return await summary_svc.get_trip_summary_by_id(trip_id)
+        res = await summary_svc.get_trip_summary_by_id(trip_id)
+        print(res)
+        return res
+
+    @app.patch(
+        "/v1/trips",
+        operation_id="patch_trip_data",
+        tags=["trips"],
+    )
+    async def patch_trip_data(
+        trip_data: PatchTripDataRequest,
+        current_user: User = Depends(get_current_user),
+    ) -> JSONResponse:
+        results = await travel_svc.update_trip_data(trip_data)
+        return JSONResponse(content=results)
 
     @app.patch(
         "/v1/confirm_trip",

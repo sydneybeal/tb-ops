@@ -77,11 +77,27 @@ export const TripEdit = () => {
     }
 
     const handleTripChange = (field, value) => {
+        let newValue = value;
+        const decimalFields = ['sell_price', 'cost_from_suppliers'];
+  
+        if (decimalFields.includes(field)) {
+            // If the value ends with a dot or is empty, keep it as a string so the user can continue typing
+            if (value === '' || value.endsWith('.')) {
+              newValue = value;
+            } else {
+              // Otherwise, attempt to convert to a float
+              newValue = parseFloat(value);
+              if (isNaN(newValue)) {
+                newValue = null;
+              }
+            }
+          }
+    
         const updatedTripData = {
             ...tripData,
-            [field]: value
-        };
-    
+            [field]: newValue,
+          };
+        
         setTripData(updatedTripData);
     }
 
@@ -129,6 +145,9 @@ export const TripEdit = () => {
                                 <h5 className="text-bold" style={{ marginBottom: '0px' }}>
                                     {tripData.trip_name || "Unnamed Trip"}
                                 </h5>
+                                <h5 className="text-bold" style={{ marginBottom: '0px' }}>
+                                    {tripData.trip_name || "Unnamed Trip"}
+                                </h5>
                                 <div className="chip warning-yellow-light">EDITING</div>
                             </div>
 
@@ -156,7 +175,7 @@ export const TripEdit = () => {
                                     </div>
                                     <div className="col s12 l4">
                                         <Select
-                                            placeholder="Select Travel Advisor"
+                                            placeholder="Select Travel Associate"
                                             inputId="ta_select"
                                             value={users.find(cons => cons.value === tripData['travel_advisor_id']) || ''}
                                             onChange={(selectedOption) => handleTripChange(
@@ -197,7 +216,7 @@ export const TripEdit = () => {
                                             <span className="material-symbols-outlined">
                                                 badge
                                             </span>
-                                            Travel Advisor
+                                            Travel Associate
                                         </label>
                                     </div>
                                 </div>
@@ -213,61 +232,129 @@ export const TripEdit = () => {
                                     </div>
                                 </div>
                                 <div className="row" style={{margin: '50px 0'}}>
-                                    <div className="col s4">
-                                        <span className="text-bold">...input for sell price...</span>
-                                        <br/>
-                                        ${tripData.sell_price}
-                                    </div>
-                                    <div className="col s4">
-                                        <span className="text-bold">...input for cost from suppliers...</span>
-                                        <br/>
-                                        ${tripData.cost_from_suppliers}
-                                    </div>
-                                    <div className="col s4">
-                                        <span className="text-bold">...input for flights handled by...</span>
-                                        <br/>
-                                        {tripData.flights_handled_by}
-                                    </div>
-                                </div>
-                                <div className="row">
                                     <div className="col s4 offset-s2">
                                         <div className="input-field">
-                                        <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                            forum
-                                        </span>
-                                        <input
-                                            type="text"
-                                            id="search-query"
-                                            placeholder="Lead source"
-                                            value={tripData.lead_source}
-                                            onChange={(e) => handleTripChange("lead_source", e.target.value)}
-                                            className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
-                                        />
-                                        <span
-                                            className="grey-text text-darken-1"
-                                        >
-                                            Lead Source
-                                        </span>
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">payments</span>
+                                            <input
+                                                type="text"
+                                                id="sellPrice"
+                                                value={tripData.sell_price}
+                                                onChange={(e) => handleTripChange("sell_price", e.target.value)}
+                                                // placeholder=""
+                                                autoComplete="off"
+                                            />
+                                            <label
+                                                style={{ fontSize: '1.3rem' }}
+                                                htmlFor="sellPrice"
+                                                className="grey-text text-darken-3"
+                                            >
+                                                Sell Price ($USD)
+                                            </label>
                                         </div>
-                                    </div><div className="col s4">
+                                    </div>
+                                    <div className="col s4">
                                         <div className="input-field">
-                                        <span className="material-symbols-outlined grey-text text-darken-1 prefix">
-                                            airplane_ticket
-                                        </span>
-                                        <input
-                                            type="text"
-                                            id="search-query"
-                                            placeholder="Flights Handled By"
-                                            value={tripData.flights_handled_by}
-                                            onChange={(e) => handleTripChange("flights_handled_by", e.target.value)}
-                                            className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
-                                        />
-                                        <span
-                                            className="grey-text text-darken-1"
-                                        >
-                                            Flights Handled By
-                                        </span>
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">payments</span>
+                                            <input
+                                                type="text"
+                                                id="costFromSuppliers"
+                                                value={tripData.cost_from_suppliers}
+                                                onChange={(e) => handleTripChange("cost_from_suppliers", e.target.value)}
+                                                // placeholder=""
+                                                autoComplete="off"
+                                            />
+                                            <label
+                                                style={{ fontSize: '1.3rem' }}
+                                                htmlFor="costFromSuppliers"
+                                                className="grey-text text-darken-3"
+                                            >
+                                                Cost from Suppliers ($USD)
+                                            </label>
                                         </div>
+                                    </div>
+                                </div>
+                                <div className="row" style={{ display: 'flex', alignItems: 'stretch' }}>
+                                    <div className="col s4">
+                                        <div className="input-field">
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                forum
+                                            </span>
+                                            <input
+                                                type="text"
+                                                id="leadSource"
+                                                // placeholder="Lead source"
+                                                value={tripData.lead_source}
+                                                onChange={(e) => handleTripChange("lead_source", e.target.value)}
+                                                // className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
+                                            />
+                                                <label
+                                                    style={{ fontSize: '1.3rem' }}
+                                                    htmlFor="leadSource"
+                                                    className="grey-text text-darken-3"
+                                                >
+                                                Lead Source
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="col s4">
+                                        <div className="input-field">
+                                            <span className="material-symbols-outlined grey-text text-darken-1 prefix">
+                                                airplane_ticket
+                                            </span>
+                                            <input
+                                                type="text"
+                                                id="flightsHandled"
+                                                // placeholder="Flights Handled By"
+                                                value={tripData.flights_handled_by}
+                                                onChange={(e) => handleTripChange("flights_handled_by", e.target.value)}
+                                                className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
+                                            />
+                                            <label
+                                                    style={{ fontSize: '1.3rem' }}
+                                                    htmlFor="flightsHandled"
+                                                    className="grey-text text-darken-3"
+                                                >
+                                                Flights Handled By
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="col s4" style={{ paddingTop: '20px'}}>
+                                        <>
+                                            <div className="switch property-switch">
+                                                <label>
+                                                    No
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={tripData.full_coverage_policy}
+                                                        onChange={(e) => handleTripChange("full_coverage_policy", e.target.checked)}
+                                                    />
+                                                    <span className="lever"></span>
+                                                    Yes
+                                                </label>
+                                            </div>
+                                            <br />
+                                            <div className="grey-text text-darken-1" style={{ marginBottom: '10px' }}>
+                                                <span className="material-symbols-outlined">
+                                                    health_and_safety
+                                                </span>
+                                                Full Coverage Policy
+                                            </div>
+                                        </>
+                                    </div>
+                                </div>
+                                <div className="row" style={{marginTop: '30px'}}>
+                                    <div className="input-field col s10 offset-s1">
+                                        <textarea
+                                            name="notes"
+                                            id="notes"
+                                            value={tripData.notes}
+                                            placeholder={tripData.notes}
+                                            onChange={(e) => handleTripChange("notes", e.target.value)}
+                                            // style={{paddingLeft: '10px'}}
+                                            className="materialize-textarea input-placeholder-dark comments"
+                                        />
+                                        <label htmlFor="notes" className="text-bold">Consultant Notes</label>
                                     </div>
                                 </div>
                                 <div className="row">

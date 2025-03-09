@@ -17,7 +17,7 @@ import datetime
 from collections import defaultdict
 from re import S
 from typing import Optional, Sequence, Union, Tuple, Dict, List, Any
-from uuid import UUID
+from uuid import UUID, uuid4
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.summaries.service import SummaryService
@@ -35,6 +35,7 @@ from api.services.travel.models import (
     Country,
     PatchCountryRequest,
     PatchTripRequest,
+    PatchTripDataRequest,
     Portfolio,
     PatchPortfolioRequest,
     Property,
@@ -1860,6 +1861,73 @@ class TravelService:
         await self._audit_svc.add_audit_logs(audit_log)
 
         return new_trip.id
+
+    async def update_trip_data(self, trip_request: PatchTripDataRequest) -> dict:
+        # Process the incoming request to merge changes
+        trip_data, audit_log = await self.process_trip_request(trip_request)
+
+        # Upsert the trip data (the repository returns the operation details)
+        if trip_data is None:
+            return {"error": "Trip not found or invalid request. No updates applied."}
+
+        upsert_res = await self._repo.upsert_trip(trip_data)
+
+        # If upsert_res is empty or indicates failure, return a graceful error message
+        if not upsert_res:
+            return {"error": "Trip update failed. Please try again."}
+
+        # Process the audit log if the upsert was successful
+        try:
+            await self.process_audit_logs(audit_log)
+        except Exception as e:
+            # Log the error but don't raise
+            print("Audit log processing failed: %s", e)
+
+        inserted_count = sum(1 for _, was_inserted in upsert_res if was_inserted)
+        updated_count = len(upsert_res) - inserted_count
+
+        return {
+            "inserted_count": inserted_count,
+            "updated_count": updated_count,
+        }
+
+    async def process_trip_request(
+        self, trip_request: PatchTripDataRequest
+    ) -> tuple[Optional[Trip], Optional[AuditLog]]:
+        if trip_request.id:
+            existing_trip = await self._repo.get_trip_by_id(trip_request.id)
+            if existing_trip:
+                detail_before_update = existing_trip.model_dump()
+                # Merge the updates – only update fields provided in the patch
+                updated_data = existing_trip.model_dump()
+                update_fields = trip_request.model_dump(exclude_unset=True)
+                updated_data.update(update_fields)
+                new_trip = Trip(**updated_data)
+                audit_log = AuditLog(
+                    table_name="trips",
+                    record_id=trip_request.id,
+                    user_name=trip_request.updated_by,
+                    before_value=detail_before_update,
+                    after_value=new_trip.model_dump(),
+                    action="update",
+                )
+                return new_trip, audit_log
+
+        # Either no ID was provided or the trip was not found—treat as an insert.
+        # If no ID provided, generate one
+        if not trip_request.id:
+            trip_request.id = uuid4()
+        # Create a new trip using the patch request data
+        new_trip = Trip(**trip_request.model_dump())
+        audit_log = AuditLog(
+            table_name="trips",
+            record_id=new_trip.id,
+            user_name=trip_request.updated_by,
+            before_value={},  # No previous state for new insert
+            after_value=new_trip.model_dump(),
+            action="insert",
+        )
+        return new_trip, audit_log
 
     async def delete_trip(self, trip_id: UUID, user_email: str):
         """Adds Trip models to the repository."""

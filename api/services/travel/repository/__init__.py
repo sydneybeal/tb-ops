@@ -16,7 +16,7 @@
 import datetime
 from uuid import UUID
 from abc import ABC, abstractmethod
-from typing import Sequence, Callable, Tuple
+from typing import Sequence, Tuple, Optional
 from api.services.travel.models import (
     AccommodationLog,
     Property,
@@ -384,6 +384,16 @@ class TravelRepository(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    async def get_trip_by_id(self, trip_id: UUID) -> Optional[Trip]:
+        """Gets a trip model from the repository by ID."""
+        raise NotImplementedError
+
+    @abstractmethod
     async def delete_trip(self, trip_id: UUID) -> bool:
         """Deletes a Trip model from the repository."""
+        raise NotImplementedError
+
+    @abstractmethod
+    async def upsert_trip(self, trip: Trip) -> None:
+        """Upserts a Trip model into the repository."""
         raise NotImplementedError

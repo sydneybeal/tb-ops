@@ -194,6 +194,16 @@ class Trip(BaseModel):
 
     id: UUID = Field(default_factory=uuid4)
     trip_name: str
+    lead_source: Optional[str] = None
+    inquiry_date: Optional[date] = None
+    deposit_date: Optional[date] = None
+    final_payment_date: Optional[date] = None
+    sell_price: Optional[float] = None
+    cost_from_suppliers: Optional[float] = None
+    notes: Optional[str] = None
+    flights_handled_by: Optional[str] = None
+    full_coverage_policy: Optional[bool] = None
+    travel_advisor_id: Optional[UUID] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: str
@@ -209,6 +219,25 @@ class PatchTripRequest(BaseModel):
     reviewed_by: Optional[str] = None
     review_status: Optional[str] = None  # Include only if needed for flagging logic
     review_notes: Optional[str] = None  # Include only if needed for flagging logic
+
+
+class PatchTripDataRequest(BaseModel):
+    """A request model for patching trip datails via API."""
+
+    id: Optional[UUID] = None
+    trip_name: str
+    lead_source: Optional[str] = None
+    inquiry_date: Optional[date] = None
+    deposit_date: Optional[date] = None
+    final_payment_date: Optional[date] = None
+    sell_price: Optional[float] = None
+    cost_from_suppliers: Optional[float] = None
+    notes: Optional[str] = None
+    flights_handled_by: Optional[str] = None
+    full_coverage_policy: Optional[bool] = None
+    travel_advisor_id: Optional[UUID] = None
+    updated_at: Optional[datetime] = Field(default_factory=datetime.now)
+    updated_by: str
 
 
 # class NewEntity(BaseModel):

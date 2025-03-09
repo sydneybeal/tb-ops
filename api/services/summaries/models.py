@@ -307,10 +307,17 @@ class BaseTrip(ABC, BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
-    def num_pax(self) -> int:
+    def num_pax(self) -> Optional[int]:
         """Calculate the highest number of pax."""
         # TODO consider other primary travelers in the group like Bealx2 and Horanx2 = 4
-        return max(log.num_pax for log in self.accommodation_logs)
+        if self.accommodation_logs:
+            nums = [
+                log.num_pax
+                for log in self.accommodation_logs
+                if log.num_pax is not None
+            ]
+            return max(nums) if nums else None
+        return None
 
     @computed_field  # type: ignore[misc]
     @property

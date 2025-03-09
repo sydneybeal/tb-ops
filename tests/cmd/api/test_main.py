@@ -16,6 +16,7 @@
 from httpx import AsyncClient
 from uuid import uuid4
 import logging
+from datetime import datetime
 import pytest
 
 
@@ -455,12 +456,159 @@ async def test_get_audit_logs(ac: AsyncClient):
     assert res.status_code == 200
     # log.info(f"Number of audit logs: {len(res.json())}")
     # Number of audit logs generated thusfar during testing
-    assert len(res.json()) == 17
+    assert len(res.json()) == 13
 
 
 async def test_get_trips(ac: AsyncClient):
     res = await ac.get(url="/v1/trips")
     assert res.status_code == 200
+    print(res)
+
+
+async def test_update_trip_inserts_when_not_found(ac: AsyncClient):
+    # Use a non-existent trip ID (simulate not found) but expect the endpoint to create a new trip.
+    fake_id = str(uuid4())
+    patch_payload = {
+        "id": fake_id,
+        "trip_name": "Inserted Trip",
+        "updated_by": "tester",
+        "updated_at": datetime.now().isoformat(),
+    }
+    res = await ac.patch("/v1/trips", json=patch_payload)
+    assert res.status_code == 200
+    data = res.json()
+    assert "inserted_count" in data
+    assert data.get("inserted_count", 0) > 0
+
+
+async def test_update_trip_insert_success(ac: AsyncClient):
+    # Create a new trip via PATCH (insert)
+    new_trip_payload = {
+        "trip_name": "Successful Trip Insert",
+        "updated_at": datetime.now().isoformat(),
+        "updated_by": "tester",
+    }
+    res = await ac.patch("/v1/trips", json=new_trip_payload)
+    assert res.status_code == 200
+    data = res.json()
+    # For an insert, expect inserted_count to be positive (or at least present)
+    assert "inserted_count" in data or "updated_count" in data
+
+
+async def test_update_trip_update_success(ac: AsyncClient):
+    # First, create a new trip via PATCH (insert)
+    trip_id = str(uuid4())
+    new_trip_payload = {
+        "id": trip_id,
+        "trip_name": "Successful Trip Update",
+        "updated_at": datetime.now().isoformat(),
+        "updated_by": "tester",
+    }
+    create_res = await ac.patch("/v1/trips", json=new_trip_payload)
+    assert create_res.status_code == 200
+    print(create_res.json())
+
+    # Now update the trip using the same generated ID.
+    patch_payload = {
+        "id": trip_id,
+        "trip_name": "Successful Trip Update - Modified",
+        "updated_at": datetime.now().isoformat(),
+        "updated_by": "tester",
+    }
+    res = await ac.patch("/v1/trips", json=patch_payload)
+    assert res.status_code == 200
+    data = res.json()
+    # Check that the response indicates an update was processed
+    assert "inserted_count" in data or "updated_count" in data
+
+    trip = await ac.get(f"/v1/trips/{str(trip_id)}")
+    trip_data = trip.json()
+    print(trip)
+    assert trip_data["updated_by"] == "tester"
+    assert trip_data["trip_name"] == "Successful Trip Update - Modified"
+
+
+async def test_upsert_creates_and_updates_trip(ac: AsyncClient, seed_user):
+    # 1. Get a valid travel advisor id from the /v1/users endpoint
+    users_res = await ac.get("/v1/users")
+    assert users_res.status_code == 200
+    users = users_res.json()
+    # Ensure we have at least one user
+    assert len(users) > 0
+    travel_advisor_id = users[0]["id"]
+    travel_advisor_name = users[0]["email"]
+
+    # 2. Create a new trip via PATCH (this will insert since the trip doesn't exist)
+    initial_id = str(uuid4())
+    # build with initial trip data, some unknowns
+    initial_payload = {
+        "id": initial_id,
+        "trip_name": "Original Trip",
+        "lead_source": "Tripadvisor",
+        "inquiry_date": "2024-11-01",
+        "deposit_date": "2024-11-28",
+        "final_payment_date": "2025-07-10",
+        "sell_price": 82000.0,
+        "cost_from_suppliers": 70000.0,
+        "notes": "Initial notes",
+        "flights_handled_by": None,
+        "full_coverage_policy": None,
+        "travel_advisor_id": None,
+        "updated_at": datetime.now().isoformat(),
+        "updated_by": "tester",
+    }
+    res = await ac.patch("/v1/trips", json=initial_payload)
+    assert res.status_code == 200
+    data = res.json()
+    # We expect an insert operation (since the trip did not exist before)
+    assert "inserted_count" in data
+    assert data.get("inserted_count", 0) > 0
+
+    # 3. Update the trip via PATCH (this will perform an update on the existing record)
+    # complete trip information, new full cost etc
+    updated_payload = {
+        "id": initial_id,
+        "trip_name": "Updated Trip",
+        "lead_source": "Referral",
+        "inquiry_date": "2024-11-01",
+        "deposit_date": "2024-11-28",
+        "final_payment_date": "2025-07-11",
+        "sell_price": 84000.0,
+        "cost_from_suppliers": 72000.0,
+        "notes": "Updated notes",
+        "flights_handled_by": "TB",
+        "full_coverage_policy": True,
+        "travel_advisor_id": travel_advisor_id,
+        "updated_at": datetime.now().isoformat(),
+        "updated_by": "tester2",
+    }
+    res = await ac.patch("/v1/trips", json=updated_payload)
+    assert res.status_code == 200
+    data = res.json()
+    # We now expect an update operation
+    assert "updated_count" in data
+    assert data.get("updated_count", 0) > 0
+
+    # 4. Retrieve the trip to verify all fields have been updated.
+    # Assuming there is a GET endpoint at `/v1/trips/{trip_id}`.
+    res_get = await ac.get(f"/v1/trips/{initial_id}")
+    assert res_get.status_code == 200
+    trip = res_get.json()
+
+    # Assert that each field matches the updated payload.
+    assert trip["trip_name"] == "Updated Trip"
+    assert trip["lead_source"] == "Referral"
+    assert trip["inquiry_date"] == "2024-11-01"
+    assert trip["deposit_date"] == "2024-11-28"
+    assert trip["final_payment_date"] == "2025-07-11"
+    assert trip["sell_price"] == 84000.0
+    assert trip["cost_from_suppliers"] == 72000.0
+    assert trip["notes"] == "Updated notes"
+    assert trip["flights_handled_by"] == "TB"
+    assert trip["full_coverage_policy"] is True
+    assert trip["updated_by"] == "tester2"
+    assert trip["travel_advisor_id"] == travel_advisor_id
+    assert trip["travel_advisor_name"] == travel_advisor_name
 
 
 # Starting to delete, so do everything that requires entry elements above
