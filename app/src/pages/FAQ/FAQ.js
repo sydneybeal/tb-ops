@@ -104,6 +104,30 @@ const FaqPage = () => {
                             <ul className="custom-icons">
                                 <li>If the client cancels and the vendor is <span className="text-bold">paid in full</span>, the bed nights stay in R&R.</li>
                                 <li>If the client cancels and the vendor was <span className="text-bold">only paid deposit</span>, or is <span className="text-bold">offering a refund</span>, remove the bed nights from R&R.</li>
+                                <li>We only count nights that vendors get full payment for, if they are refunding anything we delete it.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div style={{ marginBottom: '40px' }}>
+                        <div style={{ marginBottom: '10px' }}>
+                            <span
+                                className="material-symbols-outlined grey-text text-darken-2"
+                                style={{ marginRight: '10px' }}
+                            >
+                                live_help
+                            </span>
+                            <span className="text-bold">
+                                What if a client postpones?
+                            </span>
+                        </div>
+                        <div>
+                            <ul className="custom-icons">
+                                <li>If the vendors are moving some/all the funds paid to the new dates, you can edit the bed night entries to match the new travel dates.</li>
+                                <li>
+                                    If the client has not confirmed the new travel dates, you can send Steph and Joleen
+                                    a request to delete the original nights and add the new travel dates following confirmation,
+                                    as normal.
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -169,7 +193,8 @@ const FaqPage = () => {
                             Other notes about destinations:
                             <ul className="custom-icons">
                                 <li>
-                                    Only enter overnight stays (no day rooms)
+                                Dayrooms - only enter if client paid the full nightly rate to secure the room. If
+                                costing has a reduced dayroom rate, it should not be entered.
                                 </li>
                                 <li>
                                     If clients travel outside of our core destinations for a period of their trip
