@@ -27,6 +27,19 @@ ADD COLUMN IF NOT EXISTS full_coverage_policy BOOLEAN NULL,
 ADD COLUMN IF NOT EXISTS travel_advisor_id UUID NULL
 ;
 
-ALTER TABLE public.trips
-ADD CONSTRAINT fk_travel_advisor_id FOREIGN KEY (travel_advisor_id) 
-REFERENCES public.users(id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.table_constraints
+    WHERE constraint_name = 'fk_travel_advisor_id'
+      AND table_schema = 'public'
+      AND table_name = 'trips'
+  ) THEN
+    ALTER TABLE public.trips
+      ADD CONSTRAINT fk_travel_advisor_id
+      FOREIGN KEY (travel_advisor_id)
+      REFERENCES public.users(id);
+  END IF;
+END;
+$$;
