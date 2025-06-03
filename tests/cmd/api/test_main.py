@@ -456,7 +456,7 @@ async def test_get_audit_logs(ac: AsyncClient):
     assert res.status_code == 200
     # log.info(f"Number of audit logs: {len(res.json())}")
     # Number of audit logs generated thusfar during testing
-    assert len(res.json()) == 13
+    assert len(res.json()) == 17
 
 
 async def test_get_trips(ac: AsyncClient):
