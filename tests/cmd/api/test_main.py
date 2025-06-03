@@ -528,7 +528,7 @@ async def test_update_trip_update_success(ac: AsyncClient):
     assert trip_data["trip_name"] == "Successful Trip Update - Modified"
 
 
-async def test_upsert_creates_and_updates_trip(ac: AsyncClient, seed_user):
+async def test_upsert_creates_and_updates_trip(ac: AsyncClient):
     # 1. Get a valid travel advisor id from the /v1/users endpoint
     users_res = await ac.get("/v1/users")
     assert users_res.status_code == 200
