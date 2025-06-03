@@ -100,12 +100,12 @@ export const TripDetail = () => {
     const detailRow = (attribute, value, icon, isSensitive=false) => {
         return (
             <tr>
-                <td className={`${isSensitive && 'tb-teal-text text-darken-1'}`}>
-                    <span className="material-symbols-outlined tb-grey-text text-lighten-2 text-xlarge">
+                <td className={`${isSensitive ? 'tb-teal-text text-darken-1' : 'tb-grey-text text-darken-2'}`}>
+                    <span className="material-symbols-outlined tb-teal-text text-lighten-2 text-xlarge">
                         {icon}
                     </span>
                     &nbsp;&nbsp;
-                    {attribute}
+                    <span className="text-bold">{attribute}</span>
                 </td>
                 <td className="text-bold">
                     {value}
@@ -138,13 +138,13 @@ export const TripDetail = () => {
                                     {displayData.trip_name || "Unnamed Trip"}
                                 </h5>
                                 <em className="tb-grey-text text-darken-1 text-small" style={{ fontSize: '1rem' }}>
-                                    <span className="text-bold teal-text" style={{ fontSize: '1.2rem' }}>
+                                    <span className="text-bold tb-teal-text" style={{ fontSize: '1.2rem' }}>
                                         {moment(displayData.start_date).format('MMMM D, YYYY')}
                                     </span>
                                     <span>&nbsp;&nbsp;<span className="material-symbols-outlined">
                                         flight_land
                                     </span> </span>
-                                    <span className="text-bold teal-text" style={{ fontSize: '1.2rem' }}>
+                                    <span className="text-bold tb-teal-text" style={{ fontSize: '1.2rem' }}>
                                         {moment(displayData.end_date).format('MMMM D, YYYY')}
                                     </span>
 
@@ -197,7 +197,7 @@ export const TripDetail = () => {
                                                 <span className="material-symbols-outlined">
                                                     person_apron
                                                 </span>
-                                                Travel Advisor
+                                                Travel Associate
                                             </em>
                                         </div>
                                     </div>

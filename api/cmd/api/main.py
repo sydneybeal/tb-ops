@@ -880,7 +880,7 @@ def make_app(
         current_user: User = Depends(get_current_user),
     ) -> TripSummary:
         res = await summary_svc.get_trip_summary_by_id(trip_id)
-        print(res)
+        # print(res)
         return res
 
     @app.patch(

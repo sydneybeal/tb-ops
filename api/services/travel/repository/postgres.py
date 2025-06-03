@@ -2027,6 +2027,9 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                     trip_data.updated_at,
                     trip_data.updated_by,
                 )
+                print(
+                    f"Executing upsert for trip {trip_data.trip_name} with args: {args}"
+                )
                 row = await con.fetchrow(query, *args)
                 if row:
                     results.append((row["id"], row["was_inserted"]))

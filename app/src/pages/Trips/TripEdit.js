@@ -67,13 +67,62 @@ export const TripEdit = () => {
             .catch((err) => console.error(err));
     }, [logout, userDetails.token, trip_id]);
 
+    useEffect(() => {
+        // M.initializeTextFields();
+        M.updateTextFields();
+    }, [tripData]);
+
     const handleFormSubmit = (e) => {
+        // send POST request to update trip
         e.preventDefault();
-        M.toast({
-            html: 'Trip cannot be saved at this time.',
-            displayLength: 4000,
-            classes: 'error-red',
-        });
+        const tripDataToSend = {
+            ...tripData,
+            travel_advisor_id: tripData.travel_advisor_id || null,
+        };
+        console.log('Trip data to send:', tripDataToSend);
+
+        fetch(`${process.env.REACT_APP_API}/v1/trips`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userDetails.token}`
+            },
+            body: JSON.stringify(tripDataToSend)
+        })
+            .then(async (res) => {
+                const data = await res.json();
+                if (data.detail && data.detail === "Could not validate credentials") {
+                    M.toast({
+                        html: 'Your session has timed out, please log in again.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    logout();
+                    return;
+                }
+                if (!res.ok) {
+                    M.toast({
+                        html: data.detail || 'An error occurred while updating the trip.',
+                        displayLength: 4000,
+                        classes: 'error-red',
+                    });
+                    return;
+                }
+                M.toast({
+                    html: 'Trip updated successfully.',
+                    displayLength: 4000,
+                    classes: 'success-green',
+                });
+                // setTripData(data);
+            })
+            .catch((err) => {
+                M.toast({
+                    html: 'An error occurred while updating the trip.',
+                    displayLength: 4000,
+                    classes: 'error-red',
+                });
+                console.error(err);
+            });
     }
 
     const handleTripChange = (field, value) => {
@@ -130,6 +179,8 @@ export const TripEdit = () => {
             </>
         )
     }
+    console.log('Trip Data:', tripData);
+    console.log('Trip Name:', tripData?.trip_name);
 
     return (
         <>
@@ -142,10 +193,7 @@ export const TripEdit = () => {
                     {loaded && tripData ? (
                         <>
                             <div className="row">
-                                <h5 className="text-bold" style={{ marginBottom: '0px' }}>
-                                    {tripData.trip_name || "Unnamed Trip"}
-                                </h5>
-                                <h5 className="text-bold" style={{ marginBottom: '0px' }}>
+                                <h5 className="text-bold" style={{ marginBottom: '10px' }}>
                                     {tripData.trip_name || "Unnamed Trip"}
                                 </h5>
                                 <div className="chip warning-yellow-light">EDITING</div>
@@ -163,7 +211,7 @@ export const TripEdit = () => {
                                             type="text"
                                             id="search-query"
                                             placeholder="Trip name"
-                                            value={tripData.trip_name}
+                                            value={tripData.trip_name || ''}
                                             onChange={(e) => handleTripChange("trip_name", e.target.value)}
                                             className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
                                         />
@@ -177,7 +225,7 @@ export const TripEdit = () => {
                                         <Select
                                             placeholder="Select Travel Associate"
                                             inputId="ta_select"
-                                            value={users.find(cons => cons.value === tripData['travel_advisor_id']) || ''}
+                                            value={users?.find(cons => cons.value === tripData['travel_advisor_id']) || ''}
                                             onChange={(selectedOption) => handleTripChange(
                                                 "travel_advisor_id",
                                                 selectedOption ? selectedOption.value : ''
@@ -233,12 +281,13 @@ export const TripEdit = () => {
                                 </div>
                                 <div className="row" style={{margin: '50px 0'}}>
                                     <div className="col s4 offset-s2">
+
                                         <div className="input-field">
                                             <span className="material-symbols-outlined grey-text text-darken-1 prefix">payments</span>
                                             <input
                                                 type="text"
                                                 id="sellPrice"
-                                                value={tripData.sell_price}
+                                                value={tripData.sell_price || ''}
                                                 onChange={(e) => handleTripChange("sell_price", e.target.value)}
                                                 // placeholder=""
                                                 autoComplete="off"
@@ -258,7 +307,7 @@ export const TripEdit = () => {
                                             <input
                                                 type="text"
                                                 id="costFromSuppliers"
-                                                value={tripData.cost_from_suppliers}
+                                                value={tripData.cost_from_suppliers || ''}
                                                 onChange={(e) => handleTripChange("cost_from_suppliers", e.target.value)}
                                                 // placeholder=""
                                                 autoComplete="off"
@@ -283,7 +332,7 @@ export const TripEdit = () => {
                                                 type="text"
                                                 id="leadSource"
                                                 // placeholder="Lead source"
-                                                value={tripData.lead_source}
+                                                value={tripData.lead_source || ''}
                                                 onChange={(e) => handleTripChange("lead_source", e.target.value)}
                                                 // className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
                                             />
@@ -305,7 +354,7 @@ export const TripEdit = () => {
                                                 type="text"
                                                 id="flightsHandled"
                                                 // placeholder="Flights Handled By"
-                                                value={tripData.flights_handled_by}
+                                                value={tripData.flights_handled_by || ''}
                                                 onChange={(e) => handleTripChange("flights_handled_by", e.target.value)}
                                                 className={`${tripData.trip_name === "" ? 'invalid' : ''} name-input`}
                                             />
@@ -326,7 +375,7 @@ export const TripEdit = () => {
                                                     No
                                                     <input
                                                         type="checkbox"
-                                                        checked={tripData.full_coverage_policy}
+                                                        checked={tripData.full_coverage_policy || ''}
                                                         onChange={(e) => handleTripChange("full_coverage_policy", e.target.checked)}
                                                     />
                                                     <span className="lever"></span>
@@ -348,7 +397,7 @@ export const TripEdit = () => {
                                         <textarea
                                             name="notes"
                                             id="notes"
-                                            value={tripData.notes}
+                                            value={tripData.notes || ''}
                                             placeholder={tripData.notes}
                                             onChange={(e) => handleTripChange("notes", e.target.value)}
                                             // style={{paddingLeft: '10px'}}

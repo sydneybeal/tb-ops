@@ -19,7 +19,6 @@ from datetime import datetime
 import copy
 from typing import Iterable, Union, Sequence, Optional, Tuple, Dict
 
-from numpy import true_divide
 from api.services.audit.service import AuditService
 from api.services.audit.models import AuditLog
 from api.services.clients.models import (
