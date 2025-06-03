@@ -638,6 +638,17 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             SELECT
                 t.id AS trip_id,
                 t.trip_name,
+                t.lead_source,
+                t.inquiry_date,
+                t.deposit_date,
+                t.final_payment_date,
+                t.sell_price,
+                t.cost_from_suppliers,
+                t.notes,
+                t.flights_handled_by,
+                t.full_coverage_policy,
+                t.travel_advisor_id,
+                u.email as travel_advisor_name,
                 t.created_at AS trip_created_at,
                 t.updated_at AS trip_updated_at,
                 t.updated_by AS trip_updated_by,
@@ -665,6 +676,7 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.updated_by
             FROM public.trips t
             JOIN public.accommodation_logs al ON t.id = al.trip_id
+            LEFT JOIN public.users u ON t.travel_advisor_id = u.id
             JOIN public.properties p ON al.property_id = p.id
             JOIN public.portfolios pf ON p.portfolio_id = pf.id
             JOIN public.consultants cons ON al.consultant_id = cons.id
@@ -689,6 +701,17 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                         trip_summaries[trip_id] = TripSummary(
                             id=trip_id,
                             trip_name=record["trip_name"],
+                            lead_source=record["lead_source"],
+                            inquiry_date=record["inquiry_date"],
+                            deposit_date=record["deposit_date"],
+                            final_payment_date=record["final_payment_date"],
+                            sell_price=record["sell_price"],
+                            cost_from_suppliers=record["cost_from_suppliers"],
+                            notes=record["notes"],
+                            flights_handled_by=record["flights_handled_by"],
+                            full_coverage_policy=record["full_coverage_policy"],
+                            travel_advisor_id=record["travel_advisor_id"],
+                            travel_advisor_name=record["travel_advisor_name"],
                             created_at=record["trip_created_at"],
                             updated_at=record["trip_updated_at"],
                             updated_by=record["trip_updated_by"],
@@ -729,6 +752,17 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
             SELECT
                 t.id AS trip_id,
                 t.trip_name,
+                t.lead_source,
+                t.inquiry_date,
+                t.deposit_date,
+                t.final_payment_date,
+                t.sell_price,
+                t.cost_from_suppliers,
+                t.notes,
+                t.flights_handled_by,
+                t.full_coverage_policy,
+                t.travel_advisor_id,
+                u.email as travel_advisor_name,
                 t.created_at AS trip_created_at,
                 t.updated_at AS trip_updated_at,
                 t.updated_by AS trip_updated_by,
@@ -755,14 +789,15 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 al.updated_at,
                 al.updated_by
             FROM public.trips t
-            JOIN public.accommodation_logs al ON t.id = al.trip_id
-            JOIN public.properties p ON al.property_id = p.id
-            JOIN public.portfolios pf ON p.portfolio_id = pf.id
-            JOIN public.consultants cons ON al.consultant_id = cons.id
+            LEFT JOIN public.accommodation_logs al ON t.id = al.trip_id
+            LEFT JOIN public.users u ON t.travel_advisor_id = u.id
+            LEFT JOIN public.properties p ON al.property_id = p.id
+            LEFT JOIN public.portfolios pf ON p.portfolio_id = pf.id
+            LEFT JOIN public.consultants cons ON al.consultant_id = cons.id
             LEFT JOIN public.booking_channels bc ON al.booking_channel_id = bc.id
             LEFT JOIN public.agencies a ON al.agency_id = a.id
             LEFT JOIN public.countries c ON p.country_id = c.id
-            JOIN public.core_destinations cd ON p.core_destination_id = cd.id
+            LEFT JOIN public.core_destinations cd ON p.core_destination_id = cd.id
             WHERE t.id = $1
             """
         )
@@ -779,6 +814,17 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 trip_summary = TripSummary(
                     id=records[0]["trip_id"],
                     trip_name=records[0]["trip_name"],
+                    lead_source=records[0]["lead_source"],
+                    inquiry_date=records[0]["inquiry_date"],
+                    deposit_date=records[0]["deposit_date"],
+                    final_payment_date=records[0]["final_payment_date"],
+                    sell_price=records[0]["sell_price"],
+                    cost_from_suppliers=records[0]["cost_from_suppliers"],
+                    notes=records[0]["notes"],
+                    flights_handled_by=records[0]["flights_handled_by"],
+                    full_coverage_policy=records[0]["full_coverage_policy"],
+                    travel_advisor_id=records[0]["travel_advisor_id"],
+                    travel_advisor_name=records[0]["travel_advisor_name"],
                     created_at=records[0]["trip_created_at"],
                     updated_at=records[0]["trip_updated_at"],
                     updated_by=records[0]["trip_updated_by"],
@@ -786,6 +832,8 @@ class PostgresSummaryRepository(PostgresMixin, SummaryRepository):
                 )
 
                 for record in records:
+                    if record["log_id"] is None:
+                        continue
                     trip_summary.accommodation_logs.append(
                         AccommodationLogSummary(
                             id=record["log_id"],

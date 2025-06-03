@@ -31,6 +31,7 @@ from unittest.mock import AsyncMock, Mock
 
 from api.services.audit.service import AuditService
 from api.services.auth.service import AuthService
+from api.services.auth.models import User
 from api.cmd.migrations import runner
 from api.config.postgres import PostgresConfig
 from api.services.clients.service import ClientService
@@ -152,6 +153,31 @@ async def ac(app) -> AsyncClient:
     ac = AsyncClient(base_url="http://test", app=app)
     yield ac
     await ac.aclose()
+
+
+@pytest.fixture
+async def seed_user(auth_service: AuthService):
+    """Seeds the testing database with a test user."""
+    # Define the test user's details
+    test_user_data = {
+        "email": "testuser@example.com",
+        "password": "testpassword",
+        "role": "sales_support",
+    }
+
+    # Hash the password
+    hashed_password = auth_service.hash_password(test_user_data["password"])
+
+    # Create the user instance (assuming your User model has email, hashed_password, and role)
+    test_user = User(
+        email=test_user_data["email"],
+        hashed_password=hashed_password,
+        role=test_user_data["role"],
+    )
+
+    # Add the user to the database
+    await auth_service.add_user([test_user])
+    return test_user
 
 
 @pytest.fixture(scope="session")

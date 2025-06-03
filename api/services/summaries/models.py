@@ -262,6 +262,16 @@ class Overlap(BaseModel):
 class BaseTrip(ABC, BaseModel):
     id: UUID = Field(default_factory=uuid4)
     accommodation_logs: List[AccommodationLogSummary]
+    lead_source: Optional[str] = None
+    inquiry_date: Optional[date] = None
+    deposit_date: Optional[date] = None
+    final_payment_date: Optional[date] = None
+    sell_price: Optional[float] = None
+    cost_from_suppliers: Optional[float] = None
+    notes: Optional[str] = None
+    flights_handled_by: Optional[str] = None
+    full_coverage_policy: Optional[bool] = None
+    travel_advisor_id: Optional[UUID] = None
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     updated_by: Optional[str] = None
@@ -297,6 +307,20 @@ class BaseTrip(ABC, BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
+    def num_pax(self) -> Optional[int]:
+        """Calculate the highest number of pax."""
+        # TODO consider other primary travelers in the group like Bealx2 and Horanx2 = 4
+        if self.accommodation_logs:
+            nums = [
+                log.num_pax
+                for log in self.accommodation_logs
+                if log.num_pax is not None
+            ]
+            return max(nums) if nums else None
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
     def number_of_logs(self) -> int:
         """Return the number of accommodation logs in the trip."""
         return len(self.accommodation_logs)
@@ -305,6 +329,7 @@ class BaseTrip(ABC, BaseModel):
     @property
     def start_date(self) -> Optional[date]:
         """Calculate the start date of the trip by finding the earliest 'date_in' from the logs."""
+        # TODO: does this need to be manually stored like the day their international travel starts?
         if self.accommodation_logs:
             return min(log.date_in for log in self.accommodation_logs)
         return None
@@ -317,6 +342,97 @@ class BaseTrip(ABC, BaseModel):
             return max(log.date_out for log in self.accommodation_logs)
         return None
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def consultant_display_name(self) -> Optional[str]:
+        """Calculate the consultant of the trip by finding the most common 'consultant' from the logs."""
+        # TODO tie this with user?
+        if self.accommodation_logs:
+            consultant_counts = Counter(
+                log.consultant_display_name for log in self.accommodation_logs
+            )
+            return consultant_counts.most_common(1)[0][0] if consultant_counts else None
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def booking_channels(self) -> Optional[List[str]]:
+        """Calculate the list of primary booking channels on this trip."""
+        # TODO: probably delete this since it's in the attached Accommodation Logs
+        if self.accommodation_logs:
+            # Using a set to collect unique booking booking channel names
+            unique_booking_channels = {
+                log.booking_channel_name
+                for log in self.accommodation_logs
+                if log.booking_channel_name
+            }
+            return list(unique_booking_channels)
+        return []
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def days_to_confirm(self) -> Optional[int]:
+        """Number of days from inquiry to confirmation."""
+        if self.inquiry_date and self.deposit_date:
+            return (self.deposit_date - self.inquiry_date).days
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def trip_length_days(self) -> Optional[int]:
+        """Length of trip (first check-in to final check-out) in days."""
+        if self.start_date and self.end_date:
+            return (self.end_date - self.start_date).days
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def commission(self) -> Optional[float]:
+        """Difference between cost and sell price."""
+        if self.sell_price and self.cost_from_suppliers:
+            return self.sell_price - self.cost_from_suppliers
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def margin(self) -> Optional[float]:
+        """Decimal margin based on commission divided by sell price."""
+        if self.commission and self.sell_price:
+            return abs(self.commission / self.sell_price)
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def properties(self) -> Optional[List[str]]:
+        """List of string of property names."""
+        # TODO: probably delete this since it's in the attached Accommodation Logs
+        if self.accommodation_logs:
+            # Using a set to collect unique booking booking channel names
+            unique_properties = {
+                log.property_name
+                for log in self.accommodation_logs
+                if log.property_name
+            }
+            return list(unique_properties)
+        return []
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def conservation_levy_africa(self) -> Optional[int]:
+        """Amount of conservation levy to account for Africa passengers."""
+        if self.num_pax and self.core_destination == "Africa":
+            return self.num_pax * 125
+        return None
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def tons_emitted_africa(self) -> Optional[float]:
+        """Amount of tons emitted to account for Africa passengers."""
+        if self.total_bed_nights and self.core_destination == "Africa":
+            return self.total_bed_nights * 0.351
+        return None
+
 
 class TripSummary(BaseTrip):
     trip_name: str
+    travel_advisor_name: Optional[str] = None

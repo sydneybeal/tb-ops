@@ -1507,7 +1507,7 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
             f"Successfully added {len(args)} new booking channel record(s) to the repository."
         )
 
-    async def get_booking_channel_by_name(self, name: str) -> BookingChannel:
+    async def get_booking_channel_by_name(self, name: str) -> Optional[BookingChannel]:
         """Gets a single BookingChannel model from the repository by name."""
         pool = await self._get_pool()
         query = dedent(
@@ -1947,3 +1947,91 @@ class PostgresTravelRepository(PostgresMixin, TravelRepository):
                 }
                 print(f"Successfully deleted trip with ID: {trip_id}.")
                 return deleted_data
+
+    async def get_trip_by_id(self, trip_id: UUID) -> Optional[Trip]:
+        """Deletes a Trip model from the repository."""
+        pool = await self._get_pool()
+        query = dedent(
+            """
+            SELECT * FROM public.trips
+            WHERE id = $1;
+            """
+        )
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                res = await con.fetchrow(query, trip_id)
+                if res:
+                    return Trip(**res)
+
+    async def upsert_trip(self, trip_data: Trip) -> list[Tuple[UUID, bool]]:
+        pool = await self._get_pool()
+        query = """
+            INSERT INTO public.trips (
+                id,
+                trip_name,
+                lead_source,
+                inquiry_date,
+                deposit_date,
+                final_payment_date,
+                sell_price,
+                cost_from_suppliers,
+                notes,
+                flights_handled_by,
+                full_coverage_policy,
+                travel_advisor_id,
+                created_at,
+                updated_at,
+                updated_by
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+            )
+            ON CONFLICT (id) DO UPDATE SET
+                trip_name = EXCLUDED.trip_name,
+                lead_source = EXCLUDED.lead_source,
+                inquiry_date = EXCLUDED.inquiry_date,
+                deposit_date = EXCLUDED.deposit_date,
+                final_payment_date = EXCLUDED.final_payment_date,
+                sell_price = EXCLUDED.sell_price,
+                cost_from_suppliers = EXCLUDED.cost_from_suppliers,
+                notes = EXCLUDED.notes,
+                flights_handled_by = EXCLUDED.flights_handled_by,
+                full_coverage_policy = EXCLUDED.full_coverage_policy,
+                travel_advisor_id = EXCLUDED.travel_advisor_id,
+                updated_at = EXCLUDED.updated_at,
+                updated_by = EXCLUDED.updated_by
+            RETURNING id, (xmax = 0) AS was_inserted;
+        """
+        results = []
+        async with pool.acquire() as con:
+            await con.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            async with con.transaction():
+                args = (
+                    trip_data.id,
+                    trip_data.trip_name.strip(),
+                    trip_data.lead_source,
+                    trip_data.inquiry_date,
+                    trip_data.deposit_date,
+                    trip_data.final_payment_date,
+                    trip_data.sell_price,
+                    trip_data.cost_from_suppliers,
+                    trip_data.notes,
+                    trip_data.flights_handled_by,
+                    trip_data.full_coverage_policy,
+                    trip_data.travel_advisor_id,
+                    trip_data.created_at,
+                    trip_data.updated_at,
+                    trip_data.updated_by,
+                )
+                print(
+                    f"Executing upsert for trip {trip_data.trip_name} with args: {args}"
+                )
+                row = await con.fetchrow(query, *args)
+                if row:
+                    results.append((row["id"], row["was_inserted"]))
+
+        return results

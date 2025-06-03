@@ -177,6 +177,13 @@ const Navbar = ({ title }) => {
                 </div>
                 <div className="container" style={{ width: '100%' }}>
                     <li>
+                        <Link to={'/trips'} className="text-bold">
+                            Trips
+                        </Link>
+                    </li>
+                </div>
+                <div className="container" style={{ width: '100%' }}>
+                    <li>
                         <Link to={'/faq'} className="text-bold">
                             FAQ
                         </Link>
@@ -203,7 +210,7 @@ const Navbar = ({ title }) => {
                         }
                         <div className="container" style={{ width: '100%' }}>
                             <li>
-                                <Link to={'/trips'} className="text-bold">
+                                <Link to={'/trip_matching'} className="text-bold">
                                     <span className="material-symbols-outlined">
                                         casino
                                     </span>

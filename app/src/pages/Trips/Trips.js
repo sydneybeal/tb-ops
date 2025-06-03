@@ -23,7 +23,7 @@ export const Trips = () => {
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
     ];
-
+    
     useEffect(() => {
         // Calculate the number of pages with the new data
         const numberOfPages = Math.ceil(apiData.length / itemsPerPage);
@@ -255,7 +255,17 @@ export const Trips = () => {
                                     displayData.map(trip => (
                                         <div key={trip.id} className="card potential-trip-card">
                                             <div className="card-content">
-                                                <span className="card-title">{trip.trip_name || "Unnamed Trip"}</span>
+                                                <span className="card-title">
+                                                    <div
+                                                        className="tb-teal-text text-darken-2 text-bold"
+                                                        onClick={() => window.open(`/trip/${trip.id}`, '_blank')} style={{ cursor: 'pointer' }}
+                                                    >
+                                                        {trip.trip_name || "Unnamed Trip"}
+                                                        {/* <span className="material-symbols-outlined" style={{ fontSize: '1.3rem', marginBottom: '0px', marginRight: '0px' }}>
+                                                            open_in_new
+                                                        </span> */}
+                                                    </div>
+                                                </span>
                                                 <span className="chip green lighten-4">
                                                     <span className="material-symbols-outlined">
                                                         check_circle

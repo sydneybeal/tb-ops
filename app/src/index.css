@@ -109,6 +109,14 @@ nav.top-nav {
   font-size: 0.95rem;
 }
 
+.text-large {
+  font-size: 1.2rem;
+}
+
+.text-xlarge {
+  font-size: 1.5rem !important;
+}
+
 .travel-map {
   height: 400px;
   box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
@@ -1386,6 +1394,34 @@ th {
 
 .potential-trips .btn.chip:hover {
   background-color: #057e8c;
+}
+
+textarea.materialize-textarea.comments {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  outline: none;
+  height: 100px;
+  width: 100%;
+  font-size: 16px;
+  margin: 0 0 16px 0;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  transition: box-shadow .3s, border .3s;
+  resize: vertical;
+}
+
+textarea.comments + label {
+  left: 25px !important;
+  color: #0e9bac !important;
+  transition: top 0.2s, font-size 0.2s;
+}
+
+textarea.comments + label.active {
+  top: -5px !important;
+  color: #0e9bac !important;
+  left: 15px !important;
 }
 
 .material-symbols-outlined {
