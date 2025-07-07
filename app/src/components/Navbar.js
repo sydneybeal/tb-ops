@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom';
 
 const Navbar = ({ title }) => {
     const { userDetails, logout } = useAuth();
-    const version = 'v1.0.10';
+    const version = 'v1.0.11';
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
+        'danah@travelbeyond.com',
+        'katiem@travelbeyond.com',
+        'laureno@travelbeyond.com',
     ];
 
     // useEffect(() => {

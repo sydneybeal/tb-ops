@@ -22,6 +22,9 @@ export const Trips = () => {
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
+        'danah@travelbeyond.com',
+        'katiem@travelbeyond.com',
+        'laureno@travelbeyond.com',
     ];
 
     useEffect(() => {
