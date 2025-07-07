@@ -33,6 +33,9 @@ export const PotentialTrips = () => {
     const allowedUsers = [
         'amandab@travelbeyond.com',
         'samanthae@travelbeyond.com',
+        'danah@travelbeyond.com',
+        'katiem@travelbeyond.com',
+        'laureno@travelbeyond.com',
     ];
 
     const [selectedTrips, setSelectedTrips] = useState(new Set());
