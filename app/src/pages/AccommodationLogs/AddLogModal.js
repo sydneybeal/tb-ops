@@ -914,6 +914,13 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
         // Special case handling for "Ecoventura" portfolio and "Galapagos Network/Ecoventura" booking channel
         const galapagosChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "galapagos network/ecoventura")?.value;
         const ecoventuraPortfolioId = portfolios.find(portfolio => portfolio.label.trim().toLowerCase() === "ecoventura")?.value;
+
+        // Special case handling for properties Elite, Endemic and Ocean Spray with "Golden Galapagos" booking channel
+        const goldenGalapagosChannelId = bookingChannels.find(channel => channel.label.trim().toLowerCase() === "golden galapagos")?.value;
+        const elitePropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "elite")?.value;
+        const endemicPropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "endemic")?.value;
+        const oceanSprayPropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "ocean spray")?.value;
+
         // Special case handling for properties Magashi, Sabyinyo, Bisate and "Thousand Hills Rwanda" booking channel
         const magashiPropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "wilderness magashi")?.value;
         const bisatePropertyId = properties.find(prop => prop.name.trim().toLowerCase() === "wilderness bisate")?.value;
@@ -937,6 +944,18 @@ const AddLogModal = ({ isOpen, onClose, onRefresh, editLogData = null, isEditMod
             // Automatically change booking channel to Direct if conditions are met
             M.toast({
                 html: "Booking channel automatically changed to 'Direct' for Thousand Hills Rwanda",
+                displayLength: 4000,
+                classes: 'success-green',
+            });
+            handleLogChange(index, 'booking_channel_id', directChannelId);
+        } else if (
+            (log.property_id === elitePropertyId
+                || log.property_id === endemicPropertyId
+                || log.property_id === oceanSprayPropertyId)
+            && log.booking_channel_id === goldenGalapagosChannelId) {
+            // Automatically change booking channel to Direct if conditions are met
+            M.toast({
+                html: "Booking channel automatically changed to 'Direct' for Golden Galapagos",
                 displayLength: 4000,
                 classes: 'success-green',
             });
